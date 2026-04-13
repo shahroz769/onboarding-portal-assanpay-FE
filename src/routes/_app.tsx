@@ -1,5 +1,6 @@
 import {
   Outlet,
+  Link,
   createFileRoute,
   useMatches,
 } from '@tanstack/react-router'
@@ -39,7 +40,9 @@ function AppLayout() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">AssanPay</BreadcrumbLink>
+                <BreadcrumbLink asChild>
+                  <Link to="/">AssanPay</Link>
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>

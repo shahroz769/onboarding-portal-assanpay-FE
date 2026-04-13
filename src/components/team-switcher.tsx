@@ -22,10 +22,6 @@ export function TeamSwitcher({
 }) {
   const activeTeam = teams[0]
 
-  if (!activeTeam) {
-    return null
-  }
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>

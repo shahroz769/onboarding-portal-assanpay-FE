@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
@@ -27,6 +28,11 @@ import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-ca
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -99,6 +105,7 @@ const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/cases': typeof AppCasesRouteWithChildren
   '/merchants': typeof AppMerchantsRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/user-management/': typeof AppUserManagementIndexRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/merchants': typeof AppMerchantsRoute
   '/': typeof AppIndexRoute
@@ -128,6 +136,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/_app/cases': typeof AppCasesRouteWithChildren
   '/_app/merchants': typeof AppMerchantsRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/mcp'
     | '/cases'
     | '/merchants'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/user-management/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/login'
     | '/mcp'
     | '/merchants'
     | '/'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/login'
     | '/mcp'
     | '/_app/cases'
     | '/_app/merchants'
@@ -191,6 +203,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
 }
 
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -350,6 +370,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
   McpRoute: McpRoute,
 }
 export const routeTree = rootRouteImport

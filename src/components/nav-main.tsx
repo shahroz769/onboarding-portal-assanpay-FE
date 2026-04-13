@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { ChevronRight, type LucideIcon } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import {
   Collapsible,
@@ -28,7 +29,6 @@ function NavItem({
     title: string
     url: string
     icon?: LucideIcon
-    isActive?: boolean
     items?: {
       title: string
       url: string
@@ -36,15 +36,21 @@ function NavItem({
   }
   pathname: string
 }) {
-  const isDirectActive = pathname === item.url
+  const isDirectActive =
+    item.url === '/'
+      ? pathname === item.url
+      : pathname === item.url || pathname.startsWith(`${item.url}/`)
   const hasActiveChild = Boolean(
     item.items?.some((subItem) => pathname === subItem.url),
   )
-  const [open, setOpen] = useState(
-    isDirectActive || hasActiveChild || !!item.isActive,
-  )
+  const shouldBeOpen = isDirectActive || hasActiveChild
+  const [open, setOpen] = useState(shouldBeOpen)
   const labelClassName =
     'min-w-0 flex-1 truncate transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0'
+
+  useEffect(() => {
+    setOpen(shouldBeOpen)
+  }, [shouldBeOpen])
 
   if (!item.items?.length) {
     return (
@@ -72,7 +78,7 @@ function NavItem({
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton isActive={isDirectActive} tooltip={item.title}>
+          <SidebarMenuButton isActive={shouldBeOpen} tooltip={item.title}>
             {item.icon ? <item.icon /> : null}
             <span className={labelClassName}>{item.title}</span>
             <ChevronRight
@@ -110,7 +116,6 @@ export function NavMain({
     title: string
     url: string
     icon?: LucideIcon
-    isActive?: boolean
     items?: {
       title: string
       url: string
