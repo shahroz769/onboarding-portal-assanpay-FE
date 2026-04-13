@@ -1,0 +1,56 @@
+import type { ReactNode } from 'react'
+import { AppSidebar } from '#/components/app-sidebar'
+import { ThemeToggle } from '#/components/theme-toggle'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '#/components/ui/breadcrumb'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '#/components/ui/sidebar'
+
+export function AppPage({
+  title,
+  children,
+}: {
+  title: string
+  children?: ReactNode
+}) {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="min-h-svh bg-muted/30">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <SidebarTrigger />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink href="#">AssanPay</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col p-4 md:p-6">
+          <div className="flex flex-1 flex-col rounded-xl border bg-background p-6 shadow-sm">
+            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+            {children ? <div className="mt-6 flex-1">{children}</div> : null}
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
