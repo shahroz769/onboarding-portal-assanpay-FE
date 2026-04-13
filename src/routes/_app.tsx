@@ -1,4 +1,8 @@
-import type { ReactNode } from 'react'
+import {
+  Outlet,
+  createFileRoute,
+  useMatches,
+} from '@tanstack/react-router'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
@@ -15,13 +19,17 @@ import {
   SidebarTrigger,
 } from '#/components/ui/sidebar'
 
-export function AppPage({
-  title,
-  children,
-}: {
-  title: string
-  children?: ReactNode
-}) {
+export const Route = createFileRoute('/_app')({
+  component: AppLayout,
+})
+
+function AppLayout() {
+  const matches = useMatches()
+  const activeMatch = [...matches]
+    .reverse()
+    .find((match) => (match.staticData as { title?: string } | undefined)?.title)
+  const title = (activeMatch?.staticData as { title?: string } | undefined)?.title ?? 'Dashboard'
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -47,7 +55,9 @@ export function AppPage({
         <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 flex-col rounded-xl border bg-background p-6 shadow-sm">
             <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-            {children ? <div className="mt-6 flex-1">{children}</div> : null}
+            <div className="mt-6 flex-1">
+              <Outlet />
+            </div>
           </div>
         </div>
       </SidebarInset>

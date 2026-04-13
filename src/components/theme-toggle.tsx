@@ -1,22 +1,25 @@
 "use client"
 
 import * as React from "react"
-import { Laptop, Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 
 import { Button } from "#/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
 
 type ThemeMode = "auto" | "light" | "dark"
+type ResolvedTheme = "light" | "dark"
+
+function resolveTheme(mode: ThemeMode): ResolvedTheme {
+  if (mode === "light" || mode === "dark") {
+    return mode
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light"
+}
 
 function applyTheme(mode: ThemeMode) {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-  const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode
+  const resolved = resolveTheme(mode)
   const root = document.documentElement
 
   root.classList.remove("light", "dark")
@@ -30,25 +33,29 @@ function applyTheme(mode: ThemeMode) {
 
   root.style.colorScheme = resolved
   window.localStorage.setItem("theme", mode)
+
+  return resolved
 }
 
 export function ThemeToggle() {
   const [theme, setTheme] = React.useState<ThemeMode>("auto")
+  const [resolvedTheme, setResolvedTheme] =
+    React.useState<ResolvedTheme>("light")
 
   React.useEffect(() => {
     const stored = window.localStorage.getItem("theme")
-    const initialTheme =
+    const initialTheme: ThemeMode =
       stored === "light" || stored === "dark" || stored === "auto"
         ? stored
         : "auto"
 
     setTheme(initialTheme)
-    applyTheme(initialTheme)
+    setResolvedTheme(applyTheme(initialTheme))
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
     const handleChange = () => {
       if ((window.localStorage.getItem("theme") ?? "auto") === "auto") {
-        applyTheme("auto")
+        setResolvedTheme(applyTheme("auto"))
       }
     }
 
@@ -56,29 +63,20 @@ export function ThemeToggle() {
     return () => mediaQuery.removeEventListener("change", handleChange)
   }, [])
 
-  const Icon = theme === "dark" ? Moon : theme === "light" ? Sun : Laptop
+  const isDark = resolvedTheme === "dark"
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Toggle theme">
-          <Icon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36">
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(value) => {
-            const nextTheme = value as ThemeMode
-            setTheme(nextTheme)
-            applyTheme(nextTheme)
-          }}
-        >
-          <DropdownMenuRadioItem value="auto">System</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={() => {
+        const nextTheme: ThemeMode = isDark ? "light" : "dark"
+        setTheme(nextTheme)
+        setResolvedTheme(applyTheme(nextTheme))
+      }}
+    >
+      {isDark ? <Sun /> : <Moon />}
+    </Button>
   )
 }

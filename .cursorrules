@@ -3,8 +3,7 @@
 Use the latest version of Shadcn to install new components, like this command to add a button component:
 
 # project instructions
-hono folder contains Bun Hono backend for this project. use that for backend.
-tanstack start as SPA, Client side only
+hono folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 use tanstack docs latest
 tanstack query
 use react composiiton patterns, best practices skills

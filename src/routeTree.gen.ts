@@ -9,138 +9,145 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UserManagementRouteImport } from './routes/user-management'
-import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as McpRouteImport } from './routes/mcp'
-import { Route as CasesRouteImport } from './routes/cases'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as UserManagementIndexRouteImport } from './routes/user-management.index'
-import { Route as CasesIndexRouteImport } from './routes/cases.index'
-import { Route as UserManagementUserCreationRouteImport } from './routes/user-management.user-creation'
-import { Route as UserManagementAllUsersRouteImport } from './routes/user-management.all-users'
-import { Route as UserManagementAccessPolicyRouteImport } from './routes/user-management.access-policy'
-import { Route as CasesMyOpenCasesRouteImport } from './routes/cases.my-open-cases'
-import { Route as CasesMyClosedCasesRouteImport } from './routes/cases.my-closed-cases'
-import { Route as CasesAllCasesRouteImport } from './routes/cases.all-cases'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
+import { Route as AppMerchantsRouteImport } from './routes/_app.merchants'
+import { Route as AppCasesRouteImport } from './routes/_app.cases'
+import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
+import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
+import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
+import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
+import { Route as AppUserManagementAccessPolicyRouteImport } from './routes/_app.user-management.access-policy'
+import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
+import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
+import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
 
-const UserManagementRoute = UserManagementRouteImport.update({
-  id: '/user-management',
-  path: '/user-management',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MerchantsRoute = MerchantsRouteImport.update({
-  id: '/merchants',
-  path: '/merchants',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CasesRoute = CasesRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUserManagementRoute = AppUserManagementRouteImport.update({
+  id: '/user-management',
+  path: '/user-management',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMerchantsRoute = AppMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCasesRoute = AppCasesRouteImport.update({
   id: '/cases',
   path: '/cases',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AppUserManagementIndexRoute = AppUserManagementIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppUserManagementRoute,
 } as any)
-const UserManagementIndexRoute = UserManagementIndexRouteImport.update({
+const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => UserManagementRoute,
+  getParentRoute: () => AppCasesRoute,
 } as any)
-const CasesIndexRoute = CasesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CasesRoute,
-} as any)
-const UserManagementUserCreationRoute =
-  UserManagementUserCreationRouteImport.update({
+const AppUserManagementUserCreationRoute =
+  AppUserManagementUserCreationRouteImport.update({
     id: '/user-creation',
     path: '/user-creation',
-    getParentRoute: () => UserManagementRoute,
+    getParentRoute: () => AppUserManagementRoute,
   } as any)
-const UserManagementAllUsersRoute = UserManagementAllUsersRouteImport.update({
-  id: '/all-users',
-  path: '/all-users',
-  getParentRoute: () => UserManagementRoute,
-} as any)
-const UserManagementAccessPolicyRoute =
-  UserManagementAccessPolicyRouteImport.update({
+const AppUserManagementAllUsersRoute =
+  AppUserManagementAllUsersRouteImport.update({
+    id: '/all-users',
+    path: '/all-users',
+    getParentRoute: () => AppUserManagementRoute,
+  } as any)
+const AppUserManagementAccessPolicyRoute =
+  AppUserManagementAccessPolicyRouteImport.update({
     id: '/access-policy',
     path: '/access-policy',
-    getParentRoute: () => UserManagementRoute,
+    getParentRoute: () => AppUserManagementRoute,
   } as any)
-const CasesMyOpenCasesRoute = CasesMyOpenCasesRouteImport.update({
+const AppCasesMyOpenCasesRoute = AppCasesMyOpenCasesRouteImport.update({
   id: '/my-open-cases',
   path: '/my-open-cases',
-  getParentRoute: () => CasesRoute,
+  getParentRoute: () => AppCasesRoute,
 } as any)
-const CasesMyClosedCasesRoute = CasesMyClosedCasesRouteImport.update({
+const AppCasesMyClosedCasesRoute = AppCasesMyClosedCasesRouteImport.update({
   id: '/my-closed-cases',
   path: '/my-closed-cases',
-  getParentRoute: () => CasesRoute,
+  getParentRoute: () => AppCasesRoute,
 } as any)
-const CasesAllCasesRoute = CasesAllCasesRouteImport.update({
+const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
   id: '/all-cases',
   path: '/all-cases',
-  getParentRoute: () => CasesRoute,
+  getParentRoute: () => AppCasesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/cases': typeof CasesRouteWithChildren
+  '/': typeof AppIndexRoute
   '/mcp': typeof McpRoute
-  '/merchants': typeof MerchantsRoute
-  '/user-management': typeof UserManagementRouteWithChildren
-  '/cases/all-cases': typeof CasesAllCasesRoute
-  '/cases/my-closed-cases': typeof CasesMyClosedCasesRoute
-  '/cases/my-open-cases': typeof CasesMyOpenCasesRoute
-  '/user-management/access-policy': typeof UserManagementAccessPolicyRoute
-  '/user-management/all-users': typeof UserManagementAllUsersRoute
-  '/user-management/user-creation': typeof UserManagementUserCreationRoute
-  '/cases/': typeof CasesIndexRoute
-  '/user-management/': typeof UserManagementIndexRoute
+  '/cases': typeof AppCasesRouteWithChildren
+  '/merchants': typeof AppMerchantsRoute
+  '/user-management': typeof AppUserManagementRouteWithChildren
+  '/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
+  '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
+  '/user-management/all-users': typeof AppUserManagementAllUsersRoute
+  '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/cases/': typeof AppCasesIndexRoute
+  '/user-management/': typeof AppUserManagementIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/mcp': typeof McpRoute
-  '/merchants': typeof MerchantsRoute
-  '/cases/all-cases': typeof CasesAllCasesRoute
-  '/cases/my-closed-cases': typeof CasesMyClosedCasesRoute
-  '/cases/my-open-cases': typeof CasesMyOpenCasesRoute
-  '/user-management/access-policy': typeof UserManagementAccessPolicyRoute
-  '/user-management/all-users': typeof UserManagementAllUsersRoute
-  '/user-management/user-creation': typeof UserManagementUserCreationRoute
-  '/cases': typeof CasesIndexRoute
-  '/user-management': typeof UserManagementIndexRoute
+  '/merchants': typeof AppMerchantsRoute
+  '/': typeof AppIndexRoute
+  '/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
+  '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
+  '/user-management/all-users': typeof AppUserManagementAllUsersRoute
+  '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/cases': typeof AppCasesIndexRoute
+  '/user-management': typeof AppUserManagementIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/cases': typeof CasesRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
   '/mcp': typeof McpRoute
-  '/merchants': typeof MerchantsRoute
-  '/user-management': typeof UserManagementRouteWithChildren
-  '/cases/all-cases': typeof CasesAllCasesRoute
-  '/cases/my-closed-cases': typeof CasesMyClosedCasesRoute
-  '/cases/my-open-cases': typeof CasesMyOpenCasesRoute
-  '/user-management/access-policy': typeof UserManagementAccessPolicyRoute
-  '/user-management/all-users': typeof UserManagementAllUsersRoute
-  '/user-management/user-creation': typeof UserManagementUserCreationRoute
-  '/cases/': typeof CasesIndexRoute
-  '/user-management/': typeof UserManagementIndexRoute
+  '/_app/cases': typeof AppCasesRouteWithChildren
+  '/_app/merchants': typeof AppMerchantsRoute
+  '/_app/user-management': typeof AppUserManagementRouteWithChildren
+  '/_app/': typeof AppIndexRoute
+  '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
+  '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/_app/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
+  '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
+  '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/_app/cases/': typeof AppCasesIndexRoute
+  '/_app/user-management/': typeof AppUserManagementIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/cases'
     | '/mcp'
+    | '/cases'
     | '/merchants'
     | '/user-management'
     | '/cases/all-cases'
@@ -153,9 +160,9 @@ export interface FileRouteTypes {
     | '/user-management/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/mcp'
     | '/merchants'
+    | '/'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
@@ -166,45 +173,29 @@ export interface FileRouteTypes {
     | '/user-management'
   id:
     | '__root__'
-    | '/'
-    | '/cases'
+    | '/_app'
     | '/mcp'
-    | '/merchants'
-    | '/user-management'
-    | '/cases/all-cases'
-    | '/cases/my-closed-cases'
-    | '/cases/my-open-cases'
-    | '/user-management/access-policy'
-    | '/user-management/all-users'
-    | '/user-management/user-creation'
-    | '/cases/'
-    | '/user-management/'
+    | '/_app/cases'
+    | '/_app/merchants'
+    | '/_app/user-management'
+    | '/_app/'
+    | '/_app/cases/all-cases'
+    | '/_app/cases/my-closed-cases'
+    | '/_app/cases/my-open-cases'
+    | '/_app/user-management/access-policy'
+    | '/_app/user-management/all-users'
+    | '/_app/user-management/user-creation'
+    | '/_app/cases/'
+    | '/_app/user-management/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CasesRoute: typeof CasesRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   McpRoute: typeof McpRoute
-  MerchantsRoute: typeof MerchantsRoute
-  UserManagementRoute: typeof UserManagementRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/user-management': {
-      id: '/user-management'
-      path: '/user-management'
-      fullPath: '/user-management'
-      preLoaderRoute: typeof UserManagementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/merchants': {
-      id: '/merchants'
-      path: '/merchants'
-      fullPath: '/merchants'
-      preLoaderRoute: typeof MerchantsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
@@ -212,119 +203,154 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cases': {
-      id: '/cases'
-      path: '/cases'
-      fullPath: '/cases'
-      preLoaderRoute: typeof CasesRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/user-management/': {
-      id: '/user-management/'
+    '/_app/user-management': {
+      id: '/_app/user-management'
+      path: '/user-management'
+      fullPath: '/user-management'
+      preLoaderRoute: typeof AppUserManagementRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/merchants': {
+      id: '/_app/merchants'
+      path: '/merchants'
+      fullPath: '/merchants'
+      preLoaderRoute: typeof AppMerchantsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/cases': {
+      id: '/_app/cases'
+      path: '/cases'
+      fullPath: '/cases'
+      preLoaderRoute: typeof AppCasesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/user-management/': {
+      id: '/_app/user-management/'
       path: '/'
       fullPath: '/user-management/'
-      preLoaderRoute: typeof UserManagementIndexRouteImport
-      parentRoute: typeof UserManagementRoute
+      preLoaderRoute: typeof AppUserManagementIndexRouteImport
+      parentRoute: typeof AppUserManagementRoute
     }
-    '/cases/': {
-      id: '/cases/'
+    '/_app/cases/': {
+      id: '/_app/cases/'
       path: '/'
       fullPath: '/cases/'
-      preLoaderRoute: typeof CasesIndexRouteImport
-      parentRoute: typeof CasesRoute
+      preLoaderRoute: typeof AppCasesIndexRouteImport
+      parentRoute: typeof AppCasesRoute
     }
-    '/user-management/user-creation': {
-      id: '/user-management/user-creation'
+    '/_app/user-management/user-creation': {
+      id: '/_app/user-management/user-creation'
       path: '/user-creation'
       fullPath: '/user-management/user-creation'
-      preLoaderRoute: typeof UserManagementUserCreationRouteImport
-      parentRoute: typeof UserManagementRoute
+      preLoaderRoute: typeof AppUserManagementUserCreationRouteImport
+      parentRoute: typeof AppUserManagementRoute
     }
-    '/user-management/all-users': {
-      id: '/user-management/all-users'
+    '/_app/user-management/all-users': {
+      id: '/_app/user-management/all-users'
       path: '/all-users'
       fullPath: '/user-management/all-users'
-      preLoaderRoute: typeof UserManagementAllUsersRouteImport
-      parentRoute: typeof UserManagementRoute
+      preLoaderRoute: typeof AppUserManagementAllUsersRouteImport
+      parentRoute: typeof AppUserManagementRoute
     }
-    '/user-management/access-policy': {
-      id: '/user-management/access-policy'
+    '/_app/user-management/access-policy': {
+      id: '/_app/user-management/access-policy'
       path: '/access-policy'
       fullPath: '/user-management/access-policy'
-      preLoaderRoute: typeof UserManagementAccessPolicyRouteImport
-      parentRoute: typeof UserManagementRoute
+      preLoaderRoute: typeof AppUserManagementAccessPolicyRouteImport
+      parentRoute: typeof AppUserManagementRoute
     }
-    '/cases/my-open-cases': {
-      id: '/cases/my-open-cases'
+    '/_app/cases/my-open-cases': {
+      id: '/_app/cases/my-open-cases'
       path: '/my-open-cases'
       fullPath: '/cases/my-open-cases'
-      preLoaderRoute: typeof CasesMyOpenCasesRouteImport
-      parentRoute: typeof CasesRoute
+      preLoaderRoute: typeof AppCasesMyOpenCasesRouteImport
+      parentRoute: typeof AppCasesRoute
     }
-    '/cases/my-closed-cases': {
-      id: '/cases/my-closed-cases'
+    '/_app/cases/my-closed-cases': {
+      id: '/_app/cases/my-closed-cases'
       path: '/my-closed-cases'
       fullPath: '/cases/my-closed-cases'
-      preLoaderRoute: typeof CasesMyClosedCasesRouteImport
-      parentRoute: typeof CasesRoute
+      preLoaderRoute: typeof AppCasesMyClosedCasesRouteImport
+      parentRoute: typeof AppCasesRoute
     }
-    '/cases/all-cases': {
-      id: '/cases/all-cases'
+    '/_app/cases/all-cases': {
+      id: '/_app/cases/all-cases'
       path: '/all-cases'
       fullPath: '/cases/all-cases'
-      preLoaderRoute: typeof CasesAllCasesRouteImport
-      parentRoute: typeof CasesRoute
+      preLoaderRoute: typeof AppCasesAllCasesRouteImport
+      parentRoute: typeof AppCasesRoute
     }
   }
 }
 
-interface CasesRouteChildren {
-  CasesAllCasesRoute: typeof CasesAllCasesRoute
-  CasesMyClosedCasesRoute: typeof CasesMyClosedCasesRoute
-  CasesMyOpenCasesRoute: typeof CasesMyOpenCasesRoute
-  CasesIndexRoute: typeof CasesIndexRoute
+interface AppCasesRouteChildren {
+  AppCasesAllCasesRoute: typeof AppCasesAllCasesRoute
+  AppCasesMyClosedCasesRoute: typeof AppCasesMyClosedCasesRoute
+  AppCasesMyOpenCasesRoute: typeof AppCasesMyOpenCasesRoute
+  AppCasesIndexRoute: typeof AppCasesIndexRoute
 }
 
-const CasesRouteChildren: CasesRouteChildren = {
-  CasesAllCasesRoute: CasesAllCasesRoute,
-  CasesMyClosedCasesRoute: CasesMyClosedCasesRoute,
-  CasesMyOpenCasesRoute: CasesMyOpenCasesRoute,
-  CasesIndexRoute: CasesIndexRoute,
+const AppCasesRouteChildren: AppCasesRouteChildren = {
+  AppCasesAllCasesRoute: AppCasesAllCasesRoute,
+  AppCasesMyClosedCasesRoute: AppCasesMyClosedCasesRoute,
+  AppCasesMyOpenCasesRoute: AppCasesMyOpenCasesRoute,
+  AppCasesIndexRoute: AppCasesIndexRoute,
 }
 
-const CasesRouteWithChildren = CasesRoute._addFileChildren(CasesRouteChildren)
-
-interface UserManagementRouteChildren {
-  UserManagementAccessPolicyRoute: typeof UserManagementAccessPolicyRoute
-  UserManagementAllUsersRoute: typeof UserManagementAllUsersRoute
-  UserManagementUserCreationRoute: typeof UserManagementUserCreationRoute
-  UserManagementIndexRoute: typeof UserManagementIndexRoute
-}
-
-const UserManagementRouteChildren: UserManagementRouteChildren = {
-  UserManagementAccessPolicyRoute: UserManagementAccessPolicyRoute,
-  UserManagementAllUsersRoute: UserManagementAllUsersRoute,
-  UserManagementUserCreationRoute: UserManagementUserCreationRoute,
-  UserManagementIndexRoute: UserManagementIndexRoute,
-}
-
-const UserManagementRouteWithChildren = UserManagementRoute._addFileChildren(
-  UserManagementRouteChildren,
+const AppCasesRouteWithChildren = AppCasesRoute._addFileChildren(
+  AppCasesRouteChildren,
 )
 
+interface AppUserManagementRouteChildren {
+  AppUserManagementAccessPolicyRoute: typeof AppUserManagementAccessPolicyRoute
+  AppUserManagementAllUsersRoute: typeof AppUserManagementAllUsersRoute
+  AppUserManagementUserCreationRoute: typeof AppUserManagementUserCreationRoute
+  AppUserManagementIndexRoute: typeof AppUserManagementIndexRoute
+}
+
+const AppUserManagementRouteChildren: AppUserManagementRouteChildren = {
+  AppUserManagementAccessPolicyRoute: AppUserManagementAccessPolicyRoute,
+  AppUserManagementAllUsersRoute: AppUserManagementAllUsersRoute,
+  AppUserManagementUserCreationRoute: AppUserManagementUserCreationRoute,
+  AppUserManagementIndexRoute: AppUserManagementIndexRoute,
+}
+
+const AppUserManagementRouteWithChildren =
+  AppUserManagementRoute._addFileChildren(AppUserManagementRouteChildren)
+
+interface AppRouteChildren {
+  AppCasesRoute: typeof AppCasesRouteWithChildren
+  AppMerchantsRoute: typeof AppMerchantsRoute
+  AppUserManagementRoute: typeof AppUserManagementRouteWithChildren
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCasesRoute: AppCasesRouteWithChildren,
+  AppMerchantsRoute: AppMerchantsRoute,
+  AppUserManagementRoute: AppUserManagementRouteWithChildren,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CasesRoute: CasesRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   McpRoute: McpRoute,
-  MerchantsRoute: MerchantsRoute,
-  UserManagementRoute: UserManagementRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
