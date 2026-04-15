@@ -1,9 +1,7 @@
-import axios from 'axios'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { LoginForm } from '#/components/login-form'
-import { useAuthStore } from '#/stores/auth.store'
-import type { RefreshResponse } from '#/types/auth'
+import { redirectAuthenticatedUser } from '#/features/auth/route-guards'
 
 const loginSearchSchema = z.object({
   redirect: z.string().optional(),
@@ -12,32 +10,11 @@ const loginSearchSchema = z.object({
 export const Route = createFileRoute('/login')({
   ssr: false,
   validateSearch: loginSearchSchema,
-  beforeLoad: async ({ search }) => {
-    const { accessToken, setAuth, clearAuth } = useAuthStore.getState()
-
-    if (accessToken) {
-      throw redirect({ to: '/' })
-    }
-
-    try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-      const { data } = await axios.post<RefreshResponse>(
-        `${apiBaseUrl}/api/auth/refresh`,
-        {},
-        { withCredentials: true }
-      )
-
-      setAuth(data.accessToken, data.user)
-    } catch {
-      clearAuth()
-      return
-    }
-
-    if (search.redirect) {
-      throw redirect({ href: search.redirect })
-    }
-
-    throw redirect({ to: '/' })
+  beforeLoad: async ({ search, context }) => {
+    await redirectAuthenticatedUser({
+      queryClient: context.queryClient,
+      redirectTo: search.redirect,
+    })
   },
   component: LoginRoute,
 })

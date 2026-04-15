@@ -6,8 +6,7 @@ import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "#/lib/utils"
-import { apiClient } from "#/lib/api-client"
-import { useAuthStore } from "#/stores/auth.store"
+import { useLoginMutation } from "#/features/auth/auth-query"
 import { loginSchema } from "#/schemas/auth.schema"
 import { Button } from "#/components/ui/button"
 import {
@@ -26,7 +25,36 @@ import {
 import { Input } from "#/components/ui/input"
 import { Spinner } from "#/components/ui/spinner"
 
-import type { LoginResponse } from "#/types/auth"
+function getErrorMessage(error: unknown) {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data
+
+    if (typeof data === "string" && data.trim()) {
+      return data
+    }
+
+    if (data && typeof data === "object") {
+      const errorMessage =
+        "error" in data && typeof data.error === "string" ? data.error : null
+      const message =
+        "message" in data && typeof data.message === "string"
+          ? data.message
+          : null
+      const errors =
+        "errors" in data && Array.isArray(data.errors)
+          ? data.errors.filter((value): value is string => typeof value === "string")
+          : []
+
+      return errorMessage ?? message ?? errors[0] ?? "Something went wrong. Please try again."
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return "Something went wrong. Please try again."
+}
 
 export function LoginForm({
   className,
@@ -34,39 +62,8 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div"> & { redirect?: string }) {
   const navigate = useNavigate()
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const loginMutation = useLoginMutation()
   const [showPassword, setShowPassword] = useState(false)
-
-  function getErrorMessage(error: unknown) {
-    if (error instanceof AxiosError) {
-      const data = error.response?.data
-
-      if (typeof data === "string" && data.trim()) {
-        return data
-      }
-
-      if (data && typeof data === "object") {
-        const errorMessage =
-          "error" in data && typeof data.error === "string" ? data.error : null
-        const message =
-          "message" in data && typeof data.message === "string"
-            ? data.message
-            : null
-        const errors =
-          "errors" in data && Array.isArray(data.errors)
-            ? data.errors.filter((value): value is string => typeof value === "string")
-            : []
-
-        return errorMessage ?? message ?? errors[0] ?? "Something went wrong. Please try again."
-      }
-    }
-
-    if (error instanceof Error && error.message) {
-      return error.message
-    }
-
-    return "Something went wrong. Please try again."
-  }
 
   const form = useForm({
     defaultValues: {
@@ -78,15 +75,10 @@ export function LoginForm({
     },
     onSubmit: async ({ value }) => {
       try {
-        const { data } = await apiClient.post<LoginResponse>(
-          "/api/auth/login",
-          {
-            identifier: value.identifier,
-            password: value.password,
-          }
-        )
-
-        setAuth(data.accessToken, data.user)
+        await loginMutation.mutateAsync({
+          identifier: value.identifier,
+          password: value.password,
+        })
         navigate({ to: redirect || "/" })
       } catch (error) {
         const message = getErrorMessage(error)

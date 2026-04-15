@@ -7,9 +7,9 @@ import {
   Sparkles,
 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
+import { toast } from "sonner"
 
-import { apiClient } from "#/lib/api-client"
-import { useAuthStore } from "#/stores/auth.store"
+import { useLogoutMutation } from "#/features/auth/auth-query"
 import {
   Avatar,
   AvatarFallback,
@@ -42,17 +42,16 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
-  const clearAuth = useAuthStore((s) => s.clearAuth)
+  const logoutMutation = useLogoutMutation()
 
   const handleLogout = async () => {
     try {
-      await apiClient.post("/api/auth/logout")
+      await logoutMutation.mutateAsync()
     } catch {
-      // Logout API failing shouldn't block local cleanup
-    } finally {
-      clearAuth()
-      navigate({ to: "/login" })
+      toast.error("We couldn't log you out cleanly, but your local session was cleared.")
     }
+
+    navigate({ to: "/login" })
   }
 
   const initials = user.name

@@ -5,11 +5,9 @@ import {
   useMatches,
   redirect,
 } from '@tanstack/react-router'
-import axios from 'axios'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
-import { useAuthStore } from '#/stores/auth.store'
-import type { RefreshResponse } from '#/types/auth'
+import { requireAuthSession } from '#/features/auth/route-guards'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,27 +24,11 @@ import {
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
-  beforeLoad: async ({ location }) => {
-    const { accessToken, setAuth, clearAuth } = useAuthStore.getState()
-
-    if (accessToken) return
-
-    // Attempt silent refresh using the HttpOnly refresh cookie
-    try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-      const { data } = await axios.post<RefreshResponse>(
-        `${apiBaseUrl}/api/auth/refresh`,
-        {},
-        { withCredentials: true }
-      )
-      setAuth(data.accessToken, data.user)
-    } catch {
-      clearAuth()
-      throw redirect({
-        to: '/login',
-        search: { redirect: location.href },
-      })
-    }
+  beforeLoad: async ({ location, context }) => {
+    await requireAuthSession({
+      queryClient: context.queryClient,
+      redirectTo: location.href,
+    })
   },
   component: AppLayout,
 })
