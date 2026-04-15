@@ -1,12 +1,6 @@
 "use client"
 
 import * as React from "react"
-import {
-  BriefcaseBusiness,
-  ClipboardList,
-  LayoutDashboard,
-  Users,
-} from "lucide-react"
 
 import { NavMain } from "#/components/nav-main"
 import { NavUser } from "#/components/nav-user"
@@ -18,84 +12,41 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "#/components/ui/sidebar"
+import { useAuthStore } from "#/stores/auth.store"
+import { getFilteredNavItems } from "#/config/navigation"
 
-// This is sample data.
-const data = {
-  user: {
+const teams = [
+  {
     name: "AssanPay",
-    email: "onboarding@assanpay.com",
-    avatar: "/favicon.svg",
+    logo: "/favicon.svg",
+    plan: "Onboarding Portal",
   },
-  teams: [
-    {
-      name: "AssanPay",
-      logo: "/favicon.svg",
-      plan: "Onboarding Portal",
-    },
-  ],
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: LayoutDashboard,
-    },
-    {
-      title: "Merchants",
-      url: "/merchants",
-      icon: BriefcaseBusiness,
-    },
-    {
-      title: "Cases",
-      url: "/cases",
-      icon: ClipboardList,
-      items: [
-        {
-          title: "All Cases",
-          url: "/cases/all-cases",
-        },
-        {
-          title: "My Open Cases",
-          url: "/cases/my-open-cases",
-        },
-        {
-          title: "My Closed Cases",
-          url: "/cases/my-closed-cases",
-        },
-      ],
-    },
-    {
-      title: "User Management",
-      url: "/user-management",
-      icon: Users,
-      items: [
-        {
-          title: "All Users",
-          url: "/user-management/all-users",
-        },
-        {
-          title: "User Creation",
-          url: "/user-management/user-creation",
-        },
-        {
-          title: "Access Policy",
-          url: "/user-management/access-policy",
-        },
-      ],
-    },
-  ],
-}
+]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const user = useAuthStore((s) => s.user)
+
+  const navItems = React.useMemo(
+    () => getFilteredNavItems(user?.roleType ?? "employee"),
+    [user?.roleType]
+  )
+
+  const sidebarUser = {
+    name: user?.name ?? "User",
+    email: user?.email ?? "",
+    avatar: "/favicon.svg",
+  }
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

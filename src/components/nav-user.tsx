@@ -6,7 +6,10 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 
+import { apiClient } from "#/lib/api-client"
+import { useAuthStore } from "#/stores/auth.store"
 import {
   Avatar,
   AvatarFallback,
@@ -38,6 +41,26 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/api/auth/logout")
+    } catch {
+      // Logout API failing shouldn't block local cleanup
+    } finally {
+      clearAuth()
+      navigate({ to: "/login" })
+    }
+  }
+
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <SidebarMenu>
@@ -50,7 +73,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">AP</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -69,7 +92,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">AP</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -100,7 +123,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

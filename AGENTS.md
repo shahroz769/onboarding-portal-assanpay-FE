@@ -1,3 +1,4 @@
+work on both frontend and backend
 hono folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 use tanstack docs latest
 tanstack query
