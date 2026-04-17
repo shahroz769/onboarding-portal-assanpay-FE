@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { cn } from "#/lib/utils"
 import { useLoginMutation } from "#/features/auth/auth-query"
+import { sanitizeRedirect } from "#/features/auth/redirect"
 import { loginSchema } from "#/schemas/auth.schema"
 import { Button } from "#/components/ui/button"
 import {
@@ -79,7 +80,7 @@ export function LoginForm({
           identifier: value.identifier,
           password: value.password,
         })
-        navigate({ to: redirect || "/" })
+        navigate({ href: sanitizeRedirect(redirect) })
       } catch (error) {
         const message = getErrorMessage(error)
         toast.error(message)

@@ -1,4 +1,5 @@
-import { useState, useCallback, type KeyboardEvent } from "react"
+import { useState, useCallback } from "react"
+import type { ComponentType, KeyboardEvent, SVGProps } from "react"
 import { useForm, useStore } from "@tanstack/react-form"
 import { isAxiosError } from "axios"
 import { toast } from "sonner"
@@ -84,7 +85,7 @@ function SectionIcon({
   icon: Icon,
   colorClass,
 }: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   colorClass: string
 }) {
   return (
@@ -100,6 +101,15 @@ function SectionIcon({
 
 type MerchantOnboardingFormProps = {
   onSubmittedChange?: (submitted: boolean) => void
+}
+
+function showValidationErrorsToast(errors: Iterable<unknown>) {
+  const hasErrors = Array.from(errors).some(Boolean)
+  toast.error(
+    hasErrors
+      ? "Please review the highlighted fields and try again."
+      : "Something went wrong. Please try again."
+  )
 }
 
 function getNumericInputValue(value: string, allowDecimal: boolean) {
@@ -195,12 +205,28 @@ export function MerchantOnboardingForm({
     validators: {
       onSubmit: merchantOnboardingSchema,
     },
+    onSubmitInvalid: ({ formApi }) => {
+      const fieldErrors = Object.values(formApi.state.fieldMeta).flatMap(
+        (fieldMeta) => fieldMeta.errors
+      )
+
+      showValidationErrorsToast([...fieldErrors, ...formApi.state.errors])
+
+      if (typeof document === "undefined") {
+        return
+      }
+
+      const firstInvalidElement = document.querySelector<HTMLElement>(
+        '[aria-invalid="true"]'
+      )
+      firstInvalidElement?.focus()
+    },
     onSubmit: async ({ value }) => {
       // Validate documents
       const docErrors = validateDocuments(value.merchantType)
       if (Object.keys(docErrors).length > 0) {
         setDocumentErrors(docErrors)
-        toast.error("Please upload all required documents.")
+        showValidationErrorsToast(Object.values(docErrors))
         return
       }
       setDocumentErrors({})

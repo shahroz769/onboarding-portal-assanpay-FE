@@ -12,7 +12,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "#/components/ui/sidebar"
-import { useAuthStore } from "#/stores/auth.store"
+import { useAuth } from "#/features/auth/auth-client"
 import { getFilteredNavItems } from "#/config/navigation"
 
 const teams = [
@@ -24,7 +24,7 @@ const teams = [
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = useAuthStore((s) => s.user)
+  const { user } = useAuth()
 
   const navItems = React.useMemo(
     () => getFilteredNavItems(user?.roleType ?? "employee"),

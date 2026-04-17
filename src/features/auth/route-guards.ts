@@ -2,56 +2,55 @@ import { redirect } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 
 import { ensureAuthSession } from '#/features/auth/auth-query'
-import { useAuthStore } from '#/stores/auth.store'
+import type { AuthClient } from '#/features/auth/auth-client'
+import { sanitizeRedirect } from '#/features/auth/redirect'
 import type { RoleType } from '#/types/auth'
 
 export async function requireAuthSession(params: {
+  auth: AuthClient
   queryClient: QueryClient
   redirectTo: string
 }) {
-  const { accessToken, clearAuth } = useAuthStore.getState()
-
-  if (accessToken) {
+  if (params.auth.isAuthenticated()) {
     return
   }
 
   try {
-    await ensureAuthSession(params.queryClient)
+    await ensureAuthSession(params.queryClient, params.auth)
   } catch {
-    clearAuth()
+    params.auth.clear()
     throw redirect({
       to: '/login',
-      search: { redirect: params.redirectTo },
+      search: { redirect: sanitizeRedirect(params.redirectTo) },
     })
   }
 }
 
 export async function redirectAuthenticatedUser(params: {
+  auth: AuthClient
   queryClient: QueryClient
   redirectTo?: string
 }) {
-  const { accessToken, clearAuth } = useAuthStore.getState()
-
-  if (accessToken) {
-    throw redirect({ to: '/' })
+  if (params.auth.isAuthenticated()) {
+    throw redirect({ href: sanitizeRedirect(params.redirectTo) })
   }
 
   try {
-    await ensureAuthSession(params.queryClient)
+    await ensureAuthSession(params.queryClient, params.auth)
   } catch {
-    clearAuth()
+    params.auth.clear()
     return
   }
 
-  if (params.redirectTo) {
-    throw redirect({ href: params.redirectTo })
-  }
-
-  throw redirect({ to: '/' })
+  throw redirect({ href: sanitizeRedirect(params.redirectTo) })
 }
 
-export function requireRoleAccess(blockedRoles: RoleType[], fallbackTo = '/') {
-  const roleType = useAuthStore.getState().user?.roleType
+export function requireRoleAccess(
+  auth: AuthClient,
+  blockedRoles: RoleType[],
+  fallbackTo = '/',
+) {
+  const roleType = auth.getSnapshot().user?.roleType
 
   if (roleType && blockedRoles.includes(roleType)) {
     throw redirect({ to: fallbackTo })

@@ -3,7 +3,6 @@ import {
   Link,
   createFileRoute,
   useMatches,
-  redirect,
 } from '@tanstack/react-router'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
@@ -26,6 +25,7 @@ export const Route = createFileRoute('/_app')({
   ssr: false,
   beforeLoad: async ({ location, context }) => {
     await requireAuthSession({
+      auth: context.auth,
       queryClient: context.queryClient,
       redirectTo: location.href,
     })
