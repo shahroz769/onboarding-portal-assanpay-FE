@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, type KeyboardEvent } from "react"
 import { useForm, useStore } from "@tanstack/react-form"
 import { isAxiosError } from "axios"
 import { toast } from "sonner"
@@ -102,6 +102,59 @@ type MerchantOnboardingFormProps = {
   onSubmittedChange?: (submitted: boolean) => void
 }
 
+function getNumericInputValue(value: string, allowDecimal: boolean) {
+  if (!allowDecimal) {
+    return value.replace(/\D/g, "")
+  }
+
+  const sanitizedValue = value.replace(/[^\d.]/g, "")
+  const [integerPart = "", ...decimalParts] = sanitizedValue.split(".")
+  const decimalPart = decimalParts.join("").slice(0, 2)
+
+  if (!sanitizedValue.includes(".")) {
+    return integerPart
+  }
+
+  return `${integerPart}.${decimalPart}`
+}
+
+function handleNumericKeyDown(
+  event: KeyboardEvent<HTMLInputElement>,
+  allowDecimal: boolean
+) {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return
+  }
+
+  const allowedKeys = new Set([
+    "Backspace",
+    "Delete",
+    "Tab",
+    "Enter",
+    "ArrowLeft",
+    "ArrowRight",
+    "ArrowUp",
+    "ArrowDown",
+    "Home",
+    "End",
+  ])
+
+  if (allowedKeys.has(event.key)) {
+    return
+  }
+
+  if (allowDecimal && event.key === ".") {
+    if (event.currentTarget.value.includes(".")) {
+      event.preventDefault()
+    }
+    return
+  }
+
+  if (!/^\d$/.test(event.key)) {
+    event.preventDefault()
+  }
+}
+
 export function MerchantOnboardingForm({
   onSubmittedChange,
 }: MerchantOnboardingFormProps) {
@@ -190,6 +243,7 @@ export function MerchantOnboardingForm({
     form.store,
     (s) => s.values.nextOfKinRelation
   )
+  const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts)
 
   const getDocLabel = useCallback(
     (doc: DocumentFieldName): string => {
@@ -273,6 +327,23 @@ export function MerchantOnboardingForm({
     []
   )
 
+  const getIsInvalid = useCallback(
+    (field: {
+      state: {
+        meta: {
+          isTouched: boolean
+          isValid: boolean
+        }
+      }
+    }) => {
+      return (
+        (field.state.meta.isTouched || submissionAttempts > 0) &&
+        !field.state.meta.isValid
+      )
+    },
+    [submissionAttempts]
+  )
+
   // ── Success View ────────────────────────────────────────────────────────
 
   if (submissionData) {
@@ -291,6 +362,7 @@ export function MerchantOnboardingForm({
 
   return (
     <form
+      noValidate
       onSubmit={(e) => {
         e.preventDefault()
         form.handleSubmit()
@@ -318,8 +390,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="email"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -368,8 +439,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="ownerFullName"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -395,8 +465,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="ownerPhone"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -443,8 +512,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessName"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -470,8 +538,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessPhone"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -497,8 +564,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessEmail"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -525,8 +591,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessWebsite"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -553,8 +618,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessAddress"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
                     <FieldLabel htmlFor={field.name}>
@@ -581,8 +645,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="websiteCms"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -621,8 +684,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessNature"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -648,8 +710,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessRegistrationDate"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 const selectedDate = field.state.value
                   ? new Date(field.state.value + "T00:00:00")
                   : undefined
@@ -699,8 +760,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="businessDescription"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
                     <FieldLabel htmlFor={field.name}>
@@ -748,8 +808,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="merchantType"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
                     <FieldLabel htmlFor={field.name}>
@@ -791,8 +850,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="estimatedMonthlyTransactions"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -801,15 +859,18 @@ export function MerchantOnboardingForm({
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="number"
-                      min="1"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) =>
+                        field.handleChange(
+                          getNumericInputValue(e.target.value, false)
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
                       placeholder="e.g. 500"
-                      className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
@@ -822,8 +883,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="estimatedMonthlyVolume"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -832,15 +892,18 @@ export function MerchantOnboardingForm({
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="number"
-                      min="1"
-                      step="1"
+                      type="text"
+                      inputMode="decimal"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) =>
+                        field.handleChange(
+                          getNumericInputValue(e.target.value, true)
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, true)}
                       aria-invalid={isInvalid}
                       placeholder="e.g. 1000000"
-                      className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
@@ -874,8 +937,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="accountTitle"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -901,8 +963,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="bankName"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel>Bank Name *</FieldLabel>
@@ -940,8 +1001,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="branchName"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -967,8 +1027,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="accountNumberIban"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -994,8 +1053,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="swiftCode"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>SWIFT Code</FieldLabel>
@@ -1043,8 +1101,7 @@ export function MerchantOnboardingForm({
             <form.Field
               name="nextOfKinRelation"
               children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
+                const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -1229,3 +1286,4 @@ export function MerchantOnboardingForm({
     </form>
   )
 }
+
