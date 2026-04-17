@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingFormRouteImport } from './routes/onboarding-form'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
@@ -25,6 +26,11 @@ import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
 import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
 
+const OnboardingFormRoute = OnboardingFormRouteImport.update({
+  id: '/onboarding-form',
+  path: '/onboarding-form',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/onboarding-form': typeof OnboardingFormRoute
   '/cases': typeof AppCasesRouteWithChildren
   '/merchants': typeof AppMerchantsRoute
   '/user-management': typeof AppUserManagementRouteWithChildren
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/onboarding-form': typeof OnboardingFormRoute
   '/merchants': typeof AppMerchantsRoute
   '/': typeof AppIndexRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/onboarding-form': typeof OnboardingFormRoute
   '/_app/cases': typeof AppCasesRouteWithChildren
   '/_app/merchants': typeof AppMerchantsRoute
   '/_app/user-management': typeof AppUserManagementRouteWithChildren
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/mcp'
+    | '/onboarding-form'
     | '/cases'
     | '/merchants'
     | '/user-management'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/mcp'
+    | '/onboarding-form'
     | '/merchants'
     | '/'
     | '/cases/all-cases'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/mcp'
+    | '/onboarding-form'
     | '/_app/cases'
     | '/_app/merchants'
     | '/_app/user-management'
@@ -205,10 +217,18 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
+  OnboardingFormRoute: typeof OnboardingFormRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding-form': {
+      id: '/onboarding-form'
+      path: '/onboarding-form'
+      fullPath: '/onboarding-form'
+      preLoaderRoute: typeof OnboardingFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
+  OnboardingFormRoute: OnboardingFormRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

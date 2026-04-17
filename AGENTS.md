@@ -1,4 +1,5 @@
 work on both frontend and backend
+do not run the backend
 hono folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 use tanstack docs latest
 tanstack query
@@ -6,6 +7,7 @@ use react composiiton patterns, best practices skills
 use shadcn skills, shadcn components everytime
 zustand for state management when needed
 use zod
+always use latest docs for libraries
 <!-- intent-skills:start -->
 # Skill mappings - when working in these areas, load the linked skill file into context.
 skills:
