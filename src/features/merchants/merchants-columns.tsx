@@ -210,7 +210,7 @@ export function createMerchantColumns({
       accessorKey: 'currency',
       header: 'Currency',
       cell: ({ row }) => (
-        <Badge variant="secondary">{row.getValue('currency')}</Badge>
+        <span className="text-sm text-muted-foreground">{row.getValue('currency')}</span>
       ),
       enableSorting: false,
       size: 80,
