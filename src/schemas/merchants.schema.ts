@@ -93,18 +93,50 @@ export const merchantListResponseSchema = z.object({
 
 export type MerchantListResponse = z.infer<typeof merchantListResponseSchema>
 
-export const merchantFiltersSchema = z.object({
-  page: z.number().optional(),
-  perPage: z.number().optional(),
-  search: z.string().optional(),
-  onboardingStage: z.string().optional(),
-  priority: z.string().optional(),
-  currency: z.string().optional(),
-  businessScope: z.string().optional(),
-  createdAtFrom: z.string().optional(),
-  createdAtTo: z.string().optional(),
-  sortBy: z.enum(MERCHANT_SORTABLE_COLUMNS).optional(),
-  sortOrder: z.enum(['asc', 'desc']).optional(),
+function normalizeOptionalString(value: string | undefined) {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
+  values: TValues,
+) {
+  const allowedValues = new Set(values)
+
+  return z
+    .string()
+    .optional()
+    .transform(normalizeOptionalString)
+    .refine(
+      (value) =>
+        value === undefined ||
+        value.split(',').every((item) => allowedValues.has(item)),
+      {
+        message: 'Invalid filter value.',
+      },
+    )
+}
+
+export const merchantRouteSearchSchema = z.object({
+  search: z.string().optional().transform(normalizeOptionalString),
+  onboardingStage: createCsvEnumFilterSchema(ONBOARDING_STAGES),
+  priority: createCsvEnumFilterSchema(PRIORITIES),
+  businessScope: createCsvEnumFilterSchema(BUSINESS_SCOPES),
+  currency: z.string().optional().transform(normalizeOptionalString),
+  sortBy: z
+    .enum(MERCHANT_SORTABLE_COLUMNS)
+    .catch('merchantNumber')
+    .default('merchantNumber'),
+  sortOrder: z.enum(['asc', 'desc']).catch('desc').default('desc'),
+})
+
+export type MerchantRouteSearch = z.infer<typeof merchantRouteSearchSchema>
+
+export const merchantFiltersSchema = merchantRouteSearchSchema.extend({
+  page: z.number().int().positive().optional(),
+  perPage: z.number().int().positive().optional(),
+  createdAtFrom: z.string().optional().transform(normalizeOptionalString),
+  createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })
 
 export type MerchantFilters = z.infer<typeof merchantFiltersSchema>

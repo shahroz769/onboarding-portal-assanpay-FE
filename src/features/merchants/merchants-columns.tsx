@@ -300,11 +300,13 @@ export function createMerchantColumns({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="size-8" asChild>
-                {/* TODO: create /_app/merchants/$merchantId route */}
-                <a href={`/merchants/${merchant.id}`}>
+                <Link
+                  to="/merchants/$merchantId"
+                  params={{ merchantId: merchant.id }}
+                >
                   <EyeIcon className="size-4" />
                   <span className="sr-only">View</span>
-                </a>
+                </Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent>View</TooltipContent>

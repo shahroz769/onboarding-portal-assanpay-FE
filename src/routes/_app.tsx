@@ -69,7 +69,7 @@ function AppLayout() {
         <div className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
           <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-background p-6 shadow-sm">
             <div className="mb-6 shrink-0">
-              <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
               {subtitle && (
                 <p className="text-muted-foreground">{subtitle}</p>
               )}

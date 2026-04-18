@@ -1,4 +1,5 @@
 import {
+  infiniteQueryOptions,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
@@ -9,6 +10,7 @@ import {
   bulkDeleteMerchants,
   bulkUpdatePriority,
   deleteMerchant,
+  fetchMerchants,
   updateMerchantPriority,
 } from '#/apis/merchants'
 import type {
@@ -19,11 +21,28 @@ import type {
 } from '#/schemas/merchants.schema'
 
 export const MERCHANTS_KEY = ['merchants'] as const
+export const MERCHANTS_PAGE_SIZE = 30
 
 /** Build a stable infinite-query key from filters (excludes page/perPage). */
 export function merchantsInfiniteKey(filters: MerchantFilters) {
   const { page: _p, perPage: _pp, ...rest } = filters
   return [...MERCHANTS_KEY, rest] as const
+}
+
+export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
+  return infiniteQueryOptions({
+    queryKey: merchantsInfiniteKey(filters),
+    queryFn: ({ pageParam }) =>
+      fetchMerchants({
+        ...filters,
+        page: pageParam,
+        perPage: MERCHANTS_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    staleTime: 30_000,
+  })
 }
 
 function updateMerchantInMerchantLists(
@@ -48,7 +67,7 @@ function updateMerchantInMerchantLists(
   )
 }
 
-export function useUpdatePriorityMutation(filters: MerchantFilters) {
+export function useUpdatePriorityMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -154,7 +173,7 @@ export function useDeleteMerchantMutation(filters: MerchantFilters) {
   })
 }
 
-export function useBulkDeleteMutation(filters: MerchantFilters) {
+export function useBulkDeleteMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -169,7 +188,7 @@ export function useBulkDeleteMutation(filters: MerchantFilters) {
   })
 }
 
-export function useBulkPriorityMutation(filters: MerchantFilters) {
+export function useBulkPriorityMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({

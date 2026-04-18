@@ -6,28 +6,25 @@ import {
   useState,
 } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, getRouteApi } from '@tanstack/react-router'
+import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '#/features/auth/auth-client'
-import { fetchMerchants } from '#/apis/merchants'
 import {
-  useUpdatePriorityMutation,
-  useDeleteMerchantMutation,
+  MERCHANTS_KEY,
+  merchantsInfiniteQueryOptions,
   useBulkDeleteMutation,
   useBulkPriorityMutation,
-  MERCHANTS_KEY,
-  merchantsInfiniteKey,
+  useDeleteMerchantMutation,
+  useUpdatePriorityMutation,
 } from '#/hooks/use-merchants-query'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
-  MerchantFilters,
   MerchantListItem,
+  MerchantRouteSearch,
   Priority,
 } from '#/schemas/merchants.schema'
 import type { RoleType } from '#/types/auth'
 import { createMerchantColumns } from './merchants-columns'
-
-// ─── Types ──────────────────────────────────────────────────────────────────
 
 export type DeleteTarget =
   | { type: 'single'; merchant: MerchantListItem }
@@ -36,7 +33,7 @@ export type DeleteTarget =
 interface MerchantsTableState {
   flatData: MerchantListItem[]
   selectedIds: string[]
-  filters: MerchantFilters
+  filters: MerchantRouteSearch
   userRole: RoleType
   isLoading: boolean
   totalCount: number
@@ -51,7 +48,7 @@ interface MerchantsTableState {
 }
 
 interface MerchantsTableActions {
-  setFilter: (key: keyof MerchantFilters, value: string | undefined) => void
+  setFilter: (key: keyof MerchantRouteSearch, value: string | undefined) => void
   fetchNextPage: () => void
   openPriorityDialog: (merchant: MerchantListItem) => void
   closePriorityDialog: () => void
@@ -70,56 +67,76 @@ interface MerchantsTableMeta {
   setToCommaString: (set: Set<string>) => string | undefined
 }
 
-interface MerchantsTableContextValue {
-  state: MerchantsTableState
-  actions: MerchantsTableActions
-  meta: MerchantsTableMeta
-}
+const MerchantsTableStateContext = createContext<MerchantsTableState | null>(null)
+const MerchantsTableActionsContext =
+  createContext<MerchantsTableActions | null>(null)
+const MerchantsTableMetaContext = createContext<MerchantsTableMeta | null>(null)
 
-// ─── Context ────────────────────────────────────────────────────────────────
+function useRequiredContext<T>(context: React.Context<T | null>) {
+  const value = use(context)
 
-const MerchantsTableContext =
-  createContext<MerchantsTableContextValue | null>(null)
-
-export function useMerchantsTable() {
-  const ctx = use(MerchantsTableContext)
-  if (!ctx) {
+  if (!value) {
     throw new Error(
       'useMerchantsTable must be used within MerchantsTable.Provider',
     )
   }
-  return ctx
+
+  return value
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+export function useMerchantsTableState() {
+  return useRequiredContext(MerchantsTableStateContext)
+}
 
-const PER_PAGE = 30
+export function useMerchantsTableActions() {
+  return useRequiredContext(MerchantsTableActionsContext)
+}
+
+export function useMerchantsTableMeta() {
+  return useRequiredContext(MerchantsTableMetaContext)
+}
+
+export function useMerchantsTable() {
+  return {
+    state: useMerchantsTableState(),
+    actions: useMerchantsTableActions(),
+    meta: useMerchantsTableMeta(),
+  }
+}
 
 function cleanEmptyParams(search: Record<string, unknown>) {
   const cleaned = { ...search }
+
   for (const key of Object.keys(cleaned)) {
     const value = cleaned[key]
-    if (value === undefined || value === '' || (typeof value === 'number' && isNaN(value))) {
+
+    if (
+      value === undefined ||
+      value === '' ||
+      (typeof value === 'number' && Number.isNaN(value))
+    ) {
       delete cleaned[key]
     }
   }
+
   return cleaned
 }
-
-// ─── useFilters (TanStack Router search params pattern) ─────────────────────
 
 const routeApi = getRouteApi('/_app/merchants')
 
 function useMerchantFilters() {
   const navigate = useNavigate()
-  const filters = routeApi.useSearch() as MerchantFilters
+  const filters = routeApi.useSearch()
 
   const setFilters = useCallback(
-    (partialFilters: Partial<MerchantFilters>) => {
+    (partialFilters: Partial<MerchantRouteSearch>) => {
       void navigate({
         to: '/merchants',
         search: (prev) =>
-          cleanEmptyParams({ ...prev, ...partialFilters }) as MerchantFilters,
+          cleanEmptyParams({
+            ...prev,
+            ...partialFilters,
+          }) as MerchantRouteSearch,
         replace: true,
       })
     },
@@ -127,7 +144,7 @@ function useMerchantFilters() {
   )
 
   const setFilter = useCallback(
-    (key: keyof MerchantFilters, value: string | undefined) => {
+    (key: keyof MerchantRouteSearch, value: string | undefined) => {
       setFilters({ [key]: value || undefined })
     },
     [setFilters],
@@ -136,17 +153,12 @@ function useMerchantFilters() {
   return { filters, setFilters, setFilter }
 }
 
-// ─── Provider ───────────────────────────────────────────────────────────────
-
 function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const userRole = user?.roleType ?? 'employee'
-
-  // TanStack Router search params as single source of truth
   const { filters, setFilter, setFilters } = useMerchantFilters()
 
-  // Sort handler — toggles asc/desc or sets new column
   const handleSort = useCallback(
     (columnId: string) => {
       const isSameColumn = filters.sortBy === columnId
@@ -159,68 +171,49 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
       setFilters({ sortBy: columnId, sortOrder: nextOrder })
     },
-    [filters.sortBy, filters.sortOrder, setFilters, queryClient],
+    [filters.sortBy, filters.sortOrder, queryClient, setFilters],
   )
 
-  // Row selection as plain Set<string>
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
-
-  // Dialog state
   const [priorityDialogMerchant, setPriorityDialogMerchant] =
     useState<MerchantListItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const [bulkPriorityValue, setBulkPriorityValue] =
     useState<Priority>('normal')
 
-  // Infinite query key (excludes page/perPage — managed by useInfiniteQuery)
-  const infiniteKey = merchantsInfiniteKey(filters)
-
-  // TanStack Query — infinite scroll
   const {
     data,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: infiniteKey,
-    queryFn: ({ pageParam }) =>
-      fetchMerchants({
-        ...filters,
-        page: pageParam,
-        perPage: PER_PAGE,
-      }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
-    staleTime: 30_000,
-  })
+  } = useInfiniteQuery(merchantsInfiniteQueryOptions(filters))
 
-  // Mutations
-  const updatePriority = useUpdatePriorityMutation(filters)
+  const updatePriority = useUpdatePriorityMutation()
   const deleteMerchant = useDeleteMerchantMutation(filters)
-  const bulkDelete = useBulkDeleteMutation(filters)
-  const bulkPriority = useBulkPriorityMutation(filters)
+  const bulkDelete = useBulkDeleteMutation()
+  const bulkPriority = useBulkPriorityMutation()
 
   const flatData = useMemo(
     () => data?.pages.flatMap((page) => page.merchants) ?? [],
     [data],
   )
-
   const totalCount = data?.pages[0]?.totalCount ?? 0
+  const allIds = useMemo(
+    () => flatData.map((merchant) => merchant.id),
+    [flatData],
+  )
 
-  // All row IDs for select-all
-  const allIds = useMemo(() => flatData.map((m) => m.id), [flatData])
-
-  // Selection handlers
   const handleSelectRow = useCallback((id: string, selected: boolean) => {
     setSelectedIdSet((prev) => {
       const next = new Set(prev)
+
       if (selected) {
         next.add(id)
       } else {
         next.delete(id)
       }
+
       return next
     })
   }, [])
@@ -232,13 +225,8 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     [allIds],
   )
 
-  // Selected IDs as array (derived)
-  const selectedIds = useMemo(
-    () => Array.from(selectedIdSet),
-    [selectedIdSet],
-  )
+  const selectedIds = useMemo(() => Array.from(selectedIdSet), [selectedIdSet])
 
-  // Column factory — recreated when sort/selection/role changes
   const columns = useMemo(
     () =>
       createMerchantColumns({
@@ -250,13 +238,22 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
         allIds,
         onSelectRow: handleSelectRow,
         onSelectAll: handleSelectAll,
-        onPriorityClick: (m) => setPriorityDialogMerchant(m),
-        onDeleteClick: (m) => setDeleteTarget({ type: 'single', merchant: m }),
+        onPriorityClick: setPriorityDialogMerchant,
+        onDeleteClick: (merchant) =>
+          setDeleteTarget({ type: 'single', merchant }),
       }),
-    [userRole, filters.sortBy, filters.sortOrder, handleSort, selectedIdSet, allIds, handleSelectRow, handleSelectAll],
+    [
+      allIds,
+      filters.sortBy,
+      filters.sortOrder,
+      handleSelectAll,
+      handleSelectRow,
+      handleSort,
+      selectedIdSet,
+      userRole,
+    ],
   )
 
-  // Comma filter helpers
   const commaToSet = useCallback(
     (value: string | undefined) =>
       new Set(value?.split(',').filter(Boolean) ?? []),
@@ -269,7 +266,6 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     [],
   )
 
-  // Actions
   const submitPriority = useCallback(
     (merchantId: string, priority: Priority, note?: string) => {
       updatePriority.mutate(
@@ -281,7 +277,9 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   )
 
   const confirmDelete = useCallback(() => {
-    if (!deleteTarget) return
+    if (!deleteTarget) {
+      return
+    }
 
     if (deleteTarget.type === 'single') {
       deleteMerchant.mutate(deleteTarget.merchant.id, {
@@ -290,67 +288,33 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
           setSelectedIdSet(new Set())
         },
       })
-    } else {
-      bulkDelete.mutate(deleteTarget.ids, {
-        onSuccess: () => {
-          setDeleteTarget(null)
-          setSelectedIdSet(new Set())
-        },
-      })
+
+      return
     }
-  }, [deleteTarget, deleteMerchant, bulkDelete])
+
+    bulkDelete.mutate(deleteTarget.ids, {
+      onSuccess: () => {
+        setDeleteTarget(null)
+        setSelectedIdSet(new Set())
+      },
+    })
+  }, [bulkDelete, deleteMerchant, deleteTarget])
 
   const submitBulkPriority = useCallback(() => {
     bulkPriority.mutate(
       { ids: selectedIds, priority: bulkPriorityValue },
       { onSuccess: () => setSelectedIdSet(new Set()) },
     )
-  }, [bulkPriority, selectedIds, bulkPriorityValue])
+  }, [bulkPriority, bulkPriorityValue, selectedIds])
 
   const handleFetchNextPage = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  const contextValue = useMemo<MerchantsTableContextValue>(
+  const stateValue = useMemo<MerchantsTableState>(
     () => ({
-      state: {
-        flatData,
-        selectedIds,
-        filters,
-        userRole,
-        isLoading,
-        totalCount,
-        hasNextPage: hasNextPage ?? false,
-        isFetchingNextPage,
-        priorityDialogMerchant,
-        deleteTarget,
-        bulkPriorityValue,
-        isPriorityPending: updatePriority.isPending,
-        isDeletePending: deleteMerchant.isPending || bulkDelete.isPending,
-        isBulkPriorityPending: bulkPriority.isPending,
-      },
-      actions: {
-        setFilter,
-        fetchNextPage: handleFetchNextPage,
-        openPriorityDialog: setPriorityDialogMerchant,
-        closePriorityDialog: () => setPriorityDialogMerchant(null),
-        openDeleteDialog: setDeleteTarget,
-        closeDeleteDialog: () => setDeleteTarget(null),
-        setBulkPriorityValue,
-        submitPriority,
-        confirmDelete,
-        submitBulkPriority,
-      },
-      meta: {
-        columns,
-        selectedIdSet,
-        commaToSet,
-        setToCommaString,
-      },
-    }),
-    [
       flatData,
       selectedIds,
       filters,
@@ -362,29 +326,71 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       priorityDialogMerchant,
       deleteTarget,
       bulkPriorityValue,
-      updatePriority.isPending,
-      deleteMerchant.isPending,
+      isPriorityPending: updatePriority.isPending,
+      isDeletePending: deleteMerchant.isPending || bulkDelete.isPending,
+      isBulkPriorityPending: bulkPriority.isPending,
+    }),
+    [
       bulkDelete.isPending,
       bulkPriority.isPending,
+      bulkPriorityValue,
+      deleteMerchant.isPending,
+      deleteTarget,
+      filters,
+      flatData,
+      hasNextPage,
+      isFetchingNextPage,
+      isLoading,
+      priorityDialogMerchant,
+      selectedIds,
+      totalCount,
+      updatePriority.isPending,
+      userRole,
+    ],
+  )
+
+  const actionsValue = useMemo<MerchantsTableActions>(
+    () => ({
       setFilter,
-      handleFetchNextPage,
+      fetchNextPage: handleFetchNextPage,
+      openPriorityDialog: setPriorityDialogMerchant,
+      closePriorityDialog: () => setPriorityDialogMerchant(null),
+      openDeleteDialog: setDeleteTarget,
+      closeDeleteDialog: () => setDeleteTarget(null),
       setBulkPriorityValue,
       submitPriority,
       confirmDelete,
       submitBulkPriority,
+    }),
+    [
+      confirmDelete,
+      handleFetchNextPage,
+      setBulkPriorityValue,
+      setFilter,
+      submitBulkPriority,
+      submitPriority,
+    ],
+  )
+
+  const metaValue = useMemo<MerchantsTableMeta>(
+    () => ({
       columns,
       selectedIdSet,
       commaToSet,
       setToCommaString,
-    ],
+    }),
+    [columns, commaToSet, selectedIdSet, setToCommaString],
   )
 
   return (
-    <MerchantsTableContext value={contextValue}>
-      {children}
-    </MerchantsTableContext>
+    <MerchantsTableStateContext value={stateValue}>
+      <MerchantsTableActionsContext value={actionsValue}>
+        <MerchantsTableMetaContext value={metaValue}>
+          {children}
+        </MerchantsTableMetaContext>
+      </MerchantsTableActionsContext>
+    </MerchantsTableStateContext>
   )
 }
 
-// Re-export for compound component attachment
 export { MerchantsTableProvider }

@@ -1,20 +1,15 @@
-import {
-  queryOptions,
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query'
+import { queryOptions, useMutation } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 
 import { loginRequest, logoutRequest, refreshSessionRequest } from '#/apis/auth'
 import type { AuthClient } from '#/features/auth/auth-client'
-import type { LoginResponse } from '#/types/auth'
 
-export const authSessionQueryKey = ['auth', 'session'] as const
+const authRefreshQueryKey = ['auth', 'refresh'] as const
 
 export function authSessionQueryOptions() {
   return queryOptions({
-    queryKey: authSessionQueryKey,
+    queryKey: authRefreshQueryKey,
     queryFn: refreshSessionRequest,
     retry: false,
     staleTime: 0,
@@ -24,16 +19,13 @@ export function authSessionQueryOptions() {
 
 export function syncAuthSession(
   auth: AuthClient,
-  session: LoginResponse,
-  queryClient?: QueryClient,
+  session: Awaited<ReturnType<typeof refreshSessionRequest>>,
 ) {
   auth.setSession(session)
-  queryClient?.setQueryData(authSessionQueryKey, session)
 }
 
-export function clearAuthSession(auth: AuthClient, queryClient?: QueryClient) {
+export function clearAuthSession(auth: AuthClient) {
   auth.clear()
-  queryClient?.removeQueries({ queryKey: authSessionQueryKey })
 }
 
 export async function ensureAuthSession(
@@ -41,32 +33,30 @@ export async function ensureAuthSession(
   auth: AuthClient,
 ) {
   const session = await queryClient.fetchQuery(authSessionQueryOptions())
-  syncAuthSession(auth, session, queryClient)
+  syncAuthSession(auth, session)
   return session
 }
 
 export function useLoginMutation() {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const auth = router.options.context.auth
 
   return useMutation({
     mutationFn: loginRequest,
     onSuccess: (session) => {
-      syncAuthSession(auth, session, queryClient)
+      syncAuthSession(auth, session)
     },
   })
 }
 
 export function useLogoutMutation() {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const auth = router.options.context.auth
 
   return useMutation({
     mutationFn: logoutRequest,
     onSettled: () => {
-      clearAuthSession(auth, queryClient)
+      clearAuthSession(auth)
     },
   })
 }

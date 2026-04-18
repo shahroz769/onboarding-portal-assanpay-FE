@@ -28,7 +28,9 @@ import {
 } from '#/schemas/merchants.schema'
 import {
   MerchantsTableProvider,
-  useMerchantsTable,
+  useMerchantsTableActions,
+  useMerchantsTableMeta,
+  useMerchantsTableState,
 } from './merchants-table-context'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { MerchantDeleteDialog } from './merchants-delete-dialog'
@@ -53,7 +55,9 @@ const scopeFilterOptions = BUSINESS_SCOPES.map((s) => ({
 // ─── Toolbar ────────────────────────────────────────────────────────────────
 
 function Toolbar() {
-  const { state, actions, meta } = useMerchantsTable()
+  const state = useMerchantsTableState()
+  const actions = useMerchantsTableActions()
+  const meta = useMerchantsTableMeta()
   const { filters, selectedIds, flatData } = state
 
   return (
@@ -108,7 +112,8 @@ function Toolbar() {
 // ─── Bulk Actions ───────────────────────────────────────────────────────────
 
 function BulkActions() {
-  const { state, actions } = useMerchantsTable()
+  const state = useMerchantsTableState()
+  const actions = useMerchantsTableActions()
   const canEditPriority =
     state.userRole === 'admin' || state.userRole === 'supervisor'
   const canDelete = state.userRole === 'admin'
@@ -173,7 +178,9 @@ function BulkActions() {
 // ─── Data Grid ──────────────────────────────────────────────────────────────
 
 function Grid() {
-  const { state, actions, meta } = useMerchantsTable()
+  const state = useMerchantsTableState()
+  const actions = useMerchantsTableActions()
+  const meta = useMerchantsTableMeta()
 
   return (
     <DataTable
@@ -192,7 +199,8 @@ function Grid() {
 // ─── Dialogs ────────────────────────────────────────────────────────────────
 
 function Dialogs() {
-  const { state, actions } = useMerchantsTable()
+  const state = useMerchantsTableState()
+  const actions = useMerchantsTableActions()
   const { priorityDialogMerchant, deleteTarget } = state
 
   return (
@@ -216,7 +224,7 @@ function Dialogs() {
         description={
           deleteTarget?.type === 'single'
             ? `Are you sure you want to delete "${deleteTarget.merchant.businessName}"? This action cannot be undone.`
-            : `Are you sure you want to delete ${deleteTarget?.ids?.length ?? 0} merchant(s)? This action cannot be undone.`
+            : `Are you sure you want to delete ${deleteTarget?.ids.length ?? 0} merchant(s)? This action cannot be undone.`
         }
       />
     </>

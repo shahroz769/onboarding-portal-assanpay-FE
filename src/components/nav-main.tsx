@@ -1,10 +1,8 @@
-'use client'
-
 import { useEffect, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 
+import type { NavItem as SidebarNavItem } from '#/config/navigation'
 import {
   Collapsible,
   CollapsibleContent,
@@ -25,15 +23,7 @@ function NavItem({
   item,
   pathname,
 }: {
-  item: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    items?: {
-      title: string
-      url: string
-    }[]
-  }
+  item: SidebarNavItem
   pathname: string
 }) {
   const isDirectActive =
@@ -112,15 +102,7 @@ function NavItem({
 export function NavMain({
   items,
 }: {
-  items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    items?: {
-      title: string
-      url: string
-    }[]
-  }[]
+  items: SidebarNavItem[]
 }) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
