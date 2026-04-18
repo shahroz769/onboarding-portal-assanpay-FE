@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { MerchantsTable } from '#/features/merchants/merchants-table'
+import { MERCHANT_SORTABLE_COLUMNS } from '#/schemas/merchants.schema'
 import type { MerchantFilters } from '#/schemas/merchants.schema'
 
 const merchantSearchSchema = z.object({
@@ -10,7 +11,7 @@ const merchantSearchSchema = z.object({
   priority: z.string().optional(),
   businessScope: z.string().optional(),
   currency: z.string().optional(),
-  sortBy: z.string().optional(),
+  sortBy: z.enum(MERCHANT_SORTABLE_COLUMNS).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 

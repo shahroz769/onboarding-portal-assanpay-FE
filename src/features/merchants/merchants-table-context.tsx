@@ -1,17 +1,21 @@
-import { createContext, use, useCallback, useMemo, useState } from 'react'
+import { createContext, startTransition, use, useCallback, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   getCoreRowModel,
   getFilteredRowModel,
   useReactTable,
-  type ColumnDef,
-  type RowSelectionState,
-  type SortingState,
-  type Table as TanstackTable,
-  type VisibilityState,
+} from '@tanstack/react-table'
+import type {
+  ColumnDef,
+  RowSelectionState,
+  SortingState,
+  Table as TanstackTable,
+  VisibilityState,
 } from '@tanstack/react-table'
 
 import { useAuth } from '#/features/auth/auth-client'
 import {
+  MERCHANTS_KEY,
   useMerchantsInfiniteQuery,
   useUpdatePriorityMutation,
   useDeleteMerchantMutation,
@@ -106,6 +110,7 @@ export function MerchantsTableProvider({
   onFiltersChange,
   children,
 }: MerchantsTableProviderProps) {
+  const queryClient = useQueryClient()
   const { user } = useAuth()
   const userRole = user?.roleType ?? 'employee'
 
@@ -117,14 +122,25 @@ export function MerchantsTableProvider({
   const handleSortingChange = useCallback(
     (updater: SortingState | ((prev: SortingState) => SortingState)) => {
       const next = typeof updater === 'function' ? updater(sorting) : updater
-      const col = next[0]
-      onFiltersChange({
+      const nextSort = next.length > 0 ? next[0] : undefined
+      const nextFilters = {
         ...filters,
-        sortBy: col?.id,
-        sortOrder: col ? (col.desc ? 'desc' : 'asc') : undefined,
+        sortBy: nextSort?.id,
+        sortOrder: nextSort ? (nextSort.desc ? 'desc' : 'asc') : undefined,
+      }
+      const didSortChange =
+        filters.sortBy !== nextFilters.sortBy ||
+        filters.sortOrder !== nextFilters.sortOrder
+
+      if (didSortChange) {
+        queryClient.removeQueries({ queryKey: MERCHANTS_KEY })
+      }
+
+      startTransition(() => {
+        onFiltersChange(nextFilters)
       })
     },
-    [filters, onFiltersChange, sorting],
+    [filters, onFiltersChange, queryClient, sorting],
   )
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -202,7 +218,6 @@ export function MerchantsTableProvider({
   const selectedIds = useMemo(
     () =>
       table.getFilteredSelectedRowModel().rows.map((r) => r.original.id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [table, rowSelection],
   )
 
@@ -253,7 +268,7 @@ export function MerchantsTableProvider({
           filters,
           userRole,
           isLoading,
-          hasNextPage: hasNextPage ?? false,
+          hasNextPage: Boolean(hasNextPage),
           isFetchingNextPage,
           priorityDialogMerchant,
           deleteTarget,

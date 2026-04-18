@@ -125,10 +125,10 @@ export function createMerchantColumns({
         <DataTableColumnHeader column={column} title="Onboarding Stage" />
       ),
       cell: ({ row }) => {
-        const stage = row.getValue('onboardingStage') as string
+        const stage = row.getValue('onboardingStage')
         return (
           <Badge variant="secondary">
-            {ONBOARDING_STAGE_LABELS[stage as keyof typeof ONBOARDING_STAGE_LABELS] ?? stage}
+            {ONBOARDING_STAGE_LABELS[stage]}
           </Badge>
         )
       },
@@ -137,7 +137,7 @@ export function createMerchantColumns({
 
     // Status (derived)
     {
-      id: 'derivedStatus',
+      id: 'status',
       accessorKey: 'onboardingStage',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
@@ -195,7 +195,7 @@ export function createMerchantColumns({
         <DataTableColumnHeader column={column} title="Created At" />
       ),
       cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt') as string)
+        const date = new Date(row.getValue('createdAt'))
         return (
           <span className="text-sm text-muted-foreground">
             {format(date, 'MMM dd, yyyy h:mm a')}
@@ -210,7 +210,9 @@ export function createMerchantColumns({
       accessorKey: 'currency',
       header: 'Currency',
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.getValue('currency')}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.getValue('currency')}
+        </span>
       ),
       enableSorting: false,
       size: 80,
@@ -223,10 +225,10 @@ export function createMerchantColumns({
         <DataTableColumnHeader column={column} title="Business Scope" />
       ),
       cell: ({ row }) => {
-        const scope = row.getValue('businessScope') as string
+        const scope = row.getValue('businessScope')
         return (
           <span className="text-sm text-muted-foreground">
-            {BUSINESS_SCOPE_LABELS[scope as keyof typeof BUSINESS_SCOPE_LABELS] ?? scope}
+            {BUSINESS_SCOPE_LABELS[scope]}
           </span>
         )
       },
@@ -254,6 +256,7 @@ export function createMerchantColumns({
           </div>
         )
       },
+      enableSorting: false,
       size: 90,
     },
 

@@ -53,6 +53,18 @@ export const MERCHANT_STATUS_DISPLAY = {
 export type MerchantStatusDisplay =
   (typeof MERCHANT_STATUS_DISPLAY)[OnboardingStage]
 
+export const MERCHANT_SORTABLE_COLUMNS = [
+  'merchantNumber',
+  'businessName',
+  'onboardingStage',
+  'status',
+  'priority',
+  'createdAt',
+  'businessScope',
+] as const
+
+export type MerchantSortableColumn = (typeof MERCHANT_SORTABLE_COLUMNS)[number]
+
 // ─── Zod Schemas ────────────────────────────────────────────────────────────
 
 export const merchantListItemSchema = z.object({
@@ -87,7 +99,7 @@ export const merchantFiltersSchema = z.object({
   businessScope: z.string().optional(),
   createdAtFrom: z.string().optional(),
   createdAtTo: z.string().optional(),
-  sortBy: z.string().optional(),
+  sortBy: z.enum(MERCHANT_SORTABLE_COLUMNS).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 

@@ -24,6 +24,8 @@ function merchantsQueryKey(filters: MerchantFilters) {
   return [...MERCHANTS_KEY, filters] as const
 }
 
+export { MERCHANTS_KEY }
+
 export function useMerchantsInfiniteQuery(filters: MerchantFilters) {
   return useInfiniteQuery({
     queryKey: merchantsQueryKey(filters),
