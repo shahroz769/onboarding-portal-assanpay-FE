@@ -13,7 +13,11 @@ export const Route = createFileRoute('/_app/merchants/')({
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
     await context.queryClient.ensureInfiniteQueryData(
-      merchantsInfiniteQueryOptions(deps),
+      merchantsInfiniteQueryOptions({
+        ...deps,
+        createdAtFrom: undefined,
+        createdAtTo: undefined,
+      }),
     )
   },
   component: RouteComponent,
