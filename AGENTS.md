@@ -5,7 +5,7 @@ use tanstack docs latest
 tanstack query
 use react composiiton patterns, best practices skills
 use shadcn skills, shadcn components everytime
-zustand only when needed
+use zustand only when needed
 use zod
 always use latest docs for libraries
 <!-- intent-skills:start -->

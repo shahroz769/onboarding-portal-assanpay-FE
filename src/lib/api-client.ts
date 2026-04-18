@@ -1,10 +1,14 @@
 import axios from 'axios'
+import type { QueryClient } from '@tanstack/react-query'
 
 import type { AuthClient } from '#/features/auth/auth-client'
 import { sanitizeRedirect } from '#/features/auth/redirect'
 import type { RefreshResponse } from '#/types/auth'
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+
+// Matches authSessionQueryKey in auth-query.ts — kept in sync manually to avoid circular deps
+const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -15,9 +19,14 @@ export const apiClient = axios.create({
 })
 
 let authClient: AuthClient | null = null
+let queryClient: QueryClient | null = null
 
 export function setApiClientAuth(nextAuthClient: AuthClient) {
   authClient = nextAuthClient
+}
+
+export function setApiClientQueryClient(nextQueryClient: QueryClient) {
+  queryClient = nextQueryClient
 }
 
 apiClient.interceptors.request.use((config) => {
@@ -86,6 +95,7 @@ apiClient.interceptors.response.use(
       )
 
       authClient?.setSession(data)
+      queryClient?.setQueryData(AUTH_SESSION_QUERY_KEY, data)
       processQueue(null, data.accessToken)
 
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
