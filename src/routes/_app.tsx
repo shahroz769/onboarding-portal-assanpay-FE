@@ -38,7 +38,9 @@ function AppLayout() {
   const activeMatch = [...matches]
     .reverse()
     .find((match) => (match.staticData as { title?: string } | undefined)?.title)
-  const title = (activeMatch?.staticData as { title?: string } | undefined)?.title ?? 'Dashboard'
+  const staticData = activeMatch?.staticData as { title?: string; subtitle?: string } | undefined
+  const title = staticData?.title ?? 'Dashboard'
+  const subtitle = staticData?.subtitle
 
   return (
     <SidebarProvider>
@@ -66,8 +68,13 @@ function AppLayout() {
 
         <div className="flex flex-1 flex-col p-4 md:p-6">
           <div className="flex flex-1 flex-col rounded-xl border bg-background p-6 shadow-sm">
-            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-            <div className="mt-6 flex-1">
+            <div className="mb-6">
+              <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+              {subtitle && (
+                <p className="text-muted-foreground">{subtitle}</p>
+              )}
+            </div>
+            <div className="flex-1">
               <Outlet />
             </div>
           </div>
