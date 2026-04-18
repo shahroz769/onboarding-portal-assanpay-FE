@@ -138,6 +138,20 @@ body,
   }
 }
 
+/* Smooth dark mode transition via View Transitions API */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01s;
+  }
+}
+
 /* Performance: content-visibility for table rows */
 @utility content-visibility-auto {
   content-visibility: auto;

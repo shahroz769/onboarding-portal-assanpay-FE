@@ -72,8 +72,16 @@ export function ThemeToggle() {
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={() => {
         const nextTheme: ThemeMode = isDark ? "light" : "dark"
-        setTheme(nextTheme)
-        setResolvedTheme(applyTheme(nextTheme))
+        const apply = () => {
+          setTheme(nextTheme)
+          setResolvedTheme(applyTheme(nextTheme))
+        }
+
+        if (document.startViewTransition) {
+          document.startViewTransition(apply)
+        } else {
+          apply()
+        }
       }}
     >
       {isDark ? <Sun /> : <Moon />}
