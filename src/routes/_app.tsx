@@ -45,7 +45,7 @@ function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="min-h-svh bg-muted/30">
+      <SidebarInset className="h-svh overflow-hidden bg-muted/30">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger />
           <Breadcrumb>
@@ -66,15 +66,15 @@ function AppLayout() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="flex flex-1 flex-col rounded-xl border bg-background p-6 shadow-sm">
-            <div className="mb-6">
+        <div className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-background p-6 shadow-sm">
+            <div className="mb-6 shrink-0">
               <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
               {subtitle && (
                 <p className="text-muted-foreground">{subtitle}</p>
               )}
             </div>
-            <div className="flex-1">
+            <div className="flex min-h-0 flex-1 flex-col">
               <Outlet />
             </div>
           </div>

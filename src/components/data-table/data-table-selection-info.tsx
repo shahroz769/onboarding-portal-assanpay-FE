@@ -1,17 +1,14 @@
-import type { Table } from '@tanstack/react-table'
-
-interface DataTableSelectionInfoProps<TData> {
-  table: Table<TData>
+interface DataTableSelectionInfoProps {
+  selectedCount: number
+  visibleCount: number
   children?: React.ReactNode
 }
 
-export function DataTableSelectionInfo<TData>({
-  table,
+export function DataTableSelectionInfo({
+  selectedCount,
+  visibleCount,
   children,
-}: DataTableSelectionInfoProps<TData>) {
-  const selectedCount = table.getFilteredSelectedRowModel().rows.length
-  const visibleCount = table.getFilteredRowModel().rows.length
-
+}: DataTableSelectionInfoProps) {
   if (selectedCount === 0) return null
 
   return (

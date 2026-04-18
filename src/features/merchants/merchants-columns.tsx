@@ -1,4 +1,3 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
@@ -12,7 +11,8 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { DataTableColumnHeader } from '#/components/data-table'
-import type { MerchantListItem, Priority } from '#/schemas/merchants.schema'
+import type { DataTableColumnDef } from '#/components/data-table/data-table'
+import type { MerchantListItem } from '#/schemas/merchants.schema'
 import {
   MERCHANT_STATUS_DISPLAY,
   ONBOARDING_STAGE_LABELS,
@@ -29,8 +29,6 @@ function getDaysCount(createdAt: string, liveAt: string | null): number {
   return Math.max(0, Math.floor((end - start) / 86_400_000))
 }
 
-
-
 function getStatusBadgeClasses(status: string): string {
   switch (status) {
     case 'Completed':
@@ -46,122 +44,155 @@ function getStatusBadgeClasses(status: string): string {
   }
 }
 
-
-
 // ─── Column Factory ─────────────────────────────────────────────────────────
 
 interface CreateColumnsOptions {
   userRole: RoleType
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  onSort: (columnId: string) => void
+  selectedIds: Set<string>
+  allIds: string[]
+  onSelectRow: (id: string, selected: boolean) => void
+  onSelectAll: (selected: boolean) => void
   onPriorityClick: (merchant: MerchantListItem) => void
   onDeleteClick: (merchant: MerchantListItem) => void
 }
 
+function getSortDirection(
+  columnId: string,
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc',
+): 'asc' | 'desc' | false {
+  if (sortBy !== columnId) return false
+  return sortOrder ?? false
+}
+
 export function createMerchantColumns({
   userRole,
+  sortBy,
+  sortOrder,
+  onSort,
+  selectedIds,
+  allIds,
+  onSelectRow,
+  onSelectAll,
   onPriorityClick,
   onDeleteClick,
-}: CreateColumnsOptions): ColumnDef<MerchantListItem>[] {
+}: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
   const canEdit = userRole === 'admin' || userRole === 'supervisor'
   const canDelete = userRole === 'admin'
+
+  const isAllSelected = allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
+  const isSomeSelected = !isAllSelected && allIds.some((id) => selectedIds.has(id))
 
   return [
     // Select
     {
       id: 'select',
-      header: ({ table }) => (
+      header: (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          checked={isAllSelected || (isSomeSelected && 'indeterminate')}
+          onCheckedChange={(value) => onSelectAll(!!value)}
           aria-label="Select all"
         />
       ),
-      cell: ({ row }) => (
+      cell: (merchant) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          checked={selectedIds.has(merchant.id)}
+          onCheckedChange={(value) => onSelectRow(merchant.id, !!value)}
           aria-label="Select row"
         />
       ),
-      enableSorting: false,
-      enableHiding: false,
-      size: 40,
+      width: 40,
     },
 
     // Merchant ID
     {
-      accessorKey: 'merchantNumber',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Merchant ID" />
+      id: 'merchantNumber',
+      header: (
+        <DataTableColumnHeader
+          title="Merchant ID"
+          sortDirection={getSortDirection('merchantNumber', sortBy, sortOrder)}
+          onSort={() => onSort('merchantNumber')}
+        />
       ),
-      cell: ({ row }) => (
+      cell: (merchant) => (
         <span className="font-mono text-sm tabular-nums">
-          {row.getValue('merchantNumber')}
+          {merchant.merchantNumber}
         </span>
       ),
-      size: 120,
+      width: 120,
     },
 
     // Merchant Name
     {
-      accessorKey: 'businessName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Merchant Name" />
+      id: 'businessName',
+      header: (
+        <DataTableColumnHeader
+          title="Merchant Name"
+          sortDirection={getSortDirection('businessName', sortBy, sortOrder)}
+          onSort={() => onSort('businessName')}
+        />
       ),
-      cell: ({ row }) => (
+      cell: (merchant) => (
         <span className="max-w-50 truncate font-medium">
-          {row.getValue('businessName')}
+          {merchant.businessName}
         </span>
       ),
-      size: 200,
+      width: 200,
     },
 
     // Onboarding Stage
     {
-      accessorKey: 'onboardingStage',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Onboarding Stage" />
+      id: 'onboardingStage',
+      header: (
+        <DataTableColumnHeader
+          title="Onboarding Stage"
+          sortDirection={getSortDirection('onboardingStage', sortBy, sortOrder)}
+          onSort={() => onSort('onboardingStage')}
+        />
       ),
-      cell: ({ row }) => {
-        const stage = row.getValue('onboardingStage')
-        return (
-          <Badge variant="secondary">
-            {ONBOARDING_STAGE_LABELS[stage]}
-          </Badge>
-        )
-      },
-      size: 160,
+      cell: (merchant) => (
+        <Badge variant="secondary">
+          {ONBOARDING_STAGE_LABELS[merchant.onboardingStage]}
+        </Badge>
+      ),
+      width: 160,
     },
 
     // Status (derived)
     {
       id: 'status',
-      accessorKey: 'onboardingStage',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+      header: (
+        <DataTableColumnHeader
+          title="Status"
+          sortDirection={getSortDirection('status', sortBy, sortOrder)}
+          onSort={() => onSort('status')}
+        />
       ),
-      cell: ({ row }) => {
-        const stage = row.original.onboardingStage
-        const display = MERCHANT_STATUS_DISPLAY[stage]
+      cell: (merchant) => {
+        const display = MERCHANT_STATUS_DISPLAY[merchant.onboardingStage]
         return (
           <Badge className={getStatusBadgeClasses(display)}>
             {display}
           </Badge>
         )
       },
-      size: 120,
+      width: 120,
     },
 
     // Priority (clickable)
     {
-      accessorKey: 'priority',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Priority" />
+      id: 'priority',
+      header: (
+        <DataTableColumnHeader
+          title="Priority"
+          sortDirection={getSortDirection('priority', sortBy, sortOrder)}
+          onSort={() => onSort('priority')}
+        />
       ),
-      cell: ({ row }) => {
-        const merchant = row.original
+      cell: (merchant) => {
         const priorityBadge = (
           <Badge
             variant="secondary"
@@ -185,66 +216,67 @@ export function createMerchantColumns({
 
         return priorityBadge
       },
-      size: 100,
+      width: 100,
     },
 
     // Created At
     {
-      accessorKey: 'createdAt',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created At" />
+      id: 'createdAt',
+      header: (
+        <DataTableColumnHeader
+          title="Created At"
+          sortDirection={getSortDirection('createdAt', sortBy, sortOrder)}
+          onSort={() => onSort('createdAt')}
+        />
       ),
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'))
+      cell: (merchant) => {
+        const date = new Date(merchant.createdAt)
         return (
           <span className="text-sm text-muted-foreground">
             {format(date, 'MMM dd, yyyy h:mm a')}
           </span>
         )
       },
-      size: 180,
+      width: 180,
     },
 
     // Currency
     {
-      accessorKey: 'currency',
+      id: 'currency',
       header: 'Currency',
-      cell: ({ row }) => (
+      cell: (merchant) => (
         <span className="text-sm text-muted-foreground">
-          {row.getValue('currency')}
+          {merchant.currency}
         </span>
       ),
-      enableSorting: false,
-      size: 80,
+      width: 80,
     },
 
     // Business Scope
     {
-      accessorKey: 'businessScope',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Business Scope" />
+      id: 'businessScope',
+      header: (
+        <DataTableColumnHeader
+          title="Business Scope"
+          sortDirection={getSortDirection('businessScope', sortBy, sortOrder)}
+          onSort={() => onSort('businessScope')}
+        />
       ),
-      cell: ({ row }) => {
-        const scope = row.getValue('businessScope')
-        return (
-          <span className="text-sm text-muted-foreground">
-            {BUSINESS_SCOPE_LABELS[scope]}
-          </span>
-        )
-      },
-      size: 130,
+      cell: (merchant) => (
+        <span className="text-sm text-muted-foreground">
+          {BUSINESS_SCOPE_LABELS[merchant.businessScope]}
+        </span>
+      ),
+      width: 130,
     },
 
     // Days
     {
       id: 'days',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Days" />
-      ),
-      accessorFn: (row) => getDaysCount(row.createdAt, row.liveAt),
-      cell: ({ row }) => {
-        const days = getDaysCount(row.original.createdAt, row.original.liveAt)
-        const isLive = row.original.liveAt !== null
+      header: 'Days',
+      cell: (merchant) => {
+        const days = getDaysCount(merchant.createdAt, merchant.liveAt)
+        const isLive = merchant.liveAt !== null
         return (
           <div className="flex items-center gap-1.5">
             <span className="font-mono text-sm tabular-nums">{days}</span>
@@ -256,64 +288,59 @@ export function createMerchantColumns({
           </div>
         )
       },
-      enableSorting: false,
-      size: 90,
+      width: 90,
     },
 
     // Actions
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const merchant = row.original
-        return (
-          <div className="flex items-center gap-1">
+      cell: (merchant) => (
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8" asChild>
+                {/* TODO: create /_app/merchants/$merchantId route */}
+                <a href={`/merchants/${merchant.id}`}>
+                  <EyeIcon className="size-4" />
+                  <span className="sr-only">View</span>
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
+          </Tooltip>
+          {canEdit && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="size-8" asChild>
-                  <Link to="/merchants/$merchantId" params={{ merchantId: merchant.id }}>
-                    <EyeIcon className="size-4" />
-                    <span className="sr-only">View</span>
+                  <Link to="/onboarding-form" search={{ merchantId: merchant.id }}>
+                    <PencilIcon className="size-4" />
+                    <span className="sr-only">Edit</span>
                   </Link>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>View</TooltipContent>
+              <TooltipContent>Edit</TooltipContent>
             </Tooltip>
-            {canEdit && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8" asChild>
-                    <Link to="/onboarding-form" search={{ merchantId: merchant.id }}>
-                      <PencilIcon className="size-4" />
-                      <span className="sr-only">Edit</span>
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Edit</TooltipContent>
-              </Tooltip>
-            )}
-            {canDelete && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onDeleteClick(merchant)}
-                  >
-                    <Trash2Icon className="size-4" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Delete</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        )
-      },
-      enableSorting: false,
-      enableHiding: false,
-      size: 100,
+          )}
+          {canDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDeleteClick(merchant)}
+                >
+                  <Trash2Icon className="size-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      ),
+      width: 100,
     },
   ]
 }

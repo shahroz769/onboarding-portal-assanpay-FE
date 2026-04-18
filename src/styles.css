@@ -137,3 +137,12 @@ body,
     margin: 0;
   }
 }
+
+/* Performance: content-visibility for table rows */
+@utility content-visibility-auto {
+  content-visibility: auto;
+}
+
+@utility contain-intrinsic-size-auto-48px {
+  contain-intrinsic-size: auto 48px;
+}

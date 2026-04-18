@@ -15,7 +15,6 @@ interface MerchantDeleteDialogProps {
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
   isPending: boolean
-  /** Single merchant name or count for bulk */
   description: string
 }
 

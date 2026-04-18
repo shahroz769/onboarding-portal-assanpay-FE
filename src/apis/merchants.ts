@@ -8,8 +8,8 @@ import type {
 // ─── List Merchants ─────────────────────────────────────────────────────────
 
 interface FetchMerchantsParams extends MerchantFilters {
-  cursor?: string
-  limit?: number
+  page?: number
+  perPage?: number
 }
 
 export async function fetchMerchants(

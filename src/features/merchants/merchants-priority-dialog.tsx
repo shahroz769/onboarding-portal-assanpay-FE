@@ -43,7 +43,6 @@ export function MerchantPriorityDialog({
   )
   const [note, setNote] = useState(merchant?.priorityNote ?? '')
 
-  // Sync state when merchant changes
   const handleOpenChange = (next: boolean) => {
     if (next && merchant) {
       setPriority(merchant.priority)

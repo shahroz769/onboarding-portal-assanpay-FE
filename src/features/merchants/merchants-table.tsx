@@ -16,9 +16,8 @@ import {
   DataTableSearch,
   DataTableSelectionInfo,
   DataTableToolbar,
-  DataTableViewOptions,
 } from '#/components/data-table'
-import type { MerchantFilters, Priority } from '#/schemas/merchants.schema'
+import type { Priority } from '#/schemas/merchants.schema'
 import {
   ONBOARDING_STAGES,
   ONBOARDING_STAGE_LABELS,
@@ -27,7 +26,10 @@ import {
   BUSINESS_SCOPES,
   BUSINESS_SCOPE_LABELS,
 } from '#/schemas/merchants.schema'
-import { MerchantsTableProvider, useMerchantsTable } from './merchants-table-context'
+import {
+  MerchantsTableProvider,
+  useMerchantsTable,
+} from './merchants-table-context'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { MerchantDeleteDialog } from './merchants-delete-dialog'
 
@@ -48,42 +50,9 @@ const scopeFilterOptions = BUSINESS_SCOPES.map((s) => ({
   value: s,
 }))
 
-// ─── Public API ─────────────────────────────────────────────────────────────
-
-interface MerchantsTableProps {
-  filters: MerchantFilters
-  onFiltersChange: (filters: MerchantFilters) => void
-}
-
-export function MerchantsTable({
-  filters,
-  onFiltersChange,
-}: MerchantsTableProps) {
-  return (
-    <MerchantsTableProvider filters={filters} onFiltersChange={onFiltersChange}>
-      <MerchantsTableContent />
-    </MerchantsTableProvider>
-  )
-}
-
-// ─── Content (composed) ─────────────────────────────────────────────────────
-
-function MerchantsTableContent() {
-  return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-2">
-        <MerchantsToolbar />
-        <MerchantsBulkActions />
-        <MerchantsDataTable />
-        <MerchantsDialogs />
-      </div>
-    </TooltipProvider>
-  )
-}
-
 // ─── Toolbar ────────────────────────────────────────────────────────────────
 
-function MerchantsToolbar() {
+function Toolbar() {
   const { state, actions, meta } = useMerchantsTable()
   const { filters, selectedIds, flatData } = state
 
@@ -126,7 +95,11 @@ function MerchantsToolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         )}
-        <DataTableViewOptions table={meta.table} />
+        {!state.isLoading && (
+          <span className="text-sm text-muted-foreground">
+            Total {state.totalCount} Merchants
+          </span>
+        )}
       </DataTableToolbar.Actions>
     </DataTableToolbar>
   )
@@ -134,14 +107,17 @@ function MerchantsToolbar() {
 
 // ─── Bulk Actions ───────────────────────────────────────────────────────────
 
-function MerchantsBulkActions() {
-  const { state, actions, meta } = useMerchantsTable()
+function BulkActions() {
+  const { state, actions } = useMerchantsTable()
   const canEditPriority =
     state.userRole === 'admin' || state.userRole === 'supervisor'
   const canDelete = state.userRole === 'admin'
 
   return (
-    <DataTableSelectionInfo table={meta.table}>
+    <DataTableSelectionInfo
+      selectedCount={state.selectedIds.length}
+      visibleCount={state.flatData.length}
+    >
       {canEditPriority && (
         <div className="flex items-center gap-2">
           <Select
@@ -194,26 +170,28 @@ function MerchantsBulkActions() {
   )
 }
 
-// ─── Data Table ─────────────────────────────────────────────────────────────
+// ─── Data Grid ──────────────────────────────────────────────────────────────
 
-function MerchantsDataTable() {
+function Grid() {
   const { state, actions, meta } = useMerchantsTable()
 
   return (
     <DataTable
-      table={meta.table}
-      columnCount={meta.columns.length}
-      onLoadMore={actions.fetchNextPage}
-      isFetchingNextPage={state.isFetchingNextPage}
-      hasNextPage={state.hasNextPage}
+      columns={meta.columns}
+      data={state.flatData}
+      getRowId={(m) => m.id}
+      selectedIds={meta.selectedIdSet}
       isLoading={state.isLoading}
+      onScrollEnd={actions.fetchNextPage}
+      isFetchingMore={state.isFetchingNextPage}
+      hasMore={state.hasNextPage}
     />
   )
 }
 
 // ─── Dialogs ────────────────────────────────────────────────────────────────
 
-function MerchantsDialogs() {
+function Dialogs() {
   const { state, actions } = useMerchantsTable()
   const { priorityDialogMerchant, deleteTarget } = state
 
@@ -242,5 +220,51 @@ function MerchantsDialogs() {
         }
       />
     </>
+  )
+}
+
+// ─── Compound Component ─────────────────────────────────────────────────────
+
+/**
+ * MerchantsTable compound component.
+ *
+ * Usage:
+ * ```tsx
+ * <MerchantsTable.Provider>
+ *   <MerchantsTable.Toolbar />
+ *   <MerchantsTable.BulkActions />
+ *   <MerchantsTable.Grid />
+ *   <MerchantsTable.Dialogs />
+ * </MerchantsTable.Provider>
+ * ```
+ */
+export const MerchantsTable = {
+  Provider: MerchantsTableProvider,
+  Toolbar,
+  BulkActions,
+  Grid,
+  Dialogs,
+}
+
+// ─── Default Composed Layout ────────────────────────────────────────────────
+
+export function MerchantsTableComposed() {
+  return (
+    <MerchantsTable.Provider>
+      <TooltipProvider>
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <div className="shrink-0">
+            <MerchantsTable.Toolbar />
+          </div>
+          <div className="shrink-0">
+            <MerchantsTable.BulkActions />
+          </div>
+          <div className="min-h-0 flex-1">
+            <MerchantsTable.Grid />
+          </div>
+          <MerchantsTable.Dialogs />
+        </div>
+      </TooltipProvider>
+    </MerchantsTable.Provider>
   )
 }

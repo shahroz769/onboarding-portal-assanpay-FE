@@ -1,48 +1,55 @@
 import {
-  useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
+import type { InfiniteData } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
   bulkDeleteMerchants,
   bulkUpdatePriority,
   deleteMerchant,
-  fetchMerchants,
   updateMerchantPriority,
 } from '#/apis/merchants'
 import type {
   MerchantFilters,
+  MerchantListItem,
   MerchantListResponse,
   Priority,
 } from '#/schemas/merchants.schema'
 
-const MERCHANTS_KEY = ['merchants'] as const
+export const MERCHANTS_KEY = ['merchants'] as const
 
-function merchantsQueryKey(filters: MerchantFilters) {
-  return [...MERCHANTS_KEY, filters] as const
+/** Build a stable infinite-query key from filters (excludes page/perPage). */
+export function merchantsInfiniteKey(filters: MerchantFilters) {
+  const { page: _p, perPage: _pp, ...rest } = filters
+  return [...MERCHANTS_KEY, rest] as const
 }
 
-export { MERCHANTS_KEY }
-
-export function useMerchantsInfiniteQuery(filters: MerchantFilters) {
-  return useInfiniteQuery({
-    queryKey: merchantsQueryKey(filters),
-    queryFn: ({ pageParam }) =>
-      fetchMerchants({
-        ...filters,
-        cursor: pageParam ?? undefined,
-        limit: 30,
-      }),
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-  })
+function updateMerchantInMerchantLists(
+  queryClient: ReturnType<typeof useQueryClient>,
+  merchantId: string,
+  updater: (merchant: MerchantListItem) => MerchantListItem,
+) {
+  queryClient.setQueriesData<InfiniteData<MerchantListResponse>>(
+    { queryKey: MERCHANTS_KEY },
+    (old) => {
+      if (!old) return old
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          merchants: page.merchants.map((merchant) =>
+            merchant.id === merchantId ? updater(merchant) : merchant,
+          ),
+        })),
+      }
+    },
+  )
 }
 
 export function useUpdatePriorityMutation(filters: MerchantFilters) {
   const queryClient = useQueryClient()
-  const key = merchantsQueryKey(filters)
 
   return useMutation({
     mutationFn: ({
@@ -55,70 +62,80 @@ export function useUpdatePriorityMutation(filters: MerchantFilters) {
       note?: string
     }) => updateMerchantPriority({ merchantId, priority, note }),
     onMutate: async ({ merchantId, priority, note }) => {
-      await queryClient.cancelQueries({ queryKey: key })
+      await queryClient.cancelQueries({ queryKey: MERCHANTS_KEY })
 
-      const previous = queryClient.getQueryData(key)
+      const previous =
+        queryClient.getQueriesData<InfiniteData<MerchantListResponse>>({
+          queryKey: MERCHANTS_KEY,
+        })
 
-      queryClient.setQueryData<{
-        pages: MerchantListResponse[]
-        pageParams: (string | null)[]
-      }>(key, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            merchants: page.merchants.map((m) =>
-              m.id === merchantId
-                ? { ...m, priority, priorityNote: note ?? m.priorityNote }
-                : m,
-            ),
-          })),
-        }
-      })
+      updateMerchantInMerchantLists(
+        queryClient,
+        merchantId,
+        (merchant) => ({
+          ...merchant,
+          priority,
+          priorityNote: note ?? null,
+        }),
+      )
 
       return { previous }
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(key, context.previous)
+        for (const [queryKey, data] of context.previous) {
+          queryClient.setQueryData(queryKey, data)
+        }
       }
       toast.error('Failed to update priority.')
     },
-    onSuccess: () => {
+    onSuccess: (updatedMerchant) => {
+      updateMerchantInMerchantLists(
+        queryClient,
+        updatedMerchant.id,
+        (merchant) => ({
+          ...merchant,
+          priority: updatedMerchant.priority,
+          priorityNote: updatedMerchant.priorityNote,
+        }),
+      )
       toast.success('Priority updated.')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.invalidateQueries({
+        queryKey: MERCHANTS_KEY,
+        refetchType: 'active',
+      })
     },
   })
 }
 
 export function useDeleteMerchantMutation(filters: MerchantFilters) {
   const queryClient = useQueryClient()
-  const key = merchantsQueryKey(filters)
+  const key = merchantsInfiniteKey(filters)
 
   return useMutation({
     mutationFn: (merchantId: string) => deleteMerchant(merchantId),
     onMutate: async (merchantId) => {
       await queryClient.cancelQueries({ queryKey: key })
 
-      const previous = queryClient.getQueryData(key)
+      const previous =
+        queryClient.getQueryData<InfiniteData<MerchantListResponse>>(key)
 
-      queryClient.setQueryData<{
-        pages: MerchantListResponse[]
-        pageParams: (string | null)[]
-      }>(key, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            merchants: page.merchants.filter((m) => m.id !== merchantId),
-            totalCount: page.totalCount - 1,
-          })),
-        }
-      })
+      queryClient.setQueryData<InfiniteData<MerchantListResponse>>(
+        key,
+        (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              merchants: page.merchants.filter((m) => m.id !== merchantId),
+              totalCount: page.totalCount - 1,
+            })),
+          }
+        },
+      )
 
       return { previous }
     },
@@ -139,13 +156,12 @@ export function useDeleteMerchantMutation(filters: MerchantFilters) {
 
 export function useBulkDeleteMutation(filters: MerchantFilters) {
   const queryClient = useQueryClient()
-  const key = merchantsQueryKey(filters)
 
   return useMutation({
     mutationFn: (ids: string[]) => bulkDeleteMerchants(ids),
     onSuccess: () => {
       toast.success('Merchants deleted.')
-      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
     onError: () => {
       toast.error('Failed to delete merchants.')
@@ -155,14 +171,13 @@ export function useBulkDeleteMutation(filters: MerchantFilters) {
 
 export function useBulkPriorityMutation(filters: MerchantFilters) {
   const queryClient = useQueryClient()
-  const key = merchantsQueryKey(filters)
 
   return useMutation({
     mutationFn: ({ ids, priority }: { ids: string[]; priority: Priority }) =>
       bulkUpdatePriority(ids, priority),
     onSuccess: () => {
       toast.success('Priority updated for selected merchants.')
-      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
     onError: () => {
       toast.error('Failed to update priority.')

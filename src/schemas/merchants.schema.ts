@@ -85,13 +85,17 @@ export type MerchantListItem = z.infer<typeof merchantListItemSchema>
 
 export const merchantListResponseSchema = z.object({
   merchants: z.array(merchantListItemSchema),
-  nextCursor: z.string().nullable(),
+  page: z.number(),
+  perPage: z.number(),
   totalCount: z.number(),
+  totalPages: z.number(),
 })
 
 export type MerchantListResponse = z.infer<typeof merchantListResponseSchema>
 
 export const merchantFiltersSchema = z.object({
+  page: z.number().optional(),
+  perPage: z.number().optional(),
   search: z.string().optional(),
   onboardingStage: z.string().optional(),
   priority: z.string().optional(),

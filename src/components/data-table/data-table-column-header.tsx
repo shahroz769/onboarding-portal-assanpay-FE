@@ -1,4 +1,3 @@
-import type { Column } from '@tanstack/react-table'
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
@@ -8,18 +7,19 @@ import {
 import { cn } from '#/lib/utils'
 import { Button } from '#/components/ui/button'
 
-interface DataTableColumnHeaderProps<TData, TValue>
-  extends React.ComponentProps<'div'> {
-  column: Column<TData, TValue>
+interface DataTableColumnHeaderProps extends React.ComponentProps<'div'> {
   title: string
+  sortDirection?: 'asc' | 'desc' | false
+  onSort?: () => void
 }
 
-export function DataTableColumnHeader<TData, TValue>({
-  column,
+export function DataTableColumnHeader({
   title,
+  sortDirection,
+  onSort,
   className,
-}: DataTableColumnHeaderProps<TData, TValue>) {
-  if (!column.getCanSort()) {
+}: DataTableColumnHeaderProps) {
+  if (!onSort) {
     return <div className={cn(className)}>{title}</div>
   }
 
@@ -29,12 +29,12 @@ export function DataTableColumnHeader<TData, TValue>({
         variant="ghost"
         size="sm"
         className="-ml-3 h-8"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        onClick={onSort}
       >
         <span>{title}</span>
-        {column.getIsSorted() === 'desc' ? (
+        {sortDirection === 'desc' ? (
           <ArrowDownIcon data-icon="inline-end" />
-        ) : column.getIsSorted() === 'asc' ? (
+        ) : sortDirection === 'asc' ? (
           <ArrowUpIcon data-icon="inline-end" />
         ) : (
           <ArrowUpDownIcon data-icon="inline-end" />
