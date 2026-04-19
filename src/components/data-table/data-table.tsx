@@ -110,6 +110,26 @@ export function DataTable<TData>({
     )
   }
 
+  if (data.length === 0) {
+    return (
+      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
+        <Table className="table-fixed">
+          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+            {headerRow}
+          </TableHeader>
+        </Table>
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          {emptyContent ?? (
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+              <p className="text-sm">No cases found.</p>
+              <p className="text-xs">Try adjusting your search or filters.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       ref={scrollContainerRef}
@@ -120,21 +140,7 @@ export function DataTable<TData>({
           {headerRow}
         </TableHeader>
         <TableBody>
-          {data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-32 text-center">
-                {emptyContent ?? (
-                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                    <p className="text-sm">No cases found.</p>
-                    <p className="text-xs">
-                      Try adjusting your search or filters.
-                    </p>
-                  </div>
-                )}
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((item) => {
+          {data.map((item) => {
               const rowId = getRowId(item)
               const isSelected = selectedIds?.has(rowId) ?? false
               return (
@@ -154,7 +160,7 @@ export function DataTable<TData>({
                 </TableRow>
               )
             })
-          )}
+          }
           {isFetchingMore && (
             <TableRow>
               <TableCell colSpan={columns.length} className="py-4 text-center">

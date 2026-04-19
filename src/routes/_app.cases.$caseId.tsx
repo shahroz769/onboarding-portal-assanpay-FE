@@ -1,21 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { CaseDetailShell } from '#/features/cases/case-detail'
+import { preloadCaseDetailPageQueries } from '#/hooks/use-case-detail-query'
+
 export const Route = createFileRoute('/_app/cases/$caseId')({
   staticData: {
     title: 'Case Details',
-    subtitle: 'View and manage case information.',
+    hidePageShell: true,
   },
+  loader: ({ context, params }) =>
+    preloadCaseDetailPageQueries(context.queryClient, params.caseId),
   component: CaseDetailsRoute,
 })
 
 function CaseDetailsRoute() {
   const { caseId } = Route.useParams()
 
-  return (
-    <div className="flex flex-1 items-center justify-center">
-      <p className="text-muted-foreground">
-        Case details for <span className="font-mono font-medium">{caseId}</span> coming soon.
-      </p>
-    </div>
-  )
+  return <CaseDetailShell caseId={caseId} />
 }

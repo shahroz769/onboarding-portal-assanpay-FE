@@ -7,6 +7,7 @@ export const CASE_STATUSES = [
   'working',
   'pending',
   'qc',
+  'error',
   'closed',
 ] as const
 
@@ -17,6 +18,7 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   working: 'Working',
   pending: 'Pending',
   qc: 'QC',
+  error: 'Error',
   closed: 'Closed',
 }
 
@@ -128,3 +130,136 @@ export const caseFiltersSchema = caseRouteSearchSchema.extend({
 })
 
 export type CaseFilters = z.infer<typeof caseFiltersSchema>
+
+// ─── Stage Category ─────────────────────────────────────────────────────────
+
+export const STAGE_CATEGORIES = ['new', 'in_progress', 'qc', 'error', 'closed'] as const
+export type StageCategory = (typeof STAGE_CATEGORIES)[number]
+
+// ─── Queue Stage ────────────────────────────────────────────────────────────
+
+export const queueStageSchema = z.object({
+  id: z.string(),
+  queueId: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  order: z.number(),
+  category: z.enum(STAGE_CATEGORIES),
+  createdAt: z.string(),
+})
+
+export type QueueStage = z.infer<typeof queueStageSchema>
+
+// ─── Field Review ───────────────────────────────────────────────────────────
+
+export const FIELD_REVIEW_STATUSES = ['pending', 'approved', 'rejected'] as const
+export type FieldReviewStatus = (typeof FIELD_REVIEW_STATUSES)[number]
+
+export const fieldReviewSchema = z.object({
+  id: z.string(),
+  fieldName: z.string(),
+  status: z.enum(FIELD_REVIEW_STATUSES),
+  remarks: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewedByName: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+})
+
+export type FieldReview = z.infer<typeof fieldReviewSchema>
+
+// ─── Case Detail Response ───────────────────────────────────────────────────
+
+export const CLOSE_OUTCOMES = ['successful', 'unsuccessful'] as const
+export type CloseOutcome = (typeof CLOSE_OUTCOMES)[number]
+
+export const caseDetailSchema = z.object({
+  case: z.object({
+    id: z.string(),
+    caseNumber: z.string(),
+    status: z.enum(CASE_STATUSES),
+    priority: z.enum(['normal', 'high']),
+    closeOutcome: z.enum(CLOSE_OUTCOMES).nullable(),
+    closeReason: z.string().nullable(),
+    closedAt: z.string().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }),
+  currentStage: queueStageSchema.nullable(),
+  stages: z.array(queueStageSchema),
+  queue: z.object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    qcEnabled: z.boolean(),
+  }),
+  merchant: z.record(z.unknown()),
+  documents: z.array(z.record(z.unknown())),
+  fieldReviews: z.array(fieldReviewSchema),
+  owner: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
+})
+
+export type CaseDetail = z.infer<typeof caseDetailSchema>
+
+// ─── Case Comment ───────────────────────────────────────────────────────────
+
+export const caseCommentSchema = z.object({
+  id: z.string(),
+  caseId: z.string(),
+  authorId: z.string(),
+  authorName: z.string().nullable(),
+  authorUsername: z.string().nullable(),
+  content: z.string(),
+  parentId: z.string().nullable(),
+  mentions: z.array(z.string()).nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export type CaseComment = z.infer<typeof caseCommentSchema>
+
+// ─── Case History ───────────────────────────────────────────────────────────
+
+export const caseHistorySchema = z.object({
+  id: z.string(),
+  caseId: z.string(),
+  actorId: z.string().nullable(),
+  actorName: z.string().nullable(),
+  action: z.string(),
+  details: z.record(z.unknown()).nullable(),
+  createdAt: z.string(),
+})
+
+export type CaseHistory = z.infer<typeof caseHistorySchema>
+
+// ─── Mutation Inputs ────────────────────────────────────────────────────────
+
+export const saveFieldReviewsInputSchema = z.object({
+  reviews: z.array(
+    z.object({
+      fieldName: z.string().min(1),
+      status: z.enum(FIELD_REVIEW_STATUSES),
+      remarks: z.string().optional(),
+    }),
+  ),
+})
+
+export type SaveFieldReviewsInput = z.infer<typeof saveFieldReviewsInputSchema>
+
+export const closeUnsuccessfulInputSchema = z.object({
+  reason: z.string().min(1, 'Reason is required'),
+})
+
+export type CloseUnsuccessfulInput = z.infer<typeof closeUnsuccessfulInputSchema>
+
+export const createCommentInputSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty'),
+  parentId: z.string().optional(),
+  mentions: z.array(z.string()).optional(),
+})
+
+export type CreateCommentInput = z.infer<typeof createCommentInputSchema>

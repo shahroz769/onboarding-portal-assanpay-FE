@@ -1,10 +1,16 @@
 import { apiClient } from '#/lib/api-client'
 import type {
+  CaseComment,
+  CaseDetail,
   CaseFilters,
+  CaseHistory,
   CaseListResponse,
   CaseOwner,
   CaseStatus,
+  CloseUnsuccessfulInput,
+  CreateCommentInput,
   Queue,
+  SaveFieldReviewsInput,
 } from '#/schemas/cases.schema'
 
 // ─── List Cases ─────────────────────────────────────────────────────────────
@@ -109,5 +115,85 @@ export async function updateCasePriority({
   const response = await apiClient.patch(`/api/cases/${caseId}/priority`, {
     priority,
   })
+  return response.data
+}
+
+// ─── Get Case Detail ────────────────────────────────────────────────────────
+
+export async function fetchCaseDetail(caseId: string): Promise<CaseDetail> {
+  const response = await apiClient.get<CaseDetail>(`/api/cases/${caseId}`)
+  return response.data
+}
+
+// ─── Take Ownership ─────────────────────────────────────────────────────────
+
+export async function takeOwnership(caseId: string) {
+  const response = await apiClient.patch(`/api/cases/${caseId}/take-ownership`)
+  return response.data
+}
+
+// ─── Advance Stage ──────────────────────────────────────────────────────────
+
+export async function advanceStage(caseId: string) {
+  const response = await apiClient.patch(`/api/cases/${caseId}/advance-stage`)
+  return response.data
+}
+
+// ─── Save Field Reviews ─────────────────────────────────────────────────────
+
+export async function saveFieldReviews(
+  caseId: string,
+  input: SaveFieldReviewsInput,
+) {
+  const response = await apiClient.put(
+    `/api/cases/${caseId}/field-reviews`,
+    input,
+  )
+  return response.data
+}
+
+// ─── Close Unsuccessful ─────────────────────────────────────────────────────
+
+export async function closeUnsuccessful(
+  caseId: string,
+  input: CloseUnsuccessfulInput,
+) {
+  const response = await apiClient.patch(
+    `/api/cases/${caseId}/close-unsuccessful`,
+    input,
+  )
+  return response.data
+}
+
+// ─── Case Comments ──────────────────────────────────────────────────────────
+
+export async function fetchCaseComments(
+  caseId: string,
+): Promise<CaseComment[]> {
+  const response = await apiClient.get<CaseComment[]>(
+    `/api/cases/${caseId}/comments`,
+  )
+  return response.data
+}
+
+export async function createCaseComment(
+  caseId: string,
+  input: CreateCommentInput,
+) {
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/comments`,
+    input,
+  )
+  return response.data
+}
+
+// ─── Case History ───────────────────────────────────────────────────────────
+
+export async function fetchCaseHistory(
+  caseId: string,
+): Promise<CaseHistory[]> {
+  const response = await apiClient.get<CaseHistory[]>(
+    `/api/cases/${caseId}/history`,
+  )
   return response.data
 }

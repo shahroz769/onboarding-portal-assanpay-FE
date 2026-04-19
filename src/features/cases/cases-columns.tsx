@@ -23,6 +23,8 @@ function getStatusBadgeClasses(status: string): string {
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
     case 'qc':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+    case 'error':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     case 'closed':
       return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
     default:
@@ -48,8 +50,8 @@ function OwnerCell({
   return (
     <Button
       type="button"
-      variant="link"
-      className="h-auto justify-start px-0 text-sm"
+      variant="ghost"
+      className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
       onClick={canEdit ? () => onOpenAssignOwner(item) : undefined}
       disabled={!canEdit}
     >
