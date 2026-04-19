@@ -77,7 +77,10 @@ export function DataTable<TData>({
   const headerRow = (
     <TableRow>
       {columns.map((col) => (
-        <TableHead key={col.id} style={col.width ? { width: col.width } : undefined}>
+        <TableHead
+          key={col.id}
+          style={col.width ? { width: col.width } : undefined}
+        >
           {col.header}
         </TableHead>
       ))}
@@ -95,8 +98,8 @@ export function DataTable<TData>({
         <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/20">
           <div className="flex flex-col items-center gap-3 text-center">
             <Spinner className="size-7 text-muted-foreground" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Loading merchants</p>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">Loading cases</p>
               <p className="text-xs text-muted-foreground">
                 Fetching the latest onboarding records...
               </p>
@@ -122,8 +125,10 @@ export function DataTable<TData>({
               <TableCell colSpan={columns.length} className="h-32 text-center">
                 {emptyContent ?? (
                   <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                    <p className="text-sm">No results found.</p>
-                    <p className="text-xs">Try adjusting your search or filters.</p>
+                    <p className="text-sm">No cases found.</p>
+                    <p className="text-xs">
+                      Try adjusting your search or filters.
+                    </p>
                   </div>
                 )}
               </TableCell>
@@ -137,12 +142,12 @@ export function DataTable<TData>({
                   key={rowId}
                   data-state={isSelected ? 'selected' : undefined}
                   className={cn(
-                    'h-[49px] content-visibility-auto contain-intrinsic-size-auto-48px',
+                    'h-12 content-visibility-auto contain-intrinsic-size-auto-48px',
                     isSelected && 'bg-muted/50',
                   )}
                 >
                   {columns.map((col) => (
-                    <TableCell key={col.id}>
+                    <TableCell key={col.id} className="h-12 py-0">
                       {col.cell(item)}
                     </TableCell>
                   ))}

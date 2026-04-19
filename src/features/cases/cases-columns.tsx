@@ -1,16 +1,15 @@
-import { useState } from 'react'
 import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
-import type { CaseListItem } from '#/schemas/cases.schema'
+import { cn } from '#/lib/utils'
+import type { CaseListItem, CaseSortableColumn } from '#/schemas/cases.schema'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import type { RoleType } from '#/types/auth'
-import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
-import { CasePriorityDialog } from './case-priority-dialog'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -37,63 +36,56 @@ function formatDate(dateStr: string | null): string {
   return format(date, 'MMM dd, yyyy h:mm a')
 }
 
-function OwnerCell({ item }: { item: CaseListItem }) {
-  const [open, setOpen] = useState(false)
-
+function OwnerCell({
+  item,
+  canEdit,
+  onOpenAssignOwner,
+}: {
+  item: CaseListItem
+  canEdit: boolean
+  onOpenAssignOwner: (item: CaseListItem) => void
+}) {
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="cursor-pointer text-sm hover:underline hover:decoration-dashed hover:underline-offset-4"
-      >
-        {item.ownerName ?? 'AP System'}
-      </button>
-      <CaseAssignOwnerDialog
-        open={open}
-        onOpenChange={setOpen}
-        caseId={item.id}
-        caseNumber={item.caseNumber}
-        currentOwnerId={item.ownerId}
-        currentOwnerName={item.ownerName}
-      />
-    </>
+    <Button
+      type="button"
+      variant="link"
+      className="h-auto justify-start px-0 text-sm"
+      onClick={canEdit ? () => onOpenAssignOwner(item) : undefined}
+      disabled={!canEdit}
+    >
+      {item.ownerName ?? 'AP System'}
+    </Button>
   )
 }
 
 function PriorityCell({
   item,
   canEdit,
+  onOpenPriority,
 }: {
   item: CaseListItem
   canEdit: boolean
+  onOpenPriority: (item: CaseListItem) => void
 }) {
-  const [open, setOpen] = useState(false)
+  const className = cn(
+    item.priority === 'high' && 'bg-amber-100 text-amber-800',
+    canEdit && 'cursor-pointer transition-colors',
+  )
 
-  return (
-    <>
-      <Badge
-        variant="secondary"
-        className={[
-          item.priority === 'high'
-            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-            : '',
-          canEdit ? 'cursor-pointer transition-colors' : '',
-        ]
-          .filter(Boolean)
-          .join(' ') || undefined}
-        onClick={canEdit ? () => setOpen(true) : undefined}
-      >
+  if (!canEdit) {
+    return (
+      <Badge variant="secondary" className={className}>
         {item.priority === 'high' ? 'High' : 'Normal'}
       </Badge>
-      {canEdit && (
-        <CasePriorityDialog
-          open={open}
-          onOpenChange={setOpen}
-          caseItem={item}
-        />
-      )}
-    </>
+    )
+  }
+
+  return (
+    <Badge asChild variant="secondary" className={className}>
+      <button type="button" onClick={() => onOpenPriority(item)}>
+        {item.priority === 'high' ? 'High' : 'Normal'}
+      </button>
+    </Badge>
   )
 }
 
@@ -103,11 +95,13 @@ interface CreateColumnsOptions {
   userRole: RoleType
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
-  onSort: (columnId: string) => void
+  onSort: (columnId: CaseSortableColumn) => void
   selectedIds: Set<string>
   allIds: string[]
   onSelectRow: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
+  onOpenAssignOwner: (item: CaseListItem) => void
+  onOpenPriority: (item: CaseListItem) => void
 }
 
 function getSortDirection(
@@ -128,9 +122,13 @@ export function createCaseColumns({
   allIds,
   onSelectRow,
   onSelectAll,
+  onOpenAssignOwner,
+  onOpenPriority,
 }: CreateColumnsOptions): DataTableColumnDef<CaseListItem>[] {
-  const isAllSelected = allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
-  const isSomeSelected = !isAllSelected && allIds.some((id) => selectedIds.has(id))
+  const isAllSelected =
+    allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
+  const isSomeSelected =
+    !isAllSelected && allIds.some((id) => selectedIds.has(id))
   const canEdit = userRole === 'admin' || userRole === 'supervisor'
 
   return [
@@ -198,9 +196,7 @@ export function createCaseColumns({
     {
       id: 'queueName',
       header: 'Queue',
-      cell: (item) => (
-        <Badge variant="secondary">{item.queueName}</Badge>
-      ),
+      cell: (item) => <Badge variant="secondary">{item.queueName}</Badge>,
       width: 130,
     },
 
@@ -226,7 +222,13 @@ export function createCaseColumns({
     {
       id: 'priority',
       header: 'Priority',
-      cell: (item) => <PriorityCell item={item} canEdit={canEdit} />,
+      cell: (item) => (
+        <PriorityCell
+          item={item}
+          canEdit={canEdit}
+          onOpenPriority={onOpenPriority}
+        />
+      ),
       width: 100,
     },
 
@@ -234,7 +236,13 @@ export function createCaseColumns({
     {
       id: 'ownerName',
       header: 'Case Owner',
-      cell: (item) => <OwnerCell item={item} />,
+      cell: (item) => (
+        <OwnerCell
+          item={item}
+          canEdit={canEdit}
+          onOpenAssignOwner={onOpenAssignOwner}
+        />
+      ),
       width: 150,
     },
 

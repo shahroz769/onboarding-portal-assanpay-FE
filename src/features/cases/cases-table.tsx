@@ -19,10 +19,9 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import {
-  CASE_STATUSES,
-  CASE_STATUS_LABELS,
-} from '#/schemas/cases.schema'
+import { CASE_STATUSES, CASE_STATUS_LABELS } from '#/schemas/cases.schema'
+import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
+import { CasePriorityDialog } from './case-priority-dialog'
 import {
   CasesTableProvider,
   useCasesTableActions,
@@ -169,7 +168,9 @@ function BulkActions() {
             variant="outline"
             size="sm"
             onClick={actions.submitBulkAssign}
-            disabled={state.isBulkAssignPending}
+            disabled={
+              state.isBulkAssignPending || state.selectedIds.length === 0
+            }
           >
             <UserIcon data-icon="inline-start" />
             Assign Owner
@@ -201,6 +202,41 @@ function Grid() {
   )
 }
 
+function Dialogs() {
+  const state = useCasesTableState()
+  const actions = useCasesTableActions()
+
+  return (
+    <>
+      {state.assignOwnerCase && (
+        <CaseAssignOwnerDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              actions.closeAssignOwnerDialog()
+            }
+          }}
+          caseId={state.assignOwnerCase.id}
+          caseNumber={state.assignOwnerCase.caseNumber}
+          currentOwnerId={state.assignOwnerCase.ownerId}
+          currentOwnerName={state.assignOwnerCase.ownerName}
+        />
+      )}
+      {state.priorityCase && (
+        <CasePriorityDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              actions.closePriorityDialog()
+            }
+          }}
+          caseItem={state.priorityCase}
+        />
+      )}
+    </>
+  )
+}
+
 // ─── Compound Component ─────────────────────────────────────────────────────
 
 export const CasesTable = {
@@ -209,6 +245,7 @@ export const CasesTable = {
   Toolbar,
   BulkActions,
   Grid,
+  Dialogs,
 }
 
 // ─── Default Composed Layout ────────────────────────────────────────────────
@@ -228,6 +265,7 @@ export function CasesTableComposed() {
           <div className="min-h-0 flex-1">
             <CasesTable.Grid />
           </div>
+          <CasesTable.Dialogs />
         </div>
       </TooltipProvider>
     </CasesTable.Provider>

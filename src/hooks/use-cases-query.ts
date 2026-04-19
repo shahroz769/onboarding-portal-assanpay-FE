@@ -6,7 +6,13 @@ import {
 } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { bulkAssignCases, assignCase, fetchCases, fetchQueues, updateCasePriority } from '#/apis/cases'
+import {
+  bulkAssignCases,
+  assignCase,
+  fetchCases,
+  fetchQueues,
+  updateCasePriority,
+} from '#/apis/cases'
 import { fetchUsers } from '#/apis/users'
 import type { CaseFilters } from '#/schemas/cases.schema'
 
@@ -60,9 +66,9 @@ export function useBulkAssignCasesMutation() {
   return useMutation({
     mutationFn: ({ ids, ownerId }: { ids: string[]; ownerId: string | null }) =>
       bulkAssignCases(ids, ownerId),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Cases assigned successfully.')
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: () => {
       toast.error('Failed to assign cases.')
@@ -74,11 +80,16 @@ export function useAssignCaseMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ caseId, ownerId }: { caseId: string; ownerId: string | null }) =>
-      assignCase({ caseId, ownerId }),
-    onSuccess: () => {
+    mutationFn: ({
+      caseId,
+      ownerId,
+    }: {
+      caseId: string
+      ownerId: string | null
+    }) => assignCase({ caseId, ownerId }),
+    onSuccess: async () => {
       toast.success('Case owner updated.')
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: () => {
       toast.error('Failed to assign case owner.')
@@ -90,11 +101,16 @@ export function useUpdateCasePriorityMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ caseId, priority }: { caseId: string; priority: 'normal' | 'high' }) =>
-      updateCasePriority({ caseId, priority }),
-    onSuccess: () => {
+    mutationFn: ({
+      caseId,
+      priority,
+    }: {
+      caseId: string
+      priority: 'normal' | 'high'
+    }) => updateCasePriority({ caseId, priority }),
+    onSuccess: async () => {
       toast.success('Case priority updated.')
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: () => {
       toast.error('Failed to update case priority.')

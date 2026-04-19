@@ -1,11 +1,17 @@
 import {
   createContext,
+  useEffect,
   use,
   useCallback,
   useMemo,
+  useRef,
   useState,
 } from 'react'
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '#/features/auth/auth-client'
@@ -20,6 +26,7 @@ import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
   CaseListItem,
   CaseRouteSearch,
+  CaseSortableColumn,
   Queue,
 } from '#/schemas/cases.schema'
 import type { RoleType, User } from '#/types/auth'
@@ -41,6 +48,8 @@ interface CasesTableState {
   users: User[]
   bulkAssignOwnerId: string | null
   isBulkAssignPending: boolean
+  assignOwnerCase: CaseListItem | null
+  priorityCase: CaseListItem | null
 }
 
 interface CasesTableActions {
@@ -48,6 +57,10 @@ interface CasesTableActions {
   fetchNextPage: () => void
   setBulkAssignOwnerId: (value: string | null) => void
   submitBulkAssign: () => void
+  openAssignOwnerDialog: (item: CaseListItem) => void
+  closeAssignOwnerDialog: () => void
+  openPriorityDialog: (item: CaseListItem) => void
+  closePriorityDialog: () => void
 }
 
 interface CasesTableMeta {
@@ -65,9 +78,7 @@ function useRequiredContext<T>(context: React.Context<T | null>) {
   const value = use(context)
 
   if (!value) {
-    throw new Error(
-      'useCasesTable must be used within CasesTable.Provider',
-    )
+    throw new Error('useCasesTable must be used within CasesTable.Provider')
   }
 
   return value
@@ -145,7 +156,7 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
   const { filters, setFilter, setFilters } = useCaseFilters()
 
   const handleSort = useCallback(
-    (columnId: string) => {
+    (columnId: CaseSortableColumn) => {
       const isSameColumn = filters.sortBy === columnId
       const nextOrder =
         isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
@@ -160,19 +171,25 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
   )
 
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
-  const [bulkAssignOwnerId, setBulkAssignOwnerId] = useState<string | null>(null)
-
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery(casesInfiniteQueryOptions(filters))
-
-  const { data: queues = [], isLoading: isQueuesLoading } = useQuery(
-    queuesQueryOptions(),
+  const [bulkAssignOwnerId, setBulkAssignOwnerId] = useState<string | null>(
+    null,
   )
+  const [assignOwnerCase, setAssignOwnerCase] = useState<CaseListItem | null>(
+    null,
+  )
+  const [priorityCase, setPriorityCase] = useState<CaseListItem | null>(null)
+
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery(
+      casesInfiniteQueryOptions({
+        ...filters,
+        createdAtFrom: undefined,
+        createdAtTo: undefined,
+      }),
+    )
+
+  const { data: queues = [], isLoading: isQueuesLoading } =
+    useQuery(queuesQueryOptions())
 
   const { data: caseUsers = [] } = useQuery(usersQueryOptions())
 
@@ -183,10 +200,58 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
     [data],
   )
   const totalCount = data?.pages[0]?.totalCount ?? 0
-  const allIds = useMemo(
-    () => flatData.map((c) => c.id),
-    [flatData],
+  const allIds = useMemo(() => flatData.map((c) => c.id), [flatData])
+  const filtersKey = useMemo(
+    () =>
+      JSON.stringify({
+        search: filters.search,
+        queueId: filters.queueId,
+        ownerId: filters.ownerId,
+        status: filters.status,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+      }),
+    [
+      filters.ownerId,
+      filters.queueId,
+      filters.search,
+      filters.sortBy,
+      filters.sortOrder,
+      filters.status,
+    ],
   )
+  const previousFiltersKeyRef = useRef(filtersKey)
+
+  useEffect(() => {
+    if (previousFiltersKeyRef.current === filtersKey) {
+      return
+    }
+
+    previousFiltersKeyRef.current = filtersKey
+    setSelectedIdSet(new Set())
+    setBulkAssignOwnerId(null)
+  }, [filtersKey])
+
+  useEffect(() => {
+    setSelectedIdSet((prev) => {
+      if (prev.size === 0) {
+        return prev
+      }
+
+      const visibleIds = new Set(allIds)
+      const next = new Set(Array.from(prev).filter((id) => visibleIds.has(id)))
+
+      if (next.size === prev.size) {
+        return prev
+      }
+
+      if (next.size === 0) {
+        setBulkAssignOwnerId(null)
+      }
+
+      return next
+    })
+  }, [allIds])
 
   const handleSelectRow = useCallback((id: string, selected: boolean) => {
     setSelectedIdSet((prev) => {
@@ -222,6 +287,8 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
         allIds,
         onSelectRow: handleSelectRow,
         onSelectAll: handleSelectAll,
+        onOpenAssignOwner: setAssignOwnerCase,
+        onOpenPriority: setPriorityCase,
       }),
     [
       userRole,
@@ -231,6 +298,8 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       handleSelectAll,
       handleSelectRow,
       handleSort,
+      setAssignOwnerCase,
+      setPriorityCase,
       selectedIdSet,
     ],
   )
@@ -248,9 +317,18 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
   )
 
   const submitBulkAssign = useCallback(() => {
+    if (selectedIds.length === 0) {
+      return
+    }
+
     bulkAssign.mutate(
       { ids: selectedIds, ownerId: bulkAssignOwnerId },
-      { onSuccess: () => setSelectedIdSet(new Set()) },
+      {
+        onSuccess: () => {
+          setSelectedIdSet(new Set())
+          setBulkAssignOwnerId(null)
+        },
+      },
     )
   }, [bulkAssign, bulkAssignOwnerId, selectedIds])
 
@@ -275,8 +353,11 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       users: caseUsers,
       bulkAssignOwnerId,
       isBulkAssignPending: bulkAssign.isPending,
+      assignOwnerCase,
+      priorityCase,
     }),
     [
+      assignOwnerCase,
       bulkAssign.isPending,
       bulkAssignOwnerId,
       caseUsers,
@@ -286,6 +367,7 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       isFetchingNextPage,
       isLoading,
       isQueuesLoading,
+      priorityCase,
       queues,
       selectedIds,
       totalCount,
@@ -299,6 +381,10 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       fetchNextPage: handleFetchNextPage,
       setBulkAssignOwnerId,
       submitBulkAssign,
+      openAssignOwnerDialog: setAssignOwnerCase,
+      closeAssignOwnerDialog: () => setAssignOwnerCase(null),
+      openPriorityDialog: setPriorityCase,
+      closePriorityDialog: () => setPriorityCase(null),
     }),
     [handleFetchNextPage, setFilter, submitBulkAssign],
   )
