@@ -137,7 +137,7 @@ export function DataTable<TData>({
                   key={rowId}
                   data-state={isSelected ? 'selected' : undefined}
                   className={cn(
-                    'content-visibility-auto contain-intrinsic-size-auto-48px',
+                    'h-[49px] content-visibility-auto contain-intrinsic-size-auto-48px',
                     isSelected && 'bg-muted/50',
                   )}
                 >

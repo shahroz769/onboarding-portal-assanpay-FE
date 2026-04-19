@@ -23,12 +23,6 @@ import type { RoleType } from '#/types/auth'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getDaysCount(createdAt: string, liveAt: string | null): number {
-  const start = new Date(createdAt).getTime()
-  const end = liveAt ? new Date(liveAt).getTime() : Date.now()
-  return Math.max(0, Math.floor((end - start) / 86_400_000))
-}
-
 function getStatusBadgeClasses(status: string): string {
   switch (status) {
     case 'Completed':
@@ -143,6 +137,36 @@ export function createMerchantColumns({
       width: 200,
     },
 
+    // Business Scope
+    {
+      id: 'businessScope',
+      header: (
+        <DataTableColumnHeader
+          title="Business Scope"
+          sortDirection={getSortDirection('businessScope', sortBy, sortOrder)}
+          onSort={() => onSort('businessScope')}
+        />
+      ),
+      cell: (merchant) => (
+        <span className="text-sm text-muted-foreground">
+          {BUSINESS_SCOPE_LABELS[merchant.businessScope]}
+        </span>
+      ),
+      width: 130,
+    },
+
+    // Currency
+    {
+      id: 'currency',
+      header: 'Currency',
+      cell: (merchant) => (
+        <span className="text-sm text-muted-foreground">
+          {merchant.currency}
+        </span>
+      ),
+      width: 80,
+    },
+
     // Onboarding Stage
     {
       id: 'onboardingStage',
@@ -196,7 +220,14 @@ export function createMerchantColumns({
         const priorityBadge = (
           <Badge
             variant="secondary"
-            className="cursor-pointer transition-colors"
+            className={[
+              merchant.priority === 'high'
+                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                : '',
+              canEdit ? 'cursor-pointer transition-colors' : '',
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined}
             onClick={canEdit ? () => onPriorityClick(merchant) : undefined}
           >
             {PRIORITY_LABELS[merchant.priority]}
@@ -238,57 +269,6 @@ export function createMerchantColumns({
         )
       },
       width: 180,
-    },
-
-    // Currency
-    {
-      id: 'currency',
-      header: 'Currency',
-      cell: (merchant) => (
-        <span className="text-sm text-muted-foreground">
-          {merchant.currency}
-        </span>
-      ),
-      width: 80,
-    },
-
-    // Business Scope
-    {
-      id: 'businessScope',
-      header: (
-        <DataTableColumnHeader
-          title="Business Scope"
-          sortDirection={getSortDirection('businessScope', sortBy, sortOrder)}
-          onSort={() => onSort('businessScope')}
-        />
-      ),
-      cell: (merchant) => (
-        <span className="text-sm text-muted-foreground">
-          {BUSINESS_SCOPE_LABELS[merchant.businessScope]}
-        </span>
-      ),
-      width: 130,
-    },
-
-    // Days
-    {
-      id: 'days',
-      header: 'Days',
-      cell: (merchant) => {
-        const days = getDaysCount(merchant.createdAt, merchant.liveAt)
-        const isLive = merchant.liveAt !== null
-        return (
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-sm tabular-nums">{days}</span>
-            {isLive && (
-              <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                Final
-              </Badge>
-            )}
-          </div>
-        )
-      },
-      width: 90,
     },
 
     // Actions

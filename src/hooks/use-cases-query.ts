@@ -1,0 +1,103 @@
+import {
+  infiniteQueryOptions,
+  queryOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { toast } from 'sonner'
+
+import { bulkAssignCases, assignCase, fetchCases, fetchQueues, updateCasePriority } from '#/apis/cases'
+import { fetchUsers } from '#/apis/users'
+import type { CaseFilters } from '#/schemas/cases.schema'
+
+export const CASES_KEY = ['cases'] as const
+export const CASES_PAGE_SIZE = 30
+
+export const QUEUES_KEY = ['queues'] as const
+export const USERS_KEY = ['users'] as const
+
+/** Build a stable infinite-query key from filters (excludes page/perPage). */
+export function casesInfiniteKey(filters: CaseFilters) {
+  const { page: _p, perPage: _pp, ...rest } = filters
+  return [...CASES_KEY, rest] as const
+}
+
+export function casesInfiniteQueryOptions(filters: CaseFilters) {
+  return infiniteQueryOptions({
+    queryKey: casesInfiniteKey(filters),
+    queryFn: ({ pageParam }) =>
+      fetchCases({
+        ...filters,
+        page: pageParam,
+        perPage: CASES_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    staleTime: 30_000,
+  })
+}
+
+export function queuesQueryOptions() {
+  return queryOptions({
+    queryKey: [...QUEUES_KEY],
+    queryFn: fetchQueues,
+    staleTime: 5 * 60_000, // 5 minutes — queues rarely change
+  })
+}
+
+export function usersQueryOptions() {
+  return queryOptions({
+    queryKey: [...USERS_KEY],
+    queryFn: fetchUsers,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useBulkAssignCasesMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ ids, ownerId }: { ids: string[]; ownerId: string | null }) =>
+      bulkAssignCases(ids, ownerId),
+    onSuccess: () => {
+      toast.success('Cases assigned successfully.')
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: () => {
+      toast.error('Failed to assign cases.')
+    },
+  })
+}
+
+export function useAssignCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, ownerId }: { caseId: string; ownerId: string | null }) =>
+      assignCase({ caseId, ownerId }),
+    onSuccess: () => {
+      toast.success('Case owner updated.')
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: () => {
+      toast.error('Failed to assign case owner.')
+    },
+  })
+}
+
+export function useUpdateCasePriorityMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, priority }: { caseId: string; priority: 'normal' | 'high' }) =>
+      updateCasePriority({ caseId, priority }),
+    onSuccess: () => {
+      toast.success('Case priority updated.')
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: () => {
+      toast.error('Failed to update case priority.')
+    },
+  })
+}

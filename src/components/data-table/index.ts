@@ -1,6 +1,7 @@
 export { DataTable } from './data-table'
 export type { DataTableColumnDef } from './data-table'
 export { DataTableColumnHeader } from './data-table-column-header'
+export { DataTableComboboxFilter } from './data-table-combobox-filter'
 export { DataTableFilter } from './data-table-filter'
 export { DataTablePagination } from './data-table-pagination'
 export { DataTableSearch } from './data-table-search'

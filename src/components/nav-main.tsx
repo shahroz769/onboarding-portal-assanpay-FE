@@ -39,7 +39,9 @@ function NavItem({
     'min-w-0 flex-1 truncate transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0'
 
   useEffect(() => {
-    setOpen(shouldBeOpen)
+    if (shouldBeOpen) {
+      setOpen(true)
+    }
   }, [shouldBeOpen])
 
   if (!item.items?.length) {

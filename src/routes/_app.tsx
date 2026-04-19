@@ -68,11 +68,14 @@ function AppLayout() {
 
         <div className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
           <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-background p-6 shadow-sm">
-            <div className="mb-6 shrink-0">
-              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-              {subtitle && (
-                <p className="text-muted-foreground">{subtitle}</p>
-              )}
+            <div className="mb-6 flex shrink-0 items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                {subtitle && (
+                  <p className="text-muted-foreground">{subtitle}</p>
+                )}
+              </div>
+              <div id="page-header-actions" />
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
               <Outlet />

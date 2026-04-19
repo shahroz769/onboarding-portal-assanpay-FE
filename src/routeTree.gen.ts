@@ -27,6 +27,7 @@ import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.mercha
 import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
 import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
+import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
 const OnboardingFormRoute = OnboardingFormRouteImport.update({
   id: '/onboarding-form',
@@ -120,6 +121,11 @@ const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
   path: '/all-cases',
   getParentRoute: () => AppCasesRoute,
 } as any)
+const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => AppCasesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/cases': typeof AppCasesRouteWithChildren
   '/merchants': typeof AppMerchantsRouteWithChildren
   '/user-management': typeof AppUserManagementRouteWithChildren
+  '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/onboarding-form': typeof OnboardingFormRoute
   '/': typeof AppIndexRoute
+  '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/_app/merchants': typeof AppMerchantsRouteWithChildren
   '/_app/user-management': typeof AppUserManagementRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
   '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/cases'
     | '/merchants'
     | '/user-management'
+    | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/onboarding-form'
     | '/'
+    | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/_app/merchants'
     | '/_app/user-management'
     | '/_app/'
+    | '/_app/cases/$caseId'
     | '/_app/cases/all-cases'
     | '/_app/cases/my-closed-cases'
     | '/_app/cases/my-open-cases'
@@ -370,10 +382,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesAllCasesRouteImport
       parentRoute: typeof AppCasesRoute
     }
+    '/_app/cases/$caseId': {
+      id: '/_app/cases/$caseId'
+      path: '/$caseId'
+      fullPath: '/cases/$caseId'
+      preLoaderRoute: typeof AppCasesCaseIdRouteImport
+      parentRoute: typeof AppCasesRoute
+    }
   }
 }
 
 interface AppCasesRouteChildren {
+  AppCasesCaseIdRoute: typeof AppCasesCaseIdRoute
   AppCasesAllCasesRoute: typeof AppCasesAllCasesRoute
   AppCasesMyClosedCasesRoute: typeof AppCasesMyClosedCasesRoute
   AppCasesMyOpenCasesRoute: typeof AppCasesMyOpenCasesRoute
@@ -381,6 +401,7 @@ interface AppCasesRouteChildren {
 }
 
 const AppCasesRouteChildren: AppCasesRouteChildren = {
+  AppCasesCaseIdRoute: AppCasesCaseIdRoute,
   AppCasesAllCasesRoute: AppCasesAllCasesRoute,
   AppCasesMyClosedCasesRoute: AppCasesMyClosedCasesRoute,
   AppCasesMyOpenCasesRoute: AppCasesMyOpenCasesRoute,

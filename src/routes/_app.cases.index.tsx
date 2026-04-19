@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/cases/')({
   staticData: {
@@ -8,5 +8,5 @@ export const Route = createFileRoute('/_app/cases/')({
 })
 
 function RouteComponent() {
-  return null
+  return <Navigate to="/cases/all-cases" replace />
 }
