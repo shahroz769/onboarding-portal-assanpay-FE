@@ -1,4 +1,5 @@
 export { CaseDetailShell } from './case-detail-shell'
+export { CaseDetailShellSkeleton } from './case-detail-shell'
 export { StageProgressBar } from './stage-progress-bar'
 export { CaseActions } from './case-actions'
 export { CaseChatter } from './case-chatter'

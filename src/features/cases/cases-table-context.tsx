@@ -46,6 +46,7 @@ interface CasesTableState {
   queues: Queue[]
   isQueuesLoading: boolean
   users: User[]
+  isUsersLoading: boolean
   bulkAssignOwnerId: string | null
   isBulkAssignPending: boolean
   assignOwnerCase: CaseListItem | null
@@ -191,7 +192,8 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
   const { data: queues = [], isLoading: isQueuesLoading } =
     useQuery(queuesQueryOptions())
 
-  const { data: caseUsers = [] } = useQuery(usersQueryOptions())
+  const { data: caseUsers = [], isLoading: isUsersLoading } =
+    useQuery(usersQueryOptions())
 
   const bulkAssign = useBulkAssignCasesMutation()
 
@@ -351,6 +353,7 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       queues,
       isQueuesLoading,
       users: caseUsers,
+      isUsersLoading,
       bulkAssignOwnerId,
       isBulkAssignPending: bulkAssign.isPending,
       assignOwnerCase,
@@ -367,6 +370,7 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       isFetchingNextPage,
       isLoading,
       isQueuesLoading,
+      isUsersLoading,
       priorityCase,
       queues,
       selectedIds,

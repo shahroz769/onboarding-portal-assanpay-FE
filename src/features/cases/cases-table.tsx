@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { UserIcon } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
+import { Skeleton } from '#/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -48,7 +49,9 @@ function QueueSelector() {
     setPortalTarget(document.getElementById('page-header-actions'))
   }, [])
 
-  const content = (
+  const content = state.isQueuesLoading ? (
+    <Skeleton className="h-9 w-50" />
+  ) : (
     <Select
       value={filters.queueId ?? 'all'}
       onValueChange={(v) =>
@@ -104,14 +107,18 @@ function Toolbar() {
             actions.setFilter('status', meta.setToCommaString(set))
           }
         />
-        <DataTableFilter
-          title="Case Owner"
-          options={ownerFilterOptions}
-          selectedValues={meta.commaToSet(filters.ownerId)}
-          onChange={(set) =>
-            actions.setFilter('ownerId', meta.setToCommaString(set))
-          }
-        />
+        {state.isUsersLoading ? (
+          <Skeleton className="h-9 w-32" />
+        ) : (
+          <DataTableFilter
+            title="Case Owner"
+            options={ownerFilterOptions}
+            selectedValues={meta.commaToSet(filters.ownerId)}
+            onChange={(set) =>
+              actions.setFilter('ownerId', meta.setToCommaString(set))
+            }
+          />
+        )}
       </DataTableToolbar.Filters>
       <DataTableToolbar.Actions>
         {selectedIds.length > 0 && (
@@ -144,26 +151,30 @@ function BulkActions() {
     >
       {canAssign && (
         <div className="flex items-center gap-2">
-          <Select
-            value={state.bulkAssignOwnerId ?? 'unassigned'}
-            onValueChange={(v) =>
-              actions.setBulkAssignOwnerId(v === 'unassigned' ? null : v)
-            }
-          >
-            <SelectTrigger size="sm">
-              <SelectValue placeholder="Select owner" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
-                {state.users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {state.isUsersLoading ? (
+            <Skeleton className="h-8 w-40" />
+          ) : (
+            <Select
+              value={state.bulkAssignOwnerId ?? 'unassigned'}
+              onValueChange={(v) =>
+                actions.setBulkAssignOwnerId(v === 'unassigned' ? null : v)
+              }
+            >
+              <SelectTrigger size="sm">
+                <SelectValue placeholder="Select owner" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {state.users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
           <Button
             variant="outline"
             size="sm"

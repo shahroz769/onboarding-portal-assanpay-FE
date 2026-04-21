@@ -89,6 +89,58 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
   return pageContent
 }
 
+export function CaseDetailShellSkeleton() {
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="gap-4 py-4">
+            <CardContent className="grid gap-3 px-4 py-0 md:grid-cols-3">
+              <div className="rounded-lg bg-muted p-2 md:col-span-3">
+                <div className="grid grid-cols-6 gap-2">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <Skeleton key={index} className="h-9 w-full rounded-md" />
+                  ))}
+                </div>
+              </div>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col gap-1 rounded-xl border bg-muted/20 px-3 py-2.5"
+                >
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-72" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-0 xl:self-start">
+          <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CaseStagesBlock({
   currentStatus,
 }: {
