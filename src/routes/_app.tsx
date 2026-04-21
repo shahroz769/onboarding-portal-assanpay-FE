@@ -6,6 +6,10 @@ import {
 } from '@tanstack/react-router'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
+import {
+  NotificationBell,
+  NotificationsProvider,
+} from '#/features/notifications'
 import { requireAuthSession } from '#/features/auth/route-guards'
 import {
   Breadcrumb,
@@ -62,6 +66,7 @@ function AppLayout() {
 
   return (
     <SidebarProvider>
+      <NotificationsProvider />
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden bg-muted/30">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
@@ -101,7 +106,8 @@ function AppLayout() {
               )}
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
             <ThemeToggle />
           </div>
         </header>
