@@ -40,13 +40,22 @@ const THEME_OPTIONS: Array<{
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme()
+  const [selectedValue, setSelectedValue] = React.useState<ThemeMode>(
+    (theme as ThemeMode | undefined) ?? "system",
+  )
+
+  React.useEffect(() => {
+    setSelectedValue((theme as ThemeMode | undefined) ?? "system")
+  }, [theme])
 
   const selectedTheme =
-    THEME_OPTIONS.find((option) => option.value === theme) ??
+    THEME_OPTIONS.find((option) => option.value === selectedValue) ??
     THEME_OPTIONS[0]
   const SelectedIcon = selectedTheme.icon
 
   const updateTheme = (nextTheme: ThemeMode) => {
+    setSelectedValue(nextTheme)
+
     const apply = () => setTheme(nextTheme)
 
     if (document.startViewTransition) {
@@ -71,7 +80,7 @@ export function ThemeToggle() {
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuGroup>
           <DropdownMenuRadioGroup
-            value={theme ?? "system"}
+            value={selectedValue}
             onValueChange={(value) => updateTheme(value as ThemeMode)}
           >
             {THEME_OPTIONS.map((option) => {
