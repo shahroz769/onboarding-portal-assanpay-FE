@@ -153,6 +153,10 @@ body,
 }
 
 /* Performance: content-visibility for table rows */
+@utility view-transition-none {
+  view-transition-name: none;
+}
+
 @utility content-visibility-auto {
   content-visibility: auto;
 }

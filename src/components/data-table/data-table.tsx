@@ -89,7 +89,7 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
+      <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
         <Table className="table-fixed">
           <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
             {headerRow}
@@ -112,7 +112,7 @@ export function DataTable<TData>({
 
   if (data.length === 0) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
+      <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
         <Table className="table-fixed">
           <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
             {headerRow}
@@ -133,7 +133,7 @@ export function DataTable<TData>({
   return (
     <div
       ref={scrollContainerRef}
-      className="h-full overflow-auto rounded-md border will-change-transform"
+      className="view-transition-none h-full overflow-auto rounded-md border will-change-transform"
     >
       <Table className="table-fixed">
         <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
