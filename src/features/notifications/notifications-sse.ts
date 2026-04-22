@@ -21,11 +21,12 @@ interface SubscribeOptions {
 export function createNotificationsSseClient(options: SubscribeOptions) {
   let abortController: AbortController | null = null
   let stopped = false
+  let paused = false
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let attempts = 0
 
   function scheduleReconnect() {
-    if (stopped) return
+    if (stopped || paused) return
     const delay = Math.min(30_000, 1000 * Math.pow(2, attempts))
     attempts += 1
     if (reconnectTimer) clearTimeout(reconnectTimer)
@@ -34,14 +35,25 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     }, delay)
   }
 
+  function isExpectedDisconnect(
+    err: unknown,
+    controller: AbortController,
+  ): boolean {
+    if (stopped || paused || controller.signal.aborted) return true
+    return err instanceof DOMException && err.name === 'AbortError'
+  }
+
   async function connect(): Promise<void> {
     if (stopped) return
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      paused = true
       return
     }
 
+    paused = false
     abortController?.abort()
-    abortController = new AbortController()
+    const controller = new AbortController()
+    abortController = controller
 
     let token = options.getAccessToken()
 
@@ -55,7 +67,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           credentials: 'include',
-          signal: abortController.signal,
+          signal: controller.signal,
         },
       )
 
@@ -80,26 +92,31 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         .pipeThrough(new TextDecoderStream())
         .getReader()
 
-      let buffer = ''
+      try {
+        let buffer = ''
 
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        buffer += value
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done) break
+          buffer += value
 
-        // Parse complete events (delimited by blank line)
-        let idx
-        while ((idx = buffer.indexOf('\n\n')) !== -1) {
-          const raw = buffer.slice(0, idx)
-          buffer = buffer.slice(idx + 2)
-          handleSseFrame(raw)
+          // Parse complete events (delimited by blank line)
+          let idx
+          while ((idx = buffer.indexOf('\n\n')) !== -1) {
+            const raw = buffer.slice(0, idx)
+            buffer = buffer.slice(idx + 2)
+            handleSseFrame(raw)
+          }
         }
+      } finally {
+        reader.releaseLock()
       }
 
       // Stream ended; reconnect
-      if (!stopped) scheduleReconnect()
+      if (abortController !== controller) return
+      scheduleReconnect()
     } catch (err) {
-      if ((err as Error).name === 'AbortError') return
+      if (isExpectedDisconnect(err, controller)) return
       options.onError?.(err)
       scheduleReconnect()
     }
@@ -130,10 +147,12 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     if (stopped) return
     if (document.visibilityState === 'visible') {
       // Force reconnect to pick up missed events
+      paused = false
       attempts = 0
       void connect()
     } else {
       // Pause: abort the current stream; we'll reconnect on visibility
+      paused = true
       abortController?.abort()
     }
   }
