@@ -20,6 +20,7 @@ import { Route as AppCasesRouteImport } from './routes/_app.cases'
 import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
 import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.index'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
+import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
 import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
 import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
 import { Route as AppUserManagementAccessPolicyRouteImport } from './routes/_app.user-management.access-policy'
@@ -83,6 +84,12 @@ const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppCasesRoute,
 } as any)
+const OnboardingFormResubmitTokenRoute =
+  OnboardingFormResubmitTokenRouteImport.update({
+    id: '/resubmit/$token',
+    path: '/resubmit/$token',
+    getParentRoute: () => OnboardingFormRoute,
+  } as any)
 const AppUserManagementUserCreationRoute =
   AppUserManagementUserCreationRouteImport.update({
     id: '/user-creation',
@@ -131,7 +138,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/onboarding-form': typeof OnboardingFormRoute
+  '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/cases': typeof AppCasesRouteWithChildren
   '/merchants': typeof AppMerchantsRouteWithChildren
   '/user-management': typeof AppUserManagementRouteWithChildren
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases/': typeof AppCasesIndexRoute
   '/merchants/': typeof AppMerchantsIndexRoute
   '/user-management/': typeof AppUserManagementIndexRoute
@@ -150,7 +158,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/onboarding-form': typeof OnboardingFormRoute
+  '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/': typeof AppIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
@@ -160,6 +168,7 @@ export interface FileRoutesByTo {
   '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases': typeof AppCasesIndexRoute
   '/merchants': typeof AppMerchantsIndexRoute
   '/user-management': typeof AppUserManagementIndexRoute
@@ -169,7 +178,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/onboarding-form': typeof OnboardingFormRoute
+  '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/_app/cases': typeof AppCasesRouteWithChildren
   '/_app/merchants': typeof AppMerchantsRouteWithChildren
   '/_app/user-management': typeof AppUserManagementRouteWithChildren
@@ -182,6 +191,7 @@ export interface FileRoutesById {
   '/_app/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
+  '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/_app/cases/': typeof AppCasesIndexRoute
   '/_app/merchants/': typeof AppMerchantsIndexRoute
   '/_app/user-management/': typeof AppUserManagementIndexRoute
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/user-management/access-policy'
     | '/user-management/all-users'
     | '/user-management/user-creation'
+    | '/onboarding-form/resubmit/$token'
     | '/cases/'
     | '/merchants/'
     | '/user-management/'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/user-management/access-policy'
     | '/user-management/all-users'
     | '/user-management/user-creation'
+    | '/onboarding-form/resubmit/$token'
     | '/cases'
     | '/merchants'
     | '/user-management'
@@ -242,6 +254,7 @@ export interface FileRouteTypes {
     | '/_app/user-management/access-policy'
     | '/_app/user-management/all-users'
     | '/_app/user-management/user-creation'
+    | '/onboarding-form/resubmit/$token'
     | '/_app/cases/'
     | '/_app/merchants/'
     | '/_app/user-management/'
@@ -251,7 +264,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
-  OnboardingFormRoute: typeof OnboardingFormRoute
+  OnboardingFormRoute: typeof OnboardingFormRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cases/'
       preLoaderRoute: typeof AppCasesIndexRouteImport
       parentRoute: typeof AppCasesRoute
+    }
+    '/onboarding-form/resubmit/$token': {
+      id: '/onboarding-form/resubmit/$token'
+      path: '/resubmit/$token'
+      fullPath: '/onboarding-form/resubmit/$token'
+      preLoaderRoute: typeof OnboardingFormResubmitTokenRouteImport
+      parentRoute: typeof OnboardingFormRoute
     }
     '/_app/user-management/user-creation': {
       id: '/_app/user-management/user-creation'
@@ -459,11 +479,23 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface OnboardingFormRouteChildren {
+  OnboardingFormResubmitTokenRoute: typeof OnboardingFormResubmitTokenRoute
+}
+
+const OnboardingFormRouteChildren: OnboardingFormRouteChildren = {
+  OnboardingFormResubmitTokenRoute: OnboardingFormResubmitTokenRoute,
+}
+
+const OnboardingFormRouteWithChildren = OnboardingFormRoute._addFileChildren(
+  OnboardingFormRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
-  OnboardingFormRoute: OnboardingFormRoute,
+  OnboardingFormRoute: OnboardingFormRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

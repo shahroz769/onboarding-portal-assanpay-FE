@@ -9,6 +9,7 @@ export const CASE_STATUSES = [
   'qc',
   'error',
   'closed',
+  'awaiting_client',
 ] as const
 
 export type CaseStatus = (typeof CASE_STATUSES)[number]
@@ -20,6 +21,7 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   qc: 'QC',
   error: 'Error',
   closed: 'Closed',
+  awaiting_client: 'Awaiting Client',
 }
 
 export const CASE_SORTABLE_COLUMNS = [
@@ -163,6 +165,7 @@ export const fieldReviewSchema = z.object({
   reviewedBy: z.string().nullable(),
   reviewedByName: z.string().nullable(),
   updatedAt: z.string().nullable(),
+  resubmittedAt: z.string().nullable().optional(),
 })
 
 export type FieldReview = z.infer<typeof fieldReviewSchema>

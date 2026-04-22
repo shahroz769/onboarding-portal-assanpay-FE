@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query"
+import { queryOptions, useMutation } from "@tanstack/react-query"
 
 import { apiClient } from "#/lib/api-client"
 
@@ -70,6 +70,77 @@ export function useSubmitMerchantOnboardingMutation() {
   return useMutation({
     mutationKey: ["merchant-onboarding", "submit"],
     mutationFn: submitMerchantOnboardingForm,
+    retry: false,
+  })
+}
+
+// ─── Resubmission ────────────────────────────────────────────────────────────
+
+export type ResubmissionRejection = {
+  fieldName: string
+  label: string
+  remarks: string | null
+  isDocument: boolean
+  currentValue?: string
+  currentDocumentName?: string
+  documentType?: string
+}
+
+export type ResubmissionContext = {
+  caseId: string
+  caseNumber: string
+  expiresAt: string
+  merchantName: string
+  merchantId: string
+  ownerId: string | null
+  merchantOwnerName: string
+  rejections: Array<ResubmissionRejection>
+}
+
+export async function fetchResubmissionContext(
+  token: string,
+): Promise<ResubmissionContext> {
+  const { data } = await apiClient.get<ResubmissionContext>(
+    `/api/public/resubmission/${token}`,
+  )
+  return data
+}
+
+export function resubmissionContextQueryOptions(token: string) {
+  return queryOptions({
+    queryKey: ["resubmission-context", token] as const,
+    queryFn: () => fetchResubmissionContext(token),
+    enabled: Boolean(token),
+    staleTime: 0,
+    retry: false,
+  })
+}
+
+export type ResubmissionResponse = {
+  success: true
+  caseNumber: string
+}
+
+export async function submitResubmission(
+  token: string,
+  formData: FormData,
+): Promise<ResubmissionResponse> {
+  const { data } = await apiClient.post<ResubmissionResponse>(
+    `/api/public/resubmission/${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  )
+  return data
+}
+
+export function useSubmitResubmissionMutation(token: string) {
+  return useMutation({
+    mutationKey: ["resubmission", "submit", token] as const,
+    mutationFn: (formData: FormData) => submitResubmission(token, formData),
     retry: false,
   })
 }

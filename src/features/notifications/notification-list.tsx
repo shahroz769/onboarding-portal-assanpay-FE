@@ -53,7 +53,7 @@ export function NotificationList({ filter, onNavigate }: NotificationListProps) 
   return (
     <div
       ref={scrollRef}
-      className="h-[480px]"
+      className="h-120"
     >
       <ScrollArea className="size-full">
         {isLoading ? <NotificationListSkeleton /> : null}

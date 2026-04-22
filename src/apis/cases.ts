@@ -165,6 +165,24 @@ export async function closeUnsuccessful(
   return response.data
 }
 
+// ─── Send For Resubmission ──────────────────────────────────────────────────
+
+export interface SendForResubmissionResponse {
+  status: 'sent' | 'failed'
+  tokenExpiresAt: string | null
+  emailLogId: string
+  error?: string
+}
+
+export async function sendForResubmission(
+  caseId: string,
+): Promise<SendForResubmissionResponse> {
+  const response = await apiClient.post<SendForResubmissionResponse>(
+    `/api/cases/${caseId}/send-for-resubmission`,
+  )
+  return response.data
+}
+
 // ─── Case Comments ──────────────────────────────────────────────────────────
 
 export async function fetchCaseComments(

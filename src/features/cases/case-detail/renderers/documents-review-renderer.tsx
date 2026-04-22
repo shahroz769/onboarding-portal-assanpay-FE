@@ -51,7 +51,7 @@ import {
   MERCHANT_TYPES,
   WEBSITE_CMS_OPTIONS,
 } from '#/schemas/merchant-onboarding.schema'
-import type { FieldReviewStatus } from '#/schemas/cases.schema'
+import type { FieldReview, FieldReviewStatus } from '#/schemas/cases.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 import { useDocumentsReviewDraft } from './documents-review-draft-context'
@@ -126,7 +126,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     icon: Mail,
     toneClass: 'bg-blue-500/10 text-blue-500',
     layout: 'single',
-    fields: [{ key: 'email', label: 'Submitter Email' }],
+    fields: [{ key: 'submitterEmail', label: 'Submitter Email' }],
   },
   {
     title: 'Owner Information',
@@ -282,6 +282,14 @@ export default function DocumentsReviewRenderer({
     )
   const merchantData = merchant as Record<string, unknown>
 
+  const persistedReviewByField = useMemo(() => {
+    const map = new Map<string, (typeof fieldReviews)[number]>()
+    for (const review of fieldReviews) {
+      map.set(review.fieldName, review)
+    }
+    return map
+  }, [fieldReviews])
+
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean
     item: { key: string; label: string } | null
@@ -424,6 +432,7 @@ export default function DocumentsReviewRenderer({
                       key={item.key}
                       item={item}
                         review={draftReviews[item.key]}
+                        persistedReview={persistedReviewByField.get(item.key)}
                       isEditable={isEditable}
                       onReject={() => openRejectDialog(item)}
                     />
@@ -456,6 +465,7 @@ export default function DocumentsReviewRenderer({
                         key={document.key}
                         document={document}
                         review={draftReviews[document.key]}
+                        persistedReview={persistedReviewByField.get(document.key)}
                         isEditable={isEditable}
                         onReject={() => openRejectDialog(document)}
                       />
@@ -525,24 +535,58 @@ export default function DocumentsReviewRenderer({
   )
 }
 
+function isResubmittedAfterReview(review: FieldReview | undefined) {
+  if (!review?.resubmittedAt) return false
+  if (!review.updatedAt) return true
+  return new Date(review.resubmittedAt).getTime() >
+    new Date(review.updatedAt).getTime()
+}
+
+function UpdatedBadge({ resubmittedAt }: { resubmittedAt: string }) {
+  let label = 'Updated'
+  try {
+    const formatted = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+    }).format(new Date(resubmittedAt))
+    label = `Updated ${formatted}`
+  } catch {
+    /* keep fallback label */
+  }
+  return (
+    <Badge
+      variant="secondary"
+      className="border-transparent bg-blue-100 text-blue-800"
+      title={label}
+    >
+      Updated
+    </Badge>
+  )
+}
+
 function ReadOnlyReviewField({
   item,
   review,
+  persistedReview,
   isEditable,
   onReject,
 }: {
   item: ReviewItem
   review: LocalReview | undefined
+  persistedReview: FieldReview | undefined
   isEditable: boolean
   onReject: () => void
 }) {
   const isRejected = review?.status === 'rejected'
+  const showUpdated = isResubmittedAfterReview(persistedReview)
 
   return (
     <Field className={item.className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <FieldLabel className="min-w-0 flex items-center gap-2">
           {item.label}
+          {showUpdated && persistedReview?.resubmittedAt ? (
+            <UpdatedBadge resubmittedAt={persistedReview.resubmittedAt} />
+          ) : null}
         </FieldLabel>
         {isEditable ? (
           <div className="flex shrink-0 items-center gap-2">
@@ -590,21 +634,27 @@ function formatFileSize(bytes: number): string {
 function ReadOnlyDocumentField({
   document,
   review,
+  persistedReview,
   isEditable,
   onReject,
 }: {
   document: ReviewDocument
   review: LocalReview | undefined
+  persistedReview: FieldReview | undefined
   isEditable: boolean
   onReject: () => void
 }) {
   const isRejected = review?.status === 'rejected'
+  const showUpdated = isResubmittedAfterReview(persistedReview)
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex items-center gap-2">
           <span className="text-sm font-medium">{document.label}</span>
+          {showUpdated && persistedReview?.resubmittedAt ? (
+            <UpdatedBadge resubmittedAt={persistedReview.resubmittedAt} />
+          ) : null}
         </div>
         {isEditable ? (
           <div className="flex shrink-0 items-center gap-2">

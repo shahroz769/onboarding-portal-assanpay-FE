@@ -1,13 +1,15 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   CheckCircle2,
   Clock3,
+  MailCheck,
   MessageSquareMore,
+  Send,
   ShieldAlert,
   UserRoundPlus,
 } from 'lucide-react'
 
-import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
   Alert,
@@ -29,9 +31,9 @@ import { Spinner } from '#/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { Textarea } from '#/components/ui/textarea'
 import {
+  caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
-  useSaveFieldReviews,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
 import {
@@ -40,10 +42,9 @@ import {
 
 import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
-import {
-  createApproveAllReviewsInput,
-  getDocumentsReviewSummary,
-} from './renderers/documents-review-shared'
+import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
+import { RejectionRoundsCard } from './rejection-rounds-card'
+import { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
 
 interface CaseSidePanelProps {
@@ -79,11 +80,21 @@ function getPrimaryActionCopy(
     }
   }
 
+  if (status === 'awaiting_client') {
+    return {
+      title: 'Awaiting client',
+      description:
+        'A resubmission email was sent to the client. The case will return to working once they submit the requested updates.',
+      actionLabel: null,
+      actionKind: 'awaiting-client' as const,
+    }
+  }
+
   if (options.isDocumentReviewCase && status === 'working' && !options.isReviewApproved) {
     return {
       title: 'Review required',
       description:
-        'Open the review summary, confirm the document-review results, and approve them before marking this case as successful.',
+        'Open the review summary, confirm the rejected fields, and email the client to request a resubmission.',
       actionLabel: 'Review',
       actionKind: 'review' as const,
     }
@@ -157,11 +168,10 @@ export function CaseSidePanel({
 }: CaseSidePanelProps) {
   const takeOwnership = useTakeOwnership(caseId)
   const advanceStage = useAdvanceStage(caseId)
-  const saveFieldReviews = useSaveFieldReviews(caseId)
   const closeUnsuccessful = useCloseUnsuccessful(caseId)
 
   const [closeReason, setCloseReason] = useState('')
-  const [showReviewSummary, setShowReviewSummary] = useState(false)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
   const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
@@ -174,6 +184,7 @@ export function CaseSidePanel({
     isDocumentReviewCase,
     isReviewApproved,
   })
+  const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
   const hasOwner = Boolean(caseDetail.owner)
   const isClosed = category === 'closed' || category === 'error'
@@ -191,7 +202,7 @@ export function CaseSidePanel({
     }
 
     if (primaryAction.actionKind === 'review') {
-      setShowReviewSummary(true)
+      setReviewModalOpen(true)
       return
     }
 
@@ -205,18 +216,6 @@ export function CaseSidePanel({
 
     closeUnsuccessful.mutate({
       reason: closeReason.trim(),
-    })
-  }
-
-  function handleApproveReview() {
-    if (!isDocumentReviewCase || !reviewSummary || reviewSummary.reviewables.length === 0) {
-      return
-    }
-
-    saveFieldReviews.mutate(createApproveAllReviewsInput(caseDetail), {
-      onSuccess: () => {
-        setShowReviewSummary(false)
-      },
     })
   }
 
@@ -277,125 +276,56 @@ export function CaseSidePanel({
                       {primaryAction.actionKind === 'take-ownership'
                         ? 'Take ownership first to move the case into active review.'
                         : primaryAction.actionKind === 'review'
-                          ? 'Review the saved rejections summary and approve the document review before moving forward.'
-                          : 'When everything checks out, close this case successfully.'}
+                          ? 'Review the rejected fields and email the client to request a resubmission.'
+                          : primaryAction.actionKind === 'awaiting-client'
+                            ? 'Waiting for the client to update the requested fields.'
+                            : 'When everything checks out, close this case successfully.'}
                     </p>
-                    <Button
-                      onClick={handlePrimaryAction}
-                      disabled={
-                        primaryAction.actionKind !== 'take-ownership' &&
-                        primaryAction.actionKind !== 'mark-successful' &&
-                        primaryAction.actionKind !== 'review'
-                      }
-                    >
-                      {primaryAction.actionKind === 'take-ownership' ? (
-                        takeOwnership.isPending ? (
+                    {primaryAction.actionKind === 'awaiting-client' ? null : (
+                      <Button
+                        onClick={handlePrimaryAction}
+                        disabled={
+                          (primaryAction.actionKind !== 'take-ownership' &&
+                            primaryAction.actionKind !== 'mark-successful' &&
+                            primaryAction.actionKind !== 'review') ||
+                          (primaryAction.actionKind === 'review' &&
+                            (reviewSummary?.rejectedItems.length ?? 0) === 0)
+                        }
+                      >
+                        {primaryAction.actionKind === 'take-ownership' ? (
+                          takeOwnership.isPending ? (
+                            <Spinner data-icon="inline-start" />
+                          ) : (
+                            <UserRoundPlus data-icon="inline-start" />
+                          )
+                        ) : primaryAction.actionKind === 'review' ? (
+                          <Send data-icon="inline-start" />
+                        ) : advanceStage.isPending ? (
                           <Spinner data-icon="inline-start" />
                         ) : (
-                          <UserRoundPlus data-icon="inline-start" />
-                        )
-                      ) : primaryAction.actionKind === 'review' ? (
-                        <Clock3 data-icon="inline-start" />
-                      ) : advanceStage.isPending ? (
-                        <Spinner data-icon="inline-start" />
-                      ) : (
-                        <CheckCircle2 data-icon="inline-start" />
-                      )}
-                      {primaryAction.actionKind === 'take-ownership'
-                        ? takeOwnership.isPending
-                          ? 'Taking ownership'
-                          : 'Take ownership'
-                        : primaryAction.actionKind === 'review'
-                          ? 'Review'
-                          : primaryAction.actionKind === 'mark-successful'
-                            ? advanceStage.isPending
-                              ? 'Closing case'
-                              : 'Mark as successful'
-                            : 'No successful action available'}
-                    </Button>
+                          <CheckCircle2 data-icon="inline-start" />
+                        )}
+                        {primaryAction.actionKind === 'take-ownership'
+                          ? takeOwnership.isPending
+                            ? 'Taking ownership'
+                            : 'Take ownership'
+                          : primaryAction.actionKind === 'review'
+                            ? 'Review'
+                            : primaryAction.actionKind === 'mark-successful'
+                              ? advanceStage.isPending
+                                ? 'Closing case'
+                                : 'Mark as successful'
+                              : 'No successful action available'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ) : null}
 
               {isDocumentReviewCase &&
               hasOwner &&
-              category === 'in_progress' &&
-              showReviewSummary &&
-              !isReviewApproved &&
-              reviewSummary ? (
-                <div className="rounded-xl border bg-background p-3">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-semibold">Review summary</p>
-                        <p className="text-sm text-muted-foreground">
-                          Confirm the current rejections and save an approved review set to continue.
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">
-                          {reviewSummary.approvedItems.length} approved
-                        </Badge>
-                        <Badge variant="secondary">
-                          {reviewSummary.rejectedItems.length} rejected
-                        </Badge>
-                        <Badge variant="secondary">
-                          {reviewSummary.pendingItems.length} pending
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {reviewSummary.rejectedItems.length > 0 ? (
-                      <div className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-                        <p className="text-sm font-medium text-destructive">
-                          Rejection summary
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {reviewSummary.rejectedItems.map((item) => (
-                            <div
-                              key={item.key}
-                              className="rounded-lg border border-destructive/10 bg-background px-3 py-2"
-                            >
-                              <p className="text-sm font-medium">{item.label}</p>
-                              {item.remarks ? (
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                  {item.remarks}
-                                </p>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <Alert>
-                        <CheckCircle2 />
-                        <AlertTitle>No saved rejections</AlertTitle>
-                        <AlertDescription>
-                          Everything currently reviewed is ready to be approved and saved.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleApproveReview}
-                        disabled={
-                          saveFieldReviews.isPending ||
-                          reviewSummary.reviewables.length === 0
-                        }
-                      >
-                        {saveFieldReviews.isPending ? (
-                          <Spinner data-icon="inline-start" />
-                        ) : (
-                          <CheckCircle2 data-icon="inline-start" />
-                        )}
-                        {saveFieldReviews.isPending
-                          ? 'Saving approval'
-                          : 'Approve and save'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+              status === 'awaiting_client' ? (
+                <AwaitingClientAlert caseId={caseId} />
               ) : null}
 
               {isDocumentReviewCase &&
@@ -453,6 +383,10 @@ export function CaseSidePanel({
                   panel yet.
                 </div>
               ) : null}
+
+              {isDocumentReviewCase ? (
+                <RejectionRoundsCard caseId={caseId} />
+              ) : null}
             </div>
           </TabsContent>
 
@@ -470,7 +404,62 @@ export function CaseSidePanel({
 
         </Tabs>
       </CardContent>
+
+      {isDocumentReviewCase ? (
+        <DocumentsReviewSummaryModal
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          caseDetail={caseDetail}
+          caseId={caseId}
+          reviewSummary={reviewSummary}
+        />
+      ) : null}
     </Card>
+  )
+}
+
+function AwaitingClientAlert({ caseId }: { caseId: string }) {
+  const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
+
+  const expiresAt = useMemo(() => {
+    const items = historyQuery.data
+    if (!items) return null
+    const latest = items.find(
+      (h) => h.action === 'resubmission_email_sent',
+    )
+    const details = latest?.details as
+      | { expiresAt?: string | null }
+      | null
+      | undefined
+    return details?.expiresAt ?? null
+  }, [historyQuery.data])
+
+  const expiresLabel = useMemo(() => {
+    if (!expiresAt) return null
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      }).format(new Date(expiresAt))
+    } catch {
+      return null
+    }
+  }, [expiresAt])
+
+  return (
+    <Alert>
+      <MailCheck />
+      <AlertTitle>Awaiting client resubmission</AlertTitle>
+      <AlertDescription>
+        We emailed the client a secure link to update the rejected fields. The
+        case will return to working as soon as they submit.
+        {expiresLabel ? (
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Link expires {expiresLabel}
+          </span>
+        ) : null}
+      </AlertDescription>
+    </Alert>
   )
 }
 

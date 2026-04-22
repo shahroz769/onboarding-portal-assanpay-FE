@@ -14,6 +14,7 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   saveFieldReviews,
+  sendForResubmission,
   takeOwnership,
 } from '#/apis/cases'
 import type {
@@ -153,6 +154,33 @@ export function useCreateComment(caseId: string) {
     },
     onError: () => {
       toast.error('Failed to post comment')
+    },
+  })
+}
+
+export function useSendForResubmission(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => sendForResubmission(caseId),
+    onSuccess: (data) => {
+      if (data.status === 'sent') {
+        toast.success(
+          'Email sent — case moved to Awaiting Client',
+        )
+      } else {
+        toast.error(
+          data.error
+            ? `Failed to send email: ${data.error}`
+            : 'Failed to send resubmission email',
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send resubmission email')
     },
   })
 }
