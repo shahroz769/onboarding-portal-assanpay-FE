@@ -11,6 +11,9 @@ import {
 } from '#/components/ui/table'
 import { Spinner } from '#/components/ui/spinner'
 
+const stickyHeaderClassName =
+  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]'
+
 // ─── Column Definition ──────────────────────────────────────────────────────
 
 export interface DataTableColumnDef<TData> {
@@ -91,7 +94,7 @@ export function DataTable<TData>({
     return (
       <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
         <Table className="table-fixed">
-          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+          <TableHeader className={stickyHeaderClassName}>
             {headerRow}
           </TableHeader>
         </Table>
@@ -114,7 +117,7 @@ export function DataTable<TData>({
     return (
       <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
         <Table className="table-fixed">
-          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+          <TableHeader className={stickyHeaderClassName}>
             {headerRow}
           </TableHeader>
         </Table>
@@ -136,7 +139,7 @@ export function DataTable<TData>({
       className="view-transition-none h-full overflow-auto rounded-md border will-change-transform"
     >
       <Table className="table-fixed">
-        <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+        <TableHeader className={stickyHeaderClassName}>
           {headerRow}
         </TableHeader>
         <TableBody>

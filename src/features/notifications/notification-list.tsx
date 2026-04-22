@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { BellOff, Loader2 } from 'lucide-react'
 
 import { Skeleton } from '#/components/ui/skeleton'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import { useNotificationsInfiniteQuery } from '#/hooks/use-notifications-query'
 import type { NotificationFilter } from '#/schemas/notifications.schema'
 
@@ -27,14 +28,16 @@ export function NotificationList({ filter, onNavigate }: NotificationListProps) 
 
   useEffect(() => {
     const sentinel = sentinelRef.current
-    const root = scrollRef.current
+    const root = scrollRef.current?.querySelector<HTMLDivElement>(
+      '[data-slot="scroll-area-viewport"]',
+    )
     if (!sentinel || !root) return
     if (!hasNextPage) return
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
-        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        if (entry.isIntersecting && !isFetchingNextPage) {
           void fetchNextPage()
         }
       },
@@ -50,51 +53,53 @@ export function NotificationList({ filter, onNavigate }: NotificationListProps) 
   return (
     <div
       ref={scrollRef}
-      className="max-h-[480px] overflow-y-auto overscroll-contain"
+      className="h-[480px]"
     >
-      {isLoading ? <NotificationListSkeleton /> : null}
+      <ScrollArea className="size-full">
+        {isLoading ? <NotificationListSkeleton /> : null}
 
-      {isError ? (
-        <div className="px-4 py-6 text-center text-sm text-destructive">
-          Failed to load notifications.
-        </div>
-      ) : null}
+        {isError ? (
+          <div className="px-4 py-6 text-center text-sm text-destructive">
+            Failed to load notifications.
+          </div>
+        ) : null}
 
-      {!isLoading && !isError && items.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-sm text-muted-foreground">
-          <BellOff className="size-8 opacity-40" aria-hidden="true" />
-          <span>You're all caught up.</span>
-        </div>
-      ) : null}
+        {!isLoading && !isError && items.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-sm text-muted-foreground">
+            <BellOff className="size-8 opacity-40" aria-hidden="true" />
+            <span>You're all caught up.</span>
+          </div>
+        ) : null}
 
-      {items.length > 0 ? (
-        <ul className="flex flex-col">
-          {items.map((notification) => (
-            <li key={notification.id}>
-              <NotificationItem
-                notification={notification}
-                onNavigate={onNavigate}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+        {items.length > 0 ? (
+          <ul className="flex flex-col">
+            {items.map((notification) => (
+              <li key={notification.id}>
+                <NotificationItem
+                  notification={notification}
+                  onNavigate={onNavigate}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-      {hasNextPage ? (
-        <div
-          ref={sentinelRef}
-          className="flex items-center justify-center py-3 text-xs text-muted-foreground"
-        >
-          {isFetchingNextPage ? (
-            <span className="flex items-center gap-1.5">
-              <Loader2 className="size-3.5 animate-spin" />
-              Loading…
-            </span>
-          ) : (
-            <span className="opacity-0">Scroll for more</span>
-          )}
-        </div>
-      ) : null}
+        {hasNextPage ? (
+          <div
+            ref={sentinelRef}
+            className="flex items-center justify-center py-3 text-xs text-muted-foreground"
+          >
+            {isFetchingNextPage ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="size-3.5 animate-spin" />
+                Loading…
+              </span>
+            ) : (
+              <span className="opacity-0">Scroll for more</span>
+            )}
+          </div>
+        ) : null}
+      </ScrollArea>
     </div>
   )
 }

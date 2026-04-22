@@ -46,7 +46,7 @@ export function NotificationsPopoverContent({
 
       <Separator />
 
-      <div className="px-3 pt-2">
+      <div className="px-3 pt-2 pb-2">
         <Tabs
           value={filter}
           onValueChange={(value) => setFilter(value as NotificationFilter)}

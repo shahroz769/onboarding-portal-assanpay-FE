@@ -8,6 +8,9 @@ import {
   TableRow,
 } from '#/components/ui/table'
 
+const stickyHeaderClassName =
+  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]'
+
 export function DataTableRouteSkeleton({
   filterCount = 3,
   searchWidth = 384,
@@ -49,7 +52,7 @@ export function DataTableRouteSkeleton({
 
       <div className="overflow-hidden rounded-md border">
         <Table className="table-fixed">
-          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+          <TableHeader className={stickyHeaderClassName}>
             <TableRow>
               {resolvedColumnWidths.map((width, index) => (
                 <TableHead
