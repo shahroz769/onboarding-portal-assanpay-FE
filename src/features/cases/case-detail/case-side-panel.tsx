@@ -22,7 +22,6 @@ import {
 } from '#/components/ui/card'
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
@@ -30,15 +29,14 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { Textarea } from '#/components/ui/textarea'
+import { useAuth } from '#/features/auth/auth-client'
 import {
   caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
-import {
-  type CaseDetail,
-} from '#/schemas/cases.schema'
+import type { CaseDetail } from '#/schemas/cases.schema'
 
 import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
@@ -57,6 +55,8 @@ function getPrimaryActionCopy(
   options: {
     isDocumentReviewCase: boolean
     isReviewApproved: boolean
+    hasActiveRejections: boolean
+    hasResubmittedUpdates: boolean
   },
 ) {
   const status = caseDetail.case.status
@@ -87,6 +87,22 @@ function getPrimaryActionCopy(
         'A resubmission email was sent to the client. The case will return to working once they submit the requested updates.',
       actionLabel: null,
       actionKind: 'awaiting-client' as const,
+    }
+  }
+
+  if (
+    options.isDocumentReviewCase &&
+    status === 'working' &&
+    !options.isReviewApproved &&
+    !options.hasActiveRejections &&
+    options.hasResubmittedUpdates
+  ) {
+    return {
+      title: 'Updated items ready',
+      description:
+        'The client resubmitted the requested updates and there are no active rejections. You can now close this case successfully if everything looks good.',
+      actionLabel: 'Mark as successful',
+      actionKind: 'mark-successful' as const,
     }
   }
 
@@ -166,6 +182,7 @@ export function CaseSidePanel({
   caseDetail,
   caseId,
 }: CaseSidePanelProps) {
+  const { user } = useAuth()
   const takeOwnership = useTakeOwnership(caseId)
   const advanceStage = useAdvanceStage(caseId)
   const closeUnsuccessful = useCloseUnsuccessful(caseId)
@@ -179,19 +196,26 @@ export function CaseSidePanel({
     ? (documentsReviewDraft?.reviewSummary ?? getDocumentsReviewSummary(caseDetail))
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
+  const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
+  const hasResubmittedUpdates = caseDetail.fieldReviews.some(
+    (review) => Boolean(review.resubmittedAt),
+  )
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {
     isDocumentReviewCase,
     isReviewApproved,
+    hasActiveRejections,
+    hasResubmittedUpdates,
   })
   const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
   const hasOwner = Boolean(caseDetail.owner)
+  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
   const isClosed = category === 'closed' || category === 'error'
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
 
-  const canCloseUnsuccessfully = !isClosed && hasOwner
+  const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const unsuccessfulDisabled =
     !closeReason.trim() || closeUnsuccessful.isPending
 
@@ -276,10 +300,14 @@ export function CaseSidePanel({
                       {primaryAction.actionKind === 'take-ownership'
                         ? 'Take ownership first to move the case into active review.'
                         : primaryAction.actionKind === 'review'
-                          ? 'Review the rejected fields and email the client to request a resubmission.'
+                          ? isCaseOwner
+                            ? 'Review the rejected fields and email the client to request a resubmission.'
+                            : 'Only the current case owner can review rejected fields and request a resubmission.'
                           : primaryAction.actionKind === 'awaiting-client'
                             ? 'Waiting for the client to update the requested fields.'
-                            : 'When everything checks out, close this case successfully.'}
+                            : isCaseOwner
+                              ? 'When everything checks out, close this case successfully.'
+                              : 'Only the current case owner can complete this case.'}
                     </p>
                     {primaryAction.actionKind === 'awaiting-client' ? null : (
                       <Button
@@ -289,7 +317,13 @@ export function CaseSidePanel({
                             primaryAction.actionKind !== 'mark-successful' &&
                             primaryAction.actionKind !== 'review') ||
                           (primaryAction.actionKind === 'review' &&
-                            (reviewSummary?.rejectedItems.length ?? 0) === 0)
+                            (
+                              !hasActiveRejections ||
+                              !isCaseOwner
+                            )) ||
+                          (primaryAction.actionKind === 'mark-successful' &&
+                            hasOwner &&
+                            !isCaseOwner)
                         }
                       >
                         {primaryAction.actionKind === 'take-ownership' ? (

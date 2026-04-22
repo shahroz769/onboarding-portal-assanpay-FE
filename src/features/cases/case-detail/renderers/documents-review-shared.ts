@@ -77,10 +77,6 @@ function formatDisplayValue(value: unknown) {
   return String(value)
 }
 
-function getReviewByField(fieldReviews: FieldReview[]) {
-  return new Map(fieldReviews.map((review) => [review.fieldName, review]))
-}
-
 function getDraftReviewByField(draftReviews: DocumentsReviewDraftMap) {
   return new Map(Object.entries(draftReviews))
 }
@@ -213,5 +209,25 @@ export function createApproveAllReviewsInput(
       fieldName: item.key,
       status: 'approved' as const,
     })),
+  }
+}
+
+export function createSaveFieldReviewsInputFromDraft(
+  draftReviews: DocumentsReviewDraftMap,
+): SaveFieldReviewsInput {
+  return {
+    reviews: Object.entries(draftReviews).flatMap(([fieldName, review]) => {
+      if (!review) {
+        return []
+      }
+
+      const remarks = review.remarks.trim()
+
+      return [{
+        fieldName,
+        status: review.status,
+        ...(remarks ? { remarks } : {}),
+      }]
+    }),
   }
 }

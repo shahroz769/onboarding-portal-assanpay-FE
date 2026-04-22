@@ -1,9 +1,5 @@
-import {
-  queryOptions,
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -17,13 +13,13 @@ import {
   sendForResubmission,
   takeOwnership,
 } from '#/apis/cases'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   CloseUnsuccessfulInput,
   CreateCommentInput,
   SaveFieldReviewsInput,
 } from '#/schemas/cases.schema'
-import { CASES_KEY } from './use-cases-query'
-import { usersQueryOptions } from './use-cases-query'
+import { CASES_KEY, usersQueryOptions } from './use-cases-query'
 
 export const CASE_DETAIL_KEY = ['case-detail'] as const
 export const CASE_COMMENTS_KEY = ['case-comments'] as const
@@ -117,8 +113,8 @@ export function useSaveFieldReviews(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
     },
-    onError: () => {
-      toast.error('Failed to save field reviews')
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save field reviews'))
     },
   })
 }
@@ -179,8 +175,10 @@ export function useSendForResubmission(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to send resubmission email')
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to send resubmission email'),
+      )
     },
   })
 }

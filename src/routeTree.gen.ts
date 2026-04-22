@@ -13,6 +13,7 @@ import { Route as OnboardingFormRouteImport } from './routes/onboarding-form'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as OnboardingFormIndexRouteImport } from './routes/onboarding-form.index'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
 import { Route as AppMerchantsRouteImport } from './routes/_app.merchants'
@@ -48,6 +49,11 @@ const LoginRoute = LoginRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingFormIndexRoute = OnboardingFormIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OnboardingFormRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/cases': typeof AppCasesRouteWithChildren
   '/merchants': typeof AppMerchantsRouteWithChildren
   '/user-management': typeof AppUserManagementRouteWithChildren
+  '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
@@ -158,8 +165,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
-  '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/': typeof AppIndexRoute
+  '/onboarding-form': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
@@ -183,6 +190,7 @@ export interface FileRoutesById {
   '/_app/merchants': typeof AppMerchantsRouteWithChildren
   '/_app/user-management': typeof AppUserManagementRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
   '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
@@ -206,6 +214,7 @@ export interface FileRouteTypes {
     | '/cases'
     | '/merchants'
     | '/user-management'
+    | '/onboarding-form/'
     | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
@@ -222,8 +231,8 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/mcp'
-    | '/onboarding-form'
     | '/'
+    | '/onboarding-form'
     | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/_app/merchants'
     | '/_app/user-management'
     | '/_app/'
+    | '/onboarding-form/'
     | '/_app/cases/$caseId'
     | '/_app/cases/all-cases'
     | '/_app/cases/my-closed-cases'
@@ -296,6 +306,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/onboarding-form/': {
+      id: '/onboarding-form/'
+      path: '/'
+      fullPath: '/onboarding-form/'
+      preLoaderRoute: typeof OnboardingFormIndexRouteImport
+      parentRoute: typeof OnboardingFormRoute
     }
     '/_app/': {
       id: '/_app/'
@@ -480,10 +497,12 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface OnboardingFormRouteChildren {
+  OnboardingFormIndexRoute: typeof OnboardingFormIndexRoute
   OnboardingFormResubmitTokenRoute: typeof OnboardingFormResubmitTokenRoute
 }
 
 const OnboardingFormRouteChildren: OnboardingFormRouteChildren = {
+  OnboardingFormIndexRoute: OnboardingFormIndexRoute,
   OnboardingFormResubmitTokenRoute: OnboardingFormResubmitTokenRoute,
 }
 

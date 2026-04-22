@@ -12,9 +12,15 @@ import {
 } from '#/components/ui/dialog'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
-import { useSendForResubmission } from '#/hooks/use-case-detail-query'
+import { useAuth } from '#/features/auth/auth-client'
+import {
+  useSaveFieldReviews,
+  useSendForResubmission,
+} from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
+import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
+import { createSaveFieldReviewsInputFromDraft } from './renderers/documents-review-shared'
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 
 type ReviewSummary = ReturnType<typeof getDocumentsReviewSummary>
@@ -34,6 +40,9 @@ export function DocumentsReviewSummaryModal({
   caseId,
   reviewSummary,
 }: DocumentsReviewSummaryModalProps) {
+  const { user } = useAuth()
+  const documentsReviewDraft = useOptionalDocumentsReviewDraft()
+  const saveFieldReviews = useSaveFieldReviews(caseId)
   const sendForResubmission = useSendForResubmission(caseId)
 
   const merchant = caseDetail.merchant as
@@ -42,20 +51,45 @@ export function DocumentsReviewSummaryModal({
   const submitterEmail = merchant?.submitterEmail ?? null
   const rejectedItems = reviewSummary?.rejectedItems ?? []
 
+  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
   const hasRejections = rejectedItems.length > 0
   const hasRecipient = Boolean(submitterEmail)
+  const isDocumentsReviewCase = caseDetail.queue.slug === 'documents-review'
+  const isWorkingStage =
+    caseDetail.case.status === 'working' &&
+    caseDetail.currentStage?.category === 'in_progress'
+  const isSubmitting =
+    saveFieldReviews.isPending || sendForResubmission.isPending
   const canSubmit =
-    hasRejections && hasRecipient && !sendForResubmission.isPending
+    hasRejections &&
+    hasRecipient &&
+    isCaseOwner &&
+    isDocumentsReviewCase &&
+    isWorkingStage &&
+    !isSubmitting
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!canSubmit) return
-    sendForResubmission.mutate(undefined, {
-      onSuccess: (data) => {
-        if (data.status === 'sent') {
-          onOpenChange(false)
+
+    try {
+      if (documentsReviewDraft) {
+        const reviewsInput = createSaveFieldReviewsInputFromDraft(
+          documentsReviewDraft.draftReviews,
+        )
+
+        if (reviewsInput.reviews.length > 0) {
+          await saveFieldReviews.mutateAsync(reviewsInput)
         }
-      },
-    })
+      }
+
+      const data = await sendForResubmission.mutateAsync()
+
+      if (data.status === 'sent') {
+        onOpenChange(false)
+      }
+    } catch {
+      // Mutation hooks already surface the backend error via toast.
+    }
   }
 
   return (
@@ -85,17 +119,17 @@ export function DocumentsReviewSummaryModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={sendForResubmission.isPending}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={!canSubmit}>
-            {sendForResubmission.isPending ? (
+            {isSubmitting ? (
               <Spinner data-icon="inline-start" />
             ) : (
               <Send data-icon="inline-start" />
             )}
-            {sendForResubmission.isPending ? 'Sending email' : 'Confirm and send'}
+            {isSubmitting ? 'Sending email' : 'Confirm and send'}
           </Button>
         </DialogFooter>
       </DialogContent>
