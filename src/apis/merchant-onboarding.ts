@@ -81,8 +81,10 @@ export type ResubmissionRejection = {
   label: string
   remarks: string | null
   isDocument: boolean
+  isRequired?: boolean
   currentValue?: string
   currentDocumentName?: string
+  currentDocumentUrl?: string
   documentType?: string
 }
 

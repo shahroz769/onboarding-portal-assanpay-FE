@@ -17,11 +17,11 @@ import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { useAuth } from '#/features/auth/auth-client'
+import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
 import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from '#/components/ui/card'
 import {
@@ -40,10 +40,10 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
+import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { cn } from '#/lib/utils'
 import {
-  ALLOWED_EXTENSIONS,
   BASE_DOCUMENTS,
   DOCUMENT_LABELS,
   KIN_RELATIONS,
@@ -60,8 +60,6 @@ type LocalReview = {
   status: FieldReviewStatus
   remarks: string
 }
-
-type ReviewMap = Partial<Record<string, LocalReview>>
 
 type FieldKind = 'input' | 'textarea' | 'date'
 
@@ -269,8 +267,10 @@ function SectionIcon({
 
 export default function DocumentsReviewRenderer({
   caseDetail,
+  caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
+  const saveFieldReviews = useSaveFieldReviews(caseId)
   const { merchant, fieldReviews, currentStage } = caseDetail
   const { draftReviews, saveRejectedReview } = useDocumentsReviewDraft()
   const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
@@ -390,7 +390,7 @@ export default function DocumentsReviewRenderer({
     })
   }
 
-  function confirmReject() {
+  async function confirmReject() {
     const trimmedRemarks = rejectDialog.remarks.trim()
     const dialogItem = rejectDialog.item
 
@@ -402,8 +402,21 @@ export default function DocumentsReviewRenderer({
       return
     }
 
-    saveRejectedReview(dialogItem.key, trimmedRemarks)
-    closeRejectDialog()
+    try {
+      await saveFieldReviews.mutateAsync({
+        reviews: [
+          {
+            fieldName: dialogItem.key,
+            status: 'rejected',
+            remarks: trimmedRemarks,
+          },
+        ],
+      })
+      saveRejectedReview(dialogItem.key, trimmedRemarks)
+      closeRejectDialog()
+    } catch {
+      // Mutation hook already surfaces the backend error via toast.
+    }
   }
 
   return (
@@ -522,11 +535,24 @@ export default function DocumentsReviewRenderer({
           </FieldGroup>
 
           <DialogFooter>
-            <Button variant="outline" onClick={closeRejectDialog}>
+            <Button
+              variant="outline"
+              onClick={closeRejectDialog}
+              disabled={saveFieldReviews.isPending}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmReject}>
-              Save rejection note
+            <Button
+              variant="destructive"
+              onClick={confirmReject}
+              disabled={saveFieldReviews.isPending}
+            >
+              {saveFieldReviews.isPending ? (
+                <Spinner data-icon="inline-start" />
+              ) : null}
+              {saveFieldReviews.isPending
+                ? 'Saving rejection'
+                : 'Save rejection note'}
             </Button>
           </DialogFooter>
         </DialogContent>

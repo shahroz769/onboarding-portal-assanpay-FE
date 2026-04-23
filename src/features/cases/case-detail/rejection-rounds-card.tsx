@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ChevronDown,
+  ExternalLink,
   Inbox,
   MailCheck,
   RotateCcw,
@@ -27,6 +28,16 @@ type Round = {
   resubmittedEntry: CaseHistory | null
   rejectedFields: Array<string>
   fieldsUpdated: Array<string>
+  fieldDetails: Array<{
+    fieldName: string
+    label: string
+    type?: 'text' | 'document'
+    action?: 'replace' | 'remove'
+    previousFileName?: string | null
+    previousFileUrl?: string | null
+    nextFileName?: string | null
+    nextFileUrl?: string | null
+  }>
   expiresAt: string | null
   recipient: string | null
   emailFailed: boolean
@@ -63,6 +74,7 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
             ? (details.rejectedFields as Array<string>)
           : [],
         fieldsUpdated: [],
+        fieldDetails: [],
         expiresAt:
           typeof details.expiresAt === 'string' ? details.expiresAt : null,
         recipient:
@@ -81,6 +93,7 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
         resubmittedEntry: null,
         rejectedFields: [],
         fieldsUpdated: [],
+        fieldDetails: [],
         expiresAt: null,
         recipient: null,
         emailFailed: true,
@@ -99,6 +112,9 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
           ? (details.fieldsUpdatedLabels as Array<string>)
           : Array.isArray(details.fieldsUpdated)
             ? (details.fieldsUpdated as Array<string>)
+            : []
+        last.fieldDetails = Array.isArray(details.fieldsUpdatedDetails)
+          ? (details.fieldsUpdatedDetails as Round['fieldDetails'])
           : []
       }
     }
@@ -204,10 +220,47 @@ function RoundRow({ round }: { round: Round }) {
                       Client submitted {resubmittedAt}
                     </p>
                     <p>
-                      {round.fieldsUpdated.length} field
-                      {round.fieldsUpdated.length === 1 ? '' : 's'} updated
+                    {round.fieldsUpdated.length} field
+                    {round.fieldsUpdated.length === 1 ? '' : 's'} updated
                     </p>
-                    {round.fieldsUpdated.length > 0 ? (
+                    {round.fieldDetails.length > 0 ? (
+                      <ul className="mt-1 ml-4 list-disc text-muted-foreground">
+                        {round.fieldDetails.map((field) => (
+                          <li key={`${field.fieldName}-${field.action ?? 'text'}`}>
+                            <span>{field.label}</span>
+                            {field.type === 'document' ? (
+                              <span className="ml-1">
+                                {field.action === 'remove'
+                                  ? '(removed)'
+                                  : '(reuploaded)'}
+                              </span>
+                            ) : null}
+                            {field.previousFileUrl ? (
+                              <a
+                                href={field.previousFileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="ml-2 inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                              >
+                                <ExternalLink className="size-3" />
+                                Previous file
+                              </a>
+                            ) : null}
+                            {field.nextFileUrl ? (
+                              <a
+                                href={field.nextFileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="ml-2 inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                              >
+                                <ExternalLink className="size-3" />
+                                New file
+                              </a>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : round.fieldsUpdated.length > 0 ? (
                       <ul className="mt-1 ml-4 list-disc text-muted-foreground">
                         {round.fieldsUpdated.map((field) => (
                           <li key={field}>{field}</li>

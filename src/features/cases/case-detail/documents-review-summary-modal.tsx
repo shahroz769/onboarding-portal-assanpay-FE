@@ -14,13 +14,10 @@ import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import {
-  useSaveFieldReviews,
   useSendForResubmission,
 } from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
-import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
-import { createSaveFieldReviewsInputFromDraft } from './renderers/documents-review-shared'
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 
 type ReviewSummary = ReturnType<typeof getDocumentsReviewSummary>
@@ -41,8 +38,6 @@ export function DocumentsReviewSummaryModal({
   reviewSummary,
 }: DocumentsReviewSummaryModalProps) {
   const { user } = useAuth()
-  const documentsReviewDraft = useOptionalDocumentsReviewDraft()
-  const saveFieldReviews = useSaveFieldReviews(caseId)
   const sendForResubmission = useSendForResubmission(caseId)
 
   const merchant = caseDetail.merchant as
@@ -58,8 +53,7 @@ export function DocumentsReviewSummaryModal({
   const isWorkingStage =
     caseDetail.case.status === 'working' &&
     caseDetail.currentStage?.category === 'in_progress'
-  const isSubmitting =
-    saveFieldReviews.isPending || sendForResubmission.isPending
+  const isSubmitting = sendForResubmission.isPending
   const canSubmit =
     hasRejections &&
     hasRecipient &&
@@ -72,16 +66,6 @@ export function DocumentsReviewSummaryModal({
     if (!canSubmit) return
 
     try {
-      if (documentsReviewDraft) {
-        const reviewsInput = createSaveFieldReviewsInputFromDraft(
-          documentsReviewDraft.draftReviews,
-        )
-
-        if (reviewsInput.reviews.length > 0) {
-          await saveFieldReviews.mutateAsync(reviewsInput)
-        }
-      }
-
       const data = await sendForResubmission.mutateAsync()
 
       if (data.status === 'sent') {

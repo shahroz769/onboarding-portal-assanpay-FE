@@ -7,14 +7,13 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import {
-  CASE_STATUS_LABELS,
-  type CaseStatus,
+  type CloseOutcome,
+  type QueueStage,
 } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
@@ -41,7 +40,9 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
           <Card className="gap-4 py-4">
             <CardContent className="grid gap-3 px-4 py-0 md:grid-cols-3">
               <CaseStagesBlock
-                currentStatus={data.case.status}
+                stages={data.stages}
+                currentStageId={data.currentStage?.id ?? null}
+                closeOutcome={data.case.closeOutcome}
               />
               <InfoBlock
                 label="Case Number"
@@ -97,8 +98,8 @@ export function CaseDetailShellSkeleton() {
           <Card className="gap-4 py-4">
             <CardContent className="grid gap-3 px-4 py-0 md:grid-cols-3">
               <div className="rounded-lg bg-muted p-2 md:col-span-3">
-                <div className="grid grid-cols-6 gap-2">
-                  {Array.from({ length: 6 }).map((_, index) => (
+                <div className="grid grid-cols-4 gap-2">
+                  {Array.from({ length: 4 }).map((_, index) => (
                     <Skeleton key={index} className="h-9 w-full rounded-md" />
                   ))}
                 </div>
@@ -142,38 +143,54 @@ export function CaseDetailShellSkeleton() {
 }
 
 function CaseStagesBlock({
-  currentStatus,
+  stages,
+  currentStageId,
+  closeOutcome,
 }: {
-  currentStatus: CaseStatus
+  stages: QueueStage[]
+  currentStageId: string | null
+  closeOutcome: CloseOutcome | null
 }) {
-  const stageOrder: CaseStatus[] = [
-    'new',
-    'working',
-    'pending',
-    'qc',
-    'error',
-    'closed',
-  ]
-  const currentIndex = stageOrder.indexOf(currentStatus)
+  if (stages.length === 0) {
+    return null
+  }
 
   return (
     <div className="rounded-lg bg-muted md:col-span-3">
-      <div className="grid grid-cols-6">
-        {stageOrder.map((status, index) => {
-          const isCurrent = status === currentStatus
-          const isFirst = index === 0
-          const isLast = index === stageOrder.length - 1
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+      >
+        {stages.map((stage) => {
+          const isCurrent = stage.id === currentStageId
+          const isClosedUnsuccessfully =
+            stage.category === 'closed' && closeOutcome === 'unsuccessful'
 
           return (
             <div
-              key={status}
+              key={stage.id}
               className={cn(
                 'relative inline-flex h-9 items-center justify-center rounded-md text-center text-sm whitespace-nowrap transition-all',
                 !isCurrent && 'bg-muted text-muted-foreground/50',
-                isCurrent && 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 font-semibold',
+                isCurrent &&
+                  stage.slug === 'new' &&
+                  'bg-slate-200 text-slate-900 font-semibold dark:bg-slate-800 dark:text-slate-100',
+                isCurrent &&
+                  stage.slug === 'working' &&
+                  'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                isCurrent &&
+                  stage.slug === 'awaiting_client' &&
+                  'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
+                isCurrent &&
+                  stage.slug === 'closed' &&
+                  !isClosedUnsuccessfully &&
+                  'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-900 dark:text-emerald-300',
+                isCurrent &&
+                  isClosedUnsuccessfully &&
+                  'bg-red-100 text-red-800 font-semibold dark:bg-red-900 dark:text-red-300',
               )}
             >
-              <span>{CASE_STATUS_LABELS[status]}</span>
+              <span>{stage.name}</span>
             </div>
           )
         })}

@@ -114,11 +114,15 @@ export function StageProgressBar({
           const dotClass =
             state === 'upcoming'
               ? completedStyles.dot
+              : isUnsuccessful && state === 'active'
+                ? categoryStyles.error.dot
               : styles.dot
 
           const lineClass =
             state === 'completed'
-              ? styles.line
+              ? isUnsuccessful
+                ? categoryStyles.error.line
+                : styles.line
               : 'bg-border'
 
           return (
@@ -137,7 +141,10 @@ export function StageProgressBar({
                     'relative flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-all',
                     dotClass,
                     state === 'active' && 'ring-2 ring-offset-2 ring-offset-card',
-                    state === 'active' && activeRingClassByCategory[stage.category],
+                    state === 'active' &&
+                      (isUnsuccessful
+                        ? activeRingClassByCategory.error
+                        : activeRingClassByCategory[stage.category]),
                   )}
                 >
                   {state === 'completed' ? (
@@ -149,11 +156,12 @@ export function StageProgressBar({
                     <span
                       className={cn(
                         'absolute inset-0 rounded-full animate-ping opacity-30',
-                        stage.category === 'new' && 'bg-blue-500',
-                        stage.category === 'in_progress' && 'bg-amber-500',
-                        stage.category === 'qc' && 'bg-violet-500',
-                        stage.category === 'error' && 'bg-destructive',
-                        stage.category === 'closed' && 'bg-emerald-500',
+                        isUnsuccessful && 'bg-destructive',
+                        !isUnsuccessful && stage.category === 'new' && 'bg-blue-500',
+                        !isUnsuccessful && stage.category === 'in_progress' && 'bg-amber-500',
+                        !isUnsuccessful && stage.category === 'qc' && 'bg-violet-500',
+                        !isUnsuccessful && stage.category === 'error' && 'bg-destructive',
+                        !isUnsuccessful && stage.category === 'closed' && 'bg-emerald-500',
                       )}
                     />
                   )}

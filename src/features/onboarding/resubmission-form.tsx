@@ -11,6 +11,8 @@ import {
   Info,
   Mail,
   ShieldAlert,
+  Trash2,
+  Upload,
   Users,
   User,
 } from 'lucide-react'
@@ -22,6 +24,7 @@ import type {
   ResubmissionRejection,
 } from '#/apis/merchant-onboarding'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Calendar } from '#/components/ui/calendar'
 import {
@@ -59,6 +62,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import {
@@ -74,11 +78,6 @@ import { DocumentUploadField } from './document-upload-field'
 interface ResubmissionFormProps {
   token: string
   context: ResubmissionContext
-}
-
-type FieldValueState = {
-  text: Record<string, string>
-  files: Record<string, File | null>
 }
 
 type FieldKind =
@@ -114,7 +113,18 @@ type FieldConfig = {
   placeholder?: string
   description?: string
   options?: ReadonlyArray<{ value: string; label: string }>
+  required?: boolean
 }
+
+type TextErrors = Record<string, string>
+type DocumentErrors = Record<string, string>
+
+type DocumentDraft = {
+  action: 'replace' | 'remove' | null
+  file: File | null
+}
+
+const DOCUMENT_ACTION_PREFIX = '__document_action__:'
 
 const SECTION_CONFIGS: Record<SectionKey, SectionConfig> = {
   submitter: {
@@ -162,7 +172,7 @@ const SECTION_CONFIGS: Record<SectionKey, SectionConfig> = {
   documents: {
     key: 'documents',
     title: 'Documents',
-    description: 'Upload required documents for verification',
+    description: 'Upload or remove the requested documents',
     icon: FileText,
     colorClass: 'bg-orange-500/10 text-orange-500',
   },
@@ -271,6 +281,7 @@ const FIELD_CONFIGS: Partial<Record<string, FieldConfig>> = {
     section: 'financial',
     placeholder: 'Optional',
     description: 'Required only for international transfers.',
+    required: false,
   },
   nextOfKinRelation: {
     kind: 'select',
@@ -291,23 +302,6 @@ function SectionIcon({
       <Icon className="size-5" />
     </div>
   )
-}
-
-function useInitialState(rejections: Array<ResubmissionRejection>) {
-  return useMemo<FieldValueState>(() => {
-    const text: Record<string, string> = {}
-    const files: Record<string, File | null> = {}
-
-    for (const rejection of rejections) {
-      if (rejection.isDocument) {
-        files[rejection.fieldName] = null
-      } else {
-        text[rejection.fieldName] = rejection.currentValue ?? ''
-      }
-    }
-
-    return { text, files }
-  }, [rejections])
 }
 
 function groupRejections(rejections: Array<ResubmissionRejection>) {
@@ -331,15 +325,164 @@ function groupRejections(rejections: Array<ResubmissionRejection>) {
     .filter((entry) => entry.rejections.length > 0)
 }
 
-function formatCurrentValue(value: string | undefined) {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : 'No current value available'
+function createInitialTextValues(rejections: Array<ResubmissionRejection>) {
+  const values: Record<string, string> = {}
+
+  for (const rejection of rejections) {
+    if (!rejection.isDocument) {
+      values[rejection.fieldName] = rejection.currentValue ?? ''
+    }
+  }
+
+  return values
+}
+
+function createInitialDocumentValues(rejections: Array<ResubmissionRejection>) {
+  const values: Record<string, DocumentDraft> = {}
+
+  for (const rejection of rejections) {
+    if (rejection.isDocument) {
+      values[rejection.fieldName] = {
+        action: rejection.isRequired ? 'replace' : null,
+        file: null,
+      }
+    }
+  }
+
+  return values
+}
+
+function validateTextField(rejection: ResubmissionRejection, value: string) {
+  const config = FIELD_CONFIGS[rejection.fieldName]
+  const trimmed = value.trim()
+  const isRequired = config?.required ?? true
+
+  if (isRequired && !trimmed) {
+    return `${rejection.label} is required.`
+  }
+
+  if (!trimmed) {
+    return null
+  }
+
+  if (
+    rejection.fieldName === 'submitterEmail' ||
+    rejection.fieldName === 'businessEmail'
+  ) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailPattern.test(trimmed)) {
+      return 'Must be a valid email address.'
+    }
+  }
+
+  if (rejection.fieldName === 'businessWebsite') {
+    try {
+      const url = new URL(trimmed)
+      if (!url.protocol.startsWith('http')) {
+        return 'Must be a valid URL (include https://).'
+      }
+    } catch {
+      return 'Must be a valid URL (include https://).'
+    }
+  }
+
+  if (rejection.fieldName === 'businessRegistrationDate') {
+    const date = new Date(`${trimmed}T00:00:00`)
+    if (Number.isNaN(date.getTime())) {
+      return 'Business registration date is invalid.'
+    }
+    if (date > new Date()) {
+      return 'Registration date cannot be in the future.'
+    }
+  }
+
+  if (rejection.fieldName === 'estimatedMonthlyTransactions') {
+    const num = Number(trimmed)
+    if (!Number.isInteger(num) || num <= 0) {
+      return 'Must be a whole number greater than 0.'
+    }
+  }
+
+  if (rejection.fieldName === 'estimatedMonthlyVolume') {
+    const num = Number(trimmed)
+    if (Number.isNaN(num) || num <= 0) {
+      return 'Must be a number greater than 0.'
+    }
+  }
+
+  const optionValues = new Set((config?.options ?? []).map((option) => option.value))
+  if (optionValues.size > 0 && !optionValues.has(trimmed)) {
+    return `Please select ${rejection.label.toLowerCase()}.`
+  }
+
+  return null
+}
+
+function validateTextValues(
+  rejections: Array<ResubmissionRejection>,
+  textValues: Record<string, string>,
+) {
+  const errors: TextErrors = {}
+
+  for (const rejection of rejections) {
+    if (rejection.isDocument) continue
+
+    const error = validateTextField(
+      rejection,
+      textValues[rejection.fieldName] ?? '',
+    )
+
+    if (error) {
+      errors[rejection.fieldName] = error
+    }
+  }
+
+  return errors
+}
+
+function validateDocumentValues(
+  rejections: Array<ResubmissionRejection>,
+  documentValues: Record<string, DocumentDraft>,
+) {
+  const errors: DocumentErrors = {}
+
+  for (const rejection of rejections) {
+    if (!rejection.isDocument) continue
+
+    const draft = documentValues[rejection.fieldName] ?? {
+      action: null,
+      file: null,
+    }
+
+    if (rejection.isRequired) {
+      if (draft.action !== 'replace' || !draft.file) {
+        errors[rejection.fieldName] = `${rejection.label} must be reuploaded.`
+      }
+      continue
+    }
+
+    if (draft.action !== 'replace' && draft.action !== 'remove') {
+      errors[rejection.fieldName] = `Choose whether to reupload or remove ${rejection.label.toLowerCase()}.`
+      continue
+    }
+
+    if (draft.action === 'replace' && !draft.file) {
+      errors[rejection.fieldName] = `${rejection.label} must be reuploaded.`
+    }
+  }
+
+  return errors
 }
 
 export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
-  const initial = useInitialState(context.rejections)
-  const [textValues, setTextValues] = useState(initial.text)
-  const [fileValues, setFileValues] = useState(initial.files)
+  const [textValues, setTextValues] = useState(() =>
+    createInitialTextValues(context.rejections),
+  )
+  const [documentValues, setDocumentValues] = useState(() =>
+    createInitialDocumentValues(context.rejections),
+  )
+  const [textErrors, setTextErrors] = useState<TextErrors>({})
+  const [documentErrors, setDocumentErrors] = useState<DocumentErrors>({})
   const [submitted, setSubmitted] = useState(false)
   const mutation = useSubmitResubmissionMutation(token)
 
@@ -356,24 +499,74 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
     [context.rejections],
   )
 
+  function handleTextChange(fieldName: string, value: string) {
+    setTextValues((current) => ({
+      ...current,
+      [fieldName]: value,
+    }))
+
+    setTextErrors((current) => {
+      if (!current[fieldName]) return current
+      const next = { ...current }
+      delete next[fieldName]
+      return next
+    })
+  }
+
+  function handleDocumentChange(fieldName: string, file: File | null) {
+    setDocumentValues((current) => ({
+      ...current,
+      [fieldName]: {
+        action: file ? 'replace' : current[fieldName]?.action ?? null,
+        file,
+      },
+    }))
+
+    setDocumentErrors((current) => {
+      if (!current[fieldName]) return current
+      const next = { ...current }
+      delete next[fieldName]
+      return next
+    })
+  }
+
+  function handleDocumentAction(
+    fieldName: string,
+    action: 'replace' | 'remove',
+  ) {
+    setDocumentValues((current) => ({
+      ...current,
+      [fieldName]: {
+        action,
+        file: action === 'replace' ? current[fieldName]?.file ?? null : null,
+      },
+    }))
+
+    setDocumentErrors((current) => {
+      if (!current[fieldName]) return current
+      const next = { ...current }
+      delete next[fieldName]
+      return next
+    })
+  }
+
   function buildFormData() {
     const formData = new FormData()
 
     for (const rejection of context.rejections) {
       if (rejection.isDocument) {
-        const file = fileValues[rejection.fieldName]
-        if (file) {
-          formData.append(rejection.fieldName, file)
+        const draft = documentValues[rejection.fieldName]
+        const action = draft?.action
+        if (!action) continue
+
+        formData.append(`${DOCUMENT_ACTION_PREFIX}${rejection.fieldName}`, action)
+        if (action === 'replace' && draft.file) {
+          formData.append(rejection.fieldName, draft.file)
         }
         continue
       }
 
-      const value = (textValues[rejection.fieldName] ?? '').trim()
-      const original = (rejection.currentValue ?? '').trim()
-
-      if (value && value !== original) {
-        formData.append(rejection.fieldName, value)
-      }
+      formData.append(rejection.fieldName, textValues[rejection.fieldName] ?? '')
     }
 
     return formData
@@ -381,12 +574,25 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    const formData = buildFormData()
 
-    if ([...formData.keys()].length === 0) {
-      toast.error('Please update at least one field before submitting.')
+    const nextTextErrors = validateTextValues(context.rejections, textValues)
+    const nextDocumentErrors = validateDocumentValues(
+      context.rejections,
+      documentValues,
+    )
+
+    setTextErrors(nextTextErrors)
+    setDocumentErrors(nextDocumentErrors)
+
+    if (
+      Object.keys(nextTextErrors).length > 0 ||
+      Object.keys(nextDocumentErrors).length > 0
+    ) {
+      toast.error('Please review the highlighted fields and submit all requested updates.')
       return
     }
+
+    const formData = buildFormData()
 
     mutation.mutate(formData, {
       onSuccess: () => {
@@ -409,7 +615,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
       <div className="text-center">
         <h1 className="text-3xl font-bold">Merchant Onboarding</h1>
         <p className="mt-2 text-muted-foreground">
-          Update only the requested fields for case {context.caseNumber}.
+          Submit every requested correction for case {context.caseNumber}.
         </p>
       </div>
 
@@ -418,16 +624,17 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
           <CardTitle>Update your submission</CardTitle>
           <CardDescription>
             {context.merchantName}
-            {expiresLabel ? ` — this secure link expires ${expiresLabel}.` : '.'}
+            {expiresLabel ? ` - this secure link expires ${expiresLabel}.` : '.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <Alert>
             <Info />
-            <AlertTitle>Requested updates only</AlertTitle>
+            <AlertTitle>Complete resubmission required</AlertTitle>
             <AlertDescription>
-              We have limited this form to the rejected fields from your earlier
-              submission so you can correct only what needs attention.
+              Every rejected field below must be addressed in this submission.
+              Required documents must be reuploaded. Optional documents can be
+              reuploaded or removed.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -448,13 +655,10 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
             {section.key === 'documents' ? (
               <DocumentsSection
                 rejections={rejections}
-                fileValues={fileValues}
-                onFileChange={(fieldName, file) =>
-                  setFileValues((prev) => ({
-                    ...prev,
-                    [fieldName]: file,
-                  }))
-                }
+                documentValues={documentValues}
+                documentErrors={documentErrors}
+                onDocumentAction={handleDocumentAction}
+                onDocumentChange={handleDocumentChange}
               />
             ) : (
               <FieldGroup className="grid gap-6 sm:grid-cols-2">
@@ -463,11 +667,9 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
                     key={rejection.fieldName}
                     rejection={rejection}
                     value={textValues[rejection.fieldName] ?? ''}
+                    error={textErrors[rejection.fieldName]}
                     onChange={(value) =>
-                      setTextValues((prev) => ({
-                        ...prev,
-                        [rejection.fieldName]: value,
-                      }))
+                      handleTextChange(rejection.fieldName, value)
                     }
                   />
                 ))}
@@ -494,20 +696,28 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
 function RejectionField({
   rejection,
   value,
+  error,
   onChange,
 }: {
   rejection: ResubmissionRejection
   value: string
+  error?: string
   onChange: (value: string) => void
 }) {
   const config = FIELD_CONFIGS[rejection.fieldName] ?? {
     kind: 'text' as const,
     section: 'business' as const,
   }
+  const isInvalid = Boolean(error)
 
   return (
-    <Field className={config.className}>
-      <FieldLabel htmlFor={rejection.fieldName}>{rejection.label}</FieldLabel>
+    <Field className={config.className} data-invalid={isInvalid}>
+      <div className="flex items-center gap-2">
+        <FieldLabel htmlFor={rejection.fieldName}>{rejection.label}</FieldLabel>
+        <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+          {(config.required ?? true) ? 'Required' : 'Optional'}
+        </Badge>
+      </div>
 
       <Alert variant="destructive">
         <ShieldAlert />
@@ -517,20 +727,19 @@ function RejectionField({
         </AlertDescription>
       </Alert>
 
-      <FieldDescription>
-        Current value: {formatCurrentValue(rejection.currentValue)}
-      </FieldDescription>
-
       <FieldControl
         rejection={rejection}
         value={value}
         onChange={onChange}
         config={config}
+        isInvalid={isInvalid}
       />
 
       {config.description ? (
         <FieldDescription>{config.description}</FieldDescription>
       ) : null}
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </Field>
   )
 }
@@ -540,11 +749,13 @@ function FieldControl({
   value,
   onChange,
   config,
+  isInvalid,
 }: {
   rejection: ResubmissionRejection
   value: string
   onChange: (value: string) => void
   config: FieldConfig
+  isInvalid: boolean
 }) {
   if (config.kind === 'textarea') {
     return (
@@ -552,7 +763,7 @@ function FieldControl({
         id={rejection.fieldName}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        required
+        aria-invalid={isInvalid}
         className="min-h-24"
       />
     )
@@ -566,8 +777,10 @@ function FieldControl({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            type="button"
             data-empty={!value}
             className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+            aria-invalid={isInvalid}
           >
             <CalendarIcon data-icon="inline-start" />
             {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
@@ -590,7 +803,7 @@ function FieldControl({
   if (config.kind === 'select' && config.options) {
     return (
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={rejection.fieldName} className="w-full">
+        <SelectTrigger id={rejection.fieldName} className="w-full" aria-invalid={isInvalid}>
           <SelectValue placeholder={`Select ${rejection.label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
@@ -617,6 +830,7 @@ function FieldControl({
           placeholder="Search bank..."
           className="w-full"
           showClear
+          aria-invalid={isInvalid}
         />
         <ComboboxContent>
           <ComboboxEmpty>No bank found.</ComboboxEmpty>
@@ -639,19 +853,23 @@ function FieldControl({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={config.placeholder}
-      required
+      aria-invalid={isInvalid}
     />
   )
 }
 
 function DocumentsSection({
   rejections,
-  fileValues,
-  onFileChange,
+  documentValues,
+  documentErrors,
+  onDocumentAction,
+  onDocumentChange,
 }: {
   rejections: Array<ResubmissionRejection>
-  fileValues: Record<string, File | null>
-  onFileChange: (fieldName: string, file: File | null) => void
+  documentValues: Record<string, DocumentDraft>
+  documentErrors: DocumentErrors
+  onDocumentAction: (fieldName: string, action: 'replace' | 'remove') => void
+  onDocumentChange: (fieldName: string, file: File | null) => void
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -664,33 +882,104 @@ function DocumentsSection({
       </Alert>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {rejections.map((rejection) => (
-          <div key={rejection.fieldName} className="flex flex-col gap-3">
-            <Alert variant="destructive">
-              <ShieldAlert />
-              <AlertTitle>{rejection.label}</AlertTitle>
-              <AlertDescription>
-                {rejection.remarks ?? 'Please upload an updated document.'}
-              </AlertDescription>
-            </Alert>
+        {rejections.map((rejection) => {
+          const draft = documentValues[rejection.fieldName] ?? {
+            action: rejection.isRequired ? 'replace' : null,
+            file: null,
+          }
 
-            {rejection.currentDocumentName ? (
-              <FieldDescription>
-                Current file: {rejection.currentDocumentName}
-              </FieldDescription>
-            ) : null}
-
-            <DocumentUploadField
-              name={rejection.fieldName}
-              label={rejection.label}
-              required
-              file={fileValues[rejection.fieldName] ?? null}
-              onFileChange={(file) => onFileChange(rejection.fieldName, file)}
+          return (
+            <DocumentResubmissionField
+              key={rejection.fieldName}
+              rejection={rejection}
+              draft={draft}
+              error={documentErrors[rejection.fieldName]}
+              onDocumentAction={onDocumentAction}
+              onDocumentChange={onDocumentChange}
             />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
+  )
+}
+
+function DocumentResubmissionField({
+  rejection,
+  draft,
+  error,
+  onDocumentAction,
+  onDocumentChange,
+}: {
+  rejection: ResubmissionRejection
+  draft: DocumentDraft
+  error?: string
+  onDocumentAction: (fieldName: string, action: 'replace' | 'remove') => void
+  onDocumentChange: (fieldName: string, file: File | null) => void
+}) {
+  const isInvalid = Boolean(error)
+
+  return (
+    <Field className="rounded-lg border p-4" data-invalid={isInvalid}>
+      <div className="flex items-center gap-2">
+        <FieldLabel>{rejection.label}</FieldLabel>
+        <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+          {rejection.isRequired ? 'Required' : 'Optional'}
+        </Badge>
+      </div>
+
+      <Alert variant="destructive">
+        <ShieldAlert />
+        <AlertTitle>Reviewer feedback</AlertTitle>
+        <AlertDescription>
+          {rejection.remarks ?? 'Please upload an updated document.'}
+        </AlertDescription>
+      </Alert>
+
+      {!rejection.isRequired ? (
+        <>
+          <Separator />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={draft.action === 'replace' ? 'default' : 'outline'}
+              onClick={() => onDocumentAction(rejection.fieldName, 'replace')}
+            >
+              <Upload data-icon="inline-start" />
+              Reupload
+            </Button>
+            <Button
+              type="button"
+              variant={draft.action === 'remove' ? 'destructive' : 'outline'}
+              onClick={() => onDocumentAction(rejection.fieldName, 'remove')}
+            >
+              <Trash2 data-icon="inline-start" />
+              Remove document
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {draft.action === 'remove' && !rejection.isRequired ? (
+        <Alert>
+          <Info />
+          <AlertDescription>
+            This optional document will be removed from the submission.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <DocumentUploadField
+          name={rejection.fieldName}
+          label={rejection.label}
+          required
+          file={draft.file}
+          onFileChange={(file) => onDocumentChange(rejection.fieldName, file)}
+          error={draft.action === 'remove' ? undefined : error}
+        />
+      )}
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    </Field>
   )
 }
 
