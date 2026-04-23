@@ -12,7 +12,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '#/features/auth/auth-client'
 import {
@@ -32,12 +31,12 @@ import type {
 import type { RoleType, User } from '#/types/auth'
 import { createCaseColumns } from './cases-columns'
 
-// ─── Context Types ──────────────────────────────────────────────────────────
-
 interface CasesTableState {
   flatData: CaseListItem[]
   selectedIds: string[]
   filters: CaseRouteSearch
+  hideOwnerFilter: boolean
+  hideStatusFilter: boolean
   userRole: RoleType
   isLoading: boolean
   totalCount: number
@@ -71,6 +70,15 @@ interface CasesTableMeta {
   setToCommaString: (set: Set<string>) => string | undefined
 }
 
+type CasesTableProviderProps = {
+  children: React.ReactNode
+  filters: CaseRouteSearch
+  setFilter: (key: keyof CaseRouteSearch, value: string | undefined) => void
+  setFilters: (partialFilters: Partial<CaseRouteSearch>) => void
+  hideOwnerFilter?: boolean
+  hideStatusFilter?: boolean
+}
+
 const CasesTableStateContext = createContext<CasesTableState | null>(null)
 const CasesTableActionsContext = createContext<CasesTableActions | null>(null)
 const CasesTableMetaContext = createContext<CasesTableMeta | null>(null)
@@ -97,64 +105,17 @@ export function useCasesTableMeta() {
   return useRequiredContext(CasesTableMetaContext)
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function cleanEmptyParams(search: Record<string, unknown>) {
-  const cleaned = { ...search }
-
-  for (const key of Object.keys(cleaned)) {
-    const value = cleaned[key]
-
-    if (
-      value === undefined ||
-      value === '' ||
-      (typeof value === 'number' && Number.isNaN(value))
-    ) {
-      delete cleaned[key]
-    }
-  }
-
-  return cleaned
-}
-
-const routeApi = getRouteApi('/_app/cases/all-cases')
-
-function useCaseFilters() {
-  const navigate = useNavigate()
-  const filters = routeApi.useSearch()
-
-  const setFilters = useCallback(
-    (partialFilters: Partial<CaseRouteSearch>) => {
-      void navigate({
-        to: '/cases/all-cases',
-        search: (prev) =>
-          cleanEmptyParams({
-            ...prev,
-            ...partialFilters,
-          }) as CaseRouteSearch,
-        replace: true,
-      })
-    },
-    [navigate],
-  )
-
-  const setFilter = useCallback(
-    (key: keyof CaseRouteSearch, value: string | undefined) => {
-      setFilters({ [key]: value || undefined })
-    },
-    [setFilters],
-  )
-
-  return { filters, setFilters, setFilter }
-}
-
-// ─── Provider ───────────────────────────────────────────────────────────────
-
-function CasesTableProvider({ children }: { children: React.ReactNode }) {
+function CasesTableProvider({
+  children,
+  filters,
+  setFilter,
+  setFilters,
+  hideOwnerFilter = false,
+  hideStatusFilter = false,
+}: CasesTableProviderProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const userRole = user?.roleType ?? 'employee'
-  const { filters, setFilter, setFilters } = useCaseFilters()
 
   const handleSort = useCallback(
     (columnId: CaseSortableColumn) => {
@@ -300,8 +261,6 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       handleSelectAll,
       handleSelectRow,
       handleSort,
-      setAssignOwnerCase,
-      setPriorityCase,
       selectedIdSet,
     ],
   )
@@ -345,6 +304,8 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       flatData,
       selectedIds,
       filters,
+      hideOwnerFilter,
+      hideStatusFilter,
       userRole,
       isLoading,
       totalCount,
@@ -367,6 +328,8 @@ function CasesTableProvider({ children }: { children: React.ReactNode }) {
       filters,
       flatData,
       hasNextPage,
+      hideOwnerFilter,
+      hideStatusFilter,
       isFetchingNextPage,
       isLoading,
       isQueuesLoading,

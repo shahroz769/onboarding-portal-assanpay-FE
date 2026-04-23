@@ -8,7 +8,7 @@
         "@base-ui/react": "^1.4.1",
         "@modelcontextprotocol/sdk": "^1.29.0",
         "@tailwindcss/vite": "^4.2.4",
-        "@tanstack/intent": "^0.0.29",
+        "@tanstack/intent": "^0.0.32",
         "@tanstack/react-devtools": "latest",
         "@tanstack/react-form": "^1.29.1",
         "@tanstack/react-query": "latest",
@@ -537,7 +537,7 @@
 
     "@tanstack/history": ["@tanstack/history@1.161.6", "", {}, "sha512-NaOGLRrddszbQj9upGat6HG/4TKvXLvu+osAIgfxPYA+eIvYKv8GKDJOrY2D3/U9MRnKfMWD7bU4jeD4xmqyIg=="],
 
-    "@tanstack/intent": ["@tanstack/intent@0.0.29", "", { "dependencies": { "cac": "^6.7.14", "yaml": "^2.7.0" }, "bin": { "intent": "dist/cli.mjs", "intent-library": "dist/intent-library.mjs" } }, "sha512-tJcWapEkXGRLHE7mQYvQS0xIWrzKm2n7fQ/lOy4LCdR1hX0Yxb9QnwRwd0oqmmr54ObP9/5sfiD8vELxL/r30g=="],
+    "@tanstack/intent": ["@tanstack/intent@0.0.32", "", { "dependencies": { "cac": "^6.7.14", "yaml": "^2.7.0" }, "bin": { "intent": "dist/cli.mjs", "intent-library": "dist/intent-library.mjs" } }, "sha512-Dyv97rN1QhoJjYzUULztRsRUj8IYuq3k2+XsN9WVAF1IGoVSXpg50EykBWWQs0scti59HZmnIKSHQcw5DoxMHQ=="],
 
     "@tanstack/pacer-lite": ["@tanstack/pacer-lite@0.1.1", "", {}, "sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w=="],
 

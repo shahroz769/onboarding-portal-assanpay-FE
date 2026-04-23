@@ -42,7 +42,10 @@ import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
 import { RejectionRoundsCard } from './rejection-rounds-card'
-import { getDocumentsReviewSummary } from './renderers/documents-review-shared'
+import {
+  getDocumentsReviewSummary,
+  isUpdatedInLatestResubmissionRound,
+} from './renderers/documents-review-shared'
 import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
 
 interface CaseSidePanelProps {
@@ -93,7 +96,6 @@ function getPrimaryActionCopy(
   if (
     options.isDocumentReviewCase &&
     status === 'working' &&
-    !options.isReviewApproved &&
     !options.hasActiveRejections &&
     options.hasResubmittedUpdates
   ) {
@@ -106,6 +108,17 @@ function getPrimaryActionCopy(
     }
   }
 
+  if (options.isDocumentReviewCase && status === 'working' && !options.hasActiveRejections) {
+    return {
+      title: options.isReviewApproved ? 'Review approved' : 'No active rejections',
+      description: options.isReviewApproved
+        ? 'The document-review approval is saved. You can now mark this case as successful.'
+        : 'There are no active rejections on this case. You can now mark it as successful.',
+      actionLabel: 'Mark as successful',
+      actionKind: 'mark-successful' as const,
+    }
+  }
+
   if (options.isDocumentReviewCase && status === 'working' && !options.isReviewApproved) {
     return {
       title: 'Review required',
@@ -113,16 +126,6 @@ function getPrimaryActionCopy(
         'Open the review summary, confirm the rejected fields, and email the client to request a resubmission.',
       actionLabel: 'Review',
       actionKind: 'review' as const,
-    }
-  }
-
-  if (options.isDocumentReviewCase && status === 'working' && options.isReviewApproved) {
-    return {
-      title: 'Review approved',
-      description:
-        'The document-review approval is saved. You can now mark this case as successful.',
-      actionLabel: 'Mark as successful',
-      actionKind: 'mark-successful' as const,
     }
   }
 
@@ -197,8 +200,11 @@ export function CaseSidePanel({
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
   const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
-  const hasResubmittedUpdates = caseDetail.fieldReviews.some(
-    (review) => Boolean(review.resubmittedAt),
+  const hasResubmittedUpdates = caseDetail.fieldReviews.some((review) =>
+    isUpdatedInLatestResubmissionRound(
+      review,
+      caseDetail.latestResubmissionRequestedAt,
+    ),
   )
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {

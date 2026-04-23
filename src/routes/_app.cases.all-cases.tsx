@@ -5,6 +5,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { Skeleton } from '#/components/ui/skeleton'
 import { CasesTableComposed } from '#/features/cases/cases-table'
+import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { casesInfiniteQueryOptions } from '#/hooks/use-cases-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
@@ -38,7 +39,16 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
 })
 
 function RouteComponent() {
-  return <CasesTableComposed />
+  const search = Route.useSearch()
+  const { setFilter, setFilters } = useCasesSearchActions('/cases/all-cases')
+
+  return (
+    <CasesTableComposed
+      filters={search}
+      setFilter={setFilter}
+      setFilters={setFilters}
+    />
+  )
 }
 
 function CasesRoutePending() {

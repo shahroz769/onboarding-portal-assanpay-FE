@@ -20,6 +20,7 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
+import type { CaseRouteSearch } from '#/schemas/cases.schema'
 import { CASE_STATUSES, CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { CasePriorityDialog } from './case-priority-dialog'
@@ -30,14 +31,10 @@ import {
   useCasesTableState,
 } from './cases-table-context'
 
-// ─── Filter Option Configs ──────────────────────────────────────────────────
-
-const statusFilterOptions = CASE_STATUSES.map((s) => ({
-  label: CASE_STATUS_LABELS[s],
-  value: s,
+const statusFilterOptions = CASE_STATUSES.map((status) => ({
+  label: CASE_STATUS_LABELS[status],
+  value: status,
 }))
-
-// ─── Queue Selector (top-right) ─────────────────────────────────────────────
 
 function QueueSelector() {
   const state = useCasesTableState()
@@ -54,8 +51,8 @@ function QueueSelector() {
   ) : (
     <Select
       value={filters.queueId ?? 'all'}
-      onValueChange={(v) =>
-        actions.setFilter('queueId', v === 'all' ? undefined : v)
+      onValueChange={(value) =>
+        actions.setFilter('queueId', value === 'all' ? undefined : value)
       }
     >
       <SelectTrigger className="w-50">
@@ -78,8 +75,6 @@ function QueueSelector() {
   return createPortal(content, portalTarget)
 }
 
-// ─── Toolbar ────────────────────────────────────────────────────────────────
-
 function Toolbar() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
@@ -96,18 +91,20 @@ function Toolbar() {
       <DataTableToolbar.Filters>
         <DataTableSearch
           value={filters.search ?? ''}
-          onChange={(v) => actions.setFilter('search', v || undefined)}
+          onChange={(value) => actions.setFilter('search', value || undefined)}
           placeholder="Search by case number or merchant name..."
         />
-        <DataTableFilter
-          title="Status"
-          options={statusFilterOptions}
-          selectedValues={meta.commaToSet(filters.status)}
-          onChange={(set) =>
-            actions.setFilter('status', meta.setToCommaString(set))
-          }
-        />
-        {state.isUsersLoading ? (
+        {state.hideStatusFilter ? null : (
+          <DataTableFilter
+            title="Status"
+            options={statusFilterOptions}
+            selectedValues={meta.commaToSet(filters.status)}
+            onChange={(set) =>
+              actions.setFilter('status', meta.setToCommaString(set))
+            }
+          />
+        )}
+        {state.hideOwnerFilter ? null : state.isUsersLoading ? (
           <Skeleton className="h-9 w-32" />
         ) : (
           <DataTableFilter
@@ -121,12 +118,12 @@ function Toolbar() {
         )}
       </DataTableToolbar.Filters>
       <DataTableToolbar.Actions>
-        {selectedIds.length > 0 && (
+        {selectedIds.length > 0 ? (
           <span className="text-sm text-muted-foreground">
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
-        )}
-        {!state.isLoading && (
+        ) : null}
+        {state.isLoading ? null : (
           <span className="text-sm text-muted-foreground">
             Total {state.totalCount} Cases
           </span>
@@ -135,8 +132,6 @@ function Toolbar() {
     </DataTableToolbar>
   )
 }
-
-// ─── Bulk Actions ───────────────────────────────────────────────────────────
 
 function BulkActions() {
   const state = useCasesTableState()
@@ -149,15 +144,17 @@ function BulkActions() {
       selectedCount={state.selectedIds.length}
       visibleCount={state.flatData.length}
     >
-      {canAssign && (
+      {canAssign ? (
         <div className="flex items-center gap-2">
           {state.isUsersLoading ? (
             <Skeleton className="h-8 w-40" />
           ) : (
             <Select
               value={state.bulkAssignOwnerId ?? 'unassigned'}
-              onValueChange={(v) =>
-                actions.setBulkAssignOwnerId(v === 'unassigned' ? null : v)
+              onValueChange={(value) =>
+                actions.setBulkAssignOwnerId(
+                  value === 'unassigned' ? null : value,
+                )
               }
             >
               <SelectTrigger size="sm">
@@ -187,12 +184,10 @@ function BulkActions() {
             Assign Owner
           </Button>
         </div>
-      )}
+      ) : null}
     </DataTableSelectionInfo>
   )
 }
-
-// ─── Data Grid ──────────────────────────────────────────────────────────────
 
 function Grid() {
   const state = useCasesTableState()
@@ -203,7 +198,7 @@ function Grid() {
     <DataTable
       columns={meta.columns}
       data={state.flatData}
-      getRowId={(c) => c.id}
+      getRowId={(caseItem) => caseItem.id}
       selectedIds={meta.selectedIdSet}
       isLoading={state.isLoading}
       onScrollEnd={actions.fetchNextPage}
@@ -219,7 +214,7 @@ function Dialogs() {
 
   return (
     <>
-      {state.assignOwnerCase && (
+      {state.assignOwnerCase ? (
         <CaseAssignOwnerDialog
           open
           onOpenChange={(open) => {
@@ -232,8 +227,8 @@ function Dialogs() {
           currentOwnerId={state.assignOwnerCase.ownerId}
           currentOwnerName={state.assignOwnerCase.ownerName}
         />
-      )}
-      {state.priorityCase && (
+      ) : null}
+      {state.priorityCase ? (
         <CasePriorityDialog
           open
           onOpenChange={(open) => {
@@ -243,12 +238,10 @@ function Dialogs() {
           }}
           caseItem={state.priorityCase}
         />
-      )}
+      ) : null}
     </>
   )
 }
-
-// ─── Compound Component ─────────────────────────────────────────────────────
 
 export const CasesTable = {
   Provider: CasesTableProvider,
@@ -259,11 +252,29 @@ export const CasesTable = {
   Dialogs,
 }
 
-// ─── Default Composed Layout ────────────────────────────────────────────────
+interface CasesTableComposedProps {
+  filters: CaseRouteSearch
+  setFilter: (key: keyof CaseRouteSearch, value: string | undefined) => void
+  setFilters: (partialFilters: Partial<CaseRouteSearch>) => void
+  hideOwnerFilter?: boolean
+  hideStatusFilter?: boolean
+}
 
-export function CasesTableComposed() {
+export function CasesTableComposed({
+  filters,
+  setFilter,
+  setFilters,
+  hideOwnerFilter = false,
+  hideStatusFilter = false,
+}: CasesTableComposedProps) {
   return (
-    <CasesTable.Provider>
+    <CasesTable.Provider
+      filters={filters}
+      setFilter={setFilter}
+      setFilters={setFilters}
+      hideOwnerFilter={hideOwnerFilter}
+      hideStatusFilter={hideStatusFilter}
+    >
       <CasesTable.QueueSelector />
       <TooltipProvider>
         <div className="flex min-h-0 flex-1 flex-col gap-2">

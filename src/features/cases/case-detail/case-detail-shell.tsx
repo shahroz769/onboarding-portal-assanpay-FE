@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
@@ -155,42 +155,63 @@ function CaseStagesBlock({
     return null
   }
 
+  const currentStageIndex = stages.findIndex((stage) => stage.id === currentStageId)
+
   return (
-    <div className="rounded-lg bg-muted md:col-span-3">
+    <div className="overflow-hidden rounded-md bg-muted md:col-span-3">
       <div
-        className="grid gap-2"
+        className="grid gap-0 overflow-hidden"
         style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
       >
-        {stages.map((stage) => {
+        {stages.map((stage, index) => {
           const isCurrent = stage.id === currentStageId
+          const isPassed =
+            currentStageIndex >= 0 && index < currentStageIndex
+          const connectsToCompletedFlow =
+            isPassed && index < currentStageIndex
           const isClosedUnsuccessfully =
             stage.category === 'closed' && closeOutcome === 'unsuccessful'
+          const showCompletedIcon =
+            isPassed || (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
 
           return (
             <div
               key={stage.id}
-              className={cn(
-                'relative inline-flex h-9 items-center justify-center rounded-md text-center text-sm whitespace-nowrap transition-all',
-                !isCurrent && 'bg-muted text-muted-foreground/50',
-                isCurrent &&
-                  stage.slug === 'new' &&
-                  'bg-slate-200 text-slate-900 font-semibold dark:bg-slate-800 dark:text-slate-100',
-                isCurrent &&
-                  stage.slug === 'working' &&
-                  'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
-                isCurrent &&
-                  stage.slug === 'awaiting_client' &&
-                  'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
-                isCurrent &&
-                  stage.slug === 'closed' &&
-                  !isClosedUnsuccessfully &&
-                  'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-900 dark:text-emerald-300',
-                isCurrent &&
-                  isClosedUnsuccessfully &&
-                  'bg-red-100 text-red-800 font-semibold dark:bg-red-900 dark:text-red-300',
-              )}
+              className="min-w-0"
             >
-              <span>{stage.name}</span>
+              <div
+                className={cn(
+                  'relative inline-flex h-9 w-full items-center justify-center gap-1.5 text-center text-sm whitespace-nowrap transition-all',
+                  !isCurrent && !isPassed && 'bg-muted text-muted-foreground/50',
+                  isPassed &&
+                    stage.slug !== 'closed' &&
+                    'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-900 dark:text-emerald-300',
+                  isPassed &&
+                    stage.slug === 'closed' &&
+                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                  connectsToCompletedFlow && 'rounded-r-none',
+                  isCurrent &&
+                    stage.slug === 'new' &&
+                    'bg-slate-200 text-slate-900 font-semibold dark:bg-slate-800 dark:text-slate-100',
+                  isCurrent &&
+                    stage.slug === 'working' &&
+                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                  isCurrent &&
+                    stage.slug === 'awaiting_client' &&
+                    'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
+                  isCurrent &&
+                    stage.slug === 'closed' &&
+                    !isClosedUnsuccessfully &&
+                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                  isCurrent &&
+                    isClosedUnsuccessfully &&
+                    'bg-red-100 text-red-800 font-semibold dark:bg-red-900 dark:text-red-300',
+                  'rounded-none',
+                )}
+              >
+                {showCompletedIcon ? <CheckCircle2 className="size-4 shrink-0" /> : null}
+                <span>{stage.name}</span>
+              </div>
             </div>
           )
         })}

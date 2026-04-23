@@ -20,6 +20,7 @@ type DocumentsReviewDraftContextValue = {
   draftReviews: DocumentsReviewDraftMap
   reviewSummary: ReturnType<typeof getDocumentsReviewSummaryFromDraft>
   saveRejectedReview: (fieldName: string, remarks: string) => void
+  clearRejectedReview: (fieldName: string) => void
 }
 
 const DocumentsReviewDraftContext =
@@ -51,6 +52,15 @@ export function DocumentsReviewDraftProvider({
         [fieldName]: {
           status: 'rejected',
           remarks,
+        },
+      }))
+    },
+    clearRejectedReview: (fieldName) => {
+      setDraftReviews((currentDraft) => ({
+        ...currentDraft,
+        [fieldName]: {
+          status: 'pending',
+          remarks: '',
         },
       }))
     },

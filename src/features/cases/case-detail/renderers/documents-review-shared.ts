@@ -81,6 +81,33 @@ function getDraftReviewByField(draftReviews: DocumentsReviewDraftMap) {
   return new Map(Object.entries(draftReviews))
 }
 
+export function isUpdatedInLatestResubmissionRound(
+  review: FieldReview | undefined,
+  latestResubmissionRequestedAt: string | null,
+) {
+  if (!review?.resubmittedAt || !latestResubmissionRequestedAt) {
+    return false
+  }
+
+  const resubmittedAt = new Date(review.resubmittedAt).getTime()
+  const latestRequestedAt = new Date(latestResubmissionRequestedAt).getTime()
+
+  if (
+    Number.isNaN(resubmittedAt) ||
+    Number.isNaN(latestRequestedAt) ||
+    resubmittedAt < latestRequestedAt
+  ) {
+    return false
+  }
+
+  if (!review.updatedAt) {
+    return true
+  }
+
+  const reviewedAt = new Date(review.updatedAt).getTime()
+  return Number.isNaN(reviewedAt) || resubmittedAt > reviewedAt
+}
+
 export function createDocumentsReviewDraft(
   fieldReviews: FieldReview[],
 ): DocumentsReviewDraftMap {

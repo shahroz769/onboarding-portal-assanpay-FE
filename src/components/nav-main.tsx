@@ -19,6 +19,35 @@ import {
   SidebarMenuSubItem,
 } from '#/components/ui/sidebar'
 
+const NAV_MENU_STATE_STORAGE_KEY = 'app-sidebar-collapsible-state'
+
+function readStoredNavMenuState() {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(NAV_MENU_STATE_STORAGE_KEY)
+    if (!rawValue) return {}
+
+    const parsed = JSON.parse(rawValue) as Record<string, boolean>
+    return typeof parsed === 'object' && parsed !== null ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeStoredNavMenuState(nextState: Record<string, boolean>) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(
+    NAV_MENU_STATE_STORAGE_KEY,
+    JSON.stringify(nextState),
+  )
+}
+
 function NavItem({
   item,
   pathname,
@@ -34,7 +63,10 @@ function NavItem({
     item.items?.some((subItem) => pathname === subItem.url),
   )
   const shouldBeOpen = isDirectActive || hasActiveChild
-  const [open, setOpen] = useState(shouldBeOpen)
+  const [open, setOpen] = useState(() => {
+    const storedState = readStoredNavMenuState()
+    return storedState[item.url] ?? shouldBeOpen
+  })
   const labelClassName =
     'min-w-0 flex-1 truncate transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0'
 
@@ -43,6 +75,18 @@ function NavItem({
       setOpen(true)
     }
   }, [shouldBeOpen])
+
+  useEffect(() => {
+    const storedState = readStoredNavMenuState()
+    if (storedState[item.url] === open) {
+      return
+    }
+
+    writeStoredNavMenuState({
+      ...storedState,
+      [item.url]: open,
+    })
+  }, [item.url, open])
 
   if (!item.items?.length) {
     return (

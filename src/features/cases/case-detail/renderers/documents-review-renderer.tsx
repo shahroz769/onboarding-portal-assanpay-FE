@@ -55,6 +55,7 @@ import type { FieldReview, FieldReviewStatus } from '#/schemas/cases.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 import { useDocumentsReviewDraft } from './documents-review-draft-context'
+import { isUpdatedInLatestResubmissionRound } from './documents-review-shared'
 
 type LocalReview = {
   status: FieldReviewStatus
@@ -272,7 +273,7 @@ export default function DocumentsReviewRenderer({
   const { user } = useAuth()
   const saveFieldReviews = useSaveFieldReviews(caseId)
   const { merchant, fieldReviews, currentStage } = caseDetail
-  const { draftReviews, saveRejectedReview } = useDocumentsReviewDraft()
+  const { draftReviews, saveRejectedReview, clearRejectedReview } = useDocumentsReviewDraft()
   const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
   const isEditable =
     isCaseOwner &&
@@ -301,6 +302,9 @@ export default function DocumentsReviewRenderer({
     remarks: '',
     error: null,
   })
+  const [rejectDialogAction, setRejectDialogAction] = useState<
+    'save' | 'delete' | null
+  >(null)
 
   const sections = useMemo(() => {
     return REVIEW_SECTIONS.map((section) => {
@@ -382,6 +386,7 @@ export default function DocumentsReviewRenderer({
   }
 
   function closeRejectDialog() {
+    setRejectDialogAction(null)
     setRejectDialog({
       open: false,
       item: null,
@@ -403,6 +408,7 @@ export default function DocumentsReviewRenderer({
     }
 
     try {
+      setRejectDialogAction('save')
       await saveFieldReviews.mutateAsync({
         reviews: [
           {
@@ -416,8 +422,43 @@ export default function DocumentsReviewRenderer({
       closeRejectDialog()
     } catch {
       // Mutation hook already surfaces the backend error via toast.
+    } finally {
+      setRejectDialogAction(null)
     }
   }
+
+  async function deleteReject() {
+    const dialogItem = rejectDialog.item
+
+    if (!dialogItem) {
+      return
+    }
+
+    try {
+      setRejectDialogAction('delete')
+      await saveFieldReviews.mutateAsync({
+        reviews: [
+          {
+            fieldName: dialogItem.key,
+            status: 'pending',
+          },
+        ],
+      })
+      clearRejectedReview(dialogItem.key)
+      closeRejectDialog()
+    } catch {
+      // Mutation hook already surfaces the backend error via toast.
+    } finally {
+      setRejectDialogAction(null)
+    }
+  }
+
+  const isRejectedItem = rejectDialog.item
+    ? draftReviews[rejectDialog.item.key]?.status === 'rejected'
+    : false
+  const isSavingReject = saveFieldReviews.isPending && rejectDialogAction === 'save'
+  const isDeletingReject =
+    saveFieldReviews.isPending && rejectDialogAction === 'delete'
 
   return (
     <div className="flex flex-col gap-4">
@@ -444,8 +485,11 @@ export default function DocumentsReviewRenderer({
                     <ReadOnlyReviewField
                       key={item.key}
                       item={item}
-                        review={draftReviews[item.key]}
-                        persistedReview={persistedReviewByField.get(item.key)}
+                      review={draftReviews[item.key]}
+                      persistedReview={persistedReviewByField.get(item.key)}
+                      latestResubmissionRequestedAt={
+                        caseDetail.latestResubmissionRequestedAt
+                      }
                       isEditable={isEditable}
                       onReject={() => openRejectDialog(item)}
                     />
@@ -479,6 +523,9 @@ export default function DocumentsReviewRenderer({
                         document={document}
                         review={draftReviews[document.key]}
                         persistedReview={persistedReviewByField.get(document.key)}
+                        latestResubmissionRequestedAt={
+                          caseDetail.latestResubmissionRequestedAt
+                        }
                         isEditable={isEditable}
                         onReject={() => openRejectDialog(document)}
                       />
@@ -504,7 +551,9 @@ export default function DocumentsReviewRenderer({
           <DialogHeader>
             <DialogTitle>Reject item</DialogTitle>
             <DialogDescription>
-              Add a clear reason for rejecting {rejectDialog.item?.label ?? 'this item'}.
+              {isRejectedItem
+                ? `The current rejection for ${rejectDialog.item?.label ?? 'this item'} will be deleted if you continue.`
+                : `Add a clear reason for rejecting ${rejectDialog.item?.label ?? 'this item'}.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -535,37 +584,40 @@ export default function DocumentsReviewRenderer({
           </FieldGroup>
 
           <DialogFooter>
+            {isRejectedItem ? (
+              <Button
+                variant="destructive"
+                onClick={deleteReject}
+                disabled={saveFieldReviews.isPending}
+              >
+                {isDeletingReject ? (
+                  <Spinner data-icon="inline-start" />
+                ) : null}
+                Delete
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={closeRejectDialog}
+                disabled={saveFieldReviews.isPending}
+              >
+                Cancel
+              </Button>
+            )}
             <Button
-              variant="outline"
-              onClick={closeRejectDialog}
-              disabled={saveFieldReviews.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
               onClick={confirmReject}
               disabled={saveFieldReviews.isPending}
             >
-              {saveFieldReviews.isPending ? (
+              {isSavingReject ? (
                 <Spinner data-icon="inline-start" />
               ) : null}
-              {saveFieldReviews.isPending
-                ? 'Saving rejection'
-                : 'Save rejection note'}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
-}
-
-function isResubmittedAfterReview(review: FieldReview | undefined) {
-  if (!review?.resubmittedAt) return false
-  if (!review.updatedAt) return true
-  return new Date(review.resubmittedAt).getTime() >
-    new Date(review.updatedAt).getTime()
 }
 
 function UpdatedBadge({ resubmittedAt }: { resubmittedAt: string }) {
@@ -593,17 +645,22 @@ function ReadOnlyReviewField({
   item,
   review,
   persistedReview,
+  latestResubmissionRequestedAt,
   isEditable,
   onReject,
 }: {
   item: ReviewItem
   review: LocalReview | undefined
   persistedReview: FieldReview | undefined
+  latestResubmissionRequestedAt: string | null
   isEditable: boolean
   onReject: () => void
 }) {
   const isRejected = review?.status === 'rejected'
-  const showUpdated = isResubmittedAfterReview(persistedReview)
+  const showUpdated = isUpdatedInLatestResubmissionRound(
+    persistedReview,
+    latestResubmissionRequestedAt,
+  )
 
   return (
     <Field className={item.className}>
@@ -661,17 +718,22 @@ function ReadOnlyDocumentField({
   document,
   review,
   persistedReview,
+  latestResubmissionRequestedAt,
   isEditable,
   onReject,
 }: {
   document: ReviewDocument
   review: LocalReview | undefined
   persistedReview: FieldReview | undefined
+  latestResubmissionRequestedAt: string | null
   isEditable: boolean
   onReject: () => void
 }) {
   const isRejected = review?.status === 'rejected'
-  const showUpdated = isResubmittedAfterReview(persistedReview)
+  const showUpdated = isUpdatedInLatestResubmissionRound(
+    persistedReview,
+    latestResubmissionRequestedAt,
+  )
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-4">

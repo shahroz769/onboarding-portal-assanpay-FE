@@ -3,6 +3,9 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock3,
+  MailCheck,
+  MailWarning,
+  Send,
   ShieldAlert,
   UserRoundCheck,
 } from 'lucide-react'
@@ -27,31 +30,72 @@ const ACTION_META: Record<
   {
     label: string
     icon: typeof Clock3
+    iconClassName: string
+    iconWrapperClassName: string
   }
 > = {
   ownership_taken: {
     label: 'Ownership taken',
     icon: UserRoundCheck,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
   },
   owner_changed: {
     label: 'Owner updated',
     icon: UserRoundCheck,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
   },
   stage_advanced: {
     label: 'Stage advanced',
     icon: CheckCircle2,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
   },
   closed_successful: {
     label: 'Closed successfully',
     icon: CheckCircle2,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
   },
   closed_unsuccessful: {
     label: 'Closed unsuccessfully',
     icon: ShieldAlert,
+    iconClassName: 'text-red-700 dark:text-red-300',
+    iconWrapperClassName:
+      'border-red-200 bg-red-100 dark:border-red-800 dark:bg-red-950/60',
+  },
+  rejections_prepared: {
+    label: 'Rejections finalized',
+    icon: Send,
+    iconClassName: 'text-orange-700 dark:text-orange-300',
+    iconWrapperClassName:
+      'border-orange-200 bg-orange-100 dark:border-orange-800 dark:bg-orange-950/60',
+  },
+  resubmission_email_sent: {
+    label: 'Resubmission email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
+  resubmission_email_failed: {
+    label: 'Resubmission email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
   field_reviews_saved: {
     label: 'Review notes saved',
     icon: CircleDashed,
+    iconClassName: 'text-violet-700 dark:text-violet-300',
+    iconWrapperClassName:
+      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
   },
 }
 
@@ -85,40 +129,52 @@ export function CaseHistoryTimeline({
           No history has been recorded for this case yet.
         </div>
       ) : (
-        <div className="relative flex flex-col gap-4 pl-6">
-          <div className="absolute bottom-0 left-[0.7rem] top-1 w-px bg-border" />
-          {history.map((entry) => {
+        <div className="flex flex-col gap-4">
+          {history.map((entry, index) => {
             const meta = ACTION_META[entry.action] ?? {
               label: entry.action,
               icon: Clock3,
+              iconClassName: 'text-muted-foreground',
+              iconWrapperClassName: 'border-border bg-background',
             }
             const Icon = meta.icon
             const detailsText = formatDetails(entry.action, entry.details)
 
             return (
-              <div key={entry.id} className="relative rounded-xl border bg-background p-4">
-                <div className="absolute left-[-1.55rem] top-5 flex size-6 items-center justify-center rounded-full border bg-background">
-                  <Icon className="size-3.5 text-muted-foreground" />
+              <div key={entry.id} className="relative pl-8">
+                {index > 0 ? (
+                  <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
+                ) : null}
+                {index < history.length - 1 ? (
+                  <div className="absolute bottom-[-1rem] left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
+                ) : null}
+
+                <div
+                  className={`absolute left-3.5 top-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border ${meta.iconWrapperClassName}`}
+                >
+                  <Icon className={`size-4 ${meta.iconClassName}`} />
                 </div>
 
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 flex-col gap-2">
-                      <p className="truncate text-sm font-semibold tracking-tight">
-                        {entry.actorName ?? 'System'}
-                      </p>
-                      {detailsText ? (
-                        <p className="wrap-break-word whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                          {detailsText}
+                <div className="relative rounded-xl border bg-background p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-col gap-2">
+                        <p className="truncate text-sm font-semibold tracking-tight">
+                          {entry.actorName ?? 'System'}
                         </p>
-                      ) : null}
+                        {detailsText ? (
+                          <p className="wrap-break-word whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                            {detailsText}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    <Badge variant="secondary">{meta.label}</Badge>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {formatDateTime(entry.createdAt)}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <Badge variant="secondary">{meta.label}</Badge>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -155,8 +211,6 @@ function formatDetails(
 ) {
   if (!details) return null
 
-  const parts: string[] = []
-
   if (
     (action === 'ownership_taken' || action === 'owner_changed') &&
     typeof details.toOwner === 'string'
@@ -168,6 +222,26 @@ function formatDetails(
       return `${fromOwner} -> ${toOwner}`
     }
   }
+
+  if (action === 'rejections_prepared') {
+    const total = typeof details.total === 'number' ? details.total : null
+    const labels = Array.isArray(details.rejectedFieldLabels)
+      ? details.rejectedFieldLabels.filter(
+          (value): value is string =>
+            typeof value === 'string' && value.trim().length > 0,
+        )
+      : []
+
+    if (total && labels.length > 0) {
+      return `${total} rejected item${total === 1 ? '' : 's'} finalized: ${labels.join(', ')}`
+    }
+
+    if (total) {
+      return `${total} rejected item${total === 1 ? '' : 's'} finalized`
+    }
+  }
+
+  const parts: string[] = []
 
   if (details.fromStage && details.toStage) {
     parts.push(`${details.fromStage} -> ${details.toStage}`)
@@ -185,6 +259,21 @@ function formatDetails(
     parts.push(
       `${details.total} items reviewed (${details.approved} accepted, ${details.rejected} rejected)`,
     )
+  }
+
+  if (action === 'resubmission_email_sent' && typeof details.recipient === 'string') {
+    const rejectedFields = Array.isArray(details.rejectedFields)
+      ? details.rejectedFields.length
+      : null
+    parts.push(
+      rejectedFields && rejectedFields > 0
+        ? `Sent to ${details.recipient} for ${rejectedFields} rejected item${rejectedFields === 1 ? '' : 's'}`
+        : `Sent to ${details.recipient}`,
+    )
+  }
+
+  if (action === 'resubmission_email_failed' && typeof details.error === 'string') {
+    parts.push(`Delivery failed: ${details.error}`)
   }
 
   return parts.join(' · ') || null

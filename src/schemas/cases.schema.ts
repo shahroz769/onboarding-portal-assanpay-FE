@@ -198,6 +198,7 @@ export const caseDetailSchema = z.object({
   merchant: z.record(z.unknown()),
   documents: z.array(z.record(z.unknown())),
   fieldReviews: z.array(fieldReviewSchema),
+  latestResubmissionRequestedAt: z.string().nullable(),
   owner: z
     .object({
       id: z.string(),

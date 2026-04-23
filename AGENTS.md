@@ -1,5 +1,5 @@
 work on both frontend and backend
-do not run the backend
+do not install node modules in hono
 hono folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 use tanstack docs latest
 tanstack query

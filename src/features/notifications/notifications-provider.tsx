@@ -5,6 +5,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { refreshSessionRequest } from '#/apis/auth'
 import { useAuth } from '#/features/auth/auth-client'
 import {
+  CASE_COMMENTS_KEY,
+  CASE_DETAIL_KEY,
+  CASE_HISTORY_KEY,
+} from '#/hooks/use-case-detail-query'
+import {
   NOTIFICATIONS_UNREAD_KEY,
   applyIncomingNotificationToCache,
 } from '#/hooks/use-notifications-query'
@@ -51,6 +56,24 @@ export function NotificationsProvider() {
       },
       onEvent: (notification: Notification) => {
         applyIncomingNotificationToCache(qcRef.current, notification)
+        if (notification.caseId && notification.type === 'case_resubmitted') {
+          void qcRef.current.invalidateQueries({
+            queryKey: [...CASE_DETAIL_KEY, notification.caseId],
+          })
+          void qcRef.current.invalidateQueries({
+            queryKey: [...CASE_HISTORY_KEY, notification.caseId],
+          })
+        }
+        if (
+          notification.caseId &&
+          (notification.type === 'comment_mention' ||
+            notification.type === 'comment_reply' ||
+            notification.type === 'comment_thread')
+        ) {
+          void qcRef.current.invalidateQueries({
+            queryKey: [...CASE_COMMENTS_KEY, notification.caseId],
+          })
+        }
         showNotificationToast(notification, navigateRef.current)
       },
       onError: (err) => {
