@@ -6,7 +6,11 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { Skeleton } from '#/components/ui/skeleton'
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
-import { casesInfiniteQueryOptions } from '#/hooks/use-cases-query'
+import {
+  casesInfiniteQueryOptions,
+  queuesQueryOptions,
+  usersQueryOptions,
+} from '#/hooks/use-cases-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 export const Route = createFileRoute('/_app/cases/all-cases')({
@@ -24,9 +28,11 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
     sortOrder: search.sortOrder,
   }),
   pendingMs: 0,
-  pendingMinMs: 250,
   pendingComponent: CasesRoutePending,
   loader: async ({ context, deps }) => {
+    void context.queryClient.prefetchQuery(queuesQueryOptions())
+    void context.queryClient.prefetchQuery(usersQueryOptions())
+
     await context.queryClient.ensureInfiniteQueryData(
       casesInfiniteQueryOptions({
         ...deps,

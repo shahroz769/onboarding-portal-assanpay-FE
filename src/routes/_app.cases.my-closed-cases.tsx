@@ -7,7 +7,11 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { useAuth } from '#/features/auth/auth-client'
-import { casesInfiniteQueryOptions } from '#/hooks/use-cases-query'
+import {
+  casesInfiniteQueryOptions,
+  queuesQueryOptions,
+  usersQueryOptions,
+} from '#/hooks/use-cases-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const CLOSED_CASES_STATUS_FILTER = ['closed', 'error'].join(',')
@@ -25,9 +29,11 @@ export const Route = createFileRoute('/_app/cases/my-closed-cases')({
     sortOrder: search.sortOrder,
   }),
   pendingMs: 0,
-  pendingMinMs: 250,
   pendingComponent: CasesRoutePending,
   loader: async ({ context, deps }) => {
+    void context.queryClient.prefetchQuery(queuesQueryOptions())
+    void context.queryClient.prefetchQuery(usersQueryOptions())
+
     const userId = context.auth.getSnapshot().user?.id
 
     if (!userId) {

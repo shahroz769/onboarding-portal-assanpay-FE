@@ -21,7 +21,6 @@ export const Route = createFileRoute('/_app/merchants/')({
     sortOrder: search.sortOrder,
   }),
   pendingMs: 0,
-  pendingMinMs: 250,
   pendingComponent: MerchantsRoutePending,
   loader: async ({ context, deps }) => {
     await context.queryClient.ensureInfiniteQueryData(

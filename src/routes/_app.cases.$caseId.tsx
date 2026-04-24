@@ -12,7 +12,6 @@ export const Route = createFileRoute('/_app/cases/$caseId')({
     hidePageShell: true,
   },
   pendingMs: 0,
-  pendingMinMs: 250,
   pendingComponent: CaseDetailsPending,
   loader: ({ context, params }) =>
     preloadCaseDetailPageQueries(context.queryClient, params.caseId),
