@@ -125,7 +125,7 @@ function Toolbar() {
         ) : null}
         {state.isLoading ? null : (
           <span className="text-sm text-muted-foreground">
-            Total {state.totalCount} Cases
+            Loaded {state.loadedCount} Cases
           </span>
         )}
       </DataTableToolbar.Actions>

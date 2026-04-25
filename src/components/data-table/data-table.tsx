@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 
 const stickyHeaderClassName =
@@ -24,6 +25,63 @@ export interface DataTableColumnDef<TData> {
 }
 
 // ─── Props ──────────────────────────────────────────────────────────────────
+
+function DataTableCellSkeleton({
+  columnId,
+  width = 140,
+  rowIndex,
+}: {
+  columnId: string
+  width?: number
+  rowIndex: number
+}) {
+  if (columnId === 'select') {
+    return <Skeleton className="size-4 rounded-[4px]" />
+  }
+
+  if (columnId === 'actions') {
+    return (
+      <div className="flex items-center gap-1">
+        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="size-8 rounded-md" />
+      </div>
+    )
+  }
+
+  if (
+    columnId === 'queueName' ||
+    columnId === 'status' ||
+    columnId === 'priority' ||
+    columnId === 'onboardingStage'
+  ) {
+    return (
+      <Skeleton
+        className="h-5 rounded-md"
+        style={{ width: Math.min(width - 24, 96) }}
+      />
+    )
+  }
+
+  if (
+    columnId === 'createdAt' ||
+    columnId === 'closedAt' ||
+    columnId === 'updatedAt'
+  ) {
+    return (
+      <Skeleton className="h-4" style={{ width: Math.min(width - 24, 136) }} />
+    )
+  }
+
+  const widthOffset = rowIndex % 3 === 0 ? 32 : rowIndex % 3 === 1 ? 48 : 24
+
+  return (
+    <Skeleton
+      className="h-4"
+      style={{ width: Math.max(Math.min(width - widthOffset, width), 36) }}
+    />
+  )
+}
 
 interface DataTableProps<TData> {
   columns: DataTableColumnDef<TData>[]
@@ -92,23 +150,30 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
+      <div className="view-transition-none h-full overflow-auto rounded-md border will-change-transform">
         <Table className="table-fixed">
           <TableHeader className={stickyHeaderClassName}>
             {headerRow}
           </TableHeader>
+          <TableBody>
+            {Array.from({ length: 10 }).map((_, rowIndex) => (
+              <TableRow
+                key={rowIndex}
+                className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
+              >
+                {columns.map((column) => (
+                  <TableCell key={column.id} className="h-12 py-0">
+                    <DataTableCellSkeleton
+                      columnId={column.id}
+                      width={column.width}
+                      rowIndex={rowIndex}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
         </Table>
-        <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/20">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Spinner className="size-7 text-muted-foreground" />
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">Loading cases</p>
-              <p className="text-xs text-muted-foreground">
-                Fetching the latest onboarding records...
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     )
   }
@@ -139,31 +204,28 @@ export function DataTable<TData>({
       className="view-transition-none h-full overflow-auto rounded-md border will-change-transform"
     >
       <Table className="table-fixed">
-        <TableHeader className={stickyHeaderClassName}>
-          {headerRow}
-        </TableHeader>
+        <TableHeader className={stickyHeaderClassName}>{headerRow}</TableHeader>
         <TableBody>
           {data.map((item) => {
-              const rowId = getRowId(item)
-              const isSelected = selectedIds?.has(rowId) ?? false
-              return (
-                <TableRow
-                  key={rowId}
-                  data-state={isSelected ? 'selected' : undefined}
-                  className={cn(
-                    'h-12 content-visibility-auto contain-intrinsic-size-auto-48px',
-                    isSelected && 'bg-muted/50',
-                  )}
-                >
-                  {columns.map((col) => (
-                    <TableCell key={col.id} className="h-12 py-0">
-                      {col.cell(item)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              )
-            })
-          }
+            const rowId = getRowId(item)
+            const isSelected = selectedIds?.has(rowId) ?? false
+            return (
+              <TableRow
+                key={rowId}
+                data-state={isSelected ? 'selected' : undefined}
+                className={cn(
+                  'h-12 content-visibility-auto contain-intrinsic-size-auto-48px',
+                  isSelected && 'bg-muted/50',
+                )}
+              >
+                {columns.map((col) => (
+                  <TableCell key={col.id} className="h-12 py-0">
+                    {col.cell(item)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            )
+          })}
           {isFetchingMore && (
             <TableRow>
               <TableCell colSpan={columns.length} className="py-4 text-center">

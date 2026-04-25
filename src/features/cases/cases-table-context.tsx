@@ -39,7 +39,7 @@ interface CasesTableState {
   hideStatusFilter: boolean
   userRole: RoleType
   isLoading: boolean
-  totalCount: number
+  loadedCount: number
   hasNextPage: boolean
   isFetchingNextPage: boolean
   queues: Queue[]
@@ -162,7 +162,7 @@ function CasesTableProvider({
     () => data?.pages.flatMap((page) => page.cases) ?? [],
     [data],
   )
-  const totalCount = data?.pages[0]?.totalCount ?? 0
+  const loadedCount = flatData.length
   const allIds = useMemo(() => flatData.map((c) => c.id), [flatData])
   const filtersKey = useMemo(
     () =>
@@ -308,7 +308,7 @@ function CasesTableProvider({
       hideStatusFilter,
       userRole,
       isLoading,
-      totalCount,
+      loadedCount,
       hasNextPage,
       isFetchingNextPage,
       queues,
@@ -337,7 +337,7 @@ function CasesTableProvider({
       priorityCase,
       queues,
       selectedIds,
-      totalCount,
+      loadedCount,
       userRole,
     ],
   )

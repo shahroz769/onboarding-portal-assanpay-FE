@@ -22,10 +22,9 @@ export const CASES_PAGE_SIZE = 30
 export const QUEUES_KEY = ['queues'] as const
 export const USERS_KEY = ['users'] as const
 
-/** Build a stable infinite-query key from filters (excludes page/perPage). */
+/** Build a stable infinite-query key from filters. */
 export function casesInfiniteKey(filters: CaseFilters) {
-  const { page: _p, perPage: _pp, ...rest } = filters
-  return [...CASES_KEY, rest] as const
+  return [...CASES_KEY, filters] as const
 }
 
 export function casesInfiniteQueryOptions(filters: CaseFilters) {
@@ -34,12 +33,11 @@ export function casesInfiniteQueryOptions(filters: CaseFilters) {
     queryFn: ({ pageParam }) =>
       fetchCases({
         ...filters,
-        page: pageParam,
-        perPage: CASES_PAGE_SIZE,
+        cursor: pageParam,
+        limit: CASES_PAGE_SIZE,
       }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
   })
 }

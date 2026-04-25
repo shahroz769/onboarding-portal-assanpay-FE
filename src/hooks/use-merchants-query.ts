@@ -23,10 +23,9 @@ import type {
 export const MERCHANTS_KEY = ['merchants'] as const
 export const MERCHANTS_PAGE_SIZE = 30
 
-/** Build a stable infinite-query key from filters (excludes page/perPage). */
+/** Build a stable infinite-query key from filters. */
 export function merchantsInfiniteKey(filters: MerchantFilters) {
-  const { page: _p, perPage: _pp, ...rest } = filters
-  return [...MERCHANTS_KEY, rest] as const
+  return [...MERCHANTS_KEY, filters] as const
 }
 
 export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
@@ -35,12 +34,11 @@ export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
     queryFn: ({ pageParam }) =>
       fetchMerchants({
         ...filters,
-        page: pageParam,
-        perPage: MERCHANTS_PAGE_SIZE,
+        cursor: pageParam,
+        limit: MERCHANTS_PAGE_SIZE,
       }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
   })
 }
@@ -150,7 +148,6 @@ export function useDeleteMerchantMutation(filters: MerchantFilters) {
             pages: old.pages.map((page) => ({
               ...page,
               merchants: page.merchants.filter((m) => m.id !== merchantId),
-              totalCount: page.totalCount - 1,
             })),
           }
         },

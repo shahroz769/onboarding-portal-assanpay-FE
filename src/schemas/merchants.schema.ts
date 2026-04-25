@@ -85,10 +85,9 @@ export type MerchantListItem = z.infer<typeof merchantListItemSchema>
 
 export const merchantListResponseSchema = z.object({
   merchants: z.array(merchantListItemSchema),
-  page: z.number(),
-  perPage: z.number(),
-  totalCount: z.number(),
-  totalPages: z.number(),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+  limit: z.number(),
 })
 
 export type MerchantListResponse = z.infer<typeof merchantListResponseSchema>
@@ -133,8 +132,6 @@ export const merchantRouteSearchSchema = z.object({
 export type MerchantRouteSearch = z.infer<typeof merchantRouteSearchSchema>
 
 export const merchantFiltersSchema = merchantRouteSearchSchema.extend({
-  page: z.number().int().positive().optional(),
-  perPage: z.number().int().positive().optional(),
   createdAtFrom: z.string().optional().transform(normalizeOptionalString),
   createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })

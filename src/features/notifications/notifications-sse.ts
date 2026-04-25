@@ -43,9 +43,19 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     return err instanceof DOMException && err.name === 'AbortError'
   }
 
+  function isRetriableStreamError(err: unknown): boolean {
+    return (
+      err instanceof TypeError ||
+      (err instanceof DOMException && err.name === 'NetworkError')
+    )
+  }
+
   async function connect(): Promise<void> {
     if (stopped) return
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+    if (
+      typeof document !== 'undefined' &&
+      document.visibilityState === 'hidden'
+    ) {
       paused = true
       return
     }
@@ -58,18 +68,15 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     let token = options.getAccessToken()
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/notifications/stream`,
-        {
-          method: 'GET',
-          headers: {
-            Accept: 'text/event-stream',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: 'include',
-          signal: controller.signal,
+      const response = await fetch(`${API_BASE_URL}/api/notifications/stream`, {
+        method: 'GET',
+        headers: {
+          Accept: 'text/event-stream',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      )
+        credentials: 'include',
+        signal: controller.signal,
+      })
 
       if (response.status === 401) {
         token = await options.refreshAccessToken()
@@ -98,7 +105,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         for (;;) {
           const { value, done } = await reader.read()
           if (done) break
-          buffer += value
+          buffer = `${buffer}${value}`.replace(/\r\n/g, '\n')
 
           // Parse complete events (delimited by blank line)
           let idx
@@ -117,7 +124,9 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
       scheduleReconnect()
     } catch (err) {
       if (isExpectedDisconnect(err, controller)) return
-      options.onError?.(err)
+      if (!isRetriableStreamError(err)) {
+        options.onError?.(err)
+      }
       scheduleReconnect()
     }
   }

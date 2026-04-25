@@ -12,7 +12,10 @@ import {
 } from '#/components/ui/tooltip'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
-import type { MerchantListItem } from '#/schemas/merchants.schema'
+import type {
+  MerchantListItem,
+  MerchantSortableColumn,
+} from '#/schemas/merchants.schema'
 import {
   MERCHANT_STATUS_DISPLAY,
   ONBOARDING_STAGE_LABELS,
@@ -42,9 +45,9 @@ function getStatusBadgeClasses(status: string): string {
 
 interface CreateColumnsOptions {
   userRole: RoleType
-  sortBy?: string
+  sortBy?: MerchantSortableColumn
   sortOrder?: 'asc' | 'desc'
-  onSort: (columnId: string) => void
+  onSort: (columnId: MerchantSortableColumn) => void
   selectedIds: Set<string>
   allIds: string[]
   onSelectRow: (id: string, selected: boolean) => void
@@ -54,8 +57,8 @@ interface CreateColumnsOptions {
 }
 
 function getSortDirection(
-  columnId: string,
-  sortBy?: string,
+  columnId: MerchantSortableColumn,
+  sortBy?: MerchantSortableColumn,
   sortOrder?: 'asc' | 'desc',
 ): 'asc' | 'desc' | false {
   if (sortBy !== columnId) return false

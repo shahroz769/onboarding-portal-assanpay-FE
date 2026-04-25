@@ -5,6 +5,7 @@ import {
   Clock3,
   MailCheck,
   MailWarning,
+  RotateCcw,
   Send,
   ShieldAlert,
   UserRoundCheck,
@@ -89,6 +90,13 @@ const ACTION_META: Record<
     iconClassName: 'text-rose-700 dark:text-rose-300',
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
+  client_resubmitted: {
+    label: 'Client resubmitted',
+    icon: RotateCcw,
+    iconClassName: 'text-teal-700 dark:text-teal-300',
+    iconWrapperClassName:
+      'border-teal-200 bg-teal-100 dark:border-teal-800 dark:bg-teal-950/60',
   },
   field_reviews_saved: {
     label: 'Review notes saved',
@@ -274,6 +282,28 @@ function formatDetails(
 
   if (action === 'resubmission_email_failed' && typeof details.error === 'string') {
     parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (action === 'client_resubmitted') {
+    const labels = Array.isArray(details.fieldsUpdatedLabels)
+      ? details.fieldsUpdatedLabels.filter(
+          (value): value is string =>
+            typeof value === 'string' && value.trim().length > 0,
+        )
+      : []
+    const total = Array.isArray(details.fieldsUpdated)
+      ? details.fieldsUpdated.length
+      : labels.length
+
+    if (total > 0 && labels.length > 0) {
+      parts.push(
+        `${total} item${total === 1 ? '' : 's'} resubmitted: ${labels.join(', ')}`,
+      )
+    } else if (total > 0) {
+      parts.push(`${total} item${total === 1 ? '' : 's'} resubmitted`)
+    } else {
+      parts.push('Client submitted the requested updates')
+    }
   }
 
   return parts.join(' · ') || null

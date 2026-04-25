@@ -8,8 +8,8 @@ import type {
 // ─── List Merchants ─────────────────────────────────────────────────────────
 
 interface FetchMerchantsParams extends MerchantFilters {
-  page?: number
-  perPage?: number
+  cursor?: string | null
+  limit?: number
 }
 
 export async function fetchMerchants(
@@ -18,7 +18,7 @@ export async function fetchMerchants(
   // Strip undefined values so they don't appear as "undefined" in query string
   const query: Record<string, string> = {}
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') {
+    if (value !== undefined && value !== null && value !== '') {
       query[key] = String(value)
     }
   }

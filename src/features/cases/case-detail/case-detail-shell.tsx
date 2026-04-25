@@ -3,18 +3,11 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
-import {
-  type CloseOutcome,
-  type QueueStage,
-} from '#/schemas/cases.schema'
+import type { CloseOutcome, QueueStage } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
 import { getQueueRenderer } from './queue-registry'
@@ -44,22 +37,17 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
                 currentStageId={data.currentStage?.id ?? null}
                 closeOutcome={data.case.closeOutcome}
               />
-              <InfoBlock
-                label="Case Number"
-                value={data.case.caseNumber}
-              />
+              <InfoBlock label="Case Number" value={data.case.caseNumber} />
               <InfoBlock
                 label="CASE OWNER"
                 value={data.owner?.name ?? 'AP System'}
               />
-              <InfoBlock
-                label="Merchant Name"
-                value={merchantName}
-              />
+              <InfoBlock label="Merchant Name" value={merchantName} />
             </CardContent>
           </Card>
 
-          {data.case.closeOutcome === 'unsuccessful' && data.case.closeReason ? (
+          {data.case.closeOutcome === 'unsuccessful' &&
+          data.case.closeReason ? (
             <Alert variant="destructive">
               <AlertTriangle />
               <AlertTitle>Case closed as unsuccessful</AlertTitle>
@@ -116,26 +104,67 @@ export function CaseDetailShellSkeleton() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gap-4 py-4">
             <CardHeader>
               <Skeleton className="h-5 w-44" />
               <Skeleton className="h-4 w-72" />
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="grid gap-3 rounded-xl border bg-muted/10 p-3 md:grid-cols-[minmax(0,1fr)_8rem]"
+                >
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <Skeleton className="h-4 w-44" />
+                    <Skeleton className="h-3 w-full max-w-md" />
+                  </div>
+                  <Skeleton className="h-8 w-full rounded-md" />
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>
 
         <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-0 xl:self-start">
-          <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
+          <Card className="min-h-128 gap-4 py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
+            <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-0">
+              <div className="grid h-9 w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+                <Skeleton className="h-7 rounded-md" />
+                <Skeleton className="h-7 rounded-md" />
+                <Skeleton className="h-7 rounded-md" />
+              </div>
+
+              <div className="flex h-full flex-col gap-3">
+                <div className="rounded-xl border bg-background p-3">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="mt-1 h-9 w-40 rounded-md" />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border bg-background p-3">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-28 w-full rounded-md" />
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Skeleton className="h-9 w-48 rounded-md" />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border bg-background p-3">
+                  <Skeleton className="h-4 w-36" />
+                  <div className="mt-3 flex flex-col gap-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -155,34 +184,36 @@ function CaseStagesBlock({
     return null
   }
 
-  const currentStageIndex = stages.findIndex((stage) => stage.id === currentStageId)
+  const currentStageIndex = stages.findIndex(
+    (stage) => stage.id === currentStageId,
+  )
 
   return (
     <div className="overflow-hidden rounded-md bg-muted md:col-span-3">
       <div
         className="grid gap-0 overflow-hidden"
-        style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))`,
+        }}
       >
         {stages.map((stage, index) => {
           const isCurrent = stage.id === currentStageId
-          const isPassed =
-            currentStageIndex >= 0 && index < currentStageIndex
-          const connectsToCompletedFlow =
-            isPassed && index < currentStageIndex
+          const isPassed = currentStageIndex >= 0 && index < currentStageIndex
+          const connectsToCompletedFlow = isPassed && index < currentStageIndex
           const isClosedUnsuccessfully =
             stage.category === 'closed' && closeOutcome === 'unsuccessful'
           const showCompletedIcon =
-            isPassed || (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
+            isPassed ||
+            (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
 
           return (
-            <div
-              key={stage.id}
-              className="min-w-0"
-            >
+            <div key={stage.id} className="min-w-0">
               <div
                 className={cn(
                   'relative inline-flex h-9 w-full items-center justify-center gap-1.5 text-center text-sm whitespace-nowrap transition-all',
-                  !isCurrent && !isPassed && 'bg-muted text-muted-foreground/50',
+                  !isCurrent &&
+                    !isPassed &&
+                    'bg-muted text-muted-foreground/50',
                   isPassed &&
                     stage.slug !== 'closed' &&
                     'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-900 dark:text-emerald-300',
@@ -209,7 +240,9 @@ function CaseStagesBlock({
                   'rounded-none',
                 )}
               >
-                {showCompletedIcon ? <CheckCircle2 className="size-4 shrink-0" /> : null}
+                {showCompletedIcon ? (
+                  <CheckCircle2 className="size-4 shrink-0" />
+                ) : null}
                 <span>{stage.name}</span>
               </div>
             </div>
@@ -220,19 +253,13 @@ function CaseStagesBlock({
   )
 }
 
-function InfoBlock({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border bg-muted/20 px-3 py-2.5">
       <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </span>
-        <p className="wrap-break-word text-sm font-semibold">{value}</p>
+      <p className="wrap-break-word text-sm font-semibold">{value}</p>
     </div>
   )
 }

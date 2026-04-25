@@ -19,8 +19,10 @@ import {
 } from '#/hooks/use-merchants-query'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
+  MerchantFilters,
   MerchantListItem,
   MerchantRouteSearch,
+  MerchantSortableColumn,
   Priority,
 } from '#/schemas/merchants.schema'
 import type { RoleType } from '#/types/auth'
@@ -36,7 +38,7 @@ interface MerchantsTableState {
   filters: MerchantRouteSearch
   userRole: RoleType
   isLoading: boolean
-  totalCount: number
+  loadedCount: number
   hasNextPage: boolean
   isFetchingNextPage: boolean
   priorityDialogMerchant: MerchantListItem | null
@@ -126,7 +128,7 @@ const routeApi = getRouteApi('/_app/merchants')
 
 function useMerchantFilters() {
   const navigate = useNavigate()
-  const filters = routeApi.useSearch()
+  const filters = routeApi.useSearch() as MerchantRouteSearch
 
   const setFilters = useCallback(
     (partialFilters: Partial<MerchantRouteSearch>) => {
@@ -160,7 +162,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const { filters, setFilter, setFilters } = useMerchantFilters()
 
   const handleSort = useCallback(
-    (columnId: string) => {
+    (columnId: MerchantSortableColumn) => {
       const isSameColumn = filters.sortBy === columnId
       const nextOrder =
         isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
@@ -180,6 +182,14 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const [bulkPriorityValue, setBulkPriorityValue] =
     useState<Priority>('normal')
+  const queryFilters = useMemo<MerchantFilters>(
+    () => ({
+      ...filters,
+      createdAtFrom: undefined,
+      createdAtTo: undefined,
+    }),
+    [filters],
+  )
 
   const {
     data,
@@ -187,10 +197,10 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(merchantsInfiniteQueryOptions(filters))
+  } = useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
 
   const updatePriority = useUpdatePriorityMutation()
-  const deleteMerchant = useDeleteMerchantMutation(filters)
+  const deleteMerchant = useDeleteMerchantMutation(queryFilters)
   const bulkDelete = useBulkDeleteMutation()
   const bulkPriority = useBulkPriorityMutation()
 
@@ -198,7 +208,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     () => data?.pages.flatMap((page) => page.merchants) ?? [],
     [data],
   )
-  const totalCount = data?.pages[0]?.totalCount ?? 0
+  const loadedCount = flatData.length
   const allIds = useMemo(
     () => flatData.map((merchant) => merchant.id),
     [flatData],
@@ -320,7 +330,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       filters,
       userRole,
       isLoading,
-      totalCount,
+      loadedCount,
       hasNextPage,
       isFetchingNextPage,
       priorityDialogMerchant,
@@ -343,7 +353,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       priorityDialogMerchant,
       selectedIds,
-      totalCount,
+      loadedCount,
       updatePriority.isPending,
       userRole,
     ],

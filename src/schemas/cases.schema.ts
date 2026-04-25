@@ -76,10 +76,9 @@ export type CaseListItem = z.infer<typeof caseListItemSchema>
 
 export const caseListResponseSchema = z.object({
   cases: z.array(caseListItemSchema),
-  page: z.number(),
-  perPage: z.number(),
-  totalCount: z.number(),
-  totalPages: z.number(),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+  limit: z.number(),
 })
 
 export type CaseListResponse = z.infer<typeof caseListResponseSchema>
@@ -125,8 +124,6 @@ export const caseRouteSearchSchema = z.object({
 export type CaseRouteSearch = z.infer<typeof caseRouteSearchSchema>
 
 export const caseFiltersSchema = caseRouteSearchSchema.extend({
-  page: z.number().int().positive().optional(),
-  perPage: z.number().int().positive().optional(),
   createdAtFrom: z.string().optional().transform(normalizeOptionalString),
   createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })
@@ -195,8 +192,8 @@ export const caseDetailSchema = z.object({
     slug: z.string(),
     qcEnabled: z.boolean(),
   }),
-  merchant: z.record(z.unknown()),
-  documents: z.array(z.record(z.unknown())),
+  merchant: z.record(z.string(), z.unknown()),
+  documents: z.array(z.record(z.string(), z.unknown())),
   fieldReviews: z.array(fieldReviewSchema),
   latestResubmissionRequestedAt: z.string().nullable(),
   owner: z
@@ -234,7 +231,7 @@ export const caseHistorySchema = z.object({
   actorId: z.string().nullable(),
   actorName: z.string().nullable(),
   action: z.string(),
-  details: z.record(z.unknown()).nullable(),
+  details: z.record(z.string(), z.unknown()).nullable(),
   createdAt: z.string(),
 })
 

@@ -16,8 +16,8 @@ import type {
 // ─── List Cases ─────────────────────────────────────────────────────────────
 
 interface FetchCasesParams extends CaseFilters {
-  page?: number
-  perPage?: number
+  cursor?: string | null
+  limit?: number
 }
 
 export async function fetchCases(
@@ -25,7 +25,7 @@ export async function fetchCases(
 ): Promise<CaseListResponse> {
   const query: Record<string, string> = {}
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') {
+    if (value !== undefined && value !== null && value !== '') {
       query[key] = String(value)
     }
   }
