@@ -607,7 +607,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
   }
 
   if (submitted) {
-    return <ResubmissionSuccess caseNumber={context.caseNumber} />
+    return <ResubmissionSuccess />
   }
 
   return (
@@ -615,7 +615,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
       <div className="text-center">
         <h1 className="text-3xl font-bold">Merchant Onboarding</h1>
         <p className="mt-2 text-muted-foreground">
-          Submit every requested correction for case {context.caseNumber}.
+          Submit every requested correction below.
         </p>
       </div>
 
@@ -981,7 +981,7 @@ function DocumentResubmissionField({
   )
 }
 
-function ResubmissionSuccess({ caseNumber }: { caseNumber: string }) {
+function ResubmissionSuccess() {
   return (
     <Card>
       <CardHeader>
@@ -990,8 +990,8 @@ function ResubmissionSuccess({ caseNumber }: { caseNumber: string }) {
           Updates submitted
         </CardTitle>
         <CardDescription>
-          Thank you. Case {caseNumber} has been returned to our team for
-          review. You can close this window.
+          Thank you. Your updates have been returned to our team for review.
+          You can close this window.
         </CardDescription>
       </CardHeader>
     </Card>

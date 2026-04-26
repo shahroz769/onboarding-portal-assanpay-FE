@@ -1,11 +1,9 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import axios from 'axios'
 
 import { resubmissionContextQueryOptions } from '#/apis/merchant-onboarding'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 import { ResubmissionForm } from '#/features/onboarding/resubmission-form'
 
@@ -49,21 +47,16 @@ function ResubmissionContent({ token }: { token: string }) {
     return <TokenErrorScreen error={query.error} />
   }
 
-  if (!query.data) {
-    return <TokenErrorScreen error={new Error('Unable to load resubmission')} />
-  }
-
   return <ResubmissionForm token={token} context={query.data} />
 }
 
 function TokenErrorScreen({ error }: { error: unknown }) {
-  const router = useRouter()
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
   const message =
     axios.isAxiosError(error) && error.response?.data
       ? typeof error.response.data === 'string'
         ? error.response.data
-        : (error.response.data as { error?: string })?.error
+        : (error.response.data as { error?: string }).error
       : null
 
   const isExpired = status === 410
@@ -84,22 +77,12 @@ function TokenErrorScreen({ error }: { error: unknown }) {
               ? 'Link not found'
               : 'Unable to load resubmission'}
         </h1>
-        <Alert variant={isExpired ? 'default' : 'destructive'}>
-          <AlertTitle>
-            {isExpired
-              ? 'Reach out to your case owner'
-              : 'Something went wrong'}
-          </AlertTitle>
-          <AlertDescription>
-            {message ??
-              (isExpired
-                ? 'Ask your account contact to send a new resubmission link.'
-                : 'Please check the link and try again, or contact support.')}
-          </AlertDescription>
-        </Alert>
-        <Button variant="outline" onClick={() => router.navigate({ to: '/' })}>
-          Return home
-        </Button>
+        <p className="max-w-md text-sm text-muted-foreground">
+          {message ??
+            (isExpired
+              ? 'Ask your account contact to send a new resubmission link.'
+              : 'Please check the link and try again, or contact support.')}
+        </p>
       </div>
     </div>
   )
