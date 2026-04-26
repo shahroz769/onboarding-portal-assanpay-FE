@@ -3,6 +3,8 @@ import type { Notification } from '#/schemas/notifications.schema'
 
 type Listener = (notification: Notification) => void
 
+const INITIAL_CONNECT_DELAY_MS = import.meta.env.DEV ? 250 : 0
+
 interface SubscribeOptions {
   getAccessToken: () => string | null
   refreshAccessToken: () => Promise<string | null>
@@ -23,6 +25,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   let stopped = false
   let paused = false
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let initialConnectTimer: ReturnType<typeof setTimeout> | null = null
   let attempts = 0
 
   function scheduleReconnect() {
@@ -121,8 +124,12 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
 
       // Stream ended; reconnect
       if (abortController !== controller) return
+      abortController = null
       scheduleReconnect()
     } catch (err) {
+      if (abortController === controller) {
+        abortController = null
+      }
       if (isExpectedDisconnect(err, controller)) return
       if (!isRetriableStreamError(err)) {
         options.onError?.(err)
@@ -166,13 +173,18 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     }
   }
 
-  void connect()
+  initialConnectTimer = setTimeout(() => {
+    initialConnectTimer = null
+    void connect()
+  }, INITIAL_CONNECT_DELAY_MS)
+
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', handleVisibilityChange)
   }
 
   return function stop() {
     stopped = true
+    if (initialConnectTimer) clearTimeout(initialConnectTimer)
     if (reconnectTimer) clearTimeout(reconnectTimer)
     abortController?.abort()
     if (typeof document !== 'undefined') {
