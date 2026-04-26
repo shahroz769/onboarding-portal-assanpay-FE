@@ -517,7 +517,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
     setDocumentValues((current) => ({
       ...current,
       [fieldName]: {
-        action: file ? 'replace' : current[fieldName]?.action ?? null,
+        action: file ? 'replace' : current[fieldName].action,
         file,
       },
     }))
@@ -538,7 +538,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
       ...current,
       [fieldName]: {
         action,
-        file: action === 'replace' ? current[fieldName]?.file ?? null : null,
+        file: action === 'replace' ? current[fieldName].file : null,
       },
     }))
 
@@ -556,7 +556,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
     for (const rejection of context.rejections) {
       if (rejection.isDocument) {
         const draft = documentValues[rejection.fieldName]
-        const action = draft?.action
+        const action = draft.action
         if (!action) continue
 
         formData.append(`${DOCUMENT_ACTION_PREFIX}${rejection.fieldName}`, action)
@@ -977,8 +977,6 @@ function DocumentResubmissionField({
           error={draft.action === 'remove' ? undefined : error}
         />
       )}
-
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </Field>
   )
 }
