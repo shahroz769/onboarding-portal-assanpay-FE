@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Send, ShieldAlert } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -39,6 +40,7 @@ export function DocumentsReviewSummaryModal({
 }: DocumentsReviewSummaryModalProps) {
   const { user } = useAuth()
   const sendForResubmission = useSendForResubmission(caseId)
+  const isConfirmingRef = useRef(false)
 
   const merchant = caseDetail.merchant as
     | { submitterEmail?: string | null }
@@ -63,8 +65,9 @@ export function DocumentsReviewSummaryModal({
     !isSubmitting
 
   async function handleConfirm() {
-    if (!canSubmit) return
+    if (!canSubmit || isConfirmingRef.current) return
 
+    isConfirmingRef.current = true
     try {
       const data = await sendForResubmission.mutateAsync()
 
@@ -73,6 +76,8 @@ export function DocumentsReviewSummaryModal({
       }
     } catch {
       // Mutation hooks already surface the backend error via toast.
+    } finally {
+      isConfirmingRef.current = false
     }
   }
 

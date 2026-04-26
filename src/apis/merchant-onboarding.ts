@@ -48,6 +48,19 @@ export type MerchantSubmissionResponse = {
     updatedAt: string
   }
   documents: MerchantDocument[]
+  case: {
+    id: string
+    caseNumber: string
+    queueId: string
+    merchantId: string
+    ownerId: string | null
+    currentStageId: string | null
+    status: string
+    priority: string
+    closedAt: string | null
+    createdAt: string
+    updatedAt: string
+  }
 }
 
 export async function submitMerchantOnboardingForm(

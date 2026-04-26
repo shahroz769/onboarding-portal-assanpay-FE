@@ -9,6 +9,7 @@ import {
   CASE_DETAIL_KEY,
   CASE_HISTORY_KEY,
 } from '#/hooks/use-case-detail-query'
+import { CASES_KEY } from '#/hooks/use-cases-query'
 import {
   NOTIFICATIONS_UNREAD_KEY,
   applyIncomingNotificationToCache,
@@ -63,6 +64,7 @@ export function NotificationsProvider() {
           void qcRef.current.invalidateQueries({
             queryKey: [...CASE_HISTORY_KEY, notification.caseId],
           })
+          void qcRef.current.invalidateQueries({ queryKey: CASES_KEY })
         }
         if (
           notification.caseId &&
