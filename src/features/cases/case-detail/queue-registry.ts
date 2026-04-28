@@ -14,6 +14,8 @@ const registry: Record<string, () => Promise<{ default: LazyQueueRenderer }>> =
   {
     'documents-review': () =>
       import('./renderers/documents-review-renderer'),
+    'sub-merchant-form': () =>
+      import('./renderers/sub-merchant-form-renderer'),
   }
 
 const loadedComponents = new Map<string, LazyQueueRenderer>()

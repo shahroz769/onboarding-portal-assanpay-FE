@@ -11,6 +11,8 @@ import type {
   CreateCommentInput,
   Queue,
   SaveFieldReviewsInput,
+  SelectSubMerchantFormInput,
+  SubMerchantFormEmailResponse,
 } from '#/schemas/cases.schema'
 
 // ─── List Cases ─────────────────────────────────────────────────────────────
@@ -179,6 +181,53 @@ export async function sendForResubmission(
 ): Promise<SendForResubmissionResponse> {
   const response = await apiClient.post<SendForResubmissionResponse>(
     `/api/cases/${caseId}/send-for-resubmission`,
+  )
+  return response.data
+}
+
+// ─── EP Sub-Merchant Form ───────────────────────────────────────────────────
+
+export async function selectSubMerchantForm(
+  caseId: string,
+  input: SelectSubMerchantFormInput,
+) {
+  const response = await apiClient.put(
+    `/api/cases/${caseId}/sub-merchant-form/selection`,
+    input,
+  )
+  return response.data
+}
+
+export async function uploadSubMerchantFinalForm({
+  caseId,
+  file,
+  subMerchantKey,
+}: {
+  caseId: string
+  file: File
+  subMerchantKey: string
+}) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('subMerchantKey', subMerchantKey)
+
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/sub-merchant-form/final-form`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  )
+  return response.data
+}
+
+export async function sendSubMerchantFormEmail(
+  caseId: string,
+): Promise<SubMerchantFormEmailResponse> {
+  const response = await apiClient.post<SubMerchantFormEmailResponse>(
+    `/api/cases/${caseId}/sub-merchant-form/send-mail`,
   )
   return response.data
 }

@@ -10,14 +10,18 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   saveFieldReviews,
+  selectSubMerchantForm,
   sendForResubmission,
+  sendSubMerchantFormEmail,
   takeOwnership,
+  uploadSubMerchantFinalForm,
 } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   CloseUnsuccessfulInput,
   CreateCommentInput,
   SaveFieldReviewsInput,
+  SelectSubMerchantFormInput,
 } from '#/schemas/cases.schema'
 import { CASES_KEY, usersQueryOptions } from './use-cases-query'
 
@@ -179,6 +183,71 @@ export function useSendForResubmission(caseId: string) {
       toast.error(
         getApiErrorMessage(error, 'Failed to send resubmission email'),
       )
+    },
+  })
+}
+
+export function useSelectSubMerchantForm(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: SelectSubMerchantFormInput) =>
+      selectSubMerchantForm(caseId, input),
+    onSuccess: () => {
+      toast.success('Sub-merchant selected')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to select sub-merchant'),
+      )
+    },
+  })
+}
+
+export function useUploadSubMerchantFinalForm(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { file: File; subMerchantKey: string }) =>
+      uploadSubMerchantFinalForm({
+        caseId,
+        file: input.file,
+        subMerchantKey: input.subMerchantKey,
+      }),
+    onSuccess: () => {
+      toast.success('Final Form uploaded')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to upload Final Form'),
+      )
+    },
+  })
+}
+
+export function useSendSubMerchantFormEmail(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => sendSubMerchantFormEmail(caseId),
+    onSuccess: (data) => {
+      if (data.status === 'sent') {
+        toast.success('Email sent')
+      } else {
+        toast.error(
+          data.error ? `Failed to send email: ${data.error}` : 'Failed to send email',
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to send email'))
     },
   })
 }

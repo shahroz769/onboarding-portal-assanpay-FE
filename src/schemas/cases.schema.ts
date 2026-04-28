@@ -195,6 +195,29 @@ export const caseDetailSchema = z.object({
   merchant: z.record(z.string(), z.unknown()),
   documents: z.array(z.record(z.string(), z.unknown())),
   fieldReviews: z.array(fieldReviewSchema),
+  subMerchantForm: z
+    .object({
+      subMerchantKey: z.string(),
+      subMerchantName: z.string(),
+      draftUrl: z.string(),
+      emailStatus: z.enum(['not_sent', 'sent', 'failed']),
+      emailLogId: z.string().nullable(),
+      emailSentAt: z.string().nullable(),
+      emailRecipient: z.string().nullable(),
+      finalForm: z
+        .object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        })
+        .nullable(),
+    })
+    .nullable()
+    .optional(),
   latestResubmissionRequestedAt: z.string().nullable(),
   owner: z
     .object({
@@ -264,3 +287,17 @@ export const createCommentInputSchema = z.object({
 })
 
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>
+
+export const selectSubMerchantFormInputSchema = z.object({
+  subMerchantKey: z.string().min(1),
+})
+
+export type SelectSubMerchantFormInput = z.infer<
+  typeof selectSubMerchantFormInputSchema
+>
+
+export type SubMerchantFormEmailResponse = {
+  status: 'sent' | 'failed'
+  emailLogId: string
+  error?: string
+}

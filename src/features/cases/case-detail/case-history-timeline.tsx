@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock3,
+  FileText,
   MailCheck,
   MailWarning,
   RotateCcw,
@@ -104,6 +105,48 @@ const ACTION_META: Record<
     iconClassName: 'text-violet-700 dark:text-violet-300',
     iconWrapperClassName:
       'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
+  },
+  case_created_from_documents_review: {
+    label: 'Case created',
+    icon: FileText,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
+  },
+  next_case_created: {
+    label: 'Next case created',
+    icon: FileText,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
+  },
+  sub_merchant_selected: {
+    label: 'Sub-merchant selected',
+    icon: CheckCircle2,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
+  },
+  sub_merchant_final_form_uploaded: {
+    label: 'Final Form uploaded',
+    icon: FileText,
+    iconClassName: 'text-violet-700 dark:text-violet-300',
+    iconWrapperClassName:
+      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
+  },
+  sub_merchant_form_email_sent: {
+    label: 'Final Form email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
+  sub_merchant_form_email_failed: {
+    label: 'Final Form email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
 }
 
@@ -304,6 +347,48 @@ function formatDetails(
     } else {
       parts.push('Client submitted the requested updates')
     }
+  }
+
+  if (
+    action === 'sub_merchant_selected' &&
+    typeof details.subMerchantName === 'string'
+  ) {
+    parts.push(`Selected ${details.subMerchantName}`)
+  }
+
+  if (
+    action === 'sub_merchant_final_form_uploaded' &&
+    typeof details.fileName === 'string'
+  ) {
+    parts.push(`Uploaded ${details.fileName}`)
+  }
+
+  if (
+    action === 'sub_merchant_form_email_sent' &&
+    typeof details.recipient === 'string'
+  ) {
+    parts.push(`Sent to ${details.recipient}`)
+  }
+
+  if (
+    action === 'sub_merchant_form_email_failed' &&
+    typeof details.error === 'string'
+  ) {
+    parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (
+    action === 'next_case_created' &&
+    typeof details.nextCaseNumber === 'string'
+  ) {
+    parts.push(`Created ${details.nextCaseNumber}`)
+  }
+
+  if (
+    action === 'case_created_from_documents_review' &&
+    typeof details.sourceCaseNumber === 'string'
+  ) {
+    parts.push(`Created after ${details.sourceCaseNumber}`)
   }
 
   return parts.join(' · ') || null
