@@ -376,7 +376,7 @@ export function MerchantOnboardingForm({
     return <SubmissionSuccess data={submissionData} />
   }
 
-  // ── Merchant-type specific docs ─────────────────────────────────────────
+  // ── Business-type specific docs ─────────────────────────────────────────
 
   const specificDocs = merchantType
     ? MERCHANT_SPECIFIC_DOCUMENTS[
@@ -824,7 +824,7 @@ export function MerchantOnboardingForm({
             <div>
               <CardTitle>Business Classification</CardTitle>
               <CardDescription>
-                Merchant type and transaction estimates
+                Business type and transaction estimates
               </CardDescription>
             </div>
           </div>
@@ -838,7 +838,7 @@ export function MerchantOnboardingForm({
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
                     <FieldLabel htmlFor={field.name}>
-                      Merchant Type *
+                      Business Type *
                     </FieldLabel>
                     <Select
                       name={field.name}
@@ -850,7 +850,7 @@ export function MerchantOnboardingForm({
                         aria-invalid={isInvalid}
                         className="w-full"
                       >
-                        <SelectValue placeholder="Select merchant type" />
+                        <SelectValue placeholder="Select business type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -1212,12 +1212,12 @@ export function MerchantOnboardingForm({
               </div>
             </div>
 
-            {/* Merchant-Type Specific Documents */}
+            {/* Business-Type Specific Documents */}
             {merchantType && specificDocs && (
               <>
                 <Separator />
 
-                {/* Required for this merchant type */}
+                {/* Required for this business type */}
                 {specificDocs.required.length > 0 && (
                   <div>
                     <h3 className="mb-4 text-sm font-semibold">
@@ -1248,7 +1248,7 @@ export function MerchantOnboardingForm({
                   </div>
                 )}
 
-                {/* Optional for this merchant type */}
+                {/* Optional for this business type */}
                 {specificDocs.optional.length > 0 && (
                   <div>
                     <h3 className="mb-4 text-sm font-semibold">
@@ -1278,7 +1278,7 @@ export function MerchantOnboardingForm({
 
             {!merchantType && (
               <p className="text-sm text-muted-foreground">
-                Select a merchant type above to see additional document
+                Select a business type above to see additional document
                 requirements.
               </p>
             )}

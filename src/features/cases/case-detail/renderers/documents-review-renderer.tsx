@@ -179,14 +179,14 @@ const REVIEW_SECTIONS: ReviewSection[] = [
   },
   {
     title: 'Business Classification',
-    description: 'Merchant type and transaction estimates',
+    description: 'Business type and transaction estimates',
     icon: Briefcase,
     toneClass: 'bg-teal-500/10 text-teal-500',
     layout: 'two-column',
     fields: [
       {
         key: 'merchantType',
-        label: 'Merchant Type',
+        label: 'Business Type',
         className: 'sm:col-span-2',
         resolveValue: (value) =>
           MERCHANT_TYPE_LABELS.get(String(value)) ?? String(value),

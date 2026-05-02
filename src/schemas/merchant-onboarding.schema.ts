@@ -11,6 +11,7 @@ export const WEBSITE_CMS_OPTIONS = [
 export const MERCHANT_TYPES = [
   { value: "sole_proprietorship", label: "Sole Proprietorship" },
   { value: "private_limited_company", label: "Private Limited Company" },
+  { value: "public_limited_company", label: "Public Limited Company" },
   { value: "partnership", label: "Partnership" },
   { value: "limited_liability_partnership", label: "Limited Liability Partnership" },
   { value: "ngo_npo_charity", label: "NGO / NPO / Charity" },
@@ -134,7 +135,7 @@ export const merchantOnboardingSchema = z.object({
     .min(1, "Nature of business is required."),
 
   // Section 4: Business Classification
-  merchantType: z.enum(merchantTypeValues, "Please select a merchant type."),
+  merchantType: z.enum(merchantTypeValues, "Please select a business type."),
   estimatedMonthlyTransactions: z
     .string()
     .min(1, "Estimated monthly transactions is required.")
@@ -245,6 +246,16 @@ export const MERCHANT_SPECIFIC_DOCUMENTS: Record<
     optional: ["authority_letter", "taxpayer_registration_certificate"],
   },
   private_limited_company: {
+    required: ["company_ntn", "company_incorporation_certificate"],
+    optional: [
+      "memorandum_articles",
+      "form_ii",
+      "form_a",
+      "board_resolution",
+      "certificate_of_commencement",
+    ],
+  },
+  public_limited_company: {
     required: ["company_ntn", "company_incorporation_certificate"],
     optional: [
       "memorandum_articles",

@@ -151,7 +151,7 @@ const SECTION_CONFIGS: Record<SectionKey, SectionConfig> = {
   classification: {
     key: 'classification',
     title: 'Business Classification',
-    description: 'Merchant type and transaction estimates',
+    description: 'Business type and transaction estimates',
     icon: Briefcase,
     colorClass: 'bg-teal-500/10 text-teal-500',
   },
@@ -801,10 +801,15 @@ function FieldControl({
   }
 
   if (config.kind === 'select' && config.options) {
+    const placeholderLabel =
+      rejection.fieldName === 'merchantType'
+        ? 'business type'
+        : rejection.label.toLowerCase()
+
     return (
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id={rejection.fieldName} className="w-full" aria-invalid={isInvalid}>
-          <SelectValue placeholder={`Select ${rejection.label.toLowerCase()}`} />
+          <SelectValue placeholder={`Select ${placeholderLabel}`} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

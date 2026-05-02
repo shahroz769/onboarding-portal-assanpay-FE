@@ -50,7 +50,7 @@ const REVIEW_FIELDS: ReviewFieldDefinition[] = [
   { key: 'businessRegistrationDate', label: 'Business Registration Date' },
   { key: 'businessDescription', label: 'Business Description' },
   { key: 'businessNature', label: 'Nature of Business' },
-  { key: 'merchantType', label: 'Merchant Type' },
+  { key: 'merchantType', label: 'Business Type' },
   { key: 'estimatedMonthlyTransactions', label: 'Estimated Monthly Transactions' },
   { key: 'estimatedMonthlyVolume', label: 'Estimated Monthly Volume (PKR)' },
   { key: 'accountTitle', label: 'Account Title' },
