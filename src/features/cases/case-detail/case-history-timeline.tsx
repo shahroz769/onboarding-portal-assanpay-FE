@@ -113,6 +113,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
   },
+  case_created_manually: {
+    label: 'Case created',
+    icon: FileText,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
+  },
   next_case_created: {
     label: 'Next case created',
     icon: FileText,
@@ -389,6 +396,13 @@ function formatDetails(
     typeof details.sourceCaseNumber === 'string'
   ) {
     parts.push(`Created after ${details.sourceCaseNumber}`)
+  }
+
+  if (
+    action === 'case_created_manually' &&
+    typeof details.queueName === 'string'
+  ) {
+    parts.push(`Created in ${details.queueName}`)
   }
 
   return parts.join(' · ') || null
