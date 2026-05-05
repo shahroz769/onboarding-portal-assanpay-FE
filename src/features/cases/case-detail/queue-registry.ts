@@ -10,12 +10,16 @@ export interface QueueRendererProps {
 
 type LazyQueueRenderer = ComponentType<QueueRendererProps>
 
-const registry: Record<string, () => Promise<{ default: LazyQueueRenderer }>> =
-  {
-    'documents-review': () => import('./renderers/documents-review-renderer'),
-    'sub-merchant-form': () => import('./renderers/sub-merchant-form-renderer'),
-    agreement: () => import('./renderers/agreement-renderer'),
-  }
+const registry = {
+  'documents-review': () => import('./renderers/documents-review-renderer'),
+  'sub-merchant-form': () => import('./renderers/sub-merchant-form-renderer'),
+  agreement: () => import('./renderers/agreement-renderer'),
+  'merchant-id': () => import('./renderers/merchant-id-renderer'),
+  testing: () => import('./renderers/testing-renderer'),
+  live: () => import('./renderers/live-renderer'),
+} satisfies Partial<
+  Record<string, () => Promise<{ default: LazyQueueRenderer }>>
+>
 
 const loadedComponents = new Map<string, LazyQueueRenderer>()
 

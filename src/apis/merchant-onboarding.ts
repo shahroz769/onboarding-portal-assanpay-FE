@@ -210,3 +210,57 @@ export function useSubmitAgreementUploadMutation(token: string) {
     retry: false,
   })
 }
+
+// MID Go-Live
+
+export type MidGoLiveContext = {
+  status: 'not_ready' | 'ready' | 'started'
+  caseNumber: string
+  merchantName: string
+  availableAt: string
+  liveCaseNumber: string | null
+}
+
+export async function fetchMidGoLiveContext(
+  token: string,
+): Promise<MidGoLiveContext> {
+  const { data } = await apiClient.get<MidGoLiveContext>(
+    `/api/public/mid-go-live/${token}`,
+  )
+  return data
+}
+
+export function midGoLiveContextQueryOptions(token: string) {
+  return queryOptions({
+    queryKey: ['mid-go-live-context', token] as const,
+    queryFn: () => fetchMidGoLiveContext(token),
+    enabled: Boolean(token),
+    staleTime: 0,
+    retry: false,
+  })
+}
+
+export type MidGoLiveActivationResponse = {
+  success: true
+  alreadyStarted: boolean
+  caseNumber: string
+  liveCaseId: string | null
+  liveCaseNumber: string | null
+}
+
+export async function activateMidGoLive(
+  token: string,
+): Promise<MidGoLiveActivationResponse> {
+  const { data } = await apiClient.post<MidGoLiveActivationResponse>(
+    `/api/public/mid-go-live/${token}`,
+  )
+  return data
+}
+
+export function useActivateMidGoLiveMutation(token: string) {
+  return useMutation({
+    mutationKey: ['mid-go-live', 'activate', token] as const,
+    mutationFn: () => activateMidGoLive(token),
+    retry: false,
+  })
+}

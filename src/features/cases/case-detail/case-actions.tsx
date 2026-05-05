@@ -60,6 +60,13 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
   const hasOwner = Boolean(owner)
+  const isTestingCase = caseDetail.queue.slug === 'testing'
+  const testingLimitsApplied = Boolean(caseDetail.testing?.limitsAppliedAt)
+  const successfulActionDisabled =
+    advanceStage.isPending || (isTestingCase && !testingLimitsApplied)
+  const successfulActionLabel = isTestingCase
+    ? 'Mark as successful'
+    : 'Submit and advance'
 
   const summary = useMemo(() => {
     if (isClosed) {
@@ -148,14 +155,14 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
         {isInProgress ? (
           <Button
             onClick={() => advanceStage.mutate()}
-            disabled={advanceStage.isPending}
+            disabled={successfulActionDisabled}
           >
             {advanceStage.isPending ? (
               <Spinner data-icon="inline-start" />
             ) : (
-              <Workflow data-icon="inline-start" />
+              <CheckCircle2 data-icon="inline-start" />
             )}
-            {advanceStage.isPending ? 'Submitting stage' : 'Submit and advance'}
+            {advanceStage.isPending ? 'Closing case' : successfulActionLabel}
           </Button>
         ) : null}
 

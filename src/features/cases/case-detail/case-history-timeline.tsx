@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Send,
   ShieldAlert,
+  Sliders,
   Upload,
   UserRoundCheck,
 } from 'lucide-react'
@@ -180,6 +181,48 @@ const ACTION_META: Record<
   agreement_client_submitted: {
     label: 'Client agreement submitted',
     icon: CheckCircle2,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  mid_creation_email_sent: {
+    label: 'MID credentials email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
+  mid_creation_email_failed: {
+    label: 'MID credentials email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
+  mid_go_live_started: {
+    label: 'Go-Live started',
+    icon: CheckCircle2,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  case_created_from_mid_go_live: {
+    label: 'Live case created',
+    icon: FileText,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
+  },
+  testing_limits_applied: {
+    label: 'Testing limits applied',
+    icon: Sliders,
+    iconClassName: 'text-indigo-700 dark:text-indigo-300',
+    iconWrapperClassName:
+      'border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60',
+  },
+  live_limits_applied: {
+    label: 'Live limits applied',
+    icon: Sliders,
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     iconWrapperClassName:
       'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
@@ -447,6 +490,37 @@ function formatDetails(
     typeof details.fileName === 'string'
   ) {
     parts.push(`Submitted ${details.fileName}`)
+  }
+
+  if (
+    action === 'mid_creation_email_sent' &&
+    typeof details.recipient === 'string'
+  ) {
+    parts.push(`Sent to ${details.recipient}`)
+    if (typeof details.availableAt === 'string') {
+      parts.push(`Go-Live unlocks ${formatDateTime(details.availableAt)}`)
+    }
+  }
+
+  if (
+    action === 'mid_creation_email_failed' &&
+    typeof details.error === 'string'
+  ) {
+    parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (
+    action === 'mid_go_live_started' &&
+    typeof details.liveCaseNumber === 'string'
+  ) {
+    parts.push(`Live case ${details.liveCaseNumber}`)
+  }
+
+  if (
+    action === 'case_created_from_mid_go_live' &&
+    typeof details.midCaseNumber === 'string'
+  ) {
+    parts.push(`Started from ${details.midCaseNumber}`)
   }
 
   if (

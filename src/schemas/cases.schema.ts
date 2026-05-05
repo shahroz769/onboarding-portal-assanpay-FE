@@ -262,6 +262,31 @@ export const caseDetailSchema = z.object({
     .nullable()
     .optional(),
   latestResubmissionRequestedAt: z.string().nullable(),
+  testing: z
+    .object({
+      limitsAppliedAt: z.string().nullable(),
+      limitsAppliedBy: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable(),
+      portalMid: z.number().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  live: z
+    .object({
+      limitsAppliedAt: z.string().nullable(),
+      limitsAppliedBy: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable(),
+    })
+    .nullable()
+    .optional(),
   owner: z
     .object({
       id: z.string(),
@@ -351,5 +376,22 @@ export type AgreementEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
   tokenExpiresAt: string | null
+  error?: string
+}
+
+export const sendMidCreationEmailInputSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(8).max(128),
+  portalMid: z.coerce.number().int().positive(),
+})
+
+export type SendMidCreationEmailInput = z.infer<
+  typeof sendMidCreationEmailInputSchema
+>
+
+export type MidCreationEmailResponse = {
+  status: 'sent' | 'failed'
+  emailLogId: string
+  goLiveAvailableAt: string | null
   error?: string
 }

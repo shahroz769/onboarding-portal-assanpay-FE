@@ -13,8 +13,11 @@ import {
   fetchCaseComments,
   fetchCaseDetail,
   fetchCaseHistory,
+  markLiveLimitsApplied,
+  markTestingLimitsApplied,
   saveFieldReviews,
   sendAgreementEmail,
+  sendMidCreationEmail,
   selectSubMerchantForm,
   sendForResubmission,
   sendSubMerchantFormEmail,
@@ -27,6 +30,7 @@ import type {
   CloseUnsuccessfulInput,
   CreateCommentInput,
   SaveFieldReviewsInput,
+  SendMidCreationEmailInput,
   SelectSubMerchantFormInput,
 } from '#/schemas/cases.schema'
 import { CASES_KEY, usersQueryOptions } from './use-cases-query'
@@ -295,6 +299,70 @@ export function useSendAgreementEmail(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to send agreement email'))
+    },
+  })
+}
+
+export function useSendMidCreationEmail(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: SendMidCreationEmailInput) =>
+      sendMidCreationEmail(caseId, input),
+    onSuccess: (data) => {
+      if (data.status === 'sent') {
+        toast.success('MID credentials email sent')
+      } else {
+        toast.error(
+          data.error
+            ? `Failed to send MID credentials: ${data.error}`
+            : 'Failed to send MID credentials',
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to send MID credentials'))
+    },
+  })
+}
+
+export function useMarkTestingLimitsApplied(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => markTestingLimitsApplied(caseId),
+    onSuccess: () => {
+      toast.success('Testing limits marked as applied')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to mark testing limits as applied'),
+      )
+    },
+  })
+}
+
+export function useMarkLiveLimitsApplied(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => markLiveLimitsApplied(caseId),
+    onSuccess: () => {
+      toast.success('Live limits marked as applied')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to mark live limits as applied'),
+      )
     },
   })
 }

@@ -11,8 +11,10 @@ import type {
   CreateCommentInput,
   Queue,
   SaveFieldReviewsInput,
+  SendMidCreationEmailInput,
   SelectSubMerchantFormInput,
   AgreementEmailResponse,
+  MidCreationEmailResponse,
   SubMerchantFormEmailResponse,
 } from '#/schemas/cases.schema'
 
@@ -266,7 +268,34 @@ export async function sendAgreementEmail(
   return response.data
 }
 
+export async function sendMidCreationEmail(
+  caseId: string,
+  input: SendMidCreationEmailInput,
+): Promise<MidCreationEmailResponse> {
+  const response = await apiClient.post<MidCreationEmailResponse>(
+    `/api/cases/${caseId}/mid-creation/send-mail`,
+    input,
+  )
+  return response.data
+}
+
 // ─── Case Comments ──────────────────────────────────────────────────────────
+
+export async function markTestingLimitsApplied(caseId: string) {
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/testing/limits-applied`,
+    { applied: true },
+  )
+  return response.data
+}
+
+export async function markLiveLimitsApplied(caseId: string) {
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/live/limits-applied`,
+    { applied: true },
+  )
+  return response.data
+}
 
 export async function fetchCaseComments(
   caseId: string,
