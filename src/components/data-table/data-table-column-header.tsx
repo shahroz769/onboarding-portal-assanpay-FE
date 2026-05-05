@@ -1,8 +1,4 @@
-import {
-  ArrowDownIcon,
-  ArrowUpDownIcon,
-  ArrowUpIcon,
-} from 'lucide-react'
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 import { Button } from '#/components/ui/button'
@@ -25,12 +21,7 @@ export function DataTableColumnHeader({
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={onSort}
-      >
+      <Button variant="ghost" size="sm" className="-ml-3 h-8" onClick={onSort}>
         <span>{title}</span>
         {sortDirection === 'desc' ? (
           <ArrowDownIcon data-icon="inline-end" />

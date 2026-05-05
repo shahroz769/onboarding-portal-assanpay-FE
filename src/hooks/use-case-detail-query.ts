@@ -1,4 +1,8 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  queryOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -10,10 +14,12 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   saveFieldReviews,
+  sendAgreementEmail,
   selectSubMerchantForm,
   sendForResubmission,
   sendSubMerchantFormEmail,
   takeOwnership,
+  uploadAgreementFinalAgreement,
   uploadSubMerchantFinalForm,
 } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
@@ -145,8 +151,7 @@ export function useCreateComment(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: CreateCommentInput) =>
-      createCaseComment(caseId, input),
+    mutationFn: (input: CreateCommentInput) => createCaseComment(caseId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [...CASE_COMMENTS_KEY, caseId],
@@ -165,9 +170,7 @@ export function useSendForResubmission(caseId: string) {
     mutationFn: () => sendForResubmission(caseId),
     onSuccess: (data) => {
       if (data.status === 'sent') {
-        toast.success(
-          'Email sent — case moved to Awaiting Client',
-        )
+        toast.success('Email sent — case moved to Awaiting Client')
       } else {
         toast.error(
           data.error
@@ -199,9 +202,7 @@ export function useSelectSubMerchantForm(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
     },
     onError: (error: unknown) => {
-      toast.error(
-        getApiErrorMessage(error, 'Failed to select sub-merchant'),
-      )
+      toast.error(getApiErrorMessage(error, 'Failed to select sub-merchant'))
     },
   })
 }
@@ -222,9 +223,7 @@ export function useUploadSubMerchantFinalForm(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
     },
     onError: (error: unknown) => {
-      toast.error(
-        getApiErrorMessage(error, 'Failed to upload Final Form'),
-      )
+      toast.error(getApiErrorMessage(error, 'Failed to upload Final Form'))
     },
   })
 }
@@ -239,7 +238,9 @@ export function useSendSubMerchantFormEmail(caseId: string) {
         toast.success('Email sent')
       } else {
         toast.error(
-          data.error ? `Failed to send email: ${data.error}` : 'Failed to send email',
+          data.error
+            ? `Failed to send email: ${data.error}`
+            : 'Failed to send email',
         )
       }
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
@@ -248,6 +249,52 @@ export function useSendSubMerchantFormEmail(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to send email'))
+    },
+  })
+}
+
+export function useUploadAgreementFinalAgreement(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { file: File }) =>
+      uploadAgreementFinalAgreement({
+        caseId,
+        file: input.file,
+      }),
+    onSuccess: () => {
+      toast.success('Final Agreement uploaded')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to upload Final Agreement'))
+    },
+  })
+}
+
+export function useSendAgreementEmail(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { remarks?: string | null }) =>
+      sendAgreementEmail(caseId, input),
+    onSuccess: (data) => {
+      if (data.status === 'sent') {
+        toast.success('Agreement email sent')
+      } else {
+        toast.error(
+          data.error
+            ? `Failed to send agreement email: ${data.error}`
+            : 'Failed to send agreement email',
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to send agreement email'))
     },
   })
 }

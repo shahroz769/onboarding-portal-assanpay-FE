@@ -127,9 +127,7 @@ function BulkActions() {
         <div className="flex items-center gap-2">
           <Select
             value={state.bulkPriorityValue}
-            onValueChange={(v) =>
-              actions.setBulkPriorityValue(v as Priority)
-            }
+            onValueChange={(v) => actions.setBulkPriorityValue(v as Priority)}
           >
             <SelectTrigger size="sm">
               <SelectValue />

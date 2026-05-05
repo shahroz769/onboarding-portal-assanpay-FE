@@ -14,9 +14,7 @@ import {
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
-import {
-  useSendForResubmission,
-} from '#/hooks/use-case-detail-query'
+import { useSendForResubmission } from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
@@ -42,13 +40,15 @@ export function DocumentsReviewSummaryModal({
   const sendForResubmission = useSendForResubmission(caseId)
   const isConfirmingRef = useRef(false)
 
-  const merchant = caseDetail.merchant as
-    | { submitterEmail?: string | null }
-    | null
+  const merchant = caseDetail.merchant as {
+    submitterEmail?: string | null
+  } | null
   const submitterEmail = merchant?.submitterEmail ?? null
   const rejectedItems = reviewSummary?.rejectedItems ?? []
 
-  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
+  const isCaseOwner = Boolean(
+    caseDetail.owner && user?.id === caseDetail.owner.id,
+  )
   const hasRejections = rejectedItems.length > 0
   const hasRecipient = Boolean(submitterEmail)
   const isDocumentsReviewCase = caseDetail.queue.slug === 'documents-review'

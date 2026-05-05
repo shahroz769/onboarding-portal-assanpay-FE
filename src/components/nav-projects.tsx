@@ -1,13 +1,8 @@
-"use client"
+'use client'
 
-import { Link } from "@tanstack/react-router"
-import {
-  Folder,
-  Forward,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+import { Link } from '@tanstack/react-router'
+import { Folder, Forward, MoreHorizontal, Trash2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import {
   DropdownMenu,
@@ -15,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
+} from '#/components/ui/dropdown-menu'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -24,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "#/components/ui/sidebar"
+} from '#/components/ui/sidebar'
 
 export function NavProjects({
   projects,
@@ -58,8 +53,8 @@ export function NavProjects({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="w-48 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
+                side={isMobile ? 'bottom' : 'right'}
+                align={isMobile ? 'end' : 'start'}
               >
                 <DropdownMenuItem>
                   <Folder className="text-muted-foreground" />

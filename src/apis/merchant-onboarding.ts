@@ -1,6 +1,6 @@
-import { queryOptions, useMutation } from "@tanstack/react-query"
+import { queryOptions, useMutation } from '@tanstack/react-query'
 
-import { apiClient } from "#/lib/api-client"
+import { apiClient } from '#/lib/api-client'
 
 export type MerchantDocument = {
   id: string
@@ -51,16 +51,16 @@ export type MerchantSubmissionResponse = {
 }
 
 export async function submitMerchantOnboardingForm(
-  formData: FormData
+  formData: FormData,
 ): Promise<MerchantSubmissionResponse> {
   const { data } = await apiClient.post<MerchantSubmissionResponse>(
-    "/api/public/merchant-form",
+    '/api/public/merchant-form',
     formData,
     {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   )
 
   return data
@@ -68,7 +68,7 @@ export async function submitMerchantOnboardingForm(
 
 export function useSubmitMerchantOnboardingMutation() {
   return useMutation({
-    mutationKey: ["merchant-onboarding", "submit"],
+    mutationKey: ['merchant-onboarding', 'submit'],
     mutationFn: submitMerchantOnboardingForm,
     retry: false,
   })
@@ -110,7 +110,7 @@ export async function fetchResubmissionContext(
 
 export function resubmissionContextQueryOptions(token: string) {
   return queryOptions({
-    queryKey: ["resubmission-context", token] as const,
+    queryKey: ['resubmission-context', token] as const,
     queryFn: () => fetchResubmissionContext(token),
     enabled: Boolean(token),
     staleTime: 0,
@@ -132,7 +132,7 @@ export async function submitResubmission(
     formData,
     {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
     },
   )
@@ -141,8 +141,72 @@ export async function submitResubmission(
 
 export function useSubmitResubmissionMutation(token: string) {
   return useMutation({
-    mutationKey: ["resubmission", "submit", token] as const,
+    mutationKey: ['resubmission', 'submit', token] as const,
     mutationFn: (formData: FormData) => submitResubmission(token, formData),
+    retry: false,
+  })
+}
+
+// ─── Agreement Upload ───────────────────────────────────────────────────────
+
+export type AgreementUploadContext = {
+  caseId: string
+  caseNumber: string
+  expiresAt: string
+  merchantName: string
+  ownerName: string
+  finalAgreementName: string
+  finalAgreementUrl: string
+  remarks: string | null
+}
+
+export async function fetchAgreementUploadContext(
+  token: string,
+): Promise<AgreementUploadContext> {
+  const { data } = await apiClient.get<AgreementUploadContext>(
+    `/api/public/agreement/${token}`,
+  )
+  return data
+}
+
+export function agreementUploadContextQueryOptions(token: string) {
+  return queryOptions({
+    queryKey: ['agreement-upload-context', token] as const,
+    queryFn: () => fetchAgreementUploadContext(token),
+    enabled: Boolean(token),
+    staleTime: 0,
+    retry: false,
+  })
+}
+
+export type AgreementUploadResponse = {
+  success: true
+  caseNumber: string
+}
+
+export async function submitAgreementUpload(
+  token: string,
+  file: File,
+): Promise<AgreementUploadResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const { data } = await apiClient.post<AgreementUploadResponse>(
+    `/api/public/agreement/${token}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  )
+  return data
+}
+
+export function useSubmitAgreementUploadMutation(token: string) {
+  return useMutation({
+    mutationKey: ['agreement-upload', 'submit', token] as const,
+    mutationFn: (file: File) => submitAgreementUpload(token, file),
     retry: false,
   })
 }

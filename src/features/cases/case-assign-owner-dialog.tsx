@@ -27,7 +27,10 @@ import {
   PopoverTrigger,
 } from '#/components/ui/popover'
 import { Spinner } from '#/components/ui/spinner'
-import { useAssignCaseMutation, usersQueryOptions } from '#/hooks/use-cases-query'
+import {
+  useAssignCaseMutation,
+  usersQueryOptions,
+} from '#/hooks/use-cases-query'
 
 interface CaseAssignOwnerDialogProps {
   open: boolean
@@ -58,10 +61,13 @@ export function CaseAssignOwnerDialog({
     ...users.map((u) => ({ label: u.name, value: u.id })),
   ]
 
-  const internalValue = selectedUserId === null ? '__unassigned__' : selectedUserId
-  const resolvedOwnerId = internalValue === '__unassigned__' ? null : internalValue
+  const internalValue =
+    selectedUserId === null ? '__unassigned__' : selectedUserId
+  const resolvedOwnerId =
+    internalValue === '__unassigned__' ? null : internalValue
   const hasChanged = initialized && resolvedOwnerId !== currentOwnerId
-  const selectedLabel = options.find((o) => o.value === internalValue)?.label ?? 'Select owner...'
+  const selectedLabel =
+    options.find((o) => o.value === internalValue)?.label ?? 'Select owner...'
 
   useEffect(() => {
     if (open) {
@@ -112,10 +118,16 @@ export function CaseAssignOwnerDialog({
                 className="w-full justify-between font-normal"
               >
                 {selectedLabel}
-                <ChevronsUpDownIcon data-icon="inline-end" className="opacity-50" />
+                <ChevronsUpDownIcon
+                  data-icon="inline-end"
+                  className="opacity-50"
+                />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+            <PopoverContent
+              className="w-(--radix-popover-trigger-width) p-0"
+              align="start"
+            >
               <Command>
                 <CommandInput placeholder="Search users..." />
                 <CommandList>
@@ -132,7 +144,9 @@ export function CaseAssignOwnerDialog({
                           data-icon="inline-end"
                           className={cn(
                             'ml-auto',
-                            internalValue === option.value ? 'opacity-100' : 'opacity-0',
+                            internalValue === option.value
+                              ? 'opacity-100'
+                              : 'opacity-0',
                           )}
                         />
                       </CommandItem>
@@ -152,9 +166,7 @@ export function CaseAssignOwnerDialog({
             onClick={handleSubmit}
             disabled={!hasChanged || assignMutation.isPending}
           >
-            {assignMutation.isPending && (
-              <Spinner data-icon="inline-start" />
-            )}
+            {assignMutation.isPending && <Spinner data-icon="inline-start" />}
             Assign
           </Button>
         </DialogFooter>

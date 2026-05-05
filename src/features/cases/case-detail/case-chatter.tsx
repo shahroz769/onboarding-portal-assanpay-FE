@@ -1,8 +1,4 @@
-import {
-  useDeferredValue,
-  useRef,
-  useState,
-} from 'react'
+import { useDeferredValue, useRef, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CornerDownRight,
@@ -30,11 +26,7 @@ import {
   CommandItem,
   CommandList,
 } from '#/components/ui/command'
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from '#/components/ui/popover'
+import { Popover, PopoverAnchor, PopoverContent } from '#/components/ui/popover'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import {
@@ -56,7 +48,9 @@ type MentionMatch = {
 }
 
 function compareCommentsByNewest(first: CaseComment, second: CaseComment) {
-  return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime()
+  return (
+    new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime()
+  )
 }
 
 function formatDateTime(value: string) {
@@ -87,7 +81,10 @@ function formatUsername(username: string | null) {
     : `@${trimmedUsername}`
 }
 
-function getMentionMatch(content: string, caretPosition: number): MentionMatch | null {
+function getMentionMatch(
+  content: string,
+  caretPosition: number,
+): MentionMatch | null {
   const prefix = content.slice(0, caretPosition)
   const match = prefix.match(/(^|\s)@([^\s@]*)$/)
 
@@ -144,10 +141,7 @@ function buildCommentThreads(comments: CaseComment[]) {
   }
 }
 
-export function CaseChatter({
-  caseId,
-  embedded = false,
-}: CaseChatterProps) {
+export function CaseChatter({ caseId, embedded = false }: CaseChatterProps) {
   const { data: comments } = useSuspenseQuery(caseCommentsQueryOptions(caseId))
   const { data: users } = useSuspenseQuery(usersQueryOptions())
   const createComment = useCreateComment(caseId)
@@ -249,60 +243,59 @@ export function CaseChatter({
             className="rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-3">
-                {replyTarget ? (
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <CornerDownRight className="size-3.5" />
-                    <span>
-                      Replying to {replyTarget.authorName ?? 'Unknown'}:
-                      {' '}
-                      {replyTarget.content}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      className="ml-auto"
-                      onClick={() => setReplyTarget(null)}
-                    >
-                      <X />
-                    </Button>
-                  </div>
-                ) : null}
-
-                <Textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(event) => {
-                    setContent(event.target.value)
-                    setCursorPosition(event.target.selectionStart ?? 0)
-                  }}
-                  onSelect={(event) =>
-                    setCursorPosition(event.currentTarget.selectionStart ?? 0)
-                  }
-                  onClick={(event) =>
-                    setCursorPosition(event.currentTarget.selectionStart ?? 0)
-                  }
-                  placeholder={
-                    replyTarget
-                      ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
-                      : 'Write a review note. Use @ to mention a teammate.'
-                  }
-                  className="h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 shadow-none focus-visible:ring-0"
-                />
-
-                  <div className="flex flex-wrap items-center justify-end gap-3">
+              {replyTarget ? (
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <CornerDownRight className="size-3.5" />
+                  <span>
+                    Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
+                    {replyTarget.content}
+                  </span>
                   <Button
-                    type="submit"
-                    disabled={!content.trim() || createComment.isPending}
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="ml-auto"
+                    onClick={() => setReplyTarget(null)}
                   >
-                    {createComment.isPending ? (
-                      <Spinner data-icon="inline-start" />
-                    ) : (
-                      <SendHorizontal data-icon="inline-start" />
-                    )}
-                    {createComment.isPending ? 'Posting reply' : 'Post update'}
+                    <X />
                   </Button>
                 </div>
+              ) : null}
+
+              <Textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(event) => {
+                  setContent(event.target.value)
+                  setCursorPosition(event.target.selectionStart ?? 0)
+                }}
+                onSelect={(event) =>
+                  setCursorPosition(event.currentTarget.selectionStart ?? 0)
+                }
+                onClick={(event) =>
+                  setCursorPosition(event.currentTarget.selectionStart ?? 0)
+                }
+                placeholder={
+                  replyTarget
+                    ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
+                    : 'Write a review note. Use @ to mention a teammate.'
+                }
+                className="h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 shadow-none focus-visible:ring-0"
+              />
+
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <Button
+                  type="submit"
+                  disabled={!content.trim() || createComment.isPending}
+                >
+                  {createComment.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <SendHorizontal data-icon="inline-start" />
+                  )}
+                  {createComment.isPending ? 'Posting reply' : 'Post update'}
+                </Button>
+              </div>
             </div>
           </form>
         </PopoverAnchor>

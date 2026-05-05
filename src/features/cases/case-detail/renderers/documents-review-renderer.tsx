@@ -195,7 +195,10 @@ const REVIEW_SECTIONS: ReviewSection[] = [
         key: 'estimatedMonthlyTransactions',
         label: 'Estimated Monthly Transactions',
       },
-      { key: 'estimatedMonthlyVolume', label: 'Estimated Monthly Volume (PKR)' },
+      {
+        key: 'estimatedMonthlyVolume',
+        label: 'Estimated Monthly Volume (PKR)',
+      },
     ],
   },
   {
@@ -273,15 +276,16 @@ export default function DocumentsReviewRenderer({
   const { user } = useAuth()
   const saveFieldReviews = useSaveFieldReviews(caseId)
   const { merchant, fieldReviews, currentStage } = caseDetail
-  const { draftReviews, saveRejectedReview, clearRejectedReview } = useDocumentsReviewDraft()
-  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
+  const { draftReviews, saveRejectedReview, clearRejectedReview } =
+    useDocumentsReviewDraft()
+  const isCaseOwner = Boolean(
+    caseDetail.owner && user?.id === caseDetail.owner.id,
+  )
   const isEditable =
     isCaseOwner &&
-    (
-      currentStage?.category === 'in_progress' ||
-      (currentStage == null && caseDetail.case.closeOutcome == null)
-    )
-  const merchantData = merchant as Record<string, unknown>
+    (currentStage?.category === 'in_progress' ||
+      (currentStage == null && caseDetail.case.closeOutcome == null))
+  const merchantData = merchant
 
   const persistedReviewByField = useMemo(() => {
     const map = new Map<string, (typeof fieldReviews)[number]>()
@@ -364,7 +368,9 @@ export default function DocumentsReviewRenderer({
           key: `doc_${document.id}`,
           label: documentKey
             ? DOCUMENT_LABELS[documentKey]
-            : document.documentType ?? document.originalName ?? 'Uploaded Document',
+            : (document.documentType ??
+              document.originalName ??
+              'Uploaded Document'),
           url,
           name: document.originalName ?? 'Uploaded document',
           sizeBytes: document.sizeBytes ?? null,
@@ -456,7 +462,8 @@ export default function DocumentsReviewRenderer({
   const isRejectedItem = rejectDialog.item
     ? draftReviews[rejectDialog.item.key]?.status === 'rejected'
     : false
-  const isSavingReject = saveFieldReviews.isPending && rejectDialogAction === 'save'
+  const isSavingReject =
+    saveFieldReviews.isPending && rejectDialogAction === 'save'
   const isDeletingReject =
     saveFieldReviews.isPending && rejectDialogAction === 'delete'
 
@@ -469,7 +476,10 @@ export default function DocumentsReviewRenderer({
               <div key={section.title} className="flex flex-col gap-4">
                 {index > 0 ? <Separator /> : null}
                 <div className="flex items-center gap-3">
-                  <SectionIcon icon={section.icon} toneClass={section.toneClass} />
+                  <SectionIcon
+                    icon={section.icon}
+                    toneClass={section.toneClass}
+                  />
                   <div>
                     <CardTitle>{section.title}</CardTitle>
                     <CardDescription>{section.description}</CardDescription>
@@ -522,7 +532,9 @@ export default function DocumentsReviewRenderer({
                         key={document.key}
                         document={document}
                         review={draftReviews[document.key]}
-                        persistedReview={persistedReviewByField.get(document.key)}
+                        persistedReview={persistedReviewByField.get(
+                          document.key,
+                        )}
                         latestResubmissionRequestedAt={
                           caseDetail.latestResubmissionRequestedAt
                         }
@@ -537,7 +549,8 @@ export default function DocumentsReviewRenderer({
                   <Info />
                   <AlertTitle>No uploaded documents</AlertTitle>
                   <AlertDescription>
-                    This case currently has no document links available to review.
+                    This case currently has no document links available to
+                    review.
                   </AlertDescription>
                 </Alert>
               )}
@@ -546,7 +559,10 @@ export default function DocumentsReviewRenderer({
         </CardContent>
       </Card>
 
-      <Dialog open={rejectDialog.open} onOpenChange={(open) => !open && closeRejectDialog()}>
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => !open && closeRejectDialog()}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject item</DialogTitle>
@@ -559,7 +575,9 @@ export default function DocumentsReviewRenderer({
 
           <FieldGroup>
             <Field data-invalid={Boolean(rejectDialog.error)}>
-              <FieldLabel htmlFor="reject-remarks">Rejection remarks</FieldLabel>
+              <FieldLabel htmlFor="reject-remarks">
+                Rejection remarks
+              </FieldLabel>
               <Textarea
                 id="reject-remarks"
                 value={rejectDialog.remarks}
@@ -590,9 +608,7 @@ export default function DocumentsReviewRenderer({
                 onClick={deleteReject}
                 disabled={saveFieldReviews.isPending}
               >
-                {isDeletingReject ? (
-                  <Spinner data-icon="inline-start" />
-                ) : null}
+                {isDeletingReject ? <Spinner data-icon="inline-start" /> : null}
                 Delete
               </Button>
             ) : (
@@ -608,9 +624,7 @@ export default function DocumentsReviewRenderer({
               onClick={confirmReject}
               disabled={saveFieldReviews.isPending}
             >
-              {isSavingReject ? (
-                <Spinner data-icon="inline-start" />
-              ) : null}
+              {isSavingReject ? <Spinner data-icon="inline-start" /> : null}
               Save
             </Button>
           </DialogFooter>
@@ -681,7 +695,11 @@ function ReadOnlyReviewField({
                 Rejected
               </Badge>
             ) : (
-              <Badge variant="secondary" className="cursor-pointer" onClick={onReject}>
+              <Badge
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={onReject}
+              >
                 Reject
               </Badge>
             )}
@@ -690,7 +708,11 @@ function ReadOnlyReviewField({
       </div>
 
       {item.kind === 'textarea' ? (
-        <Textarea value={item.displayValue} readOnly className="min-h-20 resize-none" />
+        <Textarea
+          value={item.displayValue}
+          readOnly
+          className="min-h-20 resize-none"
+        />
       ) : item.kind === 'date' ? (
         <Button
           variant="outline"
@@ -754,7 +776,11 @@ function ReadOnlyDocumentField({
                 Rejected
               </Badge>
             ) : (
-              <Badge variant="secondary" className="cursor-pointer" onClick={onReject}>
+              <Badge
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={onReject}
+              >
                 Reject
               </Badge>
             )}

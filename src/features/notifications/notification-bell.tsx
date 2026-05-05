@@ -3,7 +3,11 @@ import { Bell } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '#/components/ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
 import { useUnreadCountQuery } from '#/hooks/use-notifications-query'
 import { cn } from '#/lib/utils'
 
@@ -30,9 +34,7 @@ export function NotificationBell() {
             <Badge
               className={cn(
                 'absolute -top-1 -right-1 rounded-full text-[10px] leading-none tabular-nums',
-                displayCount.length === 1
-                  ? 'size-5 p-0'
-                  : 'h-5 min-w-5 px-1.5',
+                displayCount.length === 1 ? 'size-5 p-0' : 'h-5 min-w-5 px-1.5',
               )}
               variant="destructive"
             >

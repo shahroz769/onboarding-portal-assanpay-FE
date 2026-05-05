@@ -17,7 +17,7 @@ import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter(
   (status) => status !== 'closed' && status !== 'error',
 )
-const OPEN_CASES_STATUS_FILTER = OPEN_CASE_STATUSES.join(',')
+export const OPEN_CASES_STATUS_FILTER = OPEN_CASE_STATUSES.join(',')
 
 export const Route = createFileRoute('/_app/cases/my-open-cases')({
   staticData: {

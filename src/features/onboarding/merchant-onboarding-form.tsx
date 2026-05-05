@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react"
-import type { ComponentType, KeyboardEvent, SVGProps } from "react"
-import { useForm, useStore } from "@tanstack/react-form"
-import { isAxiosError } from "axios"
-import { toast } from "sonner"
-import { format } from "date-fns"
+import { useState, useCallback } from 'react'
+import type { ComponentType, KeyboardEvent, SVGProps } from 'react'
+import { useForm, useStore } from '@tanstack/react-form'
+import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
 import {
   Mail,
   User,
@@ -14,19 +14,19 @@ import {
   FileText,
   Info,
   CalendarIcon,
-} from "lucide-react"
+} from 'lucide-react'
 
-import { Button } from "#/components/ui/button"
-import { Input } from "#/components/ui/input"
-import { Textarea } from "#/components/ui/textarea"
-import { Spinner } from "#/components/ui/spinner"
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Textarea } from '#/components/ui/textarea'
+import { Spinner } from '#/components/ui/spinner'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "#/components/ui/card"
+} from '#/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -34,13 +34,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select"
-import { Calendar } from "#/components/ui/calendar"
+} from '#/components/ui/select'
+import { Calendar } from '#/components/ui/calendar'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "#/components/ui/popover"
+} from '#/components/ui/popover'
 import {
   Combobox,
   ComboboxContent,
@@ -48,16 +48,16 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "#/components/ui/combobox"
-import { Alert, AlertDescription } from "#/components/ui/alert"
-import { Separator } from "#/components/ui/separator"
+} from '#/components/ui/combobox'
+import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Separator } from '#/components/ui/separator'
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "#/components/ui/field"
+} from '#/components/ui/field'
 
 import {
   merchantOnboardingSchema,
@@ -69,15 +69,15 @@ import {
   MERCHANT_SPECIFIC_DOCUMENTS,
   DOCUMENT_LABELS,
   ALLOWED_EXTENSIONS,
-} from "#/schemas/merchant-onboarding.schema"
-import { useSubmitMerchantOnboardingMutation } from "#/apis/merchant-onboarding"
+} from '#/schemas/merchant-onboarding.schema'
+import { useSubmitMerchantOnboardingMutation } from '#/apis/merchant-onboarding'
 import type {
   DocumentFieldName,
   MerchantOnboardingFormValues,
-} from "#/schemas/merchant-onboarding.schema"
-import type { MerchantSubmissionResponse } from "#/apis/merchant-onboarding"
-import { DocumentUploadField } from "./document-upload-field"
-import { SubmissionSuccess } from "./submission-success"
+} from '#/schemas/merchant-onboarding.schema'
+import type { MerchantSubmissionResponse } from '#/apis/merchant-onboarding'
+import { DocumentUploadField } from './document-upload-field'
+import { SubmissionSuccess } from './submission-success'
 
 // ── Section Header ──────────────────────────────────────────────────────────
 
@@ -107,21 +107,21 @@ function showValidationErrorsToast(errors: Iterable<unknown>) {
   const hasErrors = Array.from(errors).some(Boolean)
   toast.error(
     hasErrors
-      ? "Please review the highlighted fields and try again."
-      : "Something went wrong. Please try again."
+      ? 'Please review the highlighted fields and try again.'
+      : 'Something went wrong. Please try again.',
   )
 }
 
 function getNumericInputValue(value: string, allowDecimal: boolean) {
   if (!allowDecimal) {
-    return value.replace(/\D/g, "")
+    return value.replace(/\D/g, '')
   }
 
-  const sanitizedValue = value.replace(/[^\d.]/g, "")
-  const [integerPart = "", ...decimalParts] = sanitizedValue.split(".")
-  const decimalPart = decimalParts.join("").slice(0, 2)
+  const sanitizedValue = value.replace(/[^\d.]/g, '')
+  const [integerPart = '', ...decimalParts] = sanitizedValue.split('.')
+  const decimalPart = decimalParts.join('').slice(0, 2)
 
-  if (!sanitizedValue.includes(".")) {
+  if (!sanitizedValue.includes('.')) {
     return integerPart
   }
 
@@ -130,31 +130,31 @@ function getNumericInputValue(value: string, allowDecimal: boolean) {
 
 function handleNumericKeyDown(
   event: KeyboardEvent<HTMLInputElement>,
-  allowDecimal: boolean
+  allowDecimal: boolean,
 ) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return
   }
 
   const allowedKeys = new Set([
-    "Backspace",
-    "Delete",
-    "Tab",
-    "Enter",
-    "ArrowLeft",
-    "ArrowRight",
-    "ArrowUp",
-    "ArrowDown",
-    "Home",
-    "End",
+    'Backspace',
+    'Delete',
+    'Tab',
+    'Enter',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Home',
+    'End',
   ])
 
   if (allowedKeys.has(event.key)) {
     return
   }
 
-  if (allowDecimal && event.key === ".") {
-    if (event.currentTarget.value.includes(".")) {
+  if (allowDecimal && event.key === '.') {
+    if (event.currentTarget.value.includes('.')) {
       event.preventDefault()
     }
     return
@@ -180,44 +180,44 @@ export function MerchantOnboardingForm({
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      ownerFullName: "",
-      ownerPhone: "",
-      businessName: "",
-      businessPhone: "",
-      businessEmail: "",
-      businessAddress: "",
-      businessWebsite: "",
-      websiteCms: "",
-      businessDescription: "",
-      businessRegistrationDate: "",
-      businessNature: "",
-      merchantType: "",
-      estimatedMonthlyTransactions: "",
-      estimatedMonthlyVolume: "",
-      accountTitle: "",
-      bankName: "",
-      branchName: "",
-      accountNumberIban: "",
-      swiftCode: "",
-      nextOfKinRelation: "",
+      email: '',
+      ownerFullName: '',
+      ownerPhone: '',
+      businessName: '',
+      businessPhone: '',
+      businessEmail: '',
+      businessAddress: '',
+      businessWebsite: '',
+      websiteCms: '',
+      businessDescription: '',
+      businessRegistrationDate: '',
+      businessNature: '',
+      merchantType: '',
+      estimatedMonthlyTransactions: '',
+      estimatedMonthlyVolume: '',
+      accountTitle: '',
+      bankName: '',
+      branchName: '',
+      accountNumberIban: '',
+      swiftCode: '',
+      nextOfKinRelation: '',
     } satisfies Record<keyof MerchantOnboardingFormValues, string>,
     validators: {
       onSubmit: merchantOnboardingSchema,
     },
     onSubmitInvalid: ({ formApi }) => {
       const fieldErrors = Object.values(formApi.state.fieldMeta).flatMap(
-        (fieldMeta) => fieldMeta.errors
+        (fieldMeta) => fieldMeta.errors,
       )
 
       showValidationErrorsToast([...fieldErrors, ...formApi.state.errors])
 
-      if (typeof document === "undefined") {
+      if (typeof document === 'undefined') {
         return
       }
 
       const firstInvalidElement = document.querySelector<HTMLElement>(
-        '[aria-invalid="true"]'
+        '[aria-invalid="true"]',
       )
       firstInvalidElement?.focus()
     },
@@ -249,16 +249,16 @@ export function MerchantOnboardingForm({
           await submitMerchantOnboardingMutation.mutateAsync(formData)
         setSubmissionData(response)
         onSubmittedChange?.(true)
-        toast.success("Form submitted successfully!")
+        toast.success('Form submitted successfully!')
       } catch (error: unknown) {
         if (isAxiosError(error) && error.response?.data) {
           const data = error.response.data as {
             message?: string
             errors?: Partial<Record<DocumentFieldName, string>>
           }
-          toast.error(data.message ?? "Submission failed. Please try again.")
+          toast.error(data.message ?? 'Submission failed. Please try again.')
         } else {
-          toast.error("An unexpected error occurred. Please try again.")
+          toast.error('An unexpected error occurred. Please try again.')
         }
       }
     },
@@ -267,7 +267,7 @@ export function MerchantOnboardingForm({
   const merchantType = useStore(form.store, (s) => s.values.merchantType)
   const nextOfKinRelation = useStore(
     form.store,
-    (s) => s.values.nextOfKinRelation
+    (s) => s.values.nextOfKinRelation,
   )
   const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts)
 
@@ -275,19 +275,19 @@ export function MerchantOnboardingForm({
     (doc: DocumentFieldName): string => {
       const label = DOCUMENT_LABELS[doc]
       if (
-        (doc === "next_of_kin_cnic_front" || doc === "next_of_kin_cnic_back") &&
+        (doc === 'next_of_kin_cnic_front' || doc === 'next_of_kin_cnic_back') &&
         nextOfKinRelation
       ) {
         const relationLabel = KIN_RELATIONS.find(
-          (r) => r.value === nextOfKinRelation
+          (r) => r.value === nextOfKinRelation,
         )?.label
         if (relationLabel) {
-          return label.replace("Next Of Kin", `${relationLabel}'s`)
+          return label.replace('Next Of Kin', `${relationLabel}'s`)
         }
       }
       return label
     },
-    [nextOfKinRelation]
+    [nextOfKinRelation],
   )
 
   const validateDocuments = useCallback(
@@ -316,7 +316,7 @@ export function MerchantOnboardingForm({
 
       return errors
     },
-    [documents]
+    [documents],
   )
 
   const handleDocumentChange = useCallback(
@@ -339,7 +339,7 @@ export function MerchantOnboardingForm({
         })
       }
     },
-    []
+    [],
   )
 
   const handleDocumentValidationError = useCallback(
@@ -350,7 +350,7 @@ export function MerchantOnboardingForm({
       }))
       toast.error(message)
     },
-    []
+    [],
   )
 
   const getIsInvalid = useCallback(
@@ -367,7 +367,7 @@ export function MerchantOnboardingForm({
         !field.state.meta.isValid
       )
     },
-    [submissionAttempts]
+    [submissionAttempts],
   )
 
   // ── Success View ────────────────────────────────────────────────────────
@@ -454,9 +454,7 @@ export function MerchantOnboardingForm({
             />
             <div>
               <CardTitle>Owner Information</CardTitle>
-              <CardDescription>
-                Details of the business owner
-              </CardDescription>
+              <CardDescription>Details of the business owner</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -738,7 +736,7 @@ export function MerchantOnboardingForm({
               children={(field) => {
                 const isInvalid = getIsInvalid(field)
                 const selectedDate = field.state.value
-                  ? new Date(field.state.value + "T00:00:00")
+                  ? new Date(field.state.value + 'T00:00:00')
                   : undefined
                 return (
                   <Field data-invalid={isInvalid}>
@@ -754,8 +752,8 @@ export function MerchantOnboardingForm({
                         >
                           <CalendarIcon data-icon="inline-start" />
                           {selectedDate
-                            ? format(selectedDate, "PPP")
-                            : "Pick a date"}
+                            ? format(selectedDate, 'PPP')
+                            : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -764,9 +762,7 @@ export function MerchantOnboardingForm({
                           selected={selectedDate}
                           onSelect={(date) => {
                             field.handleChange(
-                              date
-                                ? format(date, "yyyy-MM-dd")
-                                : ""
+                              date ? format(date, 'yyyy-MM-dd') : '',
                             )
                           }}
                           disabled={(date) => date > new Date()}
@@ -891,7 +887,7 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) =>
                         field.handleChange(
-                          getNumericInputValue(e.target.value, false)
+                          getNumericInputValue(e.target.value, false),
                         )
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, false)}
@@ -924,7 +920,7 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) =>
                         field.handleChange(
-                          getNumericInputValue(e.target.value, true)
+                          getNumericInputValue(e.target.value, true),
                         )
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, true)}
@@ -1030,9 +1026,7 @@ export function MerchantOnboardingForm({
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Branch Name *
-                    </FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Branch Name *</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -1116,9 +1110,7 @@ export function MerchantOnboardingForm({
             />
             <div>
               <CardTitle>Next of Kin</CardTitle>
-              <CardDescription>
-                Emergency contact relationship
-              </CardDescription>
+              <CardDescription>Emergency contact relationship</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -1187,7 +1179,7 @@ export function MerchantOnboardingForm({
             <Alert>
               <Info className="size-4" />
               <AlertDescription>
-                Accepted formats: {ALLOWED_EXTENSIONS.join(", ")}. Maximum file
+                Accepted formats: {ALLOWED_EXTENSIONS.join(', ')}. Maximum file
                 size: 10 MB per document.
               </AlertDescription>
             </Alert>
@@ -1221,7 +1213,7 @@ export function MerchantOnboardingForm({
                 {specificDocs.required.length > 0 && (
                   <div>
                     <h3 className="mb-4 text-sm font-semibold">
-                      Required for{" "}
+                      Required for{' '}
                       {
                         MERCHANT_TYPES.find((t) => t.value === merchantType)
                           ?.label
@@ -1304,7 +1296,7 @@ export function MerchantOnboardingForm({
           children={(isSubmitting) => (
             <Button type="submit" size="lg" disabled={isSubmitting}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
-              {isSubmitting ? "Submitting..." : "Submit Application"}
+              {isSubmitting ? 'Submitting...' : 'Submit Application'}
             </Button>
           )}
         />
@@ -1312,4 +1304,3 @@ export function MerchantOnboardingForm({
     </form>
   )
 }
-

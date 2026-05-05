@@ -51,7 +51,10 @@ const REVIEW_FIELDS: ReviewFieldDefinition[] = [
   { key: 'businessDescription', label: 'Business Description' },
   { key: 'businessNature', label: 'Nature of Business' },
   { key: 'merchantType', label: 'Business Type' },
-  { key: 'estimatedMonthlyTransactions', label: 'Estimated Monthly Transactions' },
+  {
+    key: 'estimatedMonthlyTransactions',
+    label: 'Estimated Monthly Transactions',
+  },
   { key: 'estimatedMonthlyVolume', label: 'Estimated Monthly Volume (PKR)' },
   { key: 'accountTitle', label: 'Account Title' },
   { key: 'bankName', label: 'Bank Name' },
@@ -124,9 +127,9 @@ export function createDocumentsReviewDraft(
 }
 
 export function getDocumentsReviewables(caseDetail: CaseDetail) {
-  const merchantData = caseDetail.merchant as Record<string, unknown>
-  const fieldItems = REVIEW_FIELDS
-    .map<DocumentsReviewableItem | null>((field) => {
+  const merchantData = caseDetail.merchant
+  const fieldItems = REVIEW_FIELDS.map<DocumentsReviewableItem | null>(
+    (field) => {
       const resolvedValue = formatDisplayValue(merchantData[field.key])
 
       if (!resolvedValue) return null
@@ -135,8 +138,8 @@ export function getDocumentsReviewables(caseDetail: CaseDetail) {
         key: field.key,
         label: field.label,
       }
-    })
-    .filter((item): item is DocumentsReviewableItem => item !== null)
+    },
+  ).filter((item): item is DocumentsReviewableItem => item !== null)
 
   const merchantType = formatDisplayValue(merchantData.merchantType)
   const merchantSpecificDocs = merchantType
@@ -163,7 +166,9 @@ export function getDocumentsReviewables(caseDetail: CaseDetail) {
 
       const label = documentKey
         ? DOCUMENT_LABELS[documentKey as keyof typeof DOCUMENT_LABELS]
-        : document.documentType ?? document.originalName ?? 'Uploaded Document'
+        : (document.documentType ??
+          document.originalName ??
+          'Uploaded Document')
 
       return {
         key: `doc_${document.id}`,
@@ -194,7 +199,9 @@ export function getDocumentsReviewSummaryFromDraft(
   const reviewsByField = getDraftReviewByField(draftReviews)
 
   const approvedItems: DocumentsReviewableItem[] = []
-  const rejectedItems: Array<DocumentsReviewableItem & { remarks: string | null }> = []
+  const rejectedItems: Array<
+    DocumentsReviewableItem & { remarks: string | null }
+  > = []
   const pendingItems: DocumentsReviewableItem[] = []
 
   for (const item of reviewables) {
@@ -250,11 +257,13 @@ export function createSaveFieldReviewsInputFromDraft(
 
       const remarks = review.remarks.trim()
 
-      return [{
-        fieldName,
-        status: review.status,
-        ...(remarks ? { remarks } : {}),
-      }]
+      return [
+        {
+          fieldName,
+          status: review.status,
+          ...(remarks ? { remarks } : {}),
+        },
+      ]
     }),
   }
 }

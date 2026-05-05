@@ -12,10 +12,9 @@ type LazyQueueRenderer = ComponentType<QueueRendererProps>
 
 const registry: Record<string, () => Promise<{ default: LazyQueueRenderer }>> =
   {
-    'documents-review': () =>
-      import('./renderers/documents-review-renderer'),
-    'sub-merchant-form': () =>
-      import('./renderers/sub-merchant-form-renderer'),
+    'documents-review': () => import('./renderers/documents-review-renderer'),
+    'sub-merchant-form': () => import('./renderers/sub-merchant-form-renderer'),
+    agreement: () => import('./renderers/agreement-renderer'),
   }
 
 const loadedComponents = new Map<string, LazyQueueRenderer>()
@@ -27,9 +26,7 @@ export function getQueueRenderer(queueSlug: string): LazyQueueRenderer {
 
   const loader = registry[queueSlug]
   if (!loader) {
-    const FallbackRenderer = lazy(() =>
-      import('./renderers/fallback-renderer'),
-    )
+    const FallbackRenderer = lazy(() => import('./renderers/fallback-renderer'))
     loadedComponents.set(queueSlug, FallbackRenderer)
     return FallbackRenderer
   }

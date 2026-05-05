@@ -23,10 +23,9 @@ export async function fetchMerchants(
     }
   }
 
-  const response = await apiClient.get<MerchantListResponse>(
-    '/api/merchants',
-    { params: query },
-  )
+  const response = await apiClient.get<MerchantListResponse>('/api/merchants', {
+    params: query,
+  })
   return response.data
 }
 

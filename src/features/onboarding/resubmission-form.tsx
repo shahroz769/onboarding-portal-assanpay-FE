@@ -298,7 +298,9 @@ function SectionIcon({
   colorClass: string
 }) {
   return (
-    <div className={`flex size-10 items-center justify-center rounded-lg ${colorClass}`}>
+    <div
+      className={`flex size-10 items-center justify-center rounded-lg ${colorClass}`}
+    >
       <Icon className="size-5" />
     </div>
   )
@@ -410,7 +412,9 @@ function validateTextField(rejection: ResubmissionRejection, value: string) {
     }
   }
 
-  const optionValues = new Set((config?.options ?? []).map((option) => option.value))
+  const optionValues = new Set(
+    (config?.options ?? []).map((option) => option.value),
+  )
   if (optionValues.size > 0 && !optionValues.has(trimmed)) {
     return `Please select ${rejection.label.toLowerCase()}.`
   }
@@ -462,7 +466,8 @@ function validateDocumentValues(
     }
 
     if (draft.action !== 'replace' && draft.action !== 'remove') {
-      errors[rejection.fieldName] = `Choose whether to reupload or remove ${rejection.label.toLowerCase()}.`
+      errors[rejection.fieldName] =
+        `Choose whether to reupload or remove ${rejection.label.toLowerCase()}.`
       continue
     }
 
@@ -559,14 +564,20 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
         const action = draft.action
         if (!action) continue
 
-        formData.append(`${DOCUMENT_ACTION_PREFIX}${rejection.fieldName}`, action)
+        formData.append(
+          `${DOCUMENT_ACTION_PREFIX}${rejection.fieldName}`,
+          action,
+        )
         if (action === 'replace' && draft.file) {
           formData.append(rejection.fieldName, draft.file)
         }
         continue
       }
 
-      formData.append(rejection.fieldName, textValues[rejection.fieldName] ?? '')
+      formData.append(
+        rejection.fieldName,
+        textValues[rejection.fieldName] ?? '',
+      )
     }
 
     return formData
@@ -588,7 +599,9 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
       Object.keys(nextTextErrors).length > 0 ||
       Object.keys(nextDocumentErrors).length > 0
     ) {
-      toast.error('Please review the highlighted fields and submit all requested updates.')
+      toast.error(
+        'Please review the highlighted fields and submit all requested updates.',
+      )
       return
     }
 
@@ -624,7 +637,9 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
           <CardTitle>Update your submission</CardTitle>
           <CardDescription>
             {context.merchantName}
-            {expiresLabel ? ` - this secure link expires ${expiresLabel}.` : '.'}
+            {expiresLabel
+              ? ` - this secure link expires ${expiresLabel}.`
+              : '.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -644,7 +659,10 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
         <Card key={section.key}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <SectionIcon icon={section.icon} colorClass={section.colorClass} />
+              <SectionIcon
+                icon={section.icon}
+                colorClass={section.colorClass}
+              />
               <div>
                 <CardTitle>{section.title}</CardTitle>
                 <CardDescription>{section.description}</CardDescription>
@@ -790,7 +808,9 @@ function FieldControl({
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+            onSelect={(date) =>
+              onChange(date ? format(date, 'yyyy-MM-dd') : '')
+            }
             disabled={(date) => date > new Date()}
             captionLayout="dropdown"
             defaultMonth={selectedDate}
@@ -808,7 +828,11 @@ function FieldControl({
 
     return (
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={rejection.fieldName} className="w-full" aria-invalid={isInvalid}>
+        <SelectTrigger
+          id={rejection.fieldName}
+          className="w-full"
+          aria-invalid={isInvalid}
+        >
           <SelectValue placeholder={`Select ${placeholderLabel}`} />
         </SelectTrigger>
         <SelectContent>
@@ -854,7 +878,13 @@ function FieldControl({
   return (
     <Input
       id={rejection.fieldName}
-      type={config.kind === 'email' ? 'email' : config.kind === 'url' ? 'url' : 'text'}
+      type={
+        config.kind === 'email'
+          ? 'email'
+          : config.kind === 'url'
+            ? 'url'
+            : 'text'
+      }
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={config.placeholder}
@@ -995,8 +1025,8 @@ function ResubmissionSuccess() {
           Updates submitted
         </CardTitle>
         <CardDescription>
-          Thank you. Your updates have been returned to our team for review.
-          You can close this window.
+          Thank you. Your updates have been returned to our team for review. You
+          can close this window.
         </CardDescription>
       </CardHeader>
     </Card>

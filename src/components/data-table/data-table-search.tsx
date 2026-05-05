@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SearchIcon, XIcon } from 'lucide-react'
 
-import { InputGroup, InputGroupAddon, InputGroupInput } from '#/components/ui/input-group'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Button } from '#/components/ui/button'
 
 interface DataTableSearchProps {
@@ -60,7 +64,12 @@ export function DataTableSearch({
       />
       {localValue && (
         <InputGroupAddon align="inline-end">
-          <Button variant="ghost" size="icon" className="size-6" onClick={handleClear}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={handleClear}
+          >
             <XIcon />
           </Button>
         </InputGroupAddon>

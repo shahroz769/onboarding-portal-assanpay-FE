@@ -13,7 +13,9 @@ export function DataTableToolbar({ children }: DataTableToolbarProps) {
 }
 
 function DataTableToolbarFilters({ children }: { children: ReactNode }) {
-  return <div className="flex flex-1 flex-wrap items-center gap-2">{children}</div>
+  return (
+    <div className="flex flex-1 flex-wrap items-center gap-2">{children}</div>
+  )
 }
 
 function DataTableToolbarActions({ children }: { children: ReactNode }) {

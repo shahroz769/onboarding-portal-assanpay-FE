@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Send,
   ShieldAlert,
+  Upload,
   UserRoundCheck,
 } from 'lucide-react'
 
@@ -155,6 +156,34 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
+  agreement_final_uploaded: {
+    label: 'Final Agreement uploaded',
+    icon: Upload,
+    iconClassName: 'text-violet-700 dark:text-violet-300',
+    iconWrapperClassName:
+      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
+  },
+  agreement_email_sent: {
+    label: 'Agreement email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
+  agreement_email_failed: {
+    label: 'Agreement email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
+  agreement_client_submitted: {
+    label: 'Client agreement submitted',
+    icon: CheckCircle2,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
 }
 
 function formatDateTime(value: string) {
@@ -244,7 +273,11 @@ export function CaseHistoryTimeline({
   )
 
   if (embedded) {
-    return <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">{content}</div>
+    return (
+      <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">
+        {content}
+      </div>
+    )
   }
 
   return (
@@ -256,9 +289,7 @@ export function CaseHistoryTimeline({
           this case.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {content}
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 }
@@ -319,7 +350,10 @@ function formatDetails(
     )
   }
 
-  if (action === 'resubmission_email_sent' && typeof details.recipient === 'string') {
+  if (
+    action === 'resubmission_email_sent' &&
+    typeof details.recipient === 'string'
+  ) {
     const rejectedFields = Array.isArray(details.rejectedFields)
       ? details.rejectedFields.length
       : null
@@ -330,7 +364,10 @@ function formatDetails(
     )
   }
 
-  if (action === 'resubmission_email_failed' && typeof details.error === 'string') {
+  if (
+    action === 'resubmission_email_failed' &&
+    typeof details.error === 'string'
+  ) {
     parts.push(`Delivery failed: ${details.error}`)
   }
 
@@ -382,6 +419,34 @@ function formatDetails(
     typeof details.error === 'string'
   ) {
     parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (
+    action === 'agreement_final_uploaded' &&
+    typeof details.fileName === 'string'
+  ) {
+    parts.push(`Uploaded ${details.fileName}`)
+  }
+
+  if (
+    action === 'agreement_email_sent' &&
+    typeof details.recipient === 'string'
+  ) {
+    parts.push(`Sent to ${details.recipient}`)
+  }
+
+  if (
+    action === 'agreement_email_failed' &&
+    typeof details.error === 'string'
+  ) {
+    parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (
+    action === 'agreement_client_submitted' &&
+    typeof details.fileName === 'string'
+  ) {
+    parts.push(`Submitted ${details.fileName}`)
   }
 
   if (

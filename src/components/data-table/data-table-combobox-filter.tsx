@@ -111,7 +111,10 @@ export function DataTableComboboxFilter({
               >
                 <span>{option.label}</span>
                 {selectedValues.has(option.value) && (
-                  <Badge variant="secondary" className="size-4 rounded-full p-0 text-[10px]">
+                  <Badge
+                    variant="secondary"
+                    className="size-4 rounded-full p-0 text-[10px]"
+                  >
                     ✓
                   </Badge>
                 )}

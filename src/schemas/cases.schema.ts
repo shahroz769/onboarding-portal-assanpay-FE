@@ -114,10 +114,7 @@ export const caseRouteSearchSchema = z.object({
   queueId: z.string().optional().transform(normalizeOptionalString),
   ownerId: z.string().optional().transform(normalizeOptionalString),
   status: createCsvEnumFilterSchema(CASE_STATUSES),
-  sortBy: z
-    .enum(CASE_SORTABLE_COLUMNS)
-    .catch('createdAt')
-    .default('createdAt'),
+  sortBy: z.enum(CASE_SORTABLE_COLUMNS).catch('createdAt').default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).catch('desc').default('desc'),
 })
 
@@ -132,7 +129,13 @@ export type CaseFilters = z.infer<typeof caseFiltersSchema>
 
 // ─── Stage Category ─────────────────────────────────────────────────────────
 
-export const STAGE_CATEGORIES = ['new', 'in_progress', 'qc', 'error', 'closed'] as const
+export const STAGE_CATEGORIES = [
+  'new',
+  'in_progress',
+  'qc',
+  'error',
+  'closed',
+] as const
 export type StageCategory = (typeof STAGE_CATEGORIES)[number]
 
 // ─── Queue Stage ────────────────────────────────────────────────────────────
@@ -151,7 +154,11 @@ export type QueueStage = z.infer<typeof queueStageSchema>
 
 // ─── Field Review ───────────────────────────────────────────────────────────
 
-export const FIELD_REVIEW_STATUSES = ['pending', 'approved', 'rejected'] as const
+export const FIELD_REVIEW_STATUSES = [
+  'pending',
+  'approved',
+  'rejected',
+] as const
 export type FieldReviewStatus = (typeof FIELD_REVIEW_STATUSES)[number]
 
 export const fieldReviewSchema = z.object({
@@ -205,6 +212,42 @@ export const caseDetailSchema = z.object({
       emailSentAt: z.string().nullable(),
       emailRecipient: z.string().nullable(),
       finalForm: z
+        .object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        })
+        .nullable(),
+    })
+    .nullable()
+    .optional(),
+  agreement: z
+    .object({
+      businessType: z.string(),
+      draftKey: z.string(),
+      draftLabel: z.string(),
+      draftUrl: z.string(),
+      emailStatus: z.enum(['not_sent', 'sent', 'failed']),
+      emailLogId: z.string().nullable(),
+      emailSentAt: z.string().nullable(),
+      emailRecipient: z.string().nullable(),
+      lastRejectionRemarks: z.string().nullable(),
+      finalAgreement: z
+        .object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        })
+        .nullable(),
+      clientAgreement: z
         .object({
           id: z.string(),
           originalName: z.string(),
@@ -278,7 +321,9 @@ export const closeUnsuccessfulInputSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 })
 
-export type CloseUnsuccessfulInput = z.infer<typeof closeUnsuccessfulInputSchema>
+export type CloseUnsuccessfulInput = z.infer<
+  typeof closeUnsuccessfulInputSchema
+>
 
 export const createCommentInputSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty'),
@@ -299,5 +344,12 @@ export type SelectSubMerchantFormInput = z.infer<
 export type SubMerchantFormEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
+  error?: string
+}
+
+export type AgreementEmailResponse = {
+  status: 'sent' | 'failed'
+  emailLogId: string
+  tokenExpiresAt: string | null
   error?: string
 }

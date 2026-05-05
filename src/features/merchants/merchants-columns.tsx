@@ -80,8 +80,10 @@ export function createMerchantColumns({
   const canEdit = userRole === 'admin' || userRole === 'supervisor'
   const canDelete = userRole === 'admin'
 
-  const isAllSelected = allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
-  const isSomeSelected = !isAllSelected && allIds.some((id) => selectedIds.has(id))
+  const isAllSelected =
+    allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
+  const isSomeSelected =
+    !isAllSelected && allIds.some((id) => selectedIds.has(id))
 
   return [
     // Select
@@ -201,9 +203,7 @@ export function createMerchantColumns({
       cell: (merchant) => {
         const display = MERCHANT_STATUS_DISPLAY[merchant.onboardingStage]
         return (
-          <Badge className={getStatusBadgeClasses(display)}>
-            {display}
-          </Badge>
+          <Badge className={getStatusBadgeClasses(display)}>{display}</Badge>
         )
       },
       width: 120,
@@ -223,14 +223,16 @@ export function createMerchantColumns({
         const priorityBadge = (
           <Badge
             variant="secondary"
-            className={[
-              merchant.priority === 'high'
-                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-                : '',
-              canEdit ? 'cursor-pointer transition-colors' : '',
-            ]
-              .filter(Boolean)
-              .join(' ') || undefined}
+            className={
+              [
+                merchant.priority === 'high'
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                  : '',
+                canEdit ? 'cursor-pointer transition-colors' : '',
+              ]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             onClick={canEdit ? () => onPriorityClick(merchant) : undefined}
           >
             {PRIORITY_LABELS[merchant.priority]}
@@ -298,7 +300,10 @@ export function createMerchantColumns({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="size-8" asChild>
-                  <Link to="/onboarding-form" search={{ merchantId: merchant.id }}>
+                  <Link
+                    to="/onboarding-form"
+                    search={{ merchantId: merchant.id }}
+                  >
                     <PencilIcon className="size-4" />
                     <span className="sr-only">Edit</span>
                   </Link>

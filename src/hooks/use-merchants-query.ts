@@ -81,20 +81,17 @@ export function useUpdatePriorityMutation() {
     onMutate: async ({ merchantId, priority, note }) => {
       await queryClient.cancelQueries({ queryKey: MERCHANTS_KEY })
 
-      const previous =
-        queryClient.getQueriesData<InfiniteData<MerchantListResponse>>({
-          queryKey: MERCHANTS_KEY,
-        })
+      const previous = queryClient.getQueriesData<
+        InfiniteData<MerchantListResponse>
+      >({
+        queryKey: MERCHANTS_KEY,
+      })
 
-      updateMerchantInMerchantLists(
-        queryClient,
-        merchantId,
-        (merchant) => ({
-          ...merchant,
-          priority,
-          priorityNote: note ?? null,
-        }),
-      )
+      updateMerchantInMerchantLists(queryClient, merchantId, (merchant) => ({
+        ...merchant,
+        priority,
+        priorityNote: note ?? null,
+      }))
 
       return { previous }
     },

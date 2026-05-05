@@ -33,11 +33,13 @@ export function SubMerchantFormReviewModal({
   const sendEmail = useSendSubMerchantFormEmail(caseId)
   const isConfirmingRef = useRef(false)
   const details = caseDetail.subMerchantForm ?? null
-  const merchant = caseDetail.merchant as
-    | { submitterEmail?: string | null }
-    | null
+  const merchant = caseDetail.merchant as {
+    submitterEmail?: string | null
+  } | null
   const submitterEmail = merchant?.submitterEmail ?? null
-  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
+  const isCaseOwner = Boolean(
+    caseDetail.owner && user?.id === caseDetail.owner.id,
+  )
   const finalForm = details?.finalForm ?? null
   const canSend =
     Boolean(details) &&
@@ -69,7 +71,8 @@ export function SubMerchantFormReviewModal({
         <DialogHeader>
           <DialogTitle>Review Final Form</DialogTitle>
           <DialogDescription>
-            Confirm the selected sub-merchant and Final Form before sending the email.
+            Confirm the selected sub-merchant and Final Form before sending the
+            email.
           </DialogDescription>
         </DialogHeader>
 
@@ -79,7 +82,9 @@ export function SubMerchantFormReviewModal({
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Sub-merchant
               </p>
-              <p className="mt-1 text-sm font-medium">{details.subMerchantName}</p>
+              <p className="mt-1 text-sm font-medium">
+                {details.subMerchantName}
+              </p>
             </div>
           ) : (
             <Alert variant="destructive">
@@ -142,7 +147,8 @@ export function SubMerchantFormReviewModal({
               <MailCheck />
               <AlertTitle>Email already sent</AlertTitle>
               <AlertDescription>
-                The Final Form email was sent successfully. You can close the case from the Resolution tab.
+                The Final Form email was sent successfully. You can close the
+                case from the Resolution tab.
               </AlertDescription>
             </Alert>
           ) : null}

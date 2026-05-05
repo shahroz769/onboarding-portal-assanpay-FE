@@ -4,17 +4,19 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
-  type ReactNode,
+  useState
+  
 } from 'react'
+import type {ReactNode} from 'react';
 
 import type { CaseDetail } from '#/schemas/cases.schema'
 
 import {
   createDocumentsReviewDraft,
-  getDocumentsReviewSummaryFromDraft,
-  type DocumentsReviewDraftMap,
+  getDocumentsReviewSummaryFromDraft
+  
 } from './documents-review-shared'
+import type {DocumentsReviewDraftMap} from './documents-review-shared';
 
 type DocumentsReviewDraftContextValue = {
   draftReviews: DocumentsReviewDraftMap
@@ -43,28 +45,34 @@ export function DocumentsReviewDraftProvider({
     })
   }, [caseDetail.fieldReviews])
 
-  const value = useMemo<DocumentsReviewDraftContextValue>(() => ({
-    draftReviews,
-    reviewSummary: getDocumentsReviewSummaryFromDraft(caseDetail, draftReviews),
-    saveRejectedReview: (fieldName, remarks) => {
-      setDraftReviews((currentDraft) => ({
-        ...currentDraft,
-        [fieldName]: {
-          status: 'rejected',
-          remarks,
-        },
-      }))
-    },
-    clearRejectedReview: (fieldName) => {
-      setDraftReviews((currentDraft) => ({
-        ...currentDraft,
-        [fieldName]: {
-          status: 'pending',
-          remarks: '',
-        },
-      }))
-    },
-  }), [caseDetail, draftReviews])
+  const value = useMemo<DocumentsReviewDraftContextValue>(
+    () => ({
+      draftReviews,
+      reviewSummary: getDocumentsReviewSummaryFromDraft(
+        caseDetail,
+        draftReviews,
+      ),
+      saveRejectedReview: (fieldName, remarks) => {
+        setDraftReviews((currentDraft) => ({
+          ...currentDraft,
+          [fieldName]: {
+            status: 'rejected',
+            remarks,
+          },
+        }))
+      },
+      clearRejectedReview: (fieldName) => {
+        setDraftReviews((currentDraft) => ({
+          ...currentDraft,
+          [fieldName]: {
+            status: 'pending',
+            remarks: '',
+          },
+        }))
+      },
+    }),
+    [caseDetail, draftReviews],
+  )
 
   return (
     <DocumentsReviewDraftContext.Provider value={value}>

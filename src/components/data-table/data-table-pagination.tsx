@@ -38,7 +38,11 @@ export const DataTablePagination = memo(function DataTablePagination({
                 <PaginationPrevious
                   onClick={() => onPageChange(page - 1)}
                   aria-disabled={page <= 1}
-                  className={page <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  className={
+                    page <= 1
+                      ? 'pointer-events-none opacity-50'
+                      : 'cursor-pointer'
+                  }
                 />
               </PaginationItem>
               {pages.map((p, i) =>
@@ -62,7 +66,11 @@ export const DataTablePagination = memo(function DataTablePagination({
                 <PaginationNext
                   onClick={() => onPageChange(page + 1)}
                   aria-disabled={page >= totalPages}
-                  className={page >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  className={
+                    page >= totalPages
+                      ? 'pointer-events-none opacity-50'
+                      : 'cursor-pointer'
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -72,7 +80,6 @@ export const DataTablePagination = memo(function DataTablePagination({
     </div>
   )
 })
-
 
 function generatePageNumbers(
   current: number,

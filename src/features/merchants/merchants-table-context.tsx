@@ -1,10 +1,4 @@
-import {
-  createContext,
-  use,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, use, useCallback, useMemo, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
@@ -57,7 +51,11 @@ interface MerchantsTableActions {
   openDeleteDialog: (target: DeleteTarget) => void
   closeDeleteDialog: () => void
   setBulkPriorityValue: (value: Priority) => void
-  submitPriority: (merchantId: string, priority: Priority, note?: string) => void
+  submitPriority: (
+    merchantId: string,
+    priority: Priority,
+    note?: string,
+  ) => void
   confirmDelete: () => void
   submitBulkPriority: () => void
 }
@@ -69,7 +67,9 @@ interface MerchantsTableMeta {
   setToCommaString: (set: Set<string>) => string | undefined
 }
 
-const MerchantsTableStateContext = createContext<MerchantsTableState | null>(null)
+const MerchantsTableStateContext = createContext<MerchantsTableState | null>(
+  null,
+)
 const MerchantsTableActionsContext =
   createContext<MerchantsTableActions | null>(null)
 const MerchantsTableMetaContext = createContext<MerchantsTableMeta | null>(null)
@@ -128,7 +128,7 @@ const routeApi = getRouteApi('/_app/merchants')
 
 function useMerchantFilters() {
   const navigate = useNavigate()
-  const filters = routeApi.useSearch() as MerchantRouteSearch
+  const filters = routeApi.useSearch()
 
   const setFilters = useCallback(
     (partialFilters: Partial<MerchantRouteSearch>) => {
@@ -180,8 +180,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const [priorityDialogMerchant, setPriorityDialogMerchant] =
     useState<MerchantListItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-  const [bulkPriorityValue, setBulkPriorityValue] =
-    useState<Priority>('normal')
+  const [bulkPriorityValue, setBulkPriorityValue] = useState<Priority>('normal')
   const queryFilters = useMemo<MerchantFilters>(
     () => ({
       ...filters,
@@ -191,13 +190,8 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     [filters],
   )
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
 
   const updatePriority = useUpdatePriorityMutation()
   const deleteMerchant = useDeleteMerchantMutation(queryFilters)

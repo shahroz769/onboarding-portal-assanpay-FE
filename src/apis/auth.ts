@@ -17,7 +17,7 @@ export async function refreshSessionRequest() {
   const { data } = await axios.post<RefreshResponse>(
     `${API_BASE_URL}/api/auth/refresh`,
     {},
-    { withCredentials: true }
+    { withCredentials: true },
   )
 
   return data

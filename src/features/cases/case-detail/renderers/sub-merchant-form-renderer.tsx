@@ -91,7 +91,9 @@ function validateFinalForm(file: File) {
 
   if (
     !ACCEPTED_FINAL_FORM_EXTENSIONS.includes(
-      getFileExtension(file.name) as (typeof ACCEPTED_FINAL_FORM_EXTENSIONS)[number],
+      getFileExtension(
+        file.name,
+      ) as (typeof ACCEPTED_FINAL_FORM_EXTENSIONS)[number],
     ) ||
     !ACCEPTED_FINAL_FORM_TYPES.has(file.type)
   ) {
@@ -111,12 +113,15 @@ export default function SubMerchantFormRenderer({
   const [selectedSubMerchantKey, setSelectedSubMerchantKey] = useState(
     details?.subMerchantKey ?? '',
   )
-  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
+  const isCaseOwner = Boolean(
+    caseDetail.owner && user?.id === caseDetail.owner.id,
+  )
   const isWorking = caseDetail.case.status === 'working'
   const canEdit = isCaseOwner && isWorking
   const selectedOption =
-    SUB_MERCHANT_OPTIONS.find((option) => option.key === selectedSubMerchantKey) ??
-    null
+    SUB_MERCHANT_OPTIONS.find(
+      (option) => option.key === selectedSubMerchantKey,
+    ) ?? null
 
   useEffect(() => {
     setSelectedSubMerchantKey(details?.subMerchantKey ?? '')
@@ -130,7 +135,8 @@ export default function SubMerchantFormRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>EP Sub-Merchant Form</CardTitle>
               <CardDescription>
-                Select the sub-merchant, open the draft, then upload the completed Final Form.
+                Select the sub-merchant, open the draft, then upload the
+                completed Final Form.
               </CardDescription>
             </div>
             {details?.emailStatus === 'sent' ? (
@@ -169,7 +175,8 @@ export default function SubMerchantFormRenderer({
                 </SelectContent>
               </Select>
               <FieldDescription>
-                The draft form becomes available after a sub-merchant is selected.
+                The draft form becomes available after a sub-merchant is
+                selected.
               </FieldDescription>
             </Field>
 
@@ -182,7 +189,8 @@ export default function SubMerchantFormRenderer({
                       {selectedOption.name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Open the draft and complete it manually before uploading the final file.
+                      Open the draft and complete it manually before uploading
+                      the final file.
                     </p>
                   </div>
                   <Button asChild variant="outline">
@@ -214,7 +222,8 @@ export default function SubMerchantFormRenderer({
                 }
               />
               <FieldDescription>
-                Upload one completed PDF, DOC, or DOCX file. Maximum size is 1 MB.
+                Upload one completed PDF, DOC, or DOCX file. Maximum size is 1
+                MB.
               </FieldDescription>
             </Field>
           </FieldGroup>
@@ -260,7 +269,8 @@ export default function SubMerchantFormRenderer({
           <FileText />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
-            Only the current case owner can select the sub-merchant and upload the Final Form.
+            Only the current case owner can select the sub-merchant and upload
+            the Final Form.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -301,7 +311,11 @@ function FinalFormUpload({
   }
 
   return (
-    <div data-slot="file-upload" dir="ltr" className="relative flex w-full flex-col gap-2">
+    <div
+      data-slot="file-upload"
+      dir="ltr"
+      className="relative flex w-full flex-col gap-2"
+    >
       <div
         role="region"
         id={descriptionId}

@@ -50,12 +50,18 @@ export function DataTableFilter({
           {selectedValues.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-1 h-4" />
-              <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden">
+              <Badge
+                variant="secondary"
+                className="rounded-sm px-1 font-normal lg:hidden"
+              >
                 {selectedValues.size}
               </Badge>
               <div className="hidden gap-1 lg:flex">
                 {selectedValues.size > 2 ? (
-                  <Badge variant="secondary" className="rounded-sm px-1 font-normal">
+                  <Badge
+                    variant="secondary"
+                    className="rounded-sm px-1 font-normal"
+                  >
                     {selectedValues.size} selected
                   </Badge>
                 ) : (
@@ -99,7 +105,9 @@ export function DataTableFilter({
                 >
                   <CheckIcon />
                 </div>
-                {option.icon && <option.icon className="text-muted-foreground" />}
+                {option.icon && (
+                  <option.icon className="text-muted-foreground" />
+                )}
                 <span>{option.label}</span>
               </button>
             )

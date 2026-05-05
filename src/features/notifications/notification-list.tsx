@@ -13,7 +13,10 @@ interface NotificationListProps {
   onNavigate: () => void
 }
 
-export function NotificationList({ filter, onNavigate }: NotificationListProps) {
+export function NotificationList({
+  filter,
+  onNavigate,
+}: NotificationListProps) {
   const {
     data,
     isLoading,
@@ -51,10 +54,7 @@ export function NotificationList({ filter, onNavigate }: NotificationListProps) 
   const items = data?.pages.flatMap((page) => page.items) ?? []
 
   return (
-    <div
-      ref={scrollRef}
-      className="h-120"
-    >
+    <div ref={scrollRef} className="h-120">
       <ScrollArea className="size-full">
         {isLoading ? <NotificationListSkeleton /> : null}
 

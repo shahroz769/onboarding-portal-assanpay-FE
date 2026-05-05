@@ -1,14 +1,14 @@
-import { useRef } from "react"
-import { FileText, Upload, X } from "lucide-react"
+import { useRef } from 'react'
+import { FileText, Upload, X } from 'lucide-react'
 
-import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
   MAX_FILE_SIZE,
-} from "#/schemas/merchant-onboarding.schema"
-import { cn } from "#/lib/utils"
+} from '#/schemas/merchant-onboarding.schema'
+import { cn } from '#/lib/utils'
 
 type DocumentUploadFieldProps = {
   name: string
@@ -32,7 +32,7 @@ function validateFile(file: File): string | null {
   }
 
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-    return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}`
+    return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`
   }
 
   return null
@@ -57,21 +57,21 @@ export function DocumentUploadField({
     if (validationError) {
       onFileChange(null)
       onValidationError?.(validationError)
-      if (inputRef.current) inputRef.current.value = ""
+      if (inputRef.current) inputRef.current.value = ''
       return
     }
 
     onFileChange(selected)
-    if (inputRef.current) inputRef.current.value = ""
+    if (inputRef.current) inputRef.current.value = ''
   }
 
   function handleRemove() {
     onFileChange(null)
-    if (inputRef.current) inputRef.current.value = ""
+    if (inputRef.current) inputRef.current.value = ''
   }
 
   return (
-    <div className={cn("flex flex-col gap-1.5", error && "text-destructive")}>
+    <div className={cn('flex flex-col gap-1.5', error && 'text-destructive')}>
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">{label}</span>
         {required ? (
@@ -92,7 +92,7 @@ export function DocumentUploadField({
         ref={inputRef}
         type="file"
         name={name}
-        accept={ALLOWED_EXTENSIONS.join(",")}
+        accept={ALLOWED_EXTENSIONS.join(',')}
         onChange={handleChange}
         className="hidden"
       />

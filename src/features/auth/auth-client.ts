@@ -15,7 +15,9 @@ const emptyAuthSnapshot: AuthSnapshot = {
   user: null,
 }
 
-export function createAuthClient(initialState: AuthSnapshot = emptyAuthSnapshot) {
+export function createAuthClient(
+  initialState: AuthSnapshot = emptyAuthSnapshot,
+) {
   let snapshot = initialState
   const listeners = new Set<() => void>()
 

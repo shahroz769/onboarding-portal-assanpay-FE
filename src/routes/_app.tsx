@@ -43,7 +43,9 @@ function AppLayout() {
   )
   const activeMatch = [...matches]
     .reverse()
-    .find((match) => (match.staticData as { title?: string } | undefined)?.title)
+    .find(
+      (match) => (match.staticData as { title?: string } | undefined)?.title,
+    )
   const staticData = activeMatch?.staticData as
     | {
         title?: string
@@ -53,7 +55,8 @@ function AppLayout() {
     | undefined
   const title = staticData?.title ?? 'Dashboard'
   const subtitle = staticData?.subtitle
-  const hidePageShell = isCaseDetailRoute || (staticData?.hidePageShell ?? false)
+  const hidePageShell =
+    isCaseDetailRoute || (staticData?.hidePageShell ?? false)
   const caseDetailMatch = matches.find(
     (match) => match.routeId === '/_app/cases/$caseId',
   )

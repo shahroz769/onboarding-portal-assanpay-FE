@@ -90,7 +90,8 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
 
     return {
       title: 'Workflow actions',
-      description: 'Available actions depend on the current stage and ownership.',
+      description:
+        'Available actions depend on the current stage and ownership.',
     }
   }, [caseDetail.case.closeOutcome, hasOwner, isClosed, isInProgress, isNew])
 
@@ -122,7 +123,9 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
             <div className="flex flex-col gap-1">
               <p className="text-sm font-semibold">{summary.title}</p>
               <p className="text-sm text-muted-foreground">
-                {owner ? `Assigned to ${owner.name}.` : 'No case owner assigned yet.'}
+                {owner
+                  ? `Assigned to ${owner.name}.`
+                  : 'No case owner assigned yet.'}
               </p>
             </div>
           </div>
@@ -176,7 +179,9 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
 
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="close-reason">Closure remarks</FieldLabel>
+                  <FieldLabel htmlFor="close-reason">
+                    Closure remarks
+                  </FieldLabel>
                   <Textarea
                     id="close-reason"
                     value={closeReason}
@@ -193,9 +198,7 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  disabled={
-                    !closeReason.trim() || closeUnsuccessful.isPending
-                  }
+                  disabled={!closeReason.trim() || closeUnsuccessful.isPending}
                   onClick={() =>
                     closeUnsuccessful.mutate({ reason: closeReason.trim() })
                   }

@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2 } from 'lucide-react'
 
 import {
   Card,
@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "#/components/ui/card"
-import type { MerchantSubmissionResponse } from "#/apis/merchant-onboarding"
+} from '#/components/ui/card'
+import type { MerchantSubmissionResponse } from '#/apis/merchant-onboarding'
 
 type SubmissionSuccessProps = {
   data: MerchantSubmissionResponse
@@ -25,7 +25,8 @@ export function SubmissionSuccess({ data }: SubmissionSuccessProps) {
           Form Submitted Successfully
         </h2>
         <p className="mt-2 text-muted-foreground">
-          Your merchant onboarding form has been received and is being processed.
+          Your merchant onboarding form has been received and is being
+          processed.
         </p>
       </div>
 
@@ -49,7 +50,7 @@ export function SubmissionSuccess({ data }: SubmissionSuccessProps) {
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Status</dt>
               <dd className="font-medium capitalize">
-                {data.merchant.status.replace(/_/g, " ")}
+                {data.merchant.status.replace(/_/g, ' ')}
               </dd>
             </div>
             <div className="flex justify-between">

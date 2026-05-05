@@ -12,6 +12,7 @@ import type {
   Queue,
   SaveFieldReviewsInput,
   SelectSubMerchantFormInput,
+  AgreementEmailResponse,
   SubMerchantFormEmailResponse,
 } from '#/schemas/cases.schema'
 
@@ -232,6 +233,39 @@ export async function sendSubMerchantFormEmail(
   return response.data
 }
 
+export async function uploadAgreementFinalAgreement({
+  caseId,
+  file,
+}: {
+  caseId: string
+  file: File
+}) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/agreement/final-agreement`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  )
+  return response.data
+}
+
+export async function sendAgreementEmail(
+  caseId: string,
+  input: { remarks?: string | null },
+): Promise<AgreementEmailResponse> {
+  const response = await apiClient.post<AgreementEmailResponse>(
+    `/api/cases/${caseId}/agreement/send-mail`,
+    input,
+  )
+  return response.data
+}
+
 // ─── Case Comments ──────────────────────────────────────────────────────────
 
 export async function fetchCaseComments(
@@ -247,18 +281,13 @@ export async function createCaseComment(
   caseId: string,
   input: CreateCommentInput,
 ) {
-  const response = await apiClient.post(
-    `/api/cases/${caseId}/comments`,
-    input,
-  )
+  const response = await apiClient.post(`/api/cases/${caseId}/comments`, input)
   return response.data
 }
 
 // ─── Case History ───────────────────────────────────────────────────────────
 
-export async function fetchCaseHistory(
-  caseId: string,
-): Promise<CaseHistory[]> {
+export async function fetchCaseHistory(caseId: string): Promise<CaseHistory[]> {
   const response = await apiClient.get<CaseHistory[]>(
     `/api/cases/${caseId}/history`,
   )

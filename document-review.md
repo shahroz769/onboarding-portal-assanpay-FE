@@ -1,4 +1,5 @@
 # Ignore
+
 # Document Review Case - Complete Flow Plan
 
 ## Overview
@@ -21,14 +22,14 @@ This iteration intentionally skips `pending` and `qc` for the `documents-review`
 
 ## Workflow Decisions
 
-| Concern | Decision |
-|---------|----------|
-| Email provider | **Resend** |
-| Email template engine | **React Email** with React JSX runtime |
-| React JSX runtime in Hono | Keep global Hono JSX config; use per-file `/** @jsxImportSource react */` for email templates |
-| Stage modeling | Each case type can define its own stage details |
-| `documents-review` stages in this iteration | `new -> working -> awaiting_client -> closed` |
-| `pending` / `qc` | Explicitly skipped for now in `documents-review`; add later when that workflow is introduced |
+| Concern                                     | Decision                                                                                      |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Email provider                              | **Resend**                                                                                    |
+| Email template engine                       | **React Email** with React JSX runtime                                                        |
+| React JSX runtime in Hono                   | Keep global Hono JSX config; use per-file `/** @jsxImportSource react */` for email templates |
+| Stage modeling                              | Each case type can define its own stage details                                               |
+| `documents-review` stages in this iteration | `new -> working -> awaiting_client -> closed`                                                 |
+| `pending` / `qc`                            | Explicitly skipped for now in `documents-review`; add later when that workflow is introduced  |
 
 ---
 
@@ -64,15 +65,15 @@ Allowed transitions for this iteration:
 
 ## Resubmission Link Security
 
-| Property | Value |
-|----------|-------|
-| Mechanism | Random token stored in `case_resubmission_tokens` |
-| Token bytes | 64 random bytes, base64url-encoded |
-| Expiry | 7 days from issue |
-| GET | Reusable until expiry |
-| POST | Single-use; token is consumed only after a successful commit |
+| Property          | Value                                                         |
+| ----------------- | ------------------------------------------------------------- |
+| Mechanism         | Random token stored in `case_resubmission_tokens`             |
+| Token bytes       | 64 random bytes, base64url-encoded                            |
+| Expiry            | 7 days from issue                                             |
+| GET               | Reusable until expiry                                         |
+| POST              | Single-use; token is consumed only after a successful commit  |
 | After consumption | GET returns 410 Gone with a friendly "link already used" page |
-| After expiry | GET returns 410 Gone with a friendly "link expired" page |
+| After expiry      | GET returns 410 Gone with a friendly "link expired" page      |
 
 ---
 
@@ -190,7 +191,7 @@ If queue stages are now case-specific, update the seeding logic to stop assuming
 **`hono/src/modules/email/email.client.ts`**
 
 ```ts
-export const resendClient = new Resend(env.RESEND_API_KEY ?? "re_placeholder")
+export const resendClient = new Resend(env.RESEND_API_KEY ?? 're_placeholder')
 ```
 
 **`hono/src/modules/email/email.service.ts`**
@@ -280,7 +281,7 @@ Validation behavior:
 Token generation:
 
 ```ts
-Buffer.from(crypto.getRandomValues(new Uint8Array(64))).toString("base64url")
+Buffer.from(crypto.getRandomValues(new Uint8Array(64))).toString('base64url')
 ```
 
 ---
@@ -326,7 +327,7 @@ Flow:
 {
   tokenExpiresAt: string
   emailLogId: string
-  status: "sent" | "failed"
+  status: 'sent' | 'failed'
 }
 ```
 
@@ -417,9 +418,9 @@ After successful commit:
 Mount in **`hono/src/index.ts`**:
 
 ```ts
-import { resubmissionRoutes } from "./modules/merchants/public-resubmission.routes"
+import { resubmissionRoutes } from './modules/merchants/public-resubmission.routes'
 
-app.route("/api/public/resubmission", resubmissionRoutes)
+app.route('/api/public/resubmission', resubmissionRoutes)
 ```
 
 ---
@@ -463,7 +464,7 @@ Add:
 export async function sendForResubmission(caseId: string): Promise<{
   tokenExpiresAt: string
   emailLogId: string
-  status: "sent" | "failed"
+  status: 'sent' | 'failed'
 }>
 ```
 
@@ -598,16 +599,21 @@ Updated: Business Name, Owner CNIC Front
 Next to the Reject badge for each field row, render:
 
 ```tsx
-{fieldReview?.resubmittedAt &&
- (!fieldReview.updatedAt || fieldReview.resubmittedAt > fieldReview.updatedAt) ? (
-  <Badge variant="secondary" className="text-xs">Updated</Badge>
-) : null}
+{
+  fieldReview?.resubmittedAt &&
+  (!fieldReview.updatedAt ||
+    fieldReview.resubmittedAt > fieldReview.updatedAt) ? (
+    <Badge variant="secondary" className="text-xs">
+      Updated
+    </Badge>
+  ) : null
+}
 ```
 
 Tooltip copy:
 
 ```ts
-`Client updated this field on ${formatDate(fieldReview.resubmittedAt)}`
+;`Client updated this field on ${formatDate(fieldReview.resubmittedAt)}`
 ```
 
 Important:
@@ -718,35 +724,35 @@ Do not run the backend server.
 
 ## New Files Summary
 
-| File | Type | Purpose |
-|------|------|---------|
-| `hono/src/config/env.ts` | edit | Add Resend and public URL env vars |
-| `hono/src/db/schema.ts` | edit | New tables, enum values, and `resubmitted_at` |
-| `hono/drizzle/0008_resubmission_and_email.sql` | new | Migration |
-| `hono/src/modules/email/email.client.ts` | new | Resend singleton |
-| `hono/src/modules/email/email.service.ts` | new | Email send and logging |
-| `hono/src/modules/email/templates/document-resubmission.tsx` | new | React Email template |
-| `hono/src/modules/cases/case-resubmission-tokens.service.ts` | new | Token issue, validate, consume |
-| `hono/src/modules/cases/field-labels.ts` | new | Stable backend field label map |
-| `hono/src/modules/cases/cases.schemas.ts` | edit | Add `awaiting_client` status support |
-| `hono/src/modules/cases/cases.service.ts` | edit | Add resubmission workflow |
-| `hono/src/modules/cases/cases.routes.ts` | edit | Mount new endpoint |
-| `hono/src/modules/merchants/public-resubmission.routes.ts` | new | Public token GET/POST |
-| `hono/src/modules/merchants/merchants.service.ts` | edit | Reuse upload helpers |
-| `hono/src/modules/notifications/notifications.schemas.ts` | edit | Add `case_resubmitted` |
-| `hono/src/modules/notifications/notifications.copy.ts` | edit | Add notification copy |
-| `hono/src/index.ts` | edit | Mount resubmission routes |
-| `src/schemas/cases.schema.ts` | edit | Add `awaiting_client` and `resubmittedAt` |
-| `src/schemas/notifications.schema.ts` | edit | Add `case_resubmitted` |
-| `src/apis/cases.ts` | edit | Add `sendForResubmission()` |
-| `src/apis/merchant-onboarding.ts` | edit | Add resubmission API functions |
-| `src/hooks/use-send-for-resubmission.ts` | new | Mutation hook |
-| `src/features/cases/case-detail/documents-review-summary-modal.tsx` | new | Review and send modal |
-| `src/features/cases/case-detail/rejection-rounds-card.tsx` | new | Round history UI |
-| `src/features/cases/case-detail/case-side-panel.tsx` | edit | New status branch and modal wiring |
-| `src/features/cases/case-detail/renderers/documents-review-renderer.tsx` | edit | Updated badge |
-| `src/features/onboarding/resubmission-form.tsx` | new | Partial onboarding form |
-| `src/routes/onboarding-form.resubmit.$token.tsx` | new | Public resubmission route |
+| File                                                                     | Type | Purpose                                       |
+| ------------------------------------------------------------------------ | ---- | --------------------------------------------- |
+| `hono/src/config/env.ts`                                                 | edit | Add Resend and public URL env vars            |
+| `hono/src/db/schema.ts`                                                  | edit | New tables, enum values, and `resubmitted_at` |
+| `hono/drizzle/0008_resubmission_and_email.sql`                           | new  | Migration                                     |
+| `hono/src/modules/email/email.client.ts`                                 | new  | Resend singleton                              |
+| `hono/src/modules/email/email.service.ts`                                | new  | Email send and logging                        |
+| `hono/src/modules/email/templates/document-resubmission.tsx`             | new  | React Email template                          |
+| `hono/src/modules/cases/case-resubmission-tokens.service.ts`             | new  | Token issue, validate, consume                |
+| `hono/src/modules/cases/field-labels.ts`                                 | new  | Stable backend field label map                |
+| `hono/src/modules/cases/cases.schemas.ts`                                | edit | Add `awaiting_client` status support          |
+| `hono/src/modules/cases/cases.service.ts`                                | edit | Add resubmission workflow                     |
+| `hono/src/modules/cases/cases.routes.ts`                                 | edit | Mount new endpoint                            |
+| `hono/src/modules/merchants/public-resubmission.routes.ts`               | new  | Public token GET/POST                         |
+| `hono/src/modules/merchants/merchants.service.ts`                        | edit | Reuse upload helpers                          |
+| `hono/src/modules/notifications/notifications.schemas.ts`                | edit | Add `case_resubmitted`                        |
+| `hono/src/modules/notifications/notifications.copy.ts`                   | edit | Add notification copy                         |
+| `hono/src/index.ts`                                                      | edit | Mount resubmission routes                     |
+| `src/schemas/cases.schema.ts`                                            | edit | Add `awaiting_client` and `resubmittedAt`     |
+| `src/schemas/notifications.schema.ts`                                    | edit | Add `case_resubmitted`                        |
+| `src/apis/cases.ts`                                                      | edit | Add `sendForResubmission()`                   |
+| `src/apis/merchant-onboarding.ts`                                        | edit | Add resubmission API functions                |
+| `src/hooks/use-send-for-resubmission.ts`                                 | new  | Mutation hook                                 |
+| `src/features/cases/case-detail/documents-review-summary-modal.tsx`      | new  | Review and send modal                         |
+| `src/features/cases/case-detail/rejection-rounds-card.tsx`               | new  | Round history UI                              |
+| `src/features/cases/case-detail/case-side-panel.tsx`                     | edit | New status branch and modal wiring            |
+| `src/features/cases/case-detail/renderers/documents-review-renderer.tsx` | edit | Updated badge                                 |
+| `src/features/onboarding/resubmission-form.tsx`                          | new  | Partial onboarding form                       |
+| `src/routes/onboarding-form.resubmit.$token.tsx`                         | new  | Public resubmission route                     |
 
 ---
 

@@ -90,9 +90,7 @@ export function StageProgressBar({
               Detailed workflow steps are not available for this case yet.
             </p>
           </div>
-          <Badge className={cn('border', fallbackStyles.badge)}>
-            Current
-          </Badge>
+          <Badge className={cn('border', fallbackStyles.badge)}>Current</Badge>
         </div>
       </div>
     )
@@ -109,14 +107,15 @@ export function StageProgressBar({
           const isLast = index === stages.length - 1
           const isClosed = stage.category === 'closed'
           const isError = stage.category === 'error'
-          const isUnsuccessful = isError || (isClosed && closeOutcome === 'unsuccessful')
+          const isUnsuccessful =
+            isError || (isClosed && closeOutcome === 'unsuccessful')
 
           const dotClass =
             state === 'upcoming'
               ? completedStyles.dot
               : isUnsuccessful && state === 'active'
                 ? categoryStyles.error.dot
-              : styles.dot
+                : styles.dot
 
           const lineClass =
             state === 'completed'
@@ -140,7 +139,8 @@ export function StageProgressBar({
                   className={cn(
                     'relative flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-all',
                     dotClass,
-                    state === 'active' && 'ring-2 ring-offset-2 ring-offset-card',
+                    state === 'active' &&
+                      'ring-2 ring-offset-2 ring-offset-card',
                     state === 'active' &&
                       (isUnsuccessful
                         ? activeRingClassByCategory.error
@@ -150,18 +150,30 @@ export function StageProgressBar({
                   {state === 'completed' ? (
                     <Check className="size-3.5 stroke-[2.5]" />
                   ) : (
-                    <span className="text-xs font-bold tabular-nums">{index + 1}</span>
+                    <span className="text-xs font-bold tabular-nums">
+                      {index + 1}
+                    </span>
                   )}
                   {state === 'active' && (
                     <span
                       className={cn(
                         'absolute inset-0 rounded-full animate-ping opacity-30',
                         isUnsuccessful && 'bg-destructive',
-                        !isUnsuccessful && stage.category === 'new' && 'bg-blue-500',
-                        !isUnsuccessful && stage.category === 'in_progress' && 'bg-amber-500',
-                        !isUnsuccessful && stage.category === 'qc' && 'bg-violet-500',
-                        !isUnsuccessful && stage.category === 'error' && 'bg-destructive',
-                        !isUnsuccessful && stage.category === 'closed' && 'bg-emerald-500',
+                        !isUnsuccessful &&
+                          stage.category === 'new' &&
+                          'bg-blue-500',
+                        !isUnsuccessful &&
+                          stage.category === 'in_progress' &&
+                          'bg-amber-500',
+                        !isUnsuccessful &&
+                          stage.category === 'qc' &&
+                          'bg-violet-500',
+                        !isUnsuccessful &&
+                          stage.category === 'error' &&
+                          'bg-destructive',
+                        !isUnsuccessful &&
+                          stage.category === 'closed' &&
+                          'bg-emerald-500',
                       )}
                     />
                   )}
@@ -169,7 +181,9 @@ export function StageProgressBar({
 
                 {/* Connector line */}
                 {!isLast && (
-                  <div className={cn('h-0.5 flex-1 transition-all', lineClass)} />
+                  <div
+                    className={cn('h-0.5 flex-1 transition-all', lineClass)}
+                  />
                 )}
               </div>
 

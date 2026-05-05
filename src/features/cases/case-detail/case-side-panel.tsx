@@ -11,20 +11,9 @@ import {
 } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '#/components/ui/alert'
-import {
-  Card,
-  CardContent,
-} from '#/components/ui/card'
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { Card, CardContent } from '#/components/ui/card'
+import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
@@ -38,6 +27,7 @@ import {
 } from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
+import { AgreementRoundsCard } from './agreement-rounds-card'
 import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
@@ -64,6 +54,9 @@ function getPrimaryActionCopy(
     isSubMerchantFormCase: boolean
     isSubMerchantEmailSent: boolean
     hasSubMerchantFinalForm: boolean
+    isAgreementCase: boolean
+    hasAgreementFinal: boolean
+    hasAgreementClientSubmission: boolean
   },
 ) {
   const status = caseDetail.case.status
@@ -94,6 +87,33 @@ function getPrimaryActionCopy(
         'A resubmission email was sent to the client. The case will return to working once they submit the requested updates.',
       actionLabel: null,
       actionKind: 'awaiting-client' as const,
+    }
+  }
+
+  if (
+    options.isAgreementCase &&
+    status === 'working' &&
+    options.hasAgreementClientSubmission
+  ) {
+    return {
+      title: 'Client agreement submitted',
+      description:
+        'Review the submitted agreement. If it is correct, close this case successfully.',
+      actionLabel: 'Mark as successful',
+      actionKind: 'mark-successful' as const,
+    }
+  }
+
+  if (options.isAgreementCase && status === 'working') {
+    return {
+      title: options.hasAgreementFinal
+        ? 'Final Agreement ready'
+        : 'Final Agreement required',
+      description: options.hasAgreementFinal
+        ? 'Open the Agreement workspace, review the final agreement, then send mail to the client.'
+        : 'Upload the Final Agreement in the Agreement workspace before sending mail.',
+      actionLabel: null,
+      actionKind: 'agreement' as const,
     }
   }
 
@@ -146,9 +166,15 @@ function getPrimaryActionCopy(
     }
   }
 
-  if (options.isDocumentReviewCase && status === 'working' && !options.hasActiveRejections) {
+  if (
+    options.isDocumentReviewCase &&
+    status === 'working' &&
+    !options.hasActiveRejections
+  ) {
     return {
-      title: options.isReviewApproved ? 'Review approved' : 'No active rejections',
+      title: options.isReviewApproved
+        ? 'Review approved'
+        : 'No active rejections',
       description: options.isReviewApproved
         ? 'The document-review approval is saved. You can now mark this case as successful.'
         : 'There are no active rejections on this case. You can now mark it as successful.',
@@ -157,7 +183,11 @@ function getPrimaryActionCopy(
     }
   }
 
-  if (options.isDocumentReviewCase && status === 'working' && !options.isReviewApproved) {
+  if (
+    options.isDocumentReviewCase &&
+    status === 'working' &&
+    !options.isReviewApproved
+  ) {
     return {
       title: 'Review required',
       description:
@@ -183,7 +213,9 @@ function getPrimaryActionCopy(
       description: caseDetail.queue.qcEnabled
         ? 'This case is waiting for its next checkpoint. Send it to QC when the review is ready.'
         : 'This case is ready for a final successful closure.',
-      actionLabel: caseDetail.queue.qcEnabled ? 'Send to QC' : 'Mark as successful',
+      actionLabel: caseDetail.queue.qcEnabled
+        ? 'Send to QC'
+        : 'Mark as successful',
       actionKind: 'mark-successful' as const,
     }
   }
@@ -219,10 +251,7 @@ function getPrimaryActionCopy(
   }
 }
 
-export function CaseSidePanel({
-  caseDetail,
-  caseId,
-}: CaseSidePanelProps) {
+export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const { user } = useAuth()
   const takeOwnership = useTakeOwnership(caseId)
   const advanceStage = useAdvanceStage(caseId)
@@ -230,13 +259,16 @@ export function CaseSidePanel({
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-  const [subMerchantReviewModalOpen, setSubMerchantReviewModalOpen] = useState(false)
+  const [subMerchantReviewModalOpen, setSubMerchantReviewModalOpen] =
+    useState(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
   const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
   const isSubMerchantFormCase = caseDetail.queue.slug === 'sub-merchant-form'
+  const isAgreementCase = caseDetail.queue.slug === 'agreement'
   const reviewSummary = isDocumentReviewCase
-    ? (documentsReviewDraft?.reviewSummary ?? getDocumentsReviewSummary(caseDetail))
+    ? (documentsReviewDraft?.reviewSummary ??
+      getDocumentsReviewSummary(caseDetail))
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
   const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
@@ -255,14 +287,25 @@ export function CaseSidePanel({
     isSubMerchantFormCase,
     isSubMerchantEmailSent: caseDetail.subMerchantForm?.emailStatus === 'sent',
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
+    isAgreementCase,
+    hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
+    hasAgreementClientSubmission: Boolean(
+      caseDetail.agreement?.clientAgreement,
+    ),
   })
   const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
   const hasOwner = Boolean(caseDetail.owner)
-  const isCaseOwner = Boolean(caseDetail.owner && user?.id === caseDetail.owner.id)
+  const isCaseOwner = Boolean(
+    caseDetail.owner && user?.id === caseDetail.owner.id,
+  )
   const isClosed = category === 'closed' || category === 'error'
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
+  const showPrimaryActionButton =
+    primaryAction.actionKind !== 'awaiting-client' &&
+    primaryAction.actionKind !== 'sub-merchant-form' &&
+    primaryAction.actionKind !== 'agreement'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const unsuccessfulDisabled =
@@ -363,26 +406,25 @@ export function CaseSidePanel({
                               ? isCaseOwner
                                 ? 'Review the selected sub-merchant and Final Form, then send mail.'
                                 : 'Only the current case owner can review the Final Form and send mail.'
-                            : primaryAction.actionKind === 'sub-merchant-form'
-                              ? 'Complete the sub-merchant selection and Final Form upload in the case workspace.'
-                            : isCaseOwner
-                              ? 'When everything checks out, close this case successfully.'
-                              : 'Only the current case owner can complete this case.'}
+                              : primaryAction.actionKind === 'sub-merchant-form'
+                                ? 'Complete the sub-merchant selection and Final Form upload in the case workspace.'
+                                : primaryAction.actionKind === 'agreement'
+                                  ? 'Complete the Agreement upload and mail workflow in the case workspace.'
+                                  : isCaseOwner
+                                    ? 'When everything checks out, close this case successfully.'
+                                    : 'Only the current case owner can complete this case.'}
                     </p>
-                    {primaryAction.actionKind === 'awaiting-client' ? null : (
-                    primaryAction.actionKind === 'sub-merchant-form' ? null : (
+                    {showPrimaryActionButton ? (
                       <Button
                         onClick={handlePrimaryAction}
                         disabled={
                           (primaryAction.actionKind !== 'take-ownership' &&
                             primaryAction.actionKind !== 'mark-successful' &&
                             primaryAction.actionKind !== 'review' &&
-                            primaryAction.actionKind !== 'sub-merchant-review') ||
+                            primaryAction.actionKind !==
+                              'sub-merchant-review') ||
                           (primaryAction.actionKind === 'review' &&
-                            (
-                              !hasActiveRejections ||
-                              !isCaseOwner
-                            )) ||
+                            (!hasActiveRejections || !isCaseOwner)) ||
                           (primaryAction.actionKind === 'sub-merchant-review' &&
                             !isCaseOwner) ||
                           (primaryAction.actionKind === 'mark-successful' &&
@@ -398,7 +440,8 @@ export function CaseSidePanel({
                           )
                         ) : primaryAction.actionKind === 'review' ? (
                           <Send data-icon="inline-start" />
-                        ) : primaryAction.actionKind === 'sub-merchant-review' ? (
+                        ) : primaryAction.actionKind ===
+                          'sub-merchant-review' ? (
                           <Send data-icon="inline-start" />
                         ) : advanceStage.isPending ? (
                           <Spinner data-icon="inline-start" />
@@ -413,13 +456,13 @@ export function CaseSidePanel({
                             ? 'Review'
                             : primaryAction.actionKind === 'sub-merchant-review'
                               ? 'Review'
-                            : primaryAction.actionKind === 'mark-successful'
-                              ? advanceStage.isPending
-                                ? 'Closing case'
-                                : 'Mark as successful'
-                              : 'No successful action available'}
+                              : primaryAction.actionKind === 'mark-successful'
+                                ? advanceStage.isPending
+                                  ? 'Closing case'
+                                  : 'Mark as successful'
+                                : 'No successful action available'}
                       </Button>
-                    ))}
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -427,7 +470,21 @@ export function CaseSidePanel({
               {isDocumentReviewCase &&
               hasOwner &&
               status === 'awaiting_client' ? (
-                <AwaitingClientAlert caseId={caseId} />
+                <AwaitingClientAlert
+                  caseId={caseId}
+                  action="resubmission_email_sent"
+                  title="Awaiting client resubmission"
+                  description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
+                />
+              ) : null}
+
+              {isAgreementCase && hasOwner && status === 'awaiting_client' ? (
+                <AwaitingClientAlert
+                  caseId={caseId}
+                  action="agreement_email_sent"
+                  title="Awaiting client agreement"
+                  description="We emailed the client a secure link to upload the signed agreement. The case will return to working as soon as they submit."
+                />
               ) : null}
 
               {isDocumentReviewCase &&
@@ -438,7 +495,8 @@ export function CaseSidePanel({
                   <CheckCircle2 />
                   <AlertTitle>Review approved</AlertTitle>
                   <AlertDescription>
-                    All document-review items are approved in the database. You can now mark this case as successful.
+                    All document-review items are approved in the database. You
+                    can now mark this case as successful.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -447,9 +505,7 @@ export function CaseSidePanel({
                 <div className="rounded-xl border bg-background p-3">
                   <FieldGroup>
                     <Field>
-                      <FieldLabel htmlFor="close-reason">
-                        Reason
-                      </FieldLabel>
+                      <FieldLabel htmlFor="close-reason">Reason</FieldLabel>
                       <Textarea
                         value={closeReason}
                         id="close-reason"
@@ -489,6 +545,8 @@ export function CaseSidePanel({
               {isDocumentReviewCase ? (
                 <RejectionRoundsCard caseId={caseId} />
               ) : null}
+
+              {isAgreementCase ? <AgreementRoundsCard caseId={caseId} /> : null}
             </div>
           </TabsContent>
 
@@ -503,7 +561,6 @@ export function CaseSidePanel({
               <CaseHistoryTimeline caseId={caseId} embedded />
             </Suspense>
           </TabsContent>
-
         </Tabs>
       </CardContent>
 
@@ -528,21 +585,29 @@ export function CaseSidePanel({
   )
 }
 
-function AwaitingClientAlert({ caseId }: { caseId: string }) {
+function AwaitingClientAlert({
+  caseId,
+  action,
+  title,
+  description,
+}: {
+  caseId: string
+  action: string
+  title: string
+  description: string
+}) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
 
   const expiresAt = useMemo(() => {
     const items = historyQuery.data
     if (!items) return null
-    const latest = items.find(
-      (h) => h.action === 'resubmission_email_sent',
-    )
+    const latest = items.find((h) => h.action === action)
     const details = latest?.details as
       | { expiresAt?: string | null }
       | null
       | undefined
     return details?.expiresAt ?? null
-  }, [historyQuery.data])
+  }, [action, historyQuery.data])
 
   const expiresLabel = useMemo(() => {
     if (!expiresAt) return null
@@ -559,10 +624,9 @@ function AwaitingClientAlert({ caseId }: { caseId: string }) {
   return (
     <Alert>
       <MailCheck />
-      <AlertTitle>Awaiting client resubmission</AlertTitle>
+      <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
-        We emailed the client a secure link to update the rejected fields. The
-        case will return to working as soon as they submit.
+        {description}
         {expiresLabel ? (
           <span className="mt-1 block text-xs text-muted-foreground">
             Link expires {expiresLabel}

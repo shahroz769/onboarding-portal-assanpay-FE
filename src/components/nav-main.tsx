@@ -145,11 +145,7 @@ function NavItem({
   )
 }
 
-export function NavMain({
-  items,
-}: {
-  items: SidebarNavItem[]
-}) {
+export function NavMain({ items }: { items: SidebarNavItem[] }) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })

@@ -4,10 +4,11 @@ import {
   useInfiniteQuery,
   useMutation,
   useQuery,
-  useQueryClient,
-  type InfiniteData,
-  type QueryClient,
+  useQueryClient
+  
+  
 } from '@tanstack/react-query'
+import type {InfiniteData, QueryClient} from '@tanstack/react-query';
 import { toast } from 'sonner'
 
 import {
@@ -23,7 +24,10 @@ import type {
 } from '#/schemas/notifications.schema'
 
 export const NOTIFICATIONS_KEY = ['notifications'] as const
-export const NOTIFICATIONS_UNREAD_KEY = ['notifications', 'unread-count'] as const
+export const NOTIFICATIONS_UNREAD_KEY = [
+  'notifications',
+  'unread-count',
+] as const
 
 export function notificationsInfiniteKey(filter: NotificationFilter) {
   return [...NOTIFICATIONS_KEY, 'list', filter] as const
@@ -88,10 +92,7 @@ function filterPages(
   }
 }
 
-export function applyMarkReadToCache(
-  qc: QueryClient,
-  notificationId: string,
-) {
+export function applyMarkReadToCache(qc: QueryClient, notificationId: string) {
   // Update "all" list
   qc.setQueryData<ListCache>(notificationsInfiniteKey('all'), (cache) =>
     mapPages(cache, (n) =>
@@ -150,8 +151,9 @@ export function applyIncomingNotificationToCache(
   qc.setQueryData<ListCache>(notificationsInfiniteKey('all'), prepend)
   if (!notification.isRead) {
     qc.setQueryData<ListCache>(notificationsInfiniteKey('unread'), prepend)
-    qc.setQueryData<number>(NOTIFICATIONS_UNREAD_KEY, (current) =>
-      (current ?? 0) + 1,
+    qc.setQueryData<number>(
+      NOTIFICATIONS_UNREAD_KEY,
+      (current) => (current ?? 0) + 1,
     )
   }
 }

@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import { Laptop, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import * as React from 'react'
+import { Laptop, Moon, Sun } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
-import { Button } from "#/components/ui/button"
+import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,28 +12,28 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
+} from '#/components/ui/dropdown-menu'
 
-type ThemeMode = "system" | "light" | "dark"
+type ThemeMode = 'system' | 'light' | 'dark'
 
 const THEME_OPTIONS: Array<{
   value: ThemeMode
   label: string
-  icon: React.ComponentType<React.ComponentProps<"svg">>
+  icon: React.ComponentType<React.ComponentProps<'svg'>>
 }> = [
   {
-    value: "system",
-    label: "System",
+    value: 'system',
+    label: 'System',
     icon: Laptop,
   },
   {
-    value: "light",
-    label: "Light",
+    value: 'light',
+    label: 'Light',
     icon: Sun,
   },
   {
-    value: "dark",
-    label: "Dark",
+    value: 'dark',
+    label: 'Dark',
     icon: Moon,
   },
 ]
@@ -41,11 +41,11 @@ const THEME_OPTIONS: Array<{
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme()
   const [selectedValue, setSelectedValue] = React.useState<ThemeMode>(
-    (theme as ThemeMode | undefined) ?? "system",
+    (theme as ThemeMode | undefined) ?? 'system',
   )
 
   React.useEffect(() => {
-    setSelectedValue((theme as ThemeMode | undefined) ?? "system")
+    setSelectedValue((theme as ThemeMode | undefined) ?? 'system')
   }, [theme])
 
   const selectedTheme =

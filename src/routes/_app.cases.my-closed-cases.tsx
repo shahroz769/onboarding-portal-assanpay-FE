@@ -14,7 +14,7 @@ import {
 } from '#/hooks/use-cases-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
-const CLOSED_CASES_STATUS_FILTER = ['closed', 'error'].join(',')
+export const CLOSED_CASES_STATUS_FILTER = ['closed', 'error'].join(',')
 
 export const Route = createFileRoute('/_app/cases/my-closed-cases')({
   staticData: {
