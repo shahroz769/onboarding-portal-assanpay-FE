@@ -287,6 +287,30 @@ export const caseDetailSchema = z.object({
     })
     .nullable()
     .optional(),
+  wordpressWebsite: z
+    .object({
+      clonedWebsiteLink: z.string().nullable(),
+      savedAt: z.string().nullable(),
+      savedBy: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable(),
+      screenshots: z.array(
+        z.object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        }),
+      ),
+    })
+    .nullable()
+    .optional(),
   owner: z
     .object({
       id: z.string(),
@@ -395,3 +419,11 @@ export type MidCreationEmailResponse = {
   goLiveAvailableAt: string | null
   error?: string
 }
+
+export const saveWordpressWebsiteInputSchema = z.object({
+  clonedWebsiteLink: z.string().trim().url(),
+})
+
+export type SaveWordpressWebsiteInput = z.infer<
+  typeof saveWordpressWebsiteInputSchema
+>

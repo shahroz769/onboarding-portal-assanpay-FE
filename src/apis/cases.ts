@@ -11,6 +11,7 @@ import type {
   CreateCommentInput,
   Queue,
   SaveFieldReviewsInput,
+  SaveWordpressWebsiteInput,
   SendMidCreationEmailInput,
   SelectSubMerchantFormInput,
   AgreementEmailResponse,
@@ -293,6 +294,33 @@ export async function markLiveLimitsApplied(caseId: string) {
   const response = await apiClient.post(
     `/api/cases/${caseId}/live/limits-applied`,
     { applied: true },
+  )
+  return response.data
+}
+
+export async function saveWordpressWebsiteCase({
+  caseId,
+  clonedWebsiteLink,
+  screenshots,
+}: {
+  caseId: string
+  clonedWebsiteLink: SaveWordpressWebsiteInput['clonedWebsiteLink']
+  screenshots: File[]
+}) {
+  const formData = new FormData()
+  formData.append('clonedWebsiteLink', clonedWebsiteLink)
+  for (const screenshot of screenshots) {
+    formData.append('screenshots', screenshot)
+  }
+
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/wordpress-website`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
   )
   return response.data
 }

@@ -231,6 +231,12 @@ function CaseStagesBlock({
                     stage.slug === 'awaiting_client' &&
                     'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
                   isCurrent &&
+                    stage.slug.includes('pending') &&
+                    'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
+                  isCurrent &&
+                    stage.slug === 'docs_upload' &&
+                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                  isCurrent &&
                     stage.slug === 'closed' &&
                     !isClosedUnsuccessfully &&
                     'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',

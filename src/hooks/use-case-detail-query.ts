@@ -16,6 +16,7 @@ import {
   markLiveLimitsApplied,
   markTestingLimitsApplied,
   saveFieldReviews,
+  saveWordpressWebsiteCase,
   sendAgreementEmail,
   sendMidCreationEmail,
   selectSubMerchantForm,
@@ -362,6 +363,30 @@ export function useMarkLiveLimitsApplied(caseId: string) {
     onError: (error: unknown) => {
       toast.error(
         getApiErrorMessage(error, 'Failed to mark live limits as applied'),
+      )
+    },
+  })
+}
+
+export function useSaveWordpressWebsiteCase(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { clonedWebsiteLink: string; screenshots: File[] }) =>
+      saveWordpressWebsiteCase({
+        caseId,
+        clonedWebsiteLink: input.clonedWebsiteLink,
+        screenshots: input.screenshots,
+      }),
+    onSuccess: () => {
+      toast.success('WordPress website details saved')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to save WordPress website details'),
       )
     },
   })

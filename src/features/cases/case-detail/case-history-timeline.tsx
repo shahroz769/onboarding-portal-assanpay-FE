@@ -12,6 +12,7 @@ import {
   Sliders,
   Upload,
   UserRoundCheck,
+  Globe,
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
@@ -226,6 +227,13 @@ const ACTION_META: Record<
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     iconWrapperClassName:
       'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  wordpress_website_saved: {
+    label: 'WordPress website saved',
+    icon: Globe,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
 }
 
@@ -528,6 +536,18 @@ function formatDetails(
     typeof details.nextCaseNumber === 'string'
   ) {
     parts.push(`Created ${details.nextCaseNumber}`)
+  }
+
+  if (
+    action === 'wordpress_website_saved' &&
+    typeof details.clonedWebsiteLink === 'string'
+  ) {
+    parts.push(`Cloned link: ${details.clonedWebsiteLink}`)
+    if (typeof details.screenshots === 'number') {
+      parts.push(
+        `${details.screenshots} screenshot${details.screenshots === 1 ? '' : 's'}`,
+      )
+    }
   }
 
   if (

@@ -62,11 +62,24 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const hasOwner = Boolean(owner)
   const isTestingCase = caseDetail.queue.slug === 'testing'
   const testingLimitsApplied = Boolean(caseDetail.testing?.limitsAppliedAt)
+  const isWordpressWebsiteCase = caseDetail.queue.slug === 'wordpress-website'
+  const isDialogPayCardCase = caseDetail.queue.slug === 'dialogpay-card'
+  const wordpressWebsiteReady = Boolean(
+    caseDetail.wordpressWebsite?.clonedWebsiteLink &&
+    caseDetail.wordpressWebsite.screenshots.length > 0,
+  )
   const successfulActionDisabled =
-    advanceStage.isPending || (isTestingCase && !testingLimitsApplied)
-  const successfulActionLabel = isTestingCase
-    ? 'Mark as successful'
-    : 'Submit and advance'
+    advanceStage.isPending ||
+    (isTestingCase && !testingLimitsApplied) ||
+    (isWordpressWebsiteCase && !wordpressWebsiteReady)
+  const successfulActionLabel = isDialogPayCardCase
+    ? getDialogPayActionLabel(currentStage?.slug)
+    : isTestingCase || isWordpressWebsiteCase
+      ? 'Mark as successful'
+      : 'Submit and advance'
+  const pendingSuccessfulActionLabel = isDialogPayCardCase
+    ? 'Saving update'
+    : 'Closing case'
 
   const summary = useMemo(() => {
     if (isClosed) {
@@ -88,6 +101,14 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
     }
 
     if (isInProgress) {
+      if (isDialogPayCardCase) {
+        return {
+          title: getDialogPaySummaryTitle(currentStage?.slug),
+          description:
+            'Use these actions to record the work and approvals completed on the DialogPay portal.',
+        }
+      }
+
       return {
         title: 'Ready for review actions',
         description:
@@ -100,7 +121,15 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
       description:
         'Available actions depend on the current stage and ownership.',
     }
-  }, [caseDetail.case.closeOutcome, hasOwner, isClosed, isInProgress, isNew])
+  }, [
+    caseDetail.case.closeOutcome,
+    currentStage?.slug,
+    hasOwner,
+    isClosed,
+    isDialogPayCardCase,
+    isInProgress,
+    isNew,
+  ])
 
   return (
     <Card>
@@ -162,7 +191,9 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
             ) : (
               <CheckCircle2 data-icon="inline-start" />
             )}
-            {advanceStage.isPending ? 'Closing case' : successfulActionLabel}
+            {advanceStage.isPending
+              ? pendingSuccessfulActionLabel
+              : successfulActionLabel}
           </Button>
         ) : null}
 
@@ -228,4 +259,34 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
       </CardContent>
     </Card>
   )
+}
+
+function getDialogPaySummaryTitle(stageSlug: string | undefined) {
+  switch (stageSlug) {
+    case 'working':
+      return 'Create merchant on DialogPay'
+    case 'merchant_pending':
+      return 'Waiting for merchant approval'
+    case 'docs_upload':
+      return 'Upload merchant documents'
+    case 'docs_pending':
+      return 'Waiting for document approval'
+    default:
+      return 'DialogPay workflow'
+  }
+}
+
+function getDialogPayActionLabel(stageSlug: string | undefined) {
+  switch (stageSlug) {
+    case 'working':
+      return 'Mark merchant created'
+    case 'merchant_pending':
+      return 'Mark merchant approved'
+    case 'docs_upload':
+      return 'Mark documents uploaded'
+    case 'docs_pending':
+      return 'Mark documents approved'
+    default:
+      return 'Submit and advance'
+  }
 }
