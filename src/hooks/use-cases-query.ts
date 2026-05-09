@@ -42,10 +42,12 @@ export function casesInfiniteQueryOptions(filters: CaseFilters) {
   })
 }
 
-export function queuesQueryOptions() {
+export function queuesQueryOptions(
+  options: { includeInactive?: boolean } = {},
+) {
   return queryOptions({
-    queryKey: [...QUEUES_KEY],
-    queryFn: fetchQueues,
+    queryKey: [...QUEUES_KEY, options],
+    queryFn: () => fetchQueues(options),
     staleTime: 5 * 60_000, // 5 minutes — queues rarely change
   })
 }
@@ -53,7 +55,7 @@ export function queuesQueryOptions() {
 export function usersQueryOptions() {
   return queryOptions({
     queryKey: [...USERS_KEY],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers(),
     staleTime: 5 * 60_000,
   })
 }

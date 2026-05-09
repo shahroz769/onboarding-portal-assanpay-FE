@@ -49,6 +49,8 @@ export const queueSchema = z.object({
   name: z.string(),
   slug: z.string(),
   prefix: z.string(),
+  qcEnabled: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   createdAt: z.string(),
 })
 

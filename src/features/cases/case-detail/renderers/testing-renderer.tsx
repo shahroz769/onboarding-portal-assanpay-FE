@@ -21,6 +21,8 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useMarkTestingLimitsApplied } from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { useQuery } from '@tanstack/react-query'
 
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -29,7 +31,9 @@ export default function TestingRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
+  const configurationQuery = useQuery(configurationQueryOptions())
   const markLimitsApplied = useMarkTestingLimitsApplied(caseId)
+  const limits = configurationQuery.data?.limitsAndMdr.testing
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
   const portalMid = caseDetail.testing?.portalMid ?? null
@@ -65,8 +69,14 @@ export default function TestingRenderer({
           </div>
         ) : null}
         <div className="grid gap-3 md:grid-cols-2">
-          <LimitBlock label="Collection" value="10-100" />
-          <LimitBlock label="Disbursement" value="1000-50,000" />
+          <LimitBlock
+            label="Collection"
+            value={`${limits?.collectionMin ?? 10}-${limits?.collectionMax ?? 100}`}
+          />
+          <LimitBlock
+            label="Disbursement"
+            value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}
+          />
         </div>
 
         <FieldGroup>

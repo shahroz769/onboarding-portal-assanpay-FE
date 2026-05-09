@@ -15,23 +15,31 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as OnboardingFormIndexRouteImport } from './routes/onboarding-form.index'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as SetPasswordTokenRouteImport } from './routes/set-password.$token'
 import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
 import { Route as AppMerchantsRouteImport } from './routes/_app.merchants'
+import { Route as AppConfigurationRouteImport } from './routes/_app.configuration'
 import { Route as AppCasesRouteImport } from './routes/_app.cases'
 import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
 import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.index'
+import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configuration.index'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
 import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
 import { Route as OnboardingFormGoLiveTokenRouteImport } from './routes/onboarding-form.go-live.$token'
 import { Route as OnboardingFormAgreementTokenRouteImport } from './routes/onboarding-form.agreement.$token'
 import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
 import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
-import { Route as AppUserManagementAccessPolicyRouteImport } from './routes/_app.user-management.access-policy'
 import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
+import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.configuration.sub-merchants'
+import { Route as AppConfigurationQueuesRouteImport } from './routes/_app.configuration.queues'
+import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
+import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
+import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
 import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
 import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
+import { Route as AppUserManagementUsersUserIdRouteImport } from './routes/_app.user-management.users.$userId'
 
 const OnboardingFormRoute = OnboardingFormRouteImport.update({
   id: '/onboarding-form',
@@ -62,6 +70,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const SetPasswordTokenRoute = SetPasswordTokenRouteImport.update({
+  id: '/set-password/$token',
+  path: '/set-password/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppUserManagementRoute = AppUserManagementRouteImport.update({
   id: '/user-management',
   path: '/user-management',
@@ -70,6 +83,11 @@ const AppUserManagementRoute = AppUserManagementRouteImport.update({
 const AppMerchantsRoute = AppMerchantsRouteImport.update({
   id: '/merchants',
   path: '/merchants',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConfigurationRoute = AppConfigurationRouteImport.update({
+  id: '/configuration',
+  path: '/configuration',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCasesRoute = AppCasesRouteImport.update({
@@ -86,6 +104,11 @@ const AppMerchantsIndexRoute = AppMerchantsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppMerchantsRoute,
+} as any)
+const AppConfigurationIndexRoute = AppConfigurationIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppConfigurationRoute,
 } as any)
 const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   id: '/',
@@ -122,17 +145,40 @@ const AppUserManagementAllUsersRoute =
     path: '/all-users',
     getParentRoute: () => AppUserManagementRoute,
   } as any)
-const AppUserManagementAccessPolicyRoute =
-  AppUserManagementAccessPolicyRouteImport.update({
-    id: '/access-policy',
-    path: '/access-policy',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
 const AppMerchantsMerchantIdRoute = AppMerchantsMerchantIdRouteImport.update({
   id: '/$merchantId',
   path: '/$merchantId',
   getParentRoute: () => AppMerchantsRoute,
 } as any)
+const AppConfigurationSubMerchantsRoute =
+  AppConfigurationSubMerchantsRouteImport.update({
+    id: '/sub-merchants',
+    path: '/sub-merchants',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationQueuesRoute = AppConfigurationQueuesRouteImport.update({
+  id: '/queues',
+  path: '/queues',
+  getParentRoute: () => AppConfigurationRoute,
+} as any)
+const AppConfigurationLinkDeadlinesRoute =
+  AppConfigurationLinkDeadlinesRouteImport.update({
+    id: '/link-deadlines',
+    path: '/link-deadlines',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationLimitsAndMdrRoute =
+  AppConfigurationLimitsAndMdrRouteImport.update({
+    id: '/limits-and-mdr',
+    path: '/limits-and-mdr',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationAgreementsRoute =
+  AppConfigurationAgreementsRouteImport.update({
+    id: '/agreements',
+    path: '/agreements',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
 const AppCasesMyOpenCasesRoute = AppCasesMyOpenCasesRouteImport.update({
   id: '/my-open-cases',
   path: '/my-open-cases',
@@ -153,6 +199,12 @@ const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
   path: '/$caseId',
   getParentRoute: () => AppCasesRoute,
 } as any)
+const AppUserManagementUsersUserIdRoute =
+  AppUserManagementUsersUserIdRouteImport.update({
+    id: '/users/$userId',
+    path: '/users/$userId',
+    getParentRoute: () => AppUserManagementRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -160,43 +212,58 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/cases': typeof AppCasesRouteWithChildren
+  '/configuration': typeof AppConfigurationRouteWithChildren
   '/merchants': typeof AppMerchantsRouteWithChildren
   '/user-management': typeof AppUserManagementRouteWithChildren
+  '/set-password/$token': typeof SetPasswordTokenRoute
   '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
+  '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
+  '/configuration/queues': typeof AppConfigurationQueuesRoute
+  '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
-  '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases/': typeof AppCasesIndexRoute
+  '/configuration/': typeof AppConfigurationIndexRoute
   '/merchants/': typeof AppMerchantsIndexRoute
   '/user-management/': typeof AppUserManagementIndexRoute
+  '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/set-password/$token': typeof SetPasswordTokenRoute
   '/': typeof AppIndexRoute
   '/onboarding-form': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
+  '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
+  '/configuration/queues': typeof AppConfigurationQueuesRoute
+  '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
-  '/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases': typeof AppCasesIndexRoute
+  '/configuration': typeof AppConfigurationIndexRoute
   '/merchants': typeof AppMerchantsIndexRoute
   '/user-management': typeof AppUserManagementIndexRoute
+  '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -205,24 +272,32 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/_app/cases': typeof AppCasesRouteWithChildren
+  '/_app/configuration': typeof AppConfigurationRouteWithChildren
   '/_app/merchants': typeof AppMerchantsRouteWithChildren
   '/_app/user-management': typeof AppUserManagementRouteWithChildren
+  '/set-password/$token': typeof SetPasswordTokenRoute
   '/_app/': typeof AppIndexRoute
   '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
   '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/_app/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/_app/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
+  '/_app/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
+  '/_app/configuration/queues': typeof AppConfigurationQueuesRoute
+  '/_app/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
-  '/_app/user-management/access-policy': typeof AppUserManagementAccessPolicyRoute
   '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/_app/cases/': typeof AppCasesIndexRoute
+  '/_app/configuration/': typeof AppConfigurationIndexRoute
   '/_app/merchants/': typeof AppMerchantsIndexRoute
   '/_app/user-management/': typeof AppUserManagementIndexRoute
+  '/_app/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -232,43 +307,58 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/onboarding-form'
     | '/cases'
+    | '/configuration'
     | '/merchants'
     | '/user-management'
+    | '/set-password/$token'
     | '/onboarding-form/'
     | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
+    | '/configuration/agreements'
+    | '/configuration/limits-and-mdr'
+    | '/configuration/link-deadlines'
+    | '/configuration/queues'
+    | '/configuration/sub-merchants'
     | '/merchants/$merchantId'
-    | '/user-management/access-policy'
     | '/user-management/all-users'
     | '/user-management/user-creation'
     | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/cases/'
+    | '/configuration/'
     | '/merchants/'
     | '/user-management/'
+    | '/user-management/users/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/mcp'
+    | '/set-password/$token'
     | '/'
     | '/onboarding-form'
     | '/cases/$caseId'
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
+    | '/configuration/agreements'
+    | '/configuration/limits-and-mdr'
+    | '/configuration/link-deadlines'
+    | '/configuration/queues'
+    | '/configuration/sub-merchants'
     | '/merchants/$merchantId'
-    | '/user-management/access-policy'
     | '/user-management/all-users'
     | '/user-management/user-creation'
     | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/cases'
+    | '/configuration'
     | '/merchants'
     | '/user-management'
+    | '/user-management/users/$userId'
   id:
     | '__root__'
     | '/_app'
@@ -276,24 +366,32 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/onboarding-form'
     | '/_app/cases'
+    | '/_app/configuration'
     | '/_app/merchants'
     | '/_app/user-management'
+    | '/set-password/$token'
     | '/_app/'
     | '/onboarding-form/'
     | '/_app/cases/$caseId'
     | '/_app/cases/all-cases'
     | '/_app/cases/my-closed-cases'
     | '/_app/cases/my-open-cases'
+    | '/_app/configuration/agreements'
+    | '/_app/configuration/limits-and-mdr'
+    | '/_app/configuration/link-deadlines'
+    | '/_app/configuration/queues'
+    | '/_app/configuration/sub-merchants'
     | '/_app/merchants/$merchantId'
-    | '/_app/user-management/access-policy'
     | '/_app/user-management/all-users'
     | '/_app/user-management/user-creation'
     | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/_app/cases/'
+    | '/_app/configuration/'
     | '/_app/merchants/'
     | '/_app/user-management/'
+    | '/_app/user-management/users/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -301,6 +399,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   OnboardingFormRoute: typeof OnboardingFormRouteWithChildren
+  SetPasswordTokenRoute: typeof SetPasswordTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -347,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/set-password/$token': {
+      id: '/set-password/$token'
+      path: '/set-password/$token'
+      fullPath: '/set-password/$token'
+      preLoaderRoute: typeof SetPasswordTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/user-management': {
       id: '/_app/user-management'
       path: '/user-management'
@@ -359,6 +465,13 @@ declare module '@tanstack/react-router' {
       path: '/merchants'
       fullPath: '/merchants'
       preLoaderRoute: typeof AppMerchantsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/configuration': {
+      id: '/_app/configuration'
+      path: '/configuration'
+      fullPath: '/configuration'
+      preLoaderRoute: typeof AppConfigurationRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/cases': {
@@ -381,6 +494,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/merchants/'
       preLoaderRoute: typeof AppMerchantsIndexRouteImport
       parentRoute: typeof AppMerchantsRoute
+    }
+    '/_app/configuration/': {
+      id: '/_app/configuration/'
+      path: '/'
+      fullPath: '/configuration/'
+      preLoaderRoute: typeof AppConfigurationIndexRouteImport
+      parentRoute: typeof AppConfigurationRoute
     }
     '/_app/cases/': {
       id: '/_app/cases/'
@@ -424,19 +544,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUserManagementAllUsersRouteImport
       parentRoute: typeof AppUserManagementRoute
     }
-    '/_app/user-management/access-policy': {
-      id: '/_app/user-management/access-policy'
-      path: '/access-policy'
-      fullPath: '/user-management/access-policy'
-      preLoaderRoute: typeof AppUserManagementAccessPolicyRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
     '/_app/merchants/$merchantId': {
       id: '/_app/merchants/$merchantId'
       path: '/$merchantId'
       fullPath: '/merchants/$merchantId'
       preLoaderRoute: typeof AppMerchantsMerchantIdRouteImport
       parentRoute: typeof AppMerchantsRoute
+    }
+    '/_app/configuration/sub-merchants': {
+      id: '/_app/configuration/sub-merchants'
+      path: '/sub-merchants'
+      fullPath: '/configuration/sub-merchants'
+      preLoaderRoute: typeof AppConfigurationSubMerchantsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/queues': {
+      id: '/_app/configuration/queues'
+      path: '/queues'
+      fullPath: '/configuration/queues'
+      preLoaderRoute: typeof AppConfigurationQueuesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/link-deadlines': {
+      id: '/_app/configuration/link-deadlines'
+      path: '/link-deadlines'
+      fullPath: '/configuration/link-deadlines'
+      preLoaderRoute: typeof AppConfigurationLinkDeadlinesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/limits-and-mdr': {
+      id: '/_app/configuration/limits-and-mdr'
+      path: '/limits-and-mdr'
+      fullPath: '/configuration/limits-and-mdr'
+      preLoaderRoute: typeof AppConfigurationLimitsAndMdrRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/agreements': {
+      id: '/_app/configuration/agreements'
+      path: '/agreements'
+      fullPath: '/configuration/agreements'
+      preLoaderRoute: typeof AppConfigurationAgreementsRouteImport
+      parentRoute: typeof AppConfigurationRoute
     }
     '/_app/cases/my-open-cases': {
       id: '/_app/cases/my-open-cases'
@@ -466,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesCaseIdRouteImport
       parentRoute: typeof AppCasesRoute
     }
+    '/_app/user-management/users/$userId': {
+      id: '/_app/user-management/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/user-management/users/$userId'
+      preLoaderRoute: typeof AppUserManagementUsersUserIdRouteImport
+      parentRoute: typeof AppUserManagementRoute
+    }
   }
 }
 
@@ -489,6 +644,27 @@ const AppCasesRouteWithChildren = AppCasesRoute._addFileChildren(
   AppCasesRouteChildren,
 )
 
+interface AppConfigurationRouteChildren {
+  AppConfigurationAgreementsRoute: typeof AppConfigurationAgreementsRoute
+  AppConfigurationLimitsAndMdrRoute: typeof AppConfigurationLimitsAndMdrRoute
+  AppConfigurationLinkDeadlinesRoute: typeof AppConfigurationLinkDeadlinesRoute
+  AppConfigurationQueuesRoute: typeof AppConfigurationQueuesRoute
+  AppConfigurationSubMerchantsRoute: typeof AppConfigurationSubMerchantsRoute
+  AppConfigurationIndexRoute: typeof AppConfigurationIndexRoute
+}
+
+const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
+  AppConfigurationAgreementsRoute: AppConfigurationAgreementsRoute,
+  AppConfigurationLimitsAndMdrRoute: AppConfigurationLimitsAndMdrRoute,
+  AppConfigurationLinkDeadlinesRoute: AppConfigurationLinkDeadlinesRoute,
+  AppConfigurationQueuesRoute: AppConfigurationQueuesRoute,
+  AppConfigurationSubMerchantsRoute: AppConfigurationSubMerchantsRoute,
+  AppConfigurationIndexRoute: AppConfigurationIndexRoute,
+}
+
+const AppConfigurationRouteWithChildren =
+  AppConfigurationRoute._addFileChildren(AppConfigurationRouteChildren)
+
 interface AppMerchantsRouteChildren {
   AppMerchantsMerchantIdRoute: typeof AppMerchantsMerchantIdRoute
   AppMerchantsIndexRoute: typeof AppMerchantsIndexRoute
@@ -504,17 +680,17 @@ const AppMerchantsRouteWithChildren = AppMerchantsRoute._addFileChildren(
 )
 
 interface AppUserManagementRouteChildren {
-  AppUserManagementAccessPolicyRoute: typeof AppUserManagementAccessPolicyRoute
   AppUserManagementAllUsersRoute: typeof AppUserManagementAllUsersRoute
   AppUserManagementUserCreationRoute: typeof AppUserManagementUserCreationRoute
   AppUserManagementIndexRoute: typeof AppUserManagementIndexRoute
+  AppUserManagementUsersUserIdRoute: typeof AppUserManagementUsersUserIdRoute
 }
 
 const AppUserManagementRouteChildren: AppUserManagementRouteChildren = {
-  AppUserManagementAccessPolicyRoute: AppUserManagementAccessPolicyRoute,
   AppUserManagementAllUsersRoute: AppUserManagementAllUsersRoute,
   AppUserManagementUserCreationRoute: AppUserManagementUserCreationRoute,
   AppUserManagementIndexRoute: AppUserManagementIndexRoute,
+  AppUserManagementUsersUserIdRoute: AppUserManagementUsersUserIdRoute,
 }
 
 const AppUserManagementRouteWithChildren =
@@ -522,6 +698,7 @@ const AppUserManagementRouteWithChildren =
 
 interface AppRouteChildren {
   AppCasesRoute: typeof AppCasesRouteWithChildren
+  AppConfigurationRoute: typeof AppConfigurationRouteWithChildren
   AppMerchantsRoute: typeof AppMerchantsRouteWithChildren
   AppUserManagementRoute: typeof AppUserManagementRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
@@ -529,6 +706,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCasesRoute: AppCasesRouteWithChildren,
+  AppConfigurationRoute: AppConfigurationRouteWithChildren,
   AppMerchantsRoute: AppMerchantsRouteWithChildren,
   AppUserManagementRoute: AppUserManagementRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
@@ -559,6 +737,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   OnboardingFormRoute: OnboardingFormRouteWithChildren,
+  SetPasswordTokenRoute: SetPasswordTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

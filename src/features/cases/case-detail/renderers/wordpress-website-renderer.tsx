@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import {
   CheckCircle2,
   ExternalLink,
@@ -32,6 +32,7 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveWordpressWebsiteCase } from '#/hooks/use-case-detail-query'
+import { cn } from '#/lib/utils'
 
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -76,7 +77,6 @@ export default function WordpressWebsiteRenderer({
   caseDetail,
   caseId,
 }: QueueRendererProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const saveWebsite = useSaveWordpressWebsiteCase(caseId)
   const isCaseOwner = Boolean(
@@ -98,12 +98,7 @@ export default function WordpressWebsiteRenderer({
   const [linkError, setLinkError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
 
-  function handleFilesSelected(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? [])
-    event.target.value = ''
-
-    if (files.length === 0) return
-
+  function handleFilesSelected(files: File[]) {
     const nextFiles: File[] = []
     for (const file of files) {
       const error = validateScreenshot(file)
@@ -203,70 +198,23 @@ export default function WordpressWebsiteRenderer({
 
             <Field data-invalid={Boolean(fileError)}>
               <FieldLabel>Screenshots of all pages</FieldLabel>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                className="hidden"
-                onChange={handleFilesSelected}
+              <ScreenshotUpload
+                disabled={!canEdit}
+                isUploading={saveWebsite.isPending}
+                files={screenshots}
+                error={fileError}
+                onError={setFileError}
+                onFilesSelected={handleFilesSelected}
+                onRemove={(index) =>
+                  setScreenshots((current) =>
+                    current.filter((_, itemIndex) => itemIndex !== index),
+                  )
+                }
               />
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!canEdit || saveWebsite.isPending}
-                  onClick={() => inputRef.current?.click()}
-                >
-                  <Upload data-icon="inline-start" />
-                  Upload screenshots
-                </Button>
-                {screenshots.length > 0 ? (
-                  <Badge variant="secondary">
-                    {screenshots.length} selected
-                  </Badge>
-                ) : null}
-              </div>
               <FieldDescription>
                 JPG, PNG, or WEBP. Upload up to 30 screenshots.
               </FieldDescription>
-              <FieldError>{fileError}</FieldError>
             </Field>
-
-            {screenshots.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {screenshots.map((file, index) => (
-                  <div
-                    key={`${file.name}-${file.lastModified}-${index}`}
-                    className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2"
-                  >
-                    <FileImage className="size-4 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(file.size)}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={saveWebsite.isPending}
-                      onClick={() =>
-                        setScreenshots((current) =>
-                          current.filter((_, itemIndex) => itemIndex !== index),
-                        )
-                      }
-                    >
-                      <X />
-                      <span className="sr-only">Remove screenshot</span>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
 
             <div className="flex justify-end">
               <Button
@@ -347,6 +295,170 @@ function ReadonlyValue({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-lg border bg-muted/30 px-3 py-3 text-sm">
       {children}
+    </div>
+  )
+}
+
+function ScreenshotUpload({
+  disabled,
+  isUploading,
+  files,
+  error,
+  onError,
+  onFilesSelected,
+  onRemove,
+}: {
+  disabled: boolean
+  isUploading: boolean
+  files: File[]
+  error: string | null
+  onError: (error: string | null) => void
+  onFilesSelected: (files: File[]) => void
+  onRemove: (index: number) => void
+}) {
+  const inputId = useId()
+  const labelId = useId()
+  const descriptionId = useId()
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  function handleFiles(fileList: FileList | null) {
+    if (!fileList || disabled || isUploading) return
+    const selectedFiles = Array.from(fileList)
+    if (selectedFiles.length === 0) return
+
+    onFilesSelected(selectedFiles)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div
+      data-slot="file-upload"
+      dir="ltr"
+      className="relative flex w-full flex-col gap-2"
+    >
+      <div
+        role="region"
+        id={descriptionId}
+        aria-controls={inputId}
+        aria-disabled={disabled || isUploading}
+        aria-invalid={Boolean(error)}
+        data-slot="file-upload-dropzone"
+        data-disabled={disabled || isUploading ? true : undefined}
+        data-dragging={isDragging ? true : undefined}
+        data-invalid={error ? true : undefined}
+        dir="ltr"
+        tabIndex={disabled ? -1 : 0}
+        className={cn(
+          'relative flex min-h-40 select-none flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 outline-none transition-colors hover:bg-accent/30 focus-visible:border-ring/50 data-disabled:pointer-events-none data-disabled:opacity-60 data-dragging:border-primary/30 data-dragging:bg-accent/30 data-invalid:border-destructive data-invalid:ring-destructive/20',
+        )}
+        onDragEnter={(event) => {
+          event.preventDefault()
+          if (!disabled) setIsDragging(true)
+        }}
+        onDragOver={(event) => {
+          event.preventDefault()
+          if (!disabled) setIsDragging(true)
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault()
+          setIsDragging(false)
+          handleFiles(event.dataTransfer.files)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="rounded-full border-2 border-dashed border-muted-foreground/25 p-4">
+            {isUploading ? (
+              <Spinner className="size-8 text-muted-foreground" />
+            ) : (
+              <FileImage className="size-8 text-muted-foreground" />
+            )}
+          </div>
+          <div>
+            <p className="font-semibold">
+              {isUploading ? 'Saving screenshots' : 'Drop screenshots here'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              JPG, PNG, WEBP (max 10MB each)
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={disabled || isUploading}
+              onClick={() => inputRef.current?.click()}
+            >
+              {isUploading ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <Upload data-icon="inline-start" />
+              )}
+              Browse Screenshots
+            </Button>
+            {files.length > 0 ? (
+              <Badge variant="secondary">{files.length} selected</Badge>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      <input
+        ref={inputRef}
+        id={inputId}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        type="file"
+        multiple
+        disabled={disabled || isUploading}
+        onChange={(event) => handleFiles(event.target.files)}
+      />
+      <div id={labelId} className="sr-only">
+        Screenshot upload
+      </div>
+      <FieldError>{error}</FieldError>
+      {files.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {files.map((file, index) => (
+            <div
+              key={`${file.name}-${file.lastModified}-${index}`}
+              className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2"
+            >
+              <FileImage className="size-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(file.size)}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isUploading}
+                onClick={() => {
+                  onRemove(index)
+                  onError(null)
+                }}
+              >
+                <X />
+                <span className="sr-only">Remove screenshot</span>
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

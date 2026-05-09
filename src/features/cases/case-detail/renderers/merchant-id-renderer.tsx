@@ -59,17 +59,17 @@ import {
   caseHistoryQueryOptions,
   useSendMidCreationEmail,
 } from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 
 const MERCHANT_PORTAL_LOGIN_URL = 'https://merchant.assanpay.com/login'
-const GO_LIVE_DELAY_HOURS = 72
-const SHOPIFY_CARD_RATE = '3.5%'
-const DEFAULT_CARD_RATE = '3%'
-const E_WALLET_QR_RATE = '2.5%'
-const PAYOUT_RATE = '0%'
+const SHOPIFY_CARD_RATE = 3.5
+const DEFAULT_CARD_RATE = 3
+const E_WALLET_QR_RATE = 2.5
+const PAYOUT_RATE = 0
 
 const credentialsSchema = z.object({
   email: z
@@ -117,6 +117,7 @@ export default function MerchantIdRenderer({
   const { user } = useAuth()
   const sendMidCreationEmail = useSendMidCreationEmail(caseId)
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
+  const configurationQuery = useQuery(configurationQueryOptions())
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
@@ -138,7 +139,14 @@ export default function MerchantIdRenderer({
   const businessWebsite = getMerchantString(merchant, 'businessWebsite')
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
-  const cardRate = isShopify ? SHOPIFY_CARD_RATE : DEFAULT_CARD_RATE
+  const limitsAndMdr = configurationQuery.data?.limitsAndMdr
+  const linkDeadlines = configurationQuery.data?.linkDeadlines
+  const cardRate = isShopify
+    ? `${limitsAndMdr?.rates.cardShopify ?? SHOPIFY_CARD_RATE}%`
+    : `${limitsAndMdr?.rates.cardDefault ?? DEFAULT_CARD_RATE}%`
+  const eWalletRate = `${limitsAndMdr?.rates.eWallets ?? E_WALLET_QR_RATE}%`
+  const payoutRate = `${limitsAndMdr?.rates.payout ?? PAYOUT_RATE}%`
+  const goLiveDelayHours = linkDeadlines?.goLiveAvailabilityHours ?? 72
 
   const merchantEmail =
     getMerchantString(merchant, 'email') ??
@@ -162,8 +170,10 @@ export default function MerchantIdRenderer({
         merchantName,
         email: form.email,
         password: form.password,
+        limitsAndMdr,
+        goLiveDelayHours,
       }),
-    [merchantName, form.email, form.password],
+    [merchantName, form.email, form.password, limitsAndMdr, goLiveDelayHours],
   )
 
   function updateField<TKey extends keyof CredentialsForm>(
@@ -257,7 +267,7 @@ export default function MerchantIdRenderer({
               icon={<Wallet className="size-4" />}
               title="Payin Rates"
               rows={[
-                { label: 'E-Wallets & QR', value: E_WALLET_QR_RATE },
+                { label: 'E-Wallets & QR', value: eWalletRate },
                 {
                   label: isShopify ? 'Card (Shopify)' : 'Card',
                   value: cardRate,
@@ -268,7 +278,7 @@ export default function MerchantIdRenderer({
             <RateGroup
               icon={<Send className="size-4" />}
               title="Payout Rates"
-              rows={[{ label: 'Disbursement', value: PAYOUT_RATE }]}
+              rows={[{ label: 'Disbursement', value: payoutRate }]}
             />
           </div>
         </CardContent>
@@ -435,7 +445,7 @@ export default function MerchantIdRenderer({
               <AlertTitle>Go-Live link</AlertTitle>
               <AlertDescription>
                 The email includes a Go-Live link that becomes active{' '}
-                {GO_LIVE_DELAY_HOURS} hours after delivery. Clicking the link
+                {goLiveDelayHours} hours after delivery. Clicking the link
                 before that window only shows the instructions.
               </AlertDescription>
             </Alert>
@@ -534,10 +544,26 @@ function buildEmailPreview({
   merchantName,
   email,
   password,
+  limitsAndMdr,
+  goLiveDelayHours,
 }: {
   merchantName: string
   email: string
   password: string
+  limitsAndMdr?: {
+    testing: {
+      collectionMin: number
+      collectionMax: number
+      disbursementMin: number
+      disbursementMax: number
+    }
+    rates: {
+      eWallets: number
+      cardDefault: number
+      payout: number
+    }
+  }
+  goLiveDelayHours: number
 }) {
   const subject = `Welcome to AssanPay - Your Merchant Portal Credentials`
   const credentialsBlock =
@@ -555,16 +581,16 @@ Login Credentials
 ${credentialsBlock}
 
 Testing Limits Per Transaction
-- Collection: 10-100
-- Disbursement: 1000-50,000
+- Collection: ${limitsAndMdr?.testing.collectionMin ?? 10}-${limitsAndMdr?.testing.collectionMax ?? 100}
+- Disbursement: ${limitsAndMdr?.testing.disbursementMin ?? 1000}-${limitsAndMdr?.testing.disbursementMax ?? 50000}
 
 Applicable Rates
-- E-Wallets & QR: 2.5% + Tax
-- Card: 3% + Tax
-- Bank Settlement: 0%
+- E-Wallets & QR: ${limitsAndMdr?.rates.eWallets ?? 2.5}% + Tax
+- Card: ${limitsAndMdr?.rates.cardDefault ?? 3}% + Tax
+- Bank Settlement: ${limitsAndMdr?.rates.payout ?? 0}%
 
 Go-Live
-Once you have completed your testing, use the Go-Live button below to start the live activation process. The link works after ${GO_LIVE_DELAY_HOURS} hours only. Until then, it will show these instructions only.
+Once you have completed your testing, use the Go-Live button below to start the live activation process. The link works after ${goLiveDelayHours} hours only. Until then, it will show these instructions only.
 
 Go-Live Button Link: <will be generated when sending>
 

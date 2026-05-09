@@ -87,8 +87,12 @@ export async function assignCase({ caseId, ownerId }: AssignCaseParams) {
 
 // ─── Fetch Queues ───────────────────────────────────────────────────────────
 
-export async function fetchQueues(): Promise<Queue[]> {
-  const response = await apiClient.get<Queue[]>('/api/queues')
+export async function fetchQueues(
+  options: { includeInactive?: boolean } = {},
+): Promise<Queue[]> {
+  const response = await apiClient.get<Queue[]>('/api/queues', {
+    params: options.includeInactive ? { includeInactive: 'true' } : undefined,
+  })
   return response.data
 }
 

@@ -1,4 +1,4 @@
-export const roleTypes = ['admin', 'supervisor', 'employee'] as const
+export const roleTypes = ['admin', 'supervisor', 'agent'] as const
 
 export type RoleType = (typeof roleTypes)[number]
 
@@ -7,9 +7,10 @@ export type User = {
   name: string
   email: string
   username: string
+  gender: 'male' | 'female'
   roleType: RoleType
   status: 'active' | 'inactive'
-  accessPolicyId: string | null
+  queueViewScope: 'all' | 'selected'
   createdByUserId: string | null
   lastLoginAt: string | null
   createdAt: string

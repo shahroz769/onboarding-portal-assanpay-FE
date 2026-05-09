@@ -158,7 +158,7 @@ function useMerchantFilters() {
 function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const userRole = user?.roleType ?? 'employee'
+  const userRole = user?.roleType ?? 'agent'
   const { filters, setFilter, setFilters } = useMerchantFilters()
 
   const handleSort = useCallback(

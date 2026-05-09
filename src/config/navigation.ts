@@ -2,6 +2,7 @@ import {
   BriefcaseBusiness,
   ClipboardList,
   LayoutDashboard,
+  Settings2,
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -66,9 +67,33 @@ const navItems: NavItem[] = [
         title: 'User Creation',
         url: '/user-management/user-creation',
       },
+    ],
+  },
+  {
+    title: 'Configuration',
+    url: '/configuration',
+    icon: Settings2,
+    roles: ['admin'],
+    items: [
       {
-        title: 'Access Policy',
-        url: '/user-management/access-policy',
+        title: 'Limits and MDR',
+        url: '/configuration/limits-and-mdr',
+      },
+      {
+        title: 'Agreements',
+        url: '/configuration/agreements',
+      },
+      {
+        title: 'Sub-Merchants',
+        url: '/configuration/sub-merchants',
+      },
+      {
+        title: 'Queues',
+        url: '/configuration/queues',
+      },
+      {
+        title: 'Link Deadlines',
+        url: '/configuration/link-deadlines',
       },
     ],
   },

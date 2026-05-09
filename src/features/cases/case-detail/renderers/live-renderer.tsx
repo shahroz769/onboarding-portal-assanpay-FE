@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, Info, Rocket } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -21,6 +22,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useMarkLiveLimitsApplied } from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -29,7 +31,9 @@ export default function LiveRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
+  const configurationQuery = useQuery(configurationQueryOptions())
   const markLimitsApplied = useMarkLiveLimitsApplied(caseId)
+  const limits = configurationQuery.data?.limitsAndMdr.live
   const limitsAppliedAt = caseDetail.live?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.live?.limitsAppliedBy?.name ?? null
   const isCaseOwner = Boolean(
@@ -56,8 +60,14 @@ export default function LiveRenderer({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid gap-3 md:grid-cols-2">
-          <LimitBlock label="Collection" value="100-50,000" />
-          <LimitBlock label="Disbursement" value="1000-50,000" />
+          <LimitBlock
+            label="Collection"
+            value={`${limits?.collectionMin ?? 100}-${limits?.collectionMax ?? 50000}`}
+          />
+          <LimitBlock
+            label="Disbursement"
+            value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}
+          />
         </div>
 
         <FieldGroup>

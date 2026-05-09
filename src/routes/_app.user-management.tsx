@@ -3,7 +3,7 @@ import { requireRoleAccess } from '#/features/auth/route-guards'
 
 export const Route = createFileRoute('/_app/user-management')({
   beforeLoad: ({ context }) => {
-    requireRoleAccess(context.auth, ['employee'])
+    requireRoleAccess(context.auth, ['agent'])
   },
   component: RouteComponent,
 })

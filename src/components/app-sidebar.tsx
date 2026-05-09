@@ -25,7 +25,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
 
   const navItems = React.useMemo(
-    () => getFilteredNavItems(user?.roleType ?? 'employee'),
+    () => getFilteredNavItems(user?.roleType ?? 'agent'),
     [user?.roleType],
   )
 

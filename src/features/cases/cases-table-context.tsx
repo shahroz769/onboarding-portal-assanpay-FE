@@ -115,7 +115,7 @@ function CasesTableProvider({
 }: CasesTableProviderProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const userRole = user?.roleType ?? 'employee'
+  const userRole = user?.roleType ?? 'agent'
 
   const handleSort = useCallback(
     (columnId: CaseSortableColumn) => {
