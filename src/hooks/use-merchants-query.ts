@@ -1,5 +1,6 @@
 import {
   infiniteQueryOptions,
+  queryOptions,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
@@ -22,6 +23,7 @@ import type {
 
 export const MERCHANTS_KEY = ['merchants'] as const
 export const MERCHANTS_PAGE_SIZE = 30
+export const MERCHANT_OPTIONS_KEY = ['merchants', 'options'] as const
 
 /** Build a stable infinite-query key from filters. */
 export function merchantsInfiniteKey(filters: MerchantFilters) {
@@ -39,6 +41,20 @@ export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
       }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    staleTime: 30_000,
+  })
+}
+
+export function merchantOptionsQueryOptions(search = '') {
+  return queryOptions({
+    queryKey: [...MERCHANT_OPTIONS_KEY, search],
+    queryFn: () =>
+      fetchMerchants({
+        search,
+        sortBy: 'merchantNumber',
+        sortOrder: 'desc',
+        limit: 50,
+      }),
     staleTime: 30_000,
   })
 }

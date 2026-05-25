@@ -66,7 +66,8 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const isDialogPayCardCase = caseDetail.queue.slug === 'dialogpay-card'
   const wordpressWebsiteReady = Boolean(
     caseDetail.wordpressWebsite?.clonedWebsiteLink &&
-    caseDetail.wordpressWebsite.screenshots.length > 0,
+      caseDetail.wordpressWebsite.screenshots.length > 0 &&
+      caseDetail.wordpressWebsite.subMerchantLogoScreenshots.length > 0,
   )
   const successfulActionDisabled =
     advanceStage.isPending ||

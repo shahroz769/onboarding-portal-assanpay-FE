@@ -1,5 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Send, ShieldAlert } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
@@ -13,9 +14,17 @@ import {
 } from '#/components/ui/dialog'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
+import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { useAuth } from '#/features/auth/auth-client'
-import { useSendForResubmission } from '#/hooks/use-case-detail-query'
+import {
+  useSendForResubmission,
+  useFetchResubmissionEmailPreview,
+  useConfirmResubmissionEmailManual,
+} from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
+import type { EmailPreviewResult } from '#/apis/cases'
 
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 
@@ -37,8 +46,14 @@ export function DocumentsReviewSummaryModal({
   reviewSummary,
 }: DocumentsReviewSummaryModalProps) {
   const { user } = useAuth()
+  const { data: config } = useQuery(configurationQueryOptions())
   const sendForResubmission = useSendForResubmission(caseId)
+  const fetchPreview = useFetchResubmissionEmailPreview(caseId)
+  const confirmManual = useConfirmResubmissionEmailManual(caseId)
   const isConfirmingRef = useRef(false)
+  const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
+
+  const emailMode = config?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
 
   const merchant = caseDetail.merchant as {
     submitterEmail?: string | null
@@ -55,31 +70,83 @@ export function DocumentsReviewSummaryModal({
   const isWorkingStage =
     caseDetail.case.status === 'working' &&
     caseDetail.currentStage?.category === 'in_progress'
-  const isSubmitting = sendForResubmission.isPending
-  const canSubmit =
+  const canTrigger =
     hasRejections &&
     hasRecipient &&
     isCaseOwner &&
     isDocumentsReviewCase &&
-    isWorkingStage &&
-    !isSubmitting
+    isWorkingStage
 
-  async function handleConfirm() {
-    if (!canSubmit || isConfirmingRef.current) return
-
+  async function handleAutoConfirm() {
+    if (!canTrigger || isConfirmingRef.current) return
     isConfirmingRef.current = true
     try {
       const data = await sendForResubmission.mutateAsync()
-
-      if (data.status === 'sent') {
-        onOpenChange(false)
-      }
+      if (data.status === 'sent') onOpenChange(false)
     } catch {
-      // Mutation hooks already surface the backend error via toast.
+      // already toasted
     } finally {
       isConfirmingRef.current = false
     }
   }
+
+  async function handleLoadPreview() {
+    if (!canTrigger) return
+    const data = await fetchPreview.mutateAsync()
+    setPreview(data)
+  }
+
+  async function handleManualConfirm(file: File) {
+    if (!preview) return
+    await confirmManual.mutateAsync({ tokenId: preview.tokenId, file })
+    onOpenChange(false)
+  }
+
+  const autoContent = (
+    <div className="flex flex-col gap-4">
+      <RecipientPreview email={submitterEmail} />
+      {hasRejections ? <RejectionsList items={rejectedItems} /> : <EmptyState />}
+      <DialogFooter className="gap-2 sm:gap-2">
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={sendForResubmission.isPending}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleAutoConfirm} disabled={!canTrigger || sendForResubmission.isPending}>
+          {sendForResubmission.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Send data-icon="inline-start" />
+          )}
+          {sendForResubmission.isPending ? 'Sending email' : 'Confirm and send'}
+        </Button>
+      </DialogFooter>
+    </div>
+  )
+
+  const manualContent = (
+    <div className="flex flex-col gap-4">
+      {hasRejections ? <RejectionsList items={rejectedItems} /> : <EmptyState />}
+      {!preview ? (
+        <Button
+          onClick={handleLoadPreview}
+          disabled={!canTrigger || fetchPreview.isPending}
+          variant="outline"
+        >
+          {fetchPreview.isPending ? <Spinner data-icon="inline-start" /> : <Send data-icon="inline-start" />}
+          {fetchPreview.isPending ? 'Loading preview…' : 'Load email preview'}
+        </Button>
+      ) : (
+        <ManualEmailPanel
+          preview={preview}
+          onConfirm={handleManualConfirm}
+          isPending={confirmManual.isPending}
+        />
+      )}
+    </div>
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,40 +154,19 @@ export function DocumentsReviewSummaryModal({
         <DialogHeader>
           <DialogTitle>Send for resubmission</DialogTitle>
           <DialogDescription>
-            We will email the client a secure link to update only the rejected
-            fields below. The case will move to{' '}
-            <span className="font-medium">Awaiting Client</span> until they
-            submit.
+            {emailMode.autoEnabled && emailMode.manualEnabled
+              ? 'Choose to send automatically via Resend or manually via Gmail.'
+              : emailMode.autoEnabled
+                ? 'We will email the client a secure link to update only the rejected fields below.'
+                : 'Copy the subject and body below to send from Gmail, then upload a screenshot as proof.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          <RecipientPreview email={submitterEmail} />
-
-          {hasRejections ? (
-            <RejectionsList items={rejectedItems} />
-          ) : (
-            <EmptyState />
-          )}
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm} disabled={!canSubmit}>
-            {isSubmitting ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Send data-icon="inline-start" />
-            )}
-            {isSubmitting ? 'Sending email' : 'Confirm and send'}
-          </Button>
-        </DialogFooter>
+        <EmailModeChoice
+          mode={emailMode}
+          autoContent={autoContent}
+          manualContent={manualContent}
+        />
       </DialogContent>
     </Dialog>
   )

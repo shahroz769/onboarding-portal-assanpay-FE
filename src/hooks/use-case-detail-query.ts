@@ -15,23 +15,34 @@ import {
   fetchCaseHistory,
   markLiveLimitsApplied,
   markTestingLimitsApplied,
+  saveMidCreationDetails,
   saveFieldReviews,
+  saveDocumentReviewSubMerchant,
   saveWordpressWebsiteCase,
   sendAgreementEmail,
   sendMidCreationEmail,
   selectSubMerchantForm,
   sendForResubmission,
-  sendSubMerchantFormEmail,
   takeOwnership,
   uploadAgreementFinalAgreement,
+  uploadPhysicalAgreementCopy,
+  uploadSubMerchantEmailProof,
   uploadSubMerchantFinalForm,
+  fetchResubmissionEmailPreview,
+  confirmResubmissionEmailManual,
+  fetchAgreementEmailPreview,
+  confirmAgreementEmailManual,
+  fetchMidCreationEmailPreview,
+  confirmMidCreationEmailManual,
 } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   CloseUnsuccessfulInput,
   CreateCommentInput,
   SaveFieldReviewsInput,
+  SaveDocumentReviewSubMerchantInput,
   SendMidCreationEmailInput,
+  SaveMidCreationDetailsInput,
   SelectSubMerchantFormInput,
 } from '#/schemas/cases.schema'
 import { CASES_KEY, usersQueryOptions } from './use-cases-query'
@@ -130,6 +141,42 @@ export function useSaveFieldReviews(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to save field reviews'))
+    },
+  })
+}
+
+export function useUploadPhysicalAgreementCopy(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (file: File) => uploadPhysicalAgreementCopy({ caseId, file }),
+    onSuccess: () => {
+      toast.success('Physical agreement copy uploaded')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to upload physical agreement copy'),
+      )
+    },
+  })
+}
+
+export function useSaveDocumentReviewSubMerchant(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: SaveDocumentReviewSubMerchantInput) =>
+      saveDocumentReviewSubMerchant(caseId, input),
+    onSuccess: () => {
+      toast.success('Sub-merchant saved')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save sub-merchant'))
     },
   })
 }
@@ -233,27 +280,19 @@ export function useUploadSubMerchantFinalForm(caseId: string) {
   })
 }
 
-export function useSendSubMerchantFormEmail(caseId: string) {
+export function useUploadSubMerchantEmailProof(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: () => sendSubMerchantFormEmail(caseId),
-    onSuccess: (data) => {
-      if (data.status === 'sent') {
-        toast.success('Email sent')
-      } else {
-        toast.error(
-          data.error
-            ? `Failed to send email: ${data.error}`
-            : 'Failed to send email',
-        )
-      }
+    mutationFn: (input: { file: File }) =>
+      uploadSubMerchantEmailProof({ caseId, file: input.file }),
+    onSuccess: () => {
+      toast.success('Email proof uploaded')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
-      toast.error(getApiErrorMessage(error, 'Failed to send email'))
+      toast.error(getApiErrorMessage(error, 'Failed to upload email proof'))
     },
   })
 }
@@ -330,6 +369,104 @@ export function useSendMidCreationEmail(caseId: string) {
   })
 }
 
+export function useFetchResubmissionEmailPreview(caseId: string) {
+  return useMutation({
+    mutationFn: () => fetchResubmissionEmailPreview(caseId),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
+    },
+  })
+}
+
+export function useConfirmResubmissionEmailManual(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { tokenId: string; file: File }) =>
+      confirmResubmissionEmailManual({ caseId, ...input }),
+    onSuccess: () => {
+      toast.success('Resubmission email marked as sent')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
+    },
+  })
+}
+
+export function useFetchAgreementEmailPreview(caseId: string) {
+  return useMutation({
+    mutationFn: (input: { remarks?: string | null }) =>
+      fetchAgreementEmailPreview(caseId, input),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
+    },
+  })
+}
+
+export function useConfirmAgreementEmailManual(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { tokenId: string; remarks?: string | null; file: File }) =>
+      confirmAgreementEmailManual({ caseId, ...input }),
+    onSuccess: () => {
+      toast.success('Agreement email marked as sent')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
+    },
+  })
+}
+
+export function useFetchMidCreationEmailPreview(caseId: string) {
+  return useMutation({
+    mutationFn: (input: SendMidCreationEmailInput) =>
+      fetchMidCreationEmailPreview(caseId, input),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
+    },
+  })
+}
+
+export function useConfirmMidCreationEmailManual(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { tokenId: string; file: File } & SendMidCreationEmailInput) =>
+      confirmMidCreationEmailManual({ caseId, ...input }),
+    onSuccess: () => {
+      toast.success('MID credentials email marked as sent')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
+    },
+  })
+}
+
+export function useSaveMidCreationDetails(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: SaveMidCreationDetailsInput) =>
+      saveMidCreationDetails(caseId, input),
+    onSuccess: () => {
+      toast.success('MID details saved')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save MID details'))
+    },
+  })
+}
+
 export function useMarkTestingLimitsApplied(caseId: string) {
   const queryClient = useQueryClient()
 
@@ -372,11 +509,16 @@ export function useSaveWordpressWebsiteCase(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { clonedWebsiteLink: string; screenshots: File[] }) =>
+    mutationFn: (input: {
+      clonedWebsiteLink: string
+      screenshots: File[]
+      subMerchantLogoScreenshots: File[]
+    }) =>
       saveWordpressWebsiteCase({
         caseId,
         clonedWebsiteLink: input.clonedWebsiteLink,
         screenshots: input.screenshots,
+        subMerchantLogoScreenshots: input.subMerchantLogoScreenshots,
       }),
     onSuccess: () => {
       toast.success('WordPress website details saved')

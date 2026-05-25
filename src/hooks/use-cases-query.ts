@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import {
   bulkAssignCases,
   assignCase,
+  createCase,
   fetchCases,
   fetchQueues,
   updateCasePriority,
@@ -57,6 +58,27 @@ export function usersQueryOptions() {
     queryKey: [...USERS_KEY],
     queryFn: () => fetchUsers(),
     staleTime: 5 * 60_000,
+  })
+}
+
+export function useCreateCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      merchantId,
+      queueId,
+    }: {
+      merchantId: string
+      queueId: string
+    }) => createCase({ merchantId, queueId }),
+    onSuccess: async (createdCase) => {
+      toast.success(`Case ${createdCase.caseNumber} created.`)
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: () => {
+      toast.error('Failed to create case.')
+    },
   })
 }
 

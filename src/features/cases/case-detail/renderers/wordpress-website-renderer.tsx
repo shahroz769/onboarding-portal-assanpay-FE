@@ -73,6 +73,18 @@ function validateScreenshot(file: File) {
   return null
 }
 
+function getValidScreenshots(files: File[]) {
+  const nextFiles: File[] = []
+
+  for (const file of files) {
+    const error = validateScreenshot(file)
+    if (error) return { files: [], error }
+    nextFiles.push(file)
+  }
+
+  return { files: nextFiles, error: null }
+}
+
 export default function WordpressWebsiteRenderer({
   caseDetail,
   caseId,
@@ -91,26 +103,45 @@ export default function WordpressWebsiteRenderer({
   const wordpressWebsite = caseDetail.wordpressWebsite ?? null
   const savedLink = wordpressWebsite?.clonedWebsiteLink ?? null
   const savedScreenshots = wordpressWebsite?.screenshots ?? []
-  const isComplete = Boolean(savedLink && savedScreenshots.length > 0)
+  const savedLogoScreenshots =
+    wordpressWebsite?.subMerchantLogoScreenshots ?? []
+  const documentReviewSubMerchantName =
+    caseDetail.documentReview?.subMerchantName ?? null
+  const isComplete = Boolean(
+    savedLink && savedScreenshots.length > 0 && savedLogoScreenshots.length > 0,
+  )
 
   const [clonedWebsiteLink, setClonedWebsiteLink] = useState(savedLink ?? '')
   const [screenshots, setScreenshots] = useState<File[]>([])
+  const [subMerchantLogoScreenshots, setSubMerchantLogoScreenshots] = useState<
+    File[]
+  >([])
   const [linkError, setLinkError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [logoFileError, setLogoFileError] = useState<string | null>(null)
 
   function handleFilesSelected(files: File[]) {
-    const nextFiles: File[] = []
-    for (const file of files) {
-      const error = validateScreenshot(file)
-      if (error) {
-        setFileError(error)
-        return
-      }
-      nextFiles.push(file)
+    const result = getValidScreenshots(files)
+    if (result.error) {
+      setFileError(result.error)
+      return
     }
 
-    setScreenshots((current) => [...current, ...nextFiles].slice(0, 30))
+    setScreenshots((current) => [...current, ...result.files].slice(0, 30))
     setFileError(null)
+  }
+
+  function handleLogoFilesSelected(files: File[]) {
+    const result = getValidScreenshots(files)
+    if (result.error) {
+      setLogoFileError(result.error)
+      return
+    }
+
+    setSubMerchantLogoScreenshots((current) =>
+      [...current, ...result.files].slice(0, 30),
+    )
+    setLogoFileError(null)
   }
 
   async function handleSave() {
@@ -125,13 +156,23 @@ export default function WordpressWebsiteRenderer({
       return
     }
 
+    if (subMerchantLogoScreenshots.length === 0) {
+      setLogoFileError(
+        'Upload a screenshot of the sub-merchant website with the merchant logo before saving.',
+      )
+      return
+    }
+
     setLinkError(null)
     setFileError(null)
+    setLogoFileError(null)
     await saveWebsite.mutateAsync({
       clonedWebsiteLink: result.data.clonedWebsiteLink,
       screenshots,
+      subMerchantLogoScreenshots,
     })
     setScreenshots([])
+    setSubMerchantLogoScreenshots([])
   }
 
   return (
@@ -171,6 +212,16 @@ export default function WordpressWebsiteRenderer({
                   'Not provided'
                 )}
               </ReadonlyValue>
+            </Field>
+
+            <Field>
+              <FieldLabel>Sub-merchant name</FieldLabel>
+              <ReadonlyValue>
+                {documentReviewSubMerchantName ?? 'Not selected'}
+              </ReadonlyValue>
+              <FieldDescription>
+                Selected internally during document review.
+              </FieldDescription>
             </Field>
 
             <Field data-invalid={Boolean(linkError)}>
@@ -216,6 +267,27 @@ export default function WordpressWebsiteRenderer({
               </FieldDescription>
             </Field>
 
+            <Field data-invalid={Boolean(logoFileError)}>
+              <FieldLabel>Sub-merchant website logo screenshot</FieldLabel>
+              <ScreenshotUpload
+                disabled={!canEdit}
+                isUploading={saveWebsite.isPending}
+                files={subMerchantLogoScreenshots}
+                error={logoFileError}
+                onError={setLogoFileError}
+                onFilesSelected={handleLogoFilesSelected}
+                onRemove={(index) =>
+                  setSubMerchantLogoScreenshots((current) =>
+                    current.filter((_, itemIndex) => itemIndex !== index),
+                  )
+                }
+              />
+              <FieldDescription>
+                Upload the screenshot showing the sub-merchant website with the
+                merchant logo added.
+              </FieldDescription>
+            </Field>
+
             <div className="flex justify-end">
               <Button
                 onClick={handleSave}
@@ -233,7 +305,9 @@ export default function WordpressWebsiteRenderer({
         </CardContent>
       </Card>
 
-      {savedLink || savedScreenshots.length > 0 ? (
+      {savedLink ||
+      savedScreenshots.length > 0 ||
+      savedLogoScreenshots.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Saved Evidence</CardTitle>
@@ -273,6 +347,29 @@ export default function WordpressWebsiteRenderer({
                 </a>
               ))}
             </div>
+
+            {savedLogoScreenshots.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <FieldLabel>Sub-merchant website logo screenshot</FieldLabel>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {savedLogoScreenshots.map((screenshot) => (
+                    <a
+                      key={screenshot.id}
+                      href={screenshot.googleDriveWebViewLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 hover:bg-muted/40"
+                    >
+                      <FileImage className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {screenshot.originalName}
+                      </span>
+                      <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

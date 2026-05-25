@@ -19,6 +19,7 @@ const registry: Partial<Record<string, QueueRendererLoader>> = {
   testing: () => import('./renderers/testing-renderer'),
   'wordpress-website': () => import('./renderers/wordpress-website-renderer'),
   'dialogpay-card': () => import('./renderers/dialogpay-card-renderer'),
+  'physical-agreement': () => import('./renderers/physical-agreement-renderer'),
   live: () => import('./renderers/live-renderer'),
 }
 

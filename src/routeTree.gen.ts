@@ -34,6 +34,9 @@ import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.
 import { Route as AppConfigurationQueuesRouteImport } from './routes/_app.configuration.queues'
 import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
 import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
+import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.configuration.email-sending'
+import { Route as AppConfigurationCaseTriggeringRouteImport } from './routes/_app.configuration.case-triggering'
+import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
 import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
 import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
@@ -173,6 +176,24 @@ const AppConfigurationLimitsAndMdrRoute =
     path: '/limits-and-mdr',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
+const AppConfigurationEmailSendingRoute =
+  AppConfigurationEmailSendingRouteImport.update({
+    id: '/email-sending',
+    path: '/email-sending',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationCaseTriggeringRoute =
+  AppConfigurationCaseTriggeringRouteImport.update({
+    id: '/case-triggering',
+    path: '/case-triggering',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationCaseFlowRulesRoute =
+  AppConfigurationCaseFlowRulesRouteImport.update({
+    id: '/case-flow-rules',
+    path: '/case-flow-rules',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
 const AppConfigurationAgreementsRoute =
   AppConfigurationAgreementsRouteImport.update({
     id: '/agreements',
@@ -222,6 +243,9 @@ export interface FileRoutesByFullPath {
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
+  '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
+  '/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
@@ -249,6 +273,9 @@ export interface FileRoutesByTo {
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
+  '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
+  '/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
@@ -283,6 +310,9 @@ export interface FileRoutesById {
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/_app/configuration/agreements': typeof AppConfigurationAgreementsRoute
+  '/_app/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
+  '/_app/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
+  '/_app/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/_app/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/_app/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/_app/configuration/queues': typeof AppConfigurationQueuesRoute
@@ -317,6 +347,9 @@ export interface FileRouteTypes {
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
     | '/configuration/agreements'
+    | '/configuration/case-flow-rules'
+    | '/configuration/case-triggering'
+    | '/configuration/email-sending'
     | '/configuration/limits-and-mdr'
     | '/configuration/link-deadlines'
     | '/configuration/queues'
@@ -344,6 +377,9 @@ export interface FileRouteTypes {
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
     | '/configuration/agreements'
+    | '/configuration/case-flow-rules'
+    | '/configuration/case-triggering'
+    | '/configuration/email-sending'
     | '/configuration/limits-and-mdr'
     | '/configuration/link-deadlines'
     | '/configuration/queues'
@@ -377,6 +413,9 @@ export interface FileRouteTypes {
     | '/_app/cases/my-closed-cases'
     | '/_app/cases/my-open-cases'
     | '/_app/configuration/agreements'
+    | '/_app/configuration/case-flow-rules'
+    | '/_app/configuration/case-triggering'
+    | '/_app/configuration/email-sending'
     | '/_app/configuration/limits-and-mdr'
     | '/_app/configuration/link-deadlines'
     | '/_app/configuration/queues'
@@ -579,6 +618,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfigurationLimitsAndMdrRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
+    '/_app/configuration/email-sending': {
+      id: '/_app/configuration/email-sending'
+      path: '/email-sending'
+      fullPath: '/configuration/email-sending'
+      preLoaderRoute: typeof AppConfigurationEmailSendingRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/case-triggering': {
+      id: '/_app/configuration/case-triggering'
+      path: '/case-triggering'
+      fullPath: '/configuration/case-triggering'
+      preLoaderRoute: typeof AppConfigurationCaseTriggeringRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/case-flow-rules': {
+      id: '/_app/configuration/case-flow-rules'
+      path: '/case-flow-rules'
+      fullPath: '/configuration/case-flow-rules'
+      preLoaderRoute: typeof AppConfigurationCaseFlowRulesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
     '/_app/configuration/agreements': {
       id: '/_app/configuration/agreements'
       path: '/agreements'
@@ -646,6 +706,9 @@ const AppCasesRouteWithChildren = AppCasesRoute._addFileChildren(
 
 interface AppConfigurationRouteChildren {
   AppConfigurationAgreementsRoute: typeof AppConfigurationAgreementsRoute
+  AppConfigurationCaseFlowRulesRoute: typeof AppConfigurationCaseFlowRulesRoute
+  AppConfigurationCaseTriggeringRoute: typeof AppConfigurationCaseTriggeringRoute
+  AppConfigurationEmailSendingRoute: typeof AppConfigurationEmailSendingRoute
   AppConfigurationLimitsAndMdrRoute: typeof AppConfigurationLimitsAndMdrRoute
   AppConfigurationLinkDeadlinesRoute: typeof AppConfigurationLinkDeadlinesRoute
   AppConfigurationQueuesRoute: typeof AppConfigurationQueuesRoute
@@ -655,6 +718,9 @@ interface AppConfigurationRouteChildren {
 
 const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationAgreementsRoute: AppConfigurationAgreementsRoute,
+  AppConfigurationCaseFlowRulesRoute: AppConfigurationCaseFlowRulesRoute,
+  AppConfigurationCaseTriggeringRoute: AppConfigurationCaseTriggeringRoute,
+  AppConfigurationEmailSendingRoute: AppConfigurationEmailSendingRoute,
   AppConfigurationLimitsAndMdrRoute: AppConfigurationLimitsAndMdrRoute,
   AppConfigurationLinkDeadlinesRoute: AppConfigurationLinkDeadlinesRoute,
   AppConfigurationQueuesRoute: AppConfigurationQueuesRoute,

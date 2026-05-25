@@ -7,7 +7,10 @@ import { toast } from 'sonner'
 
 import {
   createSubMerchantDraft,
+  fetchCaseFlowConfiguration,
   fetchConfiguration,
+  updateCaseFlowConfiguration,
+  updateEmailSendingMode,
   updateLimitsAndMdr,
   updateLinkDeadlines,
   updateQueueStatus,
@@ -15,17 +18,31 @@ import {
 } from '#/apis/configuration'
 import { QUEUES_KEY } from '#/hooks/use-cases-query'
 import type {
+  CaseFlowConfiguration,
+  EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
 } from '#/schemas/configuration.schema'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export const CONFIGURATION_KEY = ['configuration'] as const
+export const CASE_FLOW_CONFIGURATION_KEY = [
+  'configuration',
+  'case-flow',
+] as const
 
 export function configurationQueryOptions() {
   return queryOptions({
     queryKey: CONFIGURATION_KEY,
     queryFn: fetchConfiguration,
+    staleTime: 60_000,
+  })
+}
+
+export function caseFlowConfigurationQueryOptions() {
+  return queryOptions({
+    queryKey: CASE_FLOW_CONFIGURATION_KEY,
+    queryFn: fetchCaseFlowConfiguration,
     staleTime: 60_000,
   })
 }
@@ -54,6 +71,37 @@ export function useUpdateLinkDeadlinesMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to save link deadlines.'))
+    },
+  })
+}
+
+export function useUpdateEmailSendingModeMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: EmailSendingMode) => updateEmailSendingMode(input),
+    onSuccess: async () => {
+      toast.success('Email sending mode saved.')
+      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save email sending mode.'))
+    },
+  })
+}
+
+export function useUpdateCaseFlowConfigurationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CaseFlowConfiguration) =>
+      updateCaseFlowConfiguration(input),
+    onSuccess: async () => {
+      toast.success('Case flow rules saved.')
+      await queryClient.invalidateQueries({
+        queryKey: CASE_FLOW_CONFIGURATION_KEY,
+      })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save case flow rules.'))
     },
   })
 }

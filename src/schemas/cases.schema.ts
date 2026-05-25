@@ -208,6 +208,7 @@ export const caseDetailSchema = z.object({
     .object({
       subMerchantKey: z.string(),
       subMerchantName: z.string(),
+      sellerCode: z.string().nullable(),
       draftUrl: z.string(),
       emailStatus: z.enum(['not_sent', 'sent', 'failed']),
       emailLogId: z.string().nullable(),
@@ -222,6 +223,31 @@ export const caseDetailSchema = z.object({
           googleDriveWebViewLink: z.string(),
           googleDriveDownloadLink: z.string().nullable(),
           createdAt: z.string(),
+        })
+        .nullable(),
+      emailProof: z
+        .object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        })
+        .nullable(),
+    })
+    .nullable()
+    .optional(),
+  documentReview: z
+    .object({
+      subMerchantId: z.string(),
+      subMerchantName: z.string(),
+      selectedAt: z.string(),
+      selectedBy: z
+        .object({
+          id: z.string(),
+          name: z.string(),
         })
         .nullable(),
     })
@@ -263,6 +289,18 @@ export const caseDetailSchema = z.object({
     })
     .nullable()
     .optional(),
+  physicalAgreement: z
+    .object({
+      id: z.string(),
+      originalName: z.string(),
+      mimeType: z.string(),
+      sizeBytes: z.number(),
+      googleDriveWebViewLink: z.string(),
+      googleDriveDownloadLink: z.string().nullable(),
+      createdAt: z.string(),
+    })
+    .nullable()
+    .optional(),
   latestResubmissionRequestedAt: z.string().nullable(),
   testing: z
     .object({
@@ -300,6 +338,17 @@ export const caseDetailSchema = z.object({
         })
         .nullable(),
       screenshots: z.array(
+        z.object({
+          id: z.string(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        }),
+      ),
+      subMerchantLogoScreenshots: z.array(
         z.object({
           id: z.string(),
           originalName: z.string(),
@@ -368,6 +417,14 @@ export const saveFieldReviewsInputSchema = z.object({
 
 export type SaveFieldReviewsInput = z.infer<typeof saveFieldReviewsInputSchema>
 
+export const saveDocumentReviewSubMerchantInputSchema = z.object({
+  subMerchantId: z.string().uuid(),
+})
+
+export type SaveDocumentReviewSubMerchantInput = z.infer<
+  typeof saveDocumentReviewSubMerchantInputSchema
+>
+
 export const closeUnsuccessfulInputSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 })
@@ -392,17 +449,24 @@ export type SelectSubMerchantFormInput = z.infer<
   typeof selectSubMerchantFormInputSchema
 >
 
-export type SubMerchantFormEmailResponse = {
-  status: 'sent' | 'failed'
-  emailLogId: string
-  error?: string
-}
-
 export type AgreementEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
   tokenExpiresAt: string | null
   error?: string
+}
+
+export const saveMidCreationDetailsInputSchema = z.object({
+  portalMid: z.coerce.number().int().positive(),
+})
+
+export type SaveMidCreationDetailsInput = z.infer<
+  typeof saveMidCreationDetailsInputSchema
+>
+
+export type SaveMidCreationDetailsResponse = {
+  portalMid: number
+  savedAt: string
 }
 
 export const sendMidCreationEmailInputSchema = z.object({

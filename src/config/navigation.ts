@@ -92,8 +92,20 @@ const navItems: NavItem[] = [
         url: '/configuration/queues',
       },
       {
+        title: 'Case Triggering',
+        url: '/configuration/case-triggering',
+      },
+      {
+        title: 'Case Flow Rules',
+        url: '/configuration/case-flow-rules',
+      },
+      {
         title: 'Link Deadlines',
         url: '/configuration/link-deadlines',
+      },
+      {
+        title: 'Email Sending',
+        url: '/configuration/email-sending',
       },
     ],
   },

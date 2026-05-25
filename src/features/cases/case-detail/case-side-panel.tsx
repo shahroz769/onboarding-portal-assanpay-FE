@@ -32,7 +32,6 @@ import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
 import { RejectionRoundsCard } from './rejection-rounds-card'
-import { SubMerchantFormReviewModal } from './sub-merchant-form-review-modal'
 import {
   getDocumentsReviewSummary,
   isUpdatedInLatestResubmissionRound,
@@ -52,11 +51,14 @@ function getPrimaryActionCopy(
     hasActiveRejections: boolean
     hasResubmittedUpdates: boolean
     isSubMerchantFormCase: boolean
-    isSubMerchantEmailSent: boolean
     hasSubMerchantFinalForm: boolean
+    isMidCreationCase: boolean
+    hasMidCreationPortalMid: boolean
     isAgreementCase: boolean
     hasAgreementFinal: boolean
     hasAgreementClientSubmission: boolean
+    isPhysicalAgreementCase: boolean
+    hasPhysicalAgreementCopy: boolean
   },
 ) {
   const status = caseDetail.case.status
@@ -117,37 +119,63 @@ function getPrimaryActionCopy(
     }
   }
 
-  if (
-    options.isSubMerchantFormCase &&
-    status === 'working' &&
-    options.isSubMerchantEmailSent
-  ) {
-    return {
-      title: 'Email sent',
-      description:
-        'The Final Form email has been sent. You can now close this case successfully.',
-      actionLabel: 'Mark as successful',
-      actionKind: 'mark-successful' as const,
-    }
-  }
-
   if (options.isSubMerchantFormCase && status === 'working') {
     if (options.hasSubMerchantFinalForm) {
       return {
         title: 'Final Form ready',
         description:
-          'Open the review summary, confirm the selected sub-merchant and Final Form, then send mail.',
-        actionLabel: 'Review',
-        actionKind: 'sub-merchant-review' as const,
+          'Use the manual Gmail details in the case workspace, upload the sent-email screenshot, then save to close this case successfully.',
+        actionLabel: null,
+        actionKind: 'sub-merchant-form' as const,
       }
     }
 
     return {
       title: 'Final Form required',
       description:
-        'Select the sub-merchant and upload the Final Form before review can begin.',
+        'Open the inherited sub-merchant draft and upload the Final Form before review can begin.',
       actionLabel: null,
       actionKind: 'sub-merchant-form' as const,
+    }
+  }
+
+  if (options.isMidCreationCase && status === 'working') {
+    if (options.hasMidCreationPortalMid) {
+      return {
+        title: 'Portal MID saved',
+        description:
+          'The merchant Portal MID is saved. You can now close this case successfully.',
+        actionLabel: 'Mark as successful',
+        actionKind: 'mark-successful' as const,
+      }
+    }
+
+    return {
+      title: 'Portal MID required',
+      description:
+        'Save the merchant Portal MID in the case workspace before closing this case successfully.',
+      actionLabel: null,
+      actionKind: 'mid-creation' as const,
+    }
+  }
+
+  if (options.isPhysicalAgreementCase && status === 'working') {
+    if (options.hasPhysicalAgreementCopy) {
+      return {
+        title: 'Physical agreement uploaded',
+        description:
+          'The scanned signed agreement copy is saved. You can now close this case successfully.',
+        actionLabel: 'Mark as successful',
+        actionKind: 'mark-successful' as const,
+      }
+    }
+
+    return {
+      title: 'Physical agreement required',
+      description:
+        'Upload the scanned signed agreement copy in the case workspace before closing this case successfully.',
+      actionLabel: null,
+      actionKind: 'physical-agreement' as const,
     }
   }
 
@@ -259,13 +287,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-  const [subMerchantReviewModalOpen, setSubMerchantReviewModalOpen] =
-    useState(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
   const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
   const isSubMerchantFormCase = caseDetail.queue.slug === 'sub-merchant-form'
+  const isMidCreationCase = caseDetail.queue.slug === 'merchant-id'
   const isAgreementCase = caseDetail.queue.slug === 'agreement'
+  const isPhysicalAgreementCase = caseDetail.queue.slug === 'physical-agreement'
   const reviewSummary = isDocumentReviewCase
     ? (documentsReviewDraft?.reviewSummary ??
       getDocumentsReviewSummary(caseDetail))
@@ -285,13 +313,16 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     hasActiveRejections,
     hasResubmittedUpdates,
     isSubMerchantFormCase,
-    isSubMerchantEmailSent: caseDetail.subMerchantForm?.emailStatus === 'sent',
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
+    isMidCreationCase,
+    hasMidCreationPortalMid: Boolean(caseDetail.testing?.portalMid),
     isAgreementCase,
     hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
     hasAgreementClientSubmission: Boolean(
       caseDetail.agreement?.clientAgreement,
     ),
+    isPhysicalAgreementCase,
+    hasPhysicalAgreementCopy: Boolean(caseDetail.physicalAgreement),
   })
   const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
@@ -305,7 +336,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const showPrimaryActionButton =
     primaryAction.actionKind !== 'awaiting-client' &&
     primaryAction.actionKind !== 'sub-merchant-form' &&
-    primaryAction.actionKind !== 'agreement'
+    primaryAction.actionKind !== 'mid-creation' &&
+    primaryAction.actionKind !== 'agreement' &&
+    primaryAction.actionKind !== 'physical-agreement'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const unsuccessfulDisabled =
@@ -319,11 +352,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
     if (primaryAction.actionKind === 'review') {
       setReviewModalOpen(true)
-      return
-    }
-
-    if (primaryAction.actionKind === 'sub-merchant-review') {
-      setSubMerchantReviewModalOpen(true)
       return
     }
 
@@ -402,14 +430,15 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                             : 'Only the current case owner can review rejected fields and request a resubmission.'
                           : primaryAction.actionKind === 'awaiting-client'
                             ? 'Waiting for the client to update the requested fields.'
-                            : primaryAction.actionKind === 'sub-merchant-review'
-                              ? isCaseOwner
-                                ? 'Review the selected sub-merchant and Final Form, then send mail.'
-                                : 'Only the current case owner can review the Final Form and send mail.'
-                              : primaryAction.actionKind === 'sub-merchant-form'
-                                ? 'Complete the sub-merchant selection and Final Form upload in the case workspace.'
+                            : primaryAction.actionKind === 'sub-merchant-form'
+                              ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
+                              : primaryAction.actionKind === 'mid-creation'
+                                ? 'Save the Portal MID in the case workspace before closing this case.'
                                 : primaryAction.actionKind === 'agreement'
                                   ? 'Complete the Agreement upload and mail workflow in the case workspace.'
+                                  : primaryAction.actionKind ===
+                                      'physical-agreement'
+                                    ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
                                   : isCaseOwner
                                     ? 'When everything checks out, close this case successfully.'
                                     : 'Only the current case owner can complete this case.'}
@@ -420,13 +449,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         disabled={
                           (primaryAction.actionKind !== 'take-ownership' &&
                             primaryAction.actionKind !== 'mark-successful' &&
-                            primaryAction.actionKind !== 'review' &&
-                            primaryAction.actionKind !==
-                              'sub-merchant-review') ||
+                            primaryAction.actionKind !== 'review') ||
                           (primaryAction.actionKind === 'review' &&
                             (!hasActiveRejections || !isCaseOwner)) ||
-                          (primaryAction.actionKind === 'sub-merchant-review' &&
-                            !isCaseOwner) ||
                           (primaryAction.actionKind === 'mark-successful' &&
                             hasOwner &&
                             !isCaseOwner)
@@ -440,9 +465,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                           )
                         ) : primaryAction.actionKind === 'review' ? (
                           <Send data-icon="inline-start" />
-                        ) : primaryAction.actionKind ===
-                          'sub-merchant-review' ? (
-                          <Send data-icon="inline-start" />
                         ) : advanceStage.isPending ? (
                           <Spinner data-icon="inline-start" />
                         ) : (
@@ -454,13 +476,11 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                             : 'Take ownership'
                           : primaryAction.actionKind === 'review'
                             ? 'Review'
-                            : primaryAction.actionKind === 'sub-merchant-review'
-                              ? 'Review'
-                              : primaryAction.actionKind === 'mark-successful'
-                                ? advanceStage.isPending
-                                  ? 'Closing case'
-                                  : 'Mark as successful'
-                                : 'No successful action available'}
+                            : primaryAction.actionKind === 'mark-successful'
+                              ? advanceStage.isPending
+                                ? 'Closing case'
+                                : 'Mark as successful'
+                              : 'No successful action available'}
                       </Button>
                     ) : null}
                   </div>
@@ -571,14 +591,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
           caseDetail={caseDetail}
           caseId={caseId}
           reviewSummary={reviewSummary}
-        />
-      ) : null}
-      {isSubMerchantFormCase ? (
-        <SubMerchantFormReviewModal
-          open={subMerchantReviewModalOpen}
-          onOpenChange={setSubMerchantReviewModalOpen}
-          caseDetail={caseDetail}
-          caseId={caseId}
         />
       ) : null}
     </Card>

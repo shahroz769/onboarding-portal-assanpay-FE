@@ -109,6 +109,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
   },
+  case_created_from_mid_go_live_email: {
+    label: 'Physical Agreement case created',
+    icon: FileText,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
+  },
   case_created_from_documents_review: {
     label: 'Case created',
     icon: FileText,
@@ -151,6 +158,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  sub_merchant_manual_email_proof_uploaded: {
+    label: 'Manual email proof uploaded',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
   sub_merchant_form_email_failed: {
     label: 'Final Form email failed',
     icon: MailWarning,
@@ -160,6 +174,13 @@ const ACTION_META: Record<
   },
   agreement_final_uploaded: {
     label: 'Final Agreement uploaded',
+    icon: Upload,
+    iconClassName: 'text-violet-700 dark:text-violet-300',
+    iconWrapperClassName:
+      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
+  },
+  physical_agreement_uploaded: {
+    label: 'Physical Agreement uploaded',
     icon: Upload,
     iconClassName: 'text-violet-700 dark:text-violet-300',
     iconWrapperClassName:
@@ -284,7 +305,7 @@ export function CaseHistoryTimeline({
                   <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
                 ) : null}
                 {index < history.length - 1 ? (
-                  <div className="absolute bottom-[-1rem] left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
+                  <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
                 ) : null}
 
                 <div
@@ -463,6 +484,13 @@ function formatDetails(
     typeof details.recipient === 'string'
   ) {
     parts.push(`Sent to ${details.recipient}`)
+  }
+
+  if (
+    action === 'sub_merchant_manual_email_proof_uploaded' &&
+    typeof details.fileName === 'string'
+  ) {
+    parts.push(`Uploaded ${details.fileName}`)
   }
 
   if (

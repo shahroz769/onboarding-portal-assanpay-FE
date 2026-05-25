@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ComponentType, SVGProps } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Building2,
   Briefcase,
@@ -17,7 +18,11 @@ import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { useAuth } from '#/features/auth/auth-client'
-import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
+import {
+  useSaveDocumentReviewSubMerchant,
+  useSaveFieldReviews,
+} from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import {
   Card,
   CardContent,
@@ -39,6 +44,14 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
@@ -275,6 +288,8 @@ export default function DocumentsReviewRenderer({
 }: QueueRendererProps) {
   const { user } = useAuth()
   const saveFieldReviews = useSaveFieldReviews(caseId)
+  const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
+  const configurationQuery = useQuery(configurationQueryOptions())
   const { merchant, fieldReviews, currentStage } = caseDetail
   const { draftReviews, saveRejectedReview, clearRejectedReview } =
     useDocumentsReviewDraft()
@@ -309,6 +324,11 @@ export default function DocumentsReviewRenderer({
   const [rejectDialogAction, setRejectDialogAction] = useState<
     'save' | 'delete' | null
   >(null)
+  const [selectedSubMerchantId, setSelectedSubMerchantId] = useState(
+    caseDetail.documentReview?.subMerchantId ?? '',
+  )
+  const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
+  const subMerchants = configurationQuery.data?.subMerchants ?? []
 
   const sections = useMemo(() => {
     return REVIEW_SECTIONS.map((section) => {
@@ -467,11 +487,109 @@ export default function DocumentsReviewRenderer({
   const isDeletingReject =
     saveFieldReviews.isPending && rejectDialogAction === 'delete'
 
+  async function handleSaveSubMerchant() {
+    if (!selectedSubMerchantId) {
+      setSubMerchantError('Select a sub-merchant before closing this case.')
+      return
+    }
+
+    setSubMerchantError(null)
+    await saveSubMerchant.mutateAsync({ subMerchantId: selectedSubMerchantId })
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Card className="py-4">
         <CardContent className="px-4 py-0">
           <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <SectionIcon
+                  icon={Building2}
+                  toneClass="bg-cyan-500/10 text-cyan-500"
+                />
+                <div>
+                  <CardTitle>Case Owner Fields</CardTitle>
+                  <CardDescription>
+                    Internal selections required before closing this case.
+                  </CardDescription>
+                </div>
+              </div>
+              <FieldGroup>
+                <Field data-invalid={Boolean(subMerchantError)}>
+                  <FieldLabel htmlFor="document-review-sub-merchant">
+                    Sub-merchant name
+                  </FieldLabel>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Select
+                      value={selectedSubMerchantId}
+                      onValueChange={(value) => {
+                        setSelectedSubMerchantId(value)
+                        setSubMerchantError(null)
+                      }}
+                      disabled={
+                        !isEditable ||
+                        saveSubMerchant.isPending ||
+                        configurationQuery.isLoading ||
+                        subMerchants.length === 0
+                      }
+                    >
+                      <SelectTrigger
+                        id="document-review-sub-merchant"
+                        className="w-full"
+                        aria-invalid={Boolean(subMerchantError)}
+                      >
+                        <SelectValue placeholder="Select sub-merchant" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {subMerchants.map((subMerchant) => (
+                            <SelectItem
+                              key={subMerchant.id}
+                              value={subMerchant.id}
+                            >
+                              {subMerchant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={handleSaveSubMerchant}
+                      disabled={!isEditable || saveSubMerchant.isPending}
+                    >
+                      {saveSubMerchant.isPending ? (
+                        <Spinner data-icon="inline-start" />
+                      ) : null}
+                      Save
+                    </Button>
+                  </div>
+                  <FieldDescription>
+                    Required for the case owner before successful closure. This
+                    selection is internal and is not sent to the merchant.
+                  </FieldDescription>
+                  {caseDetail.documentReview?.subMerchantName ? (
+                    <FieldDescription>
+                      Saved: {caseDetail.documentReview.subMerchantName}
+                    </FieldDescription>
+                  ) : null}
+                  {subMerchantError ? (
+                    <p className="text-sm text-destructive">
+                      {subMerchantError}
+                    </p>
+                  ) : null}
+                  {!configurationQuery.isLoading && subMerchants.length === 0 ? (
+                    <p className="text-sm text-destructive">
+                      Add sub-merchants in configuration before selecting one.
+                    </p>
+                  ) : null}
+                </Field>
+              </FieldGroup>
+            </div>
+
+            <Separator />
+
             {sections.map((section, index) => (
               <div key={section.title} className="flex flex-col gap-4">
                 {index > 0 ? <Separator /> : null}

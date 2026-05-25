@@ -1,15 +1,45 @@
+import type { ReactNode } from 'react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useQuery } from '@tanstack/react-query'
-import { FileText, FileUp, LinkIcon, Plus, Save, Upload, X } from 'lucide-react'
-
 import {
-  DataTable,
-  type DataTableColumnDef,
-} from '#/components/data-table'
+  ArrowRight,
+  ExternalLink,
+  FileText,
+  FileUp,
+  LinkIcon,
+  Play,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react'
+
+import { DataTable } from '#/components/data-table'
+import type { DataTableColumnDef } from '#/components/data-table'
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
+import { Checkbox } from '#/components/ui/checkbox'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '#/components/ui/combobox'
 import {
   Dialog,
   DialogClose,
@@ -22,6 +52,7 @@ import {
 } from '#/components/ui/dialog'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -32,22 +63,43 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { cn } from '#/lib/utils'
 import {
+  caseFlowConfigurationQueryOptions,
   configurationQueryOptions,
   useCreateSubMerchantDraftMutation,
+  useUpdateCaseFlowConfigurationMutation,
+  useUpdateEmailSendingModeMutation,
   useUpdateLimitsAndMdrMutation,
   useUpdateLinkDeadlinesMutation,
   useUpdateQueueStatusMutation,
   useUploadAgreementDraftMutation,
 } from '#/hooks/use-configuration-query'
-import { queuesQueryOptions } from '#/hooks/use-cases-query'
+import {
+  queuesQueryOptions,
+  useCreateCaseMutation,
+} from '#/hooks/use-cases-query'
+import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
 import type {
+  CaseFlowCloseBlocker,
+  CaseFlowCloseTrigger,
+  CaseFlowConfiguration,
+  CaseFlowStartRule,
+  EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
 } from '#/schemas/configuration.schema'
+import type { MerchantListItem } from '#/schemas/merchants.schema'
 import {
+  emailSendingModeSchema,
   limitsAndMdrSettingsSchema,
   linkDeadlineSettingsSchema,
 } from '#/schemas/configuration.schema'
+
+type QueueOption = Pick<
+  CaseFlowConfiguration['queues'][number],
+  'id' | 'name'
+> & {
+  isActive?: boolean
+}
 
 const numberInputProps = {
   type: 'number',
@@ -263,7 +315,9 @@ export function SubMerchantsPanel() {
   const existingNames = useMemo(
     () =>
       new Set(
-        (data?.subMerchants ?? []).map((item) => item.name.trim().toLowerCase()),
+        (data?.subMerchants ?? []).map((item) =>
+          item.name.trim().toLowerCase(),
+        ),
       ),
     [data?.subMerchants],
   )
@@ -294,6 +348,14 @@ export function SubMerchantsPanel() {
         ),
       },
       {
+        id: 'sellerCode',
+        header: 'Seller Code',
+        width: 180,
+        cell: (item) => (
+          <span className="truncate font-mono text-xs">{item.sellerCode}</span>
+        ),
+      },
+      {
         id: 'folder',
         header: 'Folder',
         width: 240,
@@ -311,6 +373,25 @@ export function SubMerchantsPanel() {
           <span className="text-sm text-muted-foreground">
             {formatDate(item.updatedAt)}
           </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: <span className="block text-right">Action</span>,
+        width: 160,
+        cell: (item) => (
+          <div className="flex justify-end">
+            <Button asChild variant="outline" size="sm">
+              <a
+                href={item.googleDriveWebViewLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink data-icon="inline-start" />
+                View draft
+              </a>
+            </Button>
+          </div>
         ),
       },
     ],
@@ -362,6 +443,7 @@ function AddSubMerchantDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
+  const [sellerCode, setSellerCode] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [touched, setTouched] = useState(false)
   const createDraft = useCreateSubMerchantDraftMutation()
@@ -376,21 +458,31 @@ function AddSubMerchantDialog({
         : existingNames.has(trimmedName.toLowerCase())
           ? 'A sub-merchant with this name already exists.'
           : null
-  const fileError = file ? getDraftFileError(file) : 'Please attach a draft file.'
+  const fileError = file
+    ? getDraftFileError(file)
+    : 'Please attach a draft file.'
+  const trimmedSellerCode = sellerCode.trim()
+  const sellerCodeError = !trimmedSellerCode
+    ? 'Seller Code is required.'
+    : trimmedSellerCode.length > 80
+      ? 'Seller Code must be 80 characters or fewer.'
+      : null
   const showNameError = touched && nameError
+  const showSellerCodeError = touched && sellerCodeError
   const showFileError = touched && fileError
 
   function reset() {
     setName('')
+    setSellerCode('')
     setFile(null)
     setTouched(false)
   }
 
   function handleSubmit() {
     setTouched(true)
-    if (nameError || fileError || !file) return
+    if (nameError || sellerCodeError || fileError || !file) return
     createDraft.mutate(
-      { name: trimmedName, file },
+      { name: trimmedName, sellerCode: trimmedSellerCode, file },
       {
         onSuccess: () => {
           reset()
@@ -438,6 +530,24 @@ function AddSubMerchantDialog({
               onBlur={() => setTouched(true)}
             />
             <FieldError>{showNameError ? nameError : null}</FieldError>
+          </Field>
+
+          <Field data-invalid={Boolean(showSellerCodeError)}>
+            <FieldLabel htmlFor="add-sub-merchant-seller-code">
+              Seller Code
+            </FieldLabel>
+            <Input
+              id="add-sub-merchant-seller-code"
+              value={sellerCode}
+              placeholder="e.g. MST-715012"
+              aria-invalid={Boolean(showSellerCodeError)}
+              disabled={createDraft.isPending}
+              onChange={(event) => setSellerCode(event.target.value)}
+              onBlur={() => setTouched(true)}
+            />
+            <FieldError>
+              {showSellerCodeError ? sellerCodeError : null}
+            </FieldError>
           </Field>
 
           <Field data-invalid={Boolean(showFileError)}>
@@ -756,15 +866,18 @@ export function LinkDeadlinesPanel() {
               min={1}
               step={1}
               inputMode="numeric"
-              value={value[key]}
+              placeholder="No expiry"
+              value={value[key] ?? ''}
               aria-invalid={Boolean(validationErrors[key])}
-              onChange={(event) =>
+              onChange={(event) => {
+                const raw = event.target.value
                 setForm((current) => ({
                   ...(current ?? value),
-                  [key]: Number(event.target.value),
+                  [key]: raw === '' ? null : Number(raw),
                 }))
-              }
+              }}
             />
+            <FieldDescription>Hours. Leave blank for no expiry.</FieldDescription>
             <FieldError>{validationErrors[key]}</FieldError>
           </Field>
         ))}
@@ -786,7 +899,763 @@ export function LinkDeadlinesPanel() {
   )
 }
 
+// ─── Email Sending Mode ───────────────────────────────────────────────────────
+
+export function EmailSendingModePanel() {
+  const { data } = useQuery(configurationQueryOptions())
+  const mutation = useUpdateEmailSendingModeMutation()
+  const [form, setForm] = useState<EmailSendingMode | null>(null)
+  const value = form ?? data?.emailSendingMode ?? null
+
+  const validationResult = value ? emailSendingModeSchema.safeParse(value) : null
+  const hasError = validationResult ? !validationResult.success : false
+  const bothDisabledError =
+    value && !value.autoEnabled && !value.manualEnabled
+      ? 'At least one mode must be enabled.'
+      : null
+
+  function toggle(field: keyof EmailSendingMode) {
+    setForm((prev) => {
+      const current = prev ?? data?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
+      return { ...current, [field]: !current[field] }
+    })
+  }
+
+  function handleSave() {
+    if (!value || hasError) return
+    mutation.mutate(value)
+  }
+
+  return (
+    <FieldGroup
+      title="Email Sending Mode"
+      description="Control whether emails can be sent automatically via Resend, manually via Gmail, or both."
+      footer={
+        <Button
+          size="sm"
+          disabled={mutation.isPending || hasError || !form}
+          onClick={handleSave}
+        >
+          {mutation.isPending ? <Spinner className="size-4 mr-1" /> : null}
+          Save
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            className="size-4"
+            checked={value?.autoEnabled ?? true}
+            onChange={() => toggle('autoEnabled')}
+          />
+          <div>
+            <p className="text-sm font-medium">Auto (Resend)</p>
+            <p className="text-xs text-muted-foreground">
+              Emails are sent automatically through Resend when triggered.
+            </p>
+          </div>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            className="size-4"
+            checked={value?.manualEnabled ?? true}
+            onChange={() => toggle('manualEnabled')}
+          />
+          <div>
+            <p className="text-sm font-medium">Manual (Gmail)</p>
+            <p className="text-xs text-muted-foreground">
+              Agent receives subject and body to copy-paste and send from Gmail manually.
+            </p>
+          </div>
+        </label>
+        {bothDisabledError ? (
+          <p className="text-sm text-destructive">{bothDisabledError}</p>
+        ) : null}
+      </div>
+    </FieldGroup>
+  )
+}
+
+// ─── Case Triggering ───────────────────────────────────────────────────────
+
+export function CaseTriggeringPanel() {
+  const [merchantSearch, setMerchantSearch] = useState('')
+  const [selectedMerchant, setSelectedMerchant] =
+    useState<MerchantListItem | null>(null)
+  const [queueId, setQueueId] = useState('')
+  const merchantsQuery = useQuery(merchantOptionsQueryOptions(merchantSearch))
+  const queuesQuery = useQuery(queuesQueryOptions({ includeInactive: true }))
+  const createCase = useCreateCaseMutation()
+  const merchants = merchantsQuery.data?.merchants ?? []
+  const queues = queuesQuery.data ?? []
+  const selectedQueue = queues.find((queue) => queue.id === queueId)
+  const canSubmit = Boolean(
+    selectedMerchant?.id && queueId && selectedQueue?.isActive,
+  )
+
+  function handleSubmit() {
+    if (!canSubmit || !selectedMerchant) return
+    createCase.mutate(
+      { merchantId: selectedMerchant.id, queueId },
+      {
+        onSuccess: () => {
+          setSelectedMerchant(null)
+          setMerchantSearch('')
+          setQueueId('')
+        },
+      },
+    )
+  }
+
+  return (
+    <FieldGroup>
+      <FieldSet className="rounded-lg border p-4">
+        <FieldLegend>Manual Case Trigger</FieldLegend>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start">
+          <Field>
+            <FieldLabel>Merchant</FieldLabel>
+            <MerchantCombobox
+              merchants={merchants}
+              value={selectedMerchant ?? null}
+              isFetching={merchantsQuery.isFetching}
+              onSearchValueChange={setMerchantSearch}
+              onValueChange={setSelectedMerchant}
+            />
+            {merchantsQuery.isFetching ? (
+              <p className="text-xs text-muted-foreground">Loading merchants</p>
+            ) : null}
+          </Field>
+
+          <Field
+            data-invalid={Boolean(selectedQueue && !selectedQueue.isActive)}
+          >
+            <FieldLabel>Queue</FieldLabel>
+            <QueueSelect
+              value={queueId}
+              queues={queues}
+              placeholder="Select queue"
+              onValueChange={setQueueId}
+            />
+            {selectedQueue && !selectedQueue.isActive ? (
+              <FieldError>This queue is inactive.</FieldError>
+            ) : null}
+          </Field>
+
+          <Button
+            className="xl:mt-6"
+            disabled={!canSubmit || createCase.isPending}
+            onClick={handleSubmit}
+          >
+            {createCase.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Play data-icon="inline-start" />
+            )}
+            Trigger case
+          </Button>
+        </div>
+      </FieldSet>
+    </FieldGroup>
+  )
+}
+
+// ─── Case Flow Rules ───────────────────────────────────────────────────────
+
+export function CaseFlowRulesPanel() {
+  const { data, isPending } = useQuery(caseFlowConfigurationQueryOptions())
+  const mutation = useUpdateCaseFlowConfigurationMutation()
+  const [form, setForm] = useState<CaseFlowConfiguration | null>(null)
+  const value = form ?? data ?? null
+  const queues = value?.queues ?? []
+  const formError = value ? getCaseFlowFormError(value) : null
+
+  useEffect(() => {
+    if (data) setForm(data)
+  }, [data])
+
+  if (isPending || !value) {
+    return <PanelLoading />
+  }
+
+  function update(next: CaseFlowConfiguration) {
+    setForm(next)
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>First case after submission</CardTitle>
+          <CardDescription>
+            When a merchant submits onboarding, automatically open these cases.
+          </CardDescription>
+          <CardAction>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                update({
+                  ...value,
+                  startRules: [
+                    ...value.startRules,
+                    {
+                      targetQueueId: '',
+                      order: value.startRules.length + 1,
+                      isActive: true,
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Add rule
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {value.startRules.length === 0 ? (
+            <RuleListEmpty message="No first-case rules configured yet." />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {value.startRules.map((rule, index) => (
+                <StartRuleRow
+                  key={`start-${index}`}
+                  rule={rule}
+                  queues={queues}
+                  onChange={(nextRule) => {
+                    const startRules = [...value.startRules]
+                    startRules[index] = nextRule
+                    update({ ...value, startRules })
+                  }}
+                  onRemove={() =>
+                    update({
+                      ...value,
+                      startRules: value.startRules.filter(
+                        (_, i) => i !== index,
+                      ),
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Close triggers</CardTitle>
+          <CardDescription>
+            When a case closes, automatically open another case for the same
+            merchant.
+          </CardDescription>
+          <CardAction>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                update({
+                  ...value,
+                  closeTriggers: [
+                    ...value.closeTriggers,
+                    {
+                      sourceQueueId: '',
+                      targetQueueId: '',
+                      order: value.closeTriggers.length + 1,
+                      isActive: true,
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Add trigger
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {value.closeTriggers.length === 0 ? (
+            <RuleListEmpty message="No close triggers configured yet." />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {value.closeTriggers.map((rule, index) => (
+                <CloseTriggerRuleRow
+                  key={`trigger-${index}`}
+                  rule={rule}
+                  queues={queues}
+                  onChange={(nextRule) => {
+                    const closeTriggers = [...value.closeTriggers]
+                    closeTriggers[index] = nextRule
+                    update({ ...value, closeTriggers })
+                  }}
+                  onRemove={() =>
+                    update({
+                      ...value,
+                      closeTriggers: value.closeTriggers.filter(
+                        (_, i) => i !== index,
+                      ),
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Close requirements</CardTitle>
+          <CardDescription>
+            Prevent a case from closing until another case has closed first.
+          </CardDescription>
+          <CardAction>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                update({
+                  ...value,
+                  closeBlockers: [
+                    ...value.closeBlockers,
+                    {
+                      blockedQueueId: '',
+                      prerequisiteQueueId: '',
+                      isActive: true,
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Add requirement
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {value.closeBlockers.length === 0 ? (
+            <RuleListEmpty message="No close requirements configured yet." />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {value.closeBlockers.map((rule, index) => (
+                <CloseBlockerRuleRow
+                  key={`blocker-${index}`}
+                  rule={rule}
+                  queues={queues}
+                  onChange={(nextRule) => {
+                    const closeBlockers = [...value.closeBlockers]
+                    closeBlockers[index] = nextRule
+                    update({ ...value, closeBlockers })
+                  }}
+                  onRemove={() =>
+                    update({
+                      ...value,
+                      closeBlockers: value.closeBlockers.filter(
+                        (_, i) => i !== index,
+                      ),
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {formError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Fix the errors below</AlertTitle>
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur">
+        <Button
+          disabled={mutation.isPending || Boolean(formError)}
+          onClick={() => mutation.mutate(value)}
+        >
+          {mutation.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Save data-icon="inline-start" />
+          )}
+          Save flow rules
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Sections & helpers ─────────────────────────────────────────────────────
+
+function StartRuleRow({
+  rule,
+  queues,
+  onChange,
+  onRemove,
+}: {
+  rule: CaseFlowStartRule
+  queues: QueueOption[]
+  onChange: (rule: CaseFlowStartRule) => void
+  onRemove: () => void
+}) {
+  return (
+    <FlowRuleRow
+      active={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
+      onRemove={onRemove}
+      fields={
+        <div className="min-w-0 flex-1">
+          <QueueSelect
+            value={rule.targetQueueId}
+            queues={queues}
+            placeholder="Select first case to open"
+            onValueChange={(targetQueueId) =>
+              onChange({ ...rule, targetQueueId })
+            }
+          />
+        </div>
+      }
+    />
+  )
+}
+
+function CloseTriggerRuleRow({
+  rule,
+  queues,
+  onChange,
+  onRemove,
+}: {
+  rule: CaseFlowCloseTrigger
+  queues: QueueOption[]
+  onChange: (rule: CaseFlowCloseTrigger) => void
+  onRemove: () => void
+}) {
+  return (
+    <FlowRuleRow
+      active={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
+      onRemove={onRemove}
+      fields={
+        <FlowRuleRelation
+          left={
+            <QueueSelect
+              value={rule.sourceQueueId}
+              queues={queues}
+              placeholder="When this case closes"
+              onValueChange={(sourceQueueId) =>
+                onChange({ ...rule, sourceQueueId })
+              }
+            />
+          }
+          right={
+            <QueueSelect
+              value={rule.targetQueueId}
+              queues={queues}
+              placeholder="Open this case"
+              onValueChange={(targetQueueId) =>
+                onChange({ ...rule, targetQueueId })
+              }
+            />
+          }
+        />
+      }
+    />
+  )
+}
+
+function CloseBlockerRuleRow({
+  rule,
+  queues,
+  onChange,
+  onRemove,
+}: {
+  rule: CaseFlowCloseBlocker
+  queues: QueueOption[]
+  onChange: (rule: CaseFlowCloseBlocker) => void
+  onRemove: () => void
+}) {
+  return (
+    <FlowRuleRow
+      active={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
+      onRemove={onRemove}
+      fields={
+        <FlowRuleRelation
+          left={
+            <QueueSelect
+              value={rule.blockedQueueId}
+              queues={queues}
+              placeholder="This case cannot close"
+              onValueChange={(blockedQueueId) =>
+                onChange({ ...rule, blockedQueueId })
+              }
+            />
+          }
+          right={
+            <QueueSelect
+              value={rule.prerequisiteQueueId}
+              queues={queues}
+              placeholder="Until this case closes"
+              onValueChange={(prerequisiteQueueId) =>
+                onChange({ ...rule, prerequisiteQueueId })
+              }
+            />
+          }
+        />
+      }
+    />
+  )
+}
+
+function FlowRuleRelation({
+  left,
+  right,
+}: {
+  left: ReactNode
+  right: ReactNode
+}) {
+  return (
+    <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-3">
+      <div className="min-w-0">{left}</div>
+      <ArrowRight
+        className="hidden size-4 text-muted-foreground sm:block"
+        aria-hidden
+      />
+      <div className="min-w-0">{right}</div>
+    </div>
+  )
+}
+
+function FlowRuleRow({
+  fields,
+  active,
+  onActiveChange,
+  onRemove,
+}: {
+  fields: ReactNode
+  active: boolean
+  onActiveChange: (next: boolean) => void
+  onRemove: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        'group flex flex-col gap-3 rounded-md border p-3 transition-colors',
+        'sm:flex-row sm:items-center',
+        active ? 'bg-card' : 'bg-muted/40',
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center">{fields}</div>
+      <div className="flex items-center justify-end gap-1 sm:gap-2">
+        <RuleActiveToggle checked={active} onCheckedChange={onActiveChange} />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={onRemove}
+          aria-label="Remove rule"
+        >
+          <Trash2 />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function RuleActiveToggle({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  const id = useId()
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(next) => onCheckedChange(next === true)}
+      />
+      <span>Active</span>
+    </label>
+  )
+}
+
+function MerchantCombobox({
+  merchants,
+  value,
+  isFetching,
+  onSearchValueChange,
+  onValueChange,
+}: {
+  merchants: MerchantListItem[]
+  value: MerchantListItem | null
+  isFetching: boolean
+  onSearchValueChange: (value: string) => void
+  onValueChange: (merchant: MerchantListItem | null) => void
+}) {
+  return (
+    <Combobox
+      items={merchants}
+      value={value}
+      autoHighlight
+      itemToStringLabel={(merchant) => merchant.businessName}
+      itemToStringValue={(merchant) => merchant.id}
+      isItemEqualToValue={(item, selected) => item.id === selected.id}
+      onInputValueChange={onSearchValueChange}
+      onValueChange={(merchant) => onValueChange(merchant)}
+    >
+      <ComboboxInput
+        className="w-full"
+        placeholder="Search and select merchant"
+        showClear
+      />
+      <ComboboxContent>
+        <ComboboxEmpty>
+          {isFetching ? 'Loading merchants...' : 'No merchants found.'}
+        </ComboboxEmpty>
+        <ComboboxList>
+          {(merchant: MerchantListItem) => (
+            <ComboboxItem key={merchant.id} value={merchant}>
+              <span className="min-w-0 flex-1 truncate">
+                {merchant.businessName}
+              </span>
+              <Badge variant="secondary">#{merchant.merchantNumber}</Badge>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+function QueueSelect({
+  value,
+  queues,
+  placeholder,
+  onValueChange,
+}: {
+  value: string
+  queues: QueueOption[]
+  placeholder: string
+  onValueChange: (value: string) => void
+}) {
+  const selectedQueue = queues.find((queue) => queue.id === value) ?? null
+
+  return (
+    <Combobox
+      items={queues}
+      value={selectedQueue}
+      autoHighlight
+      itemToStringLabel={(queue) => queue.name}
+      itemToStringValue={(queue) => queue.id}
+      isItemEqualToValue={(item, selected) => item.id === selected.id}
+      onValueChange={(queue) => onValueChange(queue?.id ?? '')}
+    >
+      <ComboboxInput className="w-full" placeholder={placeholder} showClear />
+      <ComboboxContent>
+        <ComboboxEmpty>No queues found.</ComboboxEmpty>
+        <ComboboxList>
+          {(queue: QueueOption) => (
+            <ComboboxItem
+              key={queue.id}
+              value={queue}
+              disabled={queue.isActive === false}
+            >
+              <span className="min-w-0 flex-1 truncate">{queue.name}</span>
+              {queue.isActive === false ? (
+                <Badge variant="outline">Inactive</Badge>
+              ) : null}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+function RuleListEmpty({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 rounded-md border border-dashed py-8 text-center">
+      <p className="text-sm font-medium text-foreground">{message}</p>
+      <p className="text-xs text-muted-foreground">
+        Click “Add” above to create one.
+      </p>
+    </div>
+  )
+}
+
+function getCaseFlowFormError(value: CaseFlowConfiguration) {
+  const requiredIds = [
+    ...value.startRules.map((rule) => rule.targetQueueId),
+    ...value.closeTriggers.flatMap((rule) => [
+      rule.sourceQueueId,
+      rule.targetQueueId,
+    ]),
+    ...value.closeBlockers.flatMap((rule) => [
+      rule.blockedQueueId,
+      rule.prerequisiteQueueId,
+    ]),
+  ]
+  if (requiredIds.some((id) => !id)) return 'Select queues for every rule.'
+
+  if (
+    value.closeTriggers.some(
+      (rule) => rule.sourceQueueId === rule.targetQueueId,
+    )
+  ) {
+    return 'A queue cannot trigger itself.'
+  }
+
+  if (
+    value.closeBlockers.some(
+      (rule) => rule.blockedQueueId === rule.prerequisiteQueueId,
+    )
+  ) {
+    return 'A queue cannot require itself before closing.'
+  }
+
+  if (hasDuplicates(value.startRules.map((rule) => rule.targetQueueId))) {
+    return 'Each first-case queue can only be selected once.'
+  }
+
+  if (
+    hasDuplicates(
+      value.closeTriggers.map(
+        (rule) => `${rule.sourceQueueId}:${rule.targetQueueId}`,
+      ),
+    )
+  ) {
+    return 'Each close trigger relation can only be configured once.'
+  }
+
+  if (
+    hasDuplicates(
+      value.closeBlockers.map(
+        (rule) => `${rule.blockedQueueId}:${rule.prerequisiteQueueId}`,
+      ),
+    )
+  ) {
+    return 'Each close requirement relation can only be configured once.'
+  }
+
+  return null
+}
+
+function hasDuplicates(values: string[]) {
+  return new Set(values).size !== values.length
+}
 
 function LimitSection({
   title,

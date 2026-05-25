@@ -8,6 +8,7 @@ import {
   Upload,
 } from 'lucide-react'
 import { z } from 'zod'
+import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
@@ -36,11 +37,17 @@ import {
 } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
+import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   useSendAgreementEmail,
   useUploadAgreementFinalAgreement,
+  useFetchAgreementEmailPreview,
+  useConfirmAgreementEmailManual,
 } from '#/hooks/use-case-detail-query'
+import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import type { EmailPreviewResult } from '#/apis/cases'
 import { cn } from '#/lib/utils'
 import { MERCHANT_TYPES } from '#/schemas/merchant-onboarding.schema'
 
@@ -93,13 +100,19 @@ export default function AgreementRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
+  const { data: config } = useQuery(configurationQueryOptions())
   const uploadFinalAgreement = useUploadAgreementFinalAgreement(caseId)
   const sendAgreement = useSendAgreementEmail(caseId)
+  const fetchPreview = useFetchAgreementEmailPreview(caseId)
+  const confirmManual = useConfirmAgreementEmailManual(caseId)
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [reviewContext, setReviewContext] =
-    useState<AgreementReviewContext>('final')
+  const [reviewContext, setReviewContext] = useState<AgreementReviewContext>('final')
   const [remarks, setRemarks] = useState('')
   const [remarksError, setRemarksError] = useState<string | null>(null)
+  const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
+
+  const emailMode = config?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
+
   const agreement = caseDetail.agreement ?? null
   const merchant = caseDetail.merchant
   const merchantType = String(
@@ -123,29 +136,48 @@ export default function AgreementRenderer({
     setReviewContext(context)
     setRemarks('')
     setRemarksError(null)
+    setPreview(null)
     setReviewOpen(true)
   }
 
-  async function handleSendAgreement() {
+  async function handleAutoSend() {
     const trimmedRemarks = remarks.trim()
-
     if (reviewContext === 'client') {
-      const result = clientAgreementReviewSchema.safeParse({
-        remarks: trimmedRemarks,
-      })
-
+      const result = clientAgreementReviewSchema.safeParse({ remarks: trimmedRemarks })
       if (!result.success) {
         setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
         return
       }
     }
-
-    await sendAgreement.mutateAsync({
-      remarks: trimmedRemarks || null,
-    })
+    await sendAgreement.mutateAsync({ remarks: trimmedRemarks || null })
     setReviewOpen(false)
     setRemarks('')
     setRemarksError(null)
+  }
+
+  async function handleLoadPreview() {
+    const trimmedRemarks = remarks.trim()
+    if (reviewContext === 'client') {
+      const result = clientAgreementReviewSchema.safeParse({ remarks: trimmedRemarks })
+      if (!result.success) {
+        setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
+        return
+      }
+    }
+    setRemarksError(null)
+    const data = await fetchPreview.mutateAsync({ remarks: trimmedRemarks || null })
+    setPreview(data)
+  }
+
+  async function handleManualConfirm(file: File) {
+    if (!preview) return
+    const trimmedRemarks = remarks.trim()
+    await confirmManual.mutateAsync({
+      tokenId: preview.tokenId,
+      remarks: trimmedRemarks || null,
+      file,
+    })
+    setReviewOpen(false)
   }
 
   return (
@@ -278,12 +310,10 @@ export default function AgreementRenderer({
       ) : null}
 
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {reviewContext === 'client'
-                ? 'Review Client Agreement'
-                : 'Review Agreement'}
+              {reviewContext === 'client' ? 'Review Client Agreement' : 'Review Agreement'}
             </DialogTitle>
             <DialogDescription>
               {reviewContext === 'client'
@@ -302,6 +332,7 @@ export default function AgreementRenderer({
                 onChange={(event) => {
                   setRemarks(event.target.value)
                   setRemarksError(null)
+                  setPreview(null)
                 }}
                 placeholder={
                   reviewContext === 'client'
@@ -314,26 +345,39 @@ export default function AgreementRenderer({
             </Field>
           </FieldGroup>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setReviewOpen(false)}
-              disabled={sendAgreement.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSendAgreement}
-              disabled={sendAgreement.isPending}
-            >
-              {sendAgreement.isPending ? (
-                <Spinner data-icon="inline-start" />
+          <EmailModeChoice
+            mode={emailMode}
+            autoContent={
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReviewOpen(false)} disabled={sendAgreement.isPending}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAutoSend} disabled={sendAgreement.isPending}>
+                  {sendAgreement.isPending ? <Spinner data-icon="inline-start" /> : <MailCheck data-icon="inline-start" />}
+                  {sendAgreement.isPending ? 'Sending' : 'Send mail'}
+                </Button>
+              </DialogFooter>
+            }
+            manualContent={
+              !preview ? (
+                <Button
+                  onClick={handleLoadPreview}
+                  disabled={fetchPreview.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {fetchPreview.isPending ? <Spinner data-icon="inline-start" /> : <MailCheck data-icon="inline-start" />}
+                  {fetchPreview.isPending ? 'Loading preview…' : 'Load email preview'}
+                </Button>
               ) : (
-                <MailCheck data-icon="inline-start" />
-              )}
-              {sendAgreement.isPending ? 'Sending' : 'Send mail'}
-            </Button>
-          </DialogFooter>
+                <ManualEmailPanel
+                  preview={preview}
+                  onConfirm={handleManualConfirm}
+                  isPending={confirmManual.isPending}
+                />
+              )
+            }
+          />
         </DialogContent>
       </Dialog>
     </div>

@@ -1,6 +1,8 @@
 import { queryOptions, useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 import { apiClient } from '#/lib/api-client'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export type MerchantDocument = {
   id: string
@@ -262,5 +264,10 @@ export function useActivateMidGoLiveMutation(token: string) {
     mutationKey: ['mid-go-live', 'activate', token] as const,
     mutationFn: () => activateMidGoLive(token),
     retry: false,
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Unable to start Go-Live activation.'),
+      )
+    },
   })
 }

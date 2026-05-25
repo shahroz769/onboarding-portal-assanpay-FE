@@ -11,12 +11,14 @@ import type {
   CreateCommentInput,
   Queue,
   SaveFieldReviewsInput,
+  SaveMidCreationDetailsInput,
+  SaveMidCreationDetailsResponse,
+  SaveDocumentReviewSubMerchantInput,
   SaveWordpressWebsiteInput,
   SendMidCreationEmailInput,
   SelectSubMerchantFormInput,
   AgreementEmailResponse,
   MidCreationEmailResponse,
-  SubMerchantFormEmailResponse,
 } from '#/schemas/cases.schema'
 
 // ─── List Cases ─────────────────────────────────────────────────────────────
@@ -162,6 +164,17 @@ export async function saveFieldReviews(
   return response.data
 }
 
+export async function saveDocumentReviewSubMerchant(
+  caseId: string,
+  input: SaveDocumentReviewSubMerchantInput,
+) {
+  const response = await apiClient.put(
+    `/api/cases/${caseId}/document-review/sub-merchant`,
+    input,
+  )
+  return response.data
+}
+
 // ─── Close Unsuccessful ─────────────────────────────────────────────────────
 
 export async function closeUnsuccessful(
@@ -231,11 +244,24 @@ export async function uploadSubMerchantFinalForm({
   return response.data
 }
 
-export async function sendSubMerchantFormEmail(
-  caseId: string,
-): Promise<SubMerchantFormEmailResponse> {
-  const response = await apiClient.post<SubMerchantFormEmailResponse>(
-    `/api/cases/${caseId}/sub-merchant-form/send-mail`,
+export async function uploadSubMerchantEmailProof({
+  caseId,
+  file,
+}: {
+  caseId: string
+  file: File
+}) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/sub-merchant-form/email-proof`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
   )
   return response.data
 }
@@ -262,6 +288,28 @@ export async function uploadAgreementFinalAgreement({
   return response.data
 }
 
+export async function uploadPhysicalAgreementCopy({
+  caseId,
+  file,
+}: {
+  caseId: string
+  file: File
+}) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/physical-agreement/scanned-copy`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  )
+  return response.data
+}
+
 export async function sendAgreementEmail(
   caseId: string,
   input: { remarks?: string | null },
@@ -278,7 +326,132 @@ export async function sendMidCreationEmail(
   input: SendMidCreationEmailInput,
 ): Promise<MidCreationEmailResponse> {
   const response = await apiClient.post<MidCreationEmailResponse>(
-    `/api/cases/${caseId}/mid-creation/send-mail`,
+    `/api/cases/${caseId}/testing/send-credentials-mail`,
+    input,
+  )
+  return response.data
+}
+
+// ─── Email preview & manual confirm ─────────────────────────────────────────
+
+export interface EmailPreviewResult {
+  recipient: string
+  subject: string
+  body: string
+  tokenId: string
+  tokenExpiresAt?: string
+  goLiveAvailableAt?: string
+}
+
+export interface ManualEmailConfirmResult {
+  status: 'sent'
+  fileId: string
+}
+
+export async function fetchResubmissionEmailPreview(
+  caseId: string,
+): Promise<EmailPreviewResult> {
+  const response = await apiClient.post<EmailPreviewResult>(
+    `/api/cases/${caseId}/send-for-resubmission/preview`,
+  )
+  return response.data
+}
+
+export async function confirmResubmissionEmailManual({
+  caseId,
+  tokenId,
+  file,
+}: {
+  caseId: string
+  tokenId: string
+  file: File
+}): Promise<ManualEmailConfirmResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('tokenId', tokenId)
+  const response = await apiClient.post<ManualEmailConfirmResult>(
+    `/api/cases/${caseId}/send-for-resubmission/manual`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+
+export async function fetchAgreementEmailPreview(
+  caseId: string,
+  input: { remarks?: string | null },
+): Promise<EmailPreviewResult> {
+  const response = await apiClient.post<EmailPreviewResult>(
+    `/api/cases/${caseId}/agreement/send-mail/preview`,
+    input,
+  )
+  return response.data
+}
+
+export async function confirmAgreementEmailManual({
+  caseId,
+  tokenId,
+  remarks,
+  file,
+}: {
+  caseId: string
+  tokenId: string
+  remarks?: string | null
+  file: File
+}): Promise<ManualEmailConfirmResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('tokenId', tokenId)
+  if (remarks) formData.append('remarks', remarks)
+  const response = await apiClient.post<ManualEmailConfirmResult>(
+    `/api/cases/${caseId}/agreement/send-mail/manual`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+
+export async function fetchMidCreationEmailPreview(
+  caseId: string,
+  input: SendMidCreationEmailInput,
+): Promise<EmailPreviewResult> {
+  const response = await apiClient.post<EmailPreviewResult>(
+    `/api/cases/${caseId}/testing/send-credentials-mail/preview`,
+    input,
+  )
+  return response.data
+}
+
+export async function confirmMidCreationEmailManual({
+  caseId,
+  tokenId,
+  file,
+  ...input
+}: {
+  caseId: string
+  tokenId: string
+  file: File
+} & SendMidCreationEmailInput): Promise<ManualEmailConfirmResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('tokenId', tokenId)
+  formData.append('email', input.email)
+  formData.append('password', input.password)
+  formData.append('portalMid', String(input.portalMid))
+  const response = await apiClient.post<ManualEmailConfirmResult>(
+    `/api/cases/${caseId}/testing/send-credentials-mail/manual`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+
+export async function saveMidCreationDetails(
+  caseId: string,
+  input: SaveMidCreationDetailsInput,
+): Promise<SaveMidCreationDetailsResponse> {
+  const response = await apiClient.post<SaveMidCreationDetailsResponse>(
+    `/api/cases/${caseId}/mid-creation/save`,
     input,
   )
   return response.data
@@ -306,15 +479,20 @@ export async function saveWordpressWebsiteCase({
   caseId,
   clonedWebsiteLink,
   screenshots,
+  subMerchantLogoScreenshots,
 }: {
   caseId: string
   clonedWebsiteLink: SaveWordpressWebsiteInput['clonedWebsiteLink']
   screenshots: File[]
+  subMerchantLogoScreenshots: File[]
 }) {
   const formData = new FormData()
   formData.append('clonedWebsiteLink', clonedWebsiteLink)
   for (const screenshot of screenshots) {
     formData.append('screenshots', screenshot)
+  }
+  for (const screenshot of subMerchantLogoScreenshots) {
+    formData.append('subMerchantLogoScreenshots', screenshot)
   }
 
   const response = await apiClient.post(
