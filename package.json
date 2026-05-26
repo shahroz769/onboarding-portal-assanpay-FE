@@ -9,6 +9,9 @@
   "scripts": {
     "dev": "vite dev --port 5173",
     "build": "vite build",
+    "deploy": "bun run build && wrangler deploy",
+    "preview:cloudflare": "bun run build && wrangler dev",
+    "cf-typegen": "wrangler types",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -51,6 +54,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@cloudflare/vite-plugin": "^1.38.0",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
@@ -67,7 +71,8 @@
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "wrangler": "^4.94.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
