@@ -1,14 +1,6 @@
-import { AlertTriangleIcon, Trash2Icon } from 'lucide-react'
+import { AlertTriangleIcon, BanIcon } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
   DataTable,
@@ -17,7 +9,6 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import type { Priority } from '#/schemas/merchants.schema'
 import {
   ONBOARDING_STAGES,
   ONBOARDING_STAGE_LABELS,
@@ -33,7 +24,7 @@ import {
   useMerchantsTableState,
 } from './merchants-table-context'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
-import { MerchantDeleteDialog } from './merchants-delete-dialog'
+import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 
 // ─── Filter Option Configs ──────────────────────────────────────────────────
 
@@ -116,7 +107,7 @@ function BulkActions() {
   const actions = useMerchantsTableActions()
   const canEditPriority =
     state.userRole === 'admin' || state.userRole === 'supervisor'
-  const canDelete = state.userRole === 'admin'
+  const canTerminate = state.userRole === 'admin'
 
   return (
     <DataTableSelectionInfo
@@ -124,49 +115,30 @@ function BulkActions() {
       visibleCount={state.flatData.length}
     >
       {canEditPriority && (
-        <div className="flex items-center gap-2">
-          <Select
-            value={state.bulkPriorityValue}
-            onValueChange={(v) => actions.setBulkPriorityValue(v as Priority)}
-          >
-            <SelectTrigger size="sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {PRIORITY_LABELS[p]}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={actions.submitBulkPriority}
-            disabled={state.isBulkPriorityPending}
-          >
-            <AlertTriangleIcon data-icon="inline-start" />
-            Set Priority
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={actions.openBulkPriorityDialog}
+          disabled={state.isBulkPriorityPending}
+        >
+          <AlertTriangleIcon data-icon="inline-start" />
+          Set Priority
+        </Button>
       )}
-      {canDelete && (
+      {canTerminate && (
         <Button
           variant="destructive"
           size="sm"
           onClick={() =>
-            actions.openDeleteDialog({
+            actions.openTerminateDialog({
               type: 'bulk',
               ids: state.selectedIds,
             })
           }
-          disabled={state.isDeletePending}
+          disabled={state.isTerminatePending}
         >
-          <Trash2Icon data-icon="inline-start" />
-          Delete ({state.selectedIds.length})
+          <BanIcon data-icon="inline-start" />
+          Terminate ({state.selectedIds.length})
         </Button>
       )}
     </DataTableSelectionInfo>
@@ -199,41 +171,33 @@ function Grid() {
 function Dialogs() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
-  const { priorityDialogMerchant, deleteTarget } = state
+  const { priorityTarget, terminateTarget } = state
 
   return (
     <>
       <MerchantPriorityDialog
-        merchant={priorityDialogMerchant}
-        open={priorityDialogMerchant !== null}
+        target={priorityTarget}
+        open={priorityTarget !== null}
         onOpenChange={(open) => {
           if (!open) actions.closePriorityDialog()
         }}
         onSubmit={actions.submitPriority}
-        isPending={state.isPriorityPending}
+        isPending={state.isPriorityPending || state.isBulkPriorityPending}
       />
-      <MerchantDeleteDialog
-        open={deleteTarget !== null}
+      <MerchantTerminateDialog
+        target={terminateTarget}
+        open={terminateTarget !== null}
         onOpenChange={(open) => {
-          if (!open) actions.closeDeleteDialog()
+          if (!open) actions.closeTerminateDialog()
         }}
-        onConfirm={actions.confirmDelete}
-        isPending={state.isDeletePending}
-        description={
-          deleteTarget?.type === 'single'
-            ? `Are you sure you want to delete "${deleteTarget.merchant.businessName}"? This action cannot be undone.`
-            : `Are you sure you want to delete ${deleteTarget?.ids.length ?? 0} merchant(s)? This action cannot be undone.`
-        }
+        onConfirm={actions.confirmTerminate}
+        isPending={state.isTerminatePending}
       />
     </>
   )
 }
 
-// ─── Compound Component ─────────────────────────────────────────────────────
-
 /**
- * MerchantsTable compound component.
- *
  * Usage:
  * ```tsx
  * <MerchantsTable.Provider>

@@ -6,9 +6,9 @@ import { useAuth } from '#/features/auth/auth-client'
 import {
   MERCHANTS_KEY,
   merchantsInfiniteQueryOptions,
-  useBulkDeleteMutation,
   useBulkPriorityMutation,
-  useDeleteMerchantMutation,
+  useBulkTerminateMutation,
+  useTerminateMerchantMutation,
   useUpdatePriorityMutation,
 } from '#/hooks/use-merchants-query'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
@@ -21,10 +21,8 @@ import type {
 } from '#/schemas/merchants.schema'
 import type { RoleType } from '#/types/auth'
 import { createMerchantColumns } from './merchants-columns'
-
-export type DeleteTarget =
-  | { type: 'single'; merchant: MerchantListItem }
-  | { type: 'bulk'; ids: string[] }
+import type { MerchantPriorityTarget } from './merchants-priority-dialog'
+import type { TerminateTarget } from './merchants-terminate-dialog'
 
 interface MerchantsTableState {
   flatData: MerchantListItem[]
@@ -35,11 +33,10 @@ interface MerchantsTableState {
   loadedCount: number
   hasNextPage: boolean
   isFetchingNextPage: boolean
-  priorityDialogMerchant: MerchantListItem | null
-  deleteTarget: DeleteTarget | null
-  bulkPriorityValue: Priority
+  priorityTarget: MerchantPriorityTarget | null
+  terminateTarget: TerminateTarget | null
   isPriorityPending: boolean
-  isDeletePending: boolean
+  isTerminatePending: boolean
   isBulkPriorityPending: boolean
 }
 
@@ -48,16 +45,11 @@ interface MerchantsTableActions {
   fetchNextPage: () => void
   openPriorityDialog: (merchant: MerchantListItem) => void
   closePriorityDialog: () => void
-  openDeleteDialog: (target: DeleteTarget) => void
-  closeDeleteDialog: () => void
-  setBulkPriorityValue: (value: Priority) => void
-  submitPriority: (
-    merchantId: string,
-    priority: Priority,
-    note?: string,
-  ) => void
-  confirmDelete: () => void
-  submitBulkPriority: () => void
+  openBulkPriorityDialog: () => void
+  openTerminateDialog: (target: TerminateTarget) => void
+  closeTerminateDialog: () => void
+  submitPriority: (priority: Priority, note?: string) => void
+  confirmTerminate: (reason: string) => void
 }
 
 interface MerchantsTableMeta {
@@ -177,10 +169,10 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   )
 
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
-  const [priorityDialogMerchant, setPriorityDialogMerchant] =
-    useState<MerchantListItem | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-  const [bulkPriorityValue, setBulkPriorityValue] = useState<Priority>('normal')
+  const [priorityTarget, setPriorityTarget] =
+    useState<MerchantPriorityTarget | null>(null)
+  const [terminateTarget, setTerminateTarget] =
+    useState<TerminateTarget | null>(null)
   const queryFilters = useMemo<MerchantFilters>(
     () => ({
       ...filters,
@@ -194,8 +186,8 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
 
   const updatePriority = useUpdatePriorityMutation()
-  const deleteMerchant = useDeleteMerchantMutation(queryFilters)
-  const bulkDelete = useBulkDeleteMutation()
+  const terminateMerchant = useTerminateMerchantMutation()
+  const bulkTerminate = useBulkTerminateMutation()
   const bulkPriority = useBulkPriorityMutation()
 
   const flatData = useMemo(
@@ -242,9 +234,10 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
         allIds,
         onSelectRow: handleSelectRow,
         onSelectAll: handleSelectAll,
-        onPriorityClick: setPriorityDialogMerchant,
-        onDeleteClick: (merchant) =>
-          setDeleteTarget({ type: 'single', merchant }),
+        onPriorityClick: (merchant) =>
+          setPriorityTarget({ type: 'single', merchant }),
+        onTerminateClick: (merchant) =>
+          setTerminateTarget({ type: 'single', merchant }),
       }),
     [
       allIds,
@@ -271,45 +264,65 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   )
 
   const submitPriority = useCallback(
-    (merchantId: string, priority: Priority, note?: string) => {
+    (priority: Priority, note?: string) => {
+      if (!priorityTarget) {
+        return
+      }
+
+      if (priorityTarget.type === 'bulk') {
+        bulkPriority.mutate(
+          { ids: priorityTarget.ids, priority, note },
+          {
+            onSuccess: () => {
+              setPriorityTarget(null)
+              setSelectedIdSet(new Set())
+            },
+          },
+        )
+
+        return
+      }
+
       updatePriority.mutate(
-        { merchantId, priority, note },
-        { onSuccess: () => setPriorityDialogMerchant(null) },
+        { merchantId: priorityTarget.merchant.id, priority, note },
+        { onSuccess: () => setPriorityTarget(null) },
       )
     },
-    [updatePriority],
+    [bulkPriority, priorityTarget, updatePriority],
   )
 
-  const confirmDelete = useCallback(() => {
-    if (!deleteTarget) {
-      return
-    }
+  const confirmTerminate = useCallback(
+    (reason: string) => {
+      if (!terminateTarget) {
+        return
+      }
 
-    if (deleteTarget.type === 'single') {
-      deleteMerchant.mutate(deleteTarget.merchant.id, {
-        onSuccess: () => {
-          setDeleteTarget(null)
-          setSelectedIdSet(new Set())
+      if (terminateTarget.type === 'single') {
+        terminateMerchant.mutate(
+          { merchantId: terminateTarget.merchant.id, reason },
+          {
+            onSuccess: () => {
+              setTerminateTarget(null)
+              setSelectedIdSet(new Set())
+            },
+          },
+        )
+
+        return
+      }
+
+      bulkTerminate.mutate(
+        { ids: terminateTarget.ids, reason },
+        {
+          onSuccess: () => {
+            setTerminateTarget(null)
+            setSelectedIdSet(new Set())
+          },
         },
-      })
-
-      return
-    }
-
-    bulkDelete.mutate(deleteTarget.ids, {
-      onSuccess: () => {
-        setDeleteTarget(null)
-        setSelectedIdSet(new Set())
-      },
-    })
-  }, [bulkDelete, deleteMerchant, deleteTarget])
-
-  const submitBulkPriority = useCallback(() => {
-    bulkPriority.mutate(
-      { ids: selectedIds, priority: bulkPriorityValue },
-      { onSuccess: () => setSelectedIdSet(new Set()) },
-    )
-  }, [bulkPriority, bulkPriorityValue, selectedIds])
+      )
+    },
+    [bulkTerminate, terminateMerchant, terminateTarget],
+  )
 
   const handleFetchNextPage = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -327,26 +340,25 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       loadedCount,
       hasNextPage,
       isFetchingNextPage,
-      priorityDialogMerchant,
-      deleteTarget,
-      bulkPriorityValue,
+      priorityTarget,
+      terminateTarget,
       isPriorityPending: updatePriority.isPending,
-      isDeletePending: deleteMerchant.isPending || bulkDelete.isPending,
+      isTerminatePending:
+        terminateMerchant.isPending || bulkTerminate.isPending,
       isBulkPriorityPending: bulkPriority.isPending,
     }),
     [
-      bulkDelete.isPending,
       bulkPriority.isPending,
-      bulkPriorityValue,
-      deleteMerchant.isPending,
-      deleteTarget,
+      bulkTerminate.isPending,
       filters,
       flatData,
       hasNextPage,
       isFetchingNextPage,
       isLoading,
-      priorityDialogMerchant,
+      priorityTarget,
       selectedIds,
+      terminateMerchant.isPending,
+      terminateTarget,
       loadedCount,
       updatePriority.isPending,
       userRole,
@@ -357,21 +369,25 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     () => ({
       setFilter,
       fetchNextPage: handleFetchNextPage,
-      openPriorityDialog: setPriorityDialogMerchant,
-      closePriorityDialog: () => setPriorityDialogMerchant(null),
-      openDeleteDialog: setDeleteTarget,
-      closeDeleteDialog: () => setDeleteTarget(null),
-      setBulkPriorityValue,
+      openPriorityDialog: (merchant) =>
+        setPriorityTarget({ type: 'single', merchant }),
+      closePriorityDialog: () => setPriorityTarget(null),
+      openBulkPriorityDialog: () =>
+        setPriorityTarget({
+          type: 'bulk',
+          ids: selectedIds,
+          initialPriority: 'normal',
+        }),
+      openTerminateDialog: setTerminateTarget,
+      closeTerminateDialog: () => setTerminateTarget(null),
       submitPriority,
-      confirmDelete,
-      submitBulkPriority,
+      confirmTerminate,
     }),
     [
-      confirmDelete,
+      confirmTerminate,
       handleFetchNextPage,
-      setBulkPriorityValue,
       setFilter,
-      submitBulkPriority,
+      selectedIds,
       submitPriority,
     ],
   )

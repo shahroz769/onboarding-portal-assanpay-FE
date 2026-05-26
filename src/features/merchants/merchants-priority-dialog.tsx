@@ -23,23 +23,30 @@ import { FieldGroup, Field, FieldLabel } from '#/components/ui/field'
 import type { MerchantListItem, Priority } from '#/schemas/merchants.schema'
 import { PRIORITIES, PRIORITY_LABELS } from '#/schemas/merchants.schema'
 
+export type MerchantPriorityTarget =
+  | { type: 'single'; merchant: MerchantListItem }
+  | { type: 'bulk'; ids: string[]; initialPriority: Priority }
+
 interface MerchantPriorityDialogProps {
-  merchant: MerchantListItem | null
+  target: MerchantPriorityTarget | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (merchantId: string, priority: Priority, note?: string) => void
+  onSubmit: (priority: Priority, note?: string) => void
   isPending: boolean
 }
 
 export function MerchantPriorityDialog({
-  merchant,
+  target,
   open,
   onOpenChange,
   onSubmit,
   isPending,
 }: MerchantPriorityDialogProps) {
+  const merchant = target?.type === 'single' ? target.merchant : null
   const [priority, setPriority] = useState<Priority>(
-    merchant?.priority ?? 'normal',
+    target?.type === 'bulk'
+      ? target.initialPriority
+      : (merchant?.priority ?? 'normal'),
   )
   const [note, setNote] = useState(merchant?.priorityNote ?? '')
 
@@ -48,9 +55,13 @@ export function MerchantPriorityDialog({
       return
     }
 
-    setPriority(merchant?.priority ?? 'normal')
+    setPriority(
+      target?.type === 'bulk'
+        ? target.initialPriority
+        : (merchant?.priority ?? 'normal'),
+    )
     setNote(merchant?.priorityNote ?? '')
-  }, [merchant, open])
+  }, [merchant, open, target])
 
   const handleOpenChange = (next: boolean) => {
     onOpenChange(next)
@@ -58,9 +69,16 @@ export function MerchantPriorityDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!merchant) return
-    onSubmit(merchant.id, priority, note || undefined)
+    if (!target) return
+    onSubmit(priority, note || undefined)
   }
+
+  const description =
+    target?.type === 'bulk'
+      ? `Update the priority for ${target.ids.length} selected merchants.`
+      : merchant
+        ? 'Update the priority for '
+        : 'Update merchant priority.'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -68,10 +86,16 @@ export function MerchantPriorityDialog({
         <DialogHeader>
           <DialogTitle>Change Priority</DialogTitle>
           <DialogDescription>
-            Update the priority for{' '}
-            <span className="font-medium text-foreground">
-              {merchant?.businessName}
-            </span>
+            {target?.type === 'single' && merchant ? (
+              <>
+                {description}
+                <span className="font-medium text-foreground">
+                  {merchant.businessName}
+                </span>
+              </>
+            ) : (
+              description
+            )}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

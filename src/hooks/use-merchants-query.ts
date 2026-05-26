@@ -8,10 +8,10 @@ import type { InfiniteData } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
-  bulkDeleteMerchants,
   bulkUpdatePriority,
-  deleteMerchant,
   fetchMerchants,
+  bulkTerminateMerchants,
+  terminateMerchant,
   updateMerchantPriority,
 } from '#/apis/merchants'
 import type {
@@ -140,60 +140,62 @@ export function useUpdatePriorityMutation() {
   })
 }
 
-export function useDeleteMerchantMutation(filters: MerchantFilters) {
+export function useTerminateMerchantMutation() {
   const queryClient = useQueryClient()
-  const key = merchantsInfiniteKey(filters)
 
   return useMutation({
-    mutationFn: (merchantId: string) => deleteMerchant(merchantId),
-    onMutate: async (merchantId) => {
-      await queryClient.cancelQueries({ queryKey: key })
+    mutationFn: ({
+      merchantId,
+      reason,
+    }: {
+      merchantId: string
+      reason: string
+    }) => terminateMerchant(merchantId, reason),
+    onMutate: async ({ merchantId }) => {
+      await queryClient.cancelQueries({ queryKey: MERCHANTS_KEY })
 
-      const previous =
-        queryClient.getQueryData<InfiniteData<MerchantListResponse>>(key)
+      const previous = queryClient.getQueriesData<
+        InfiniteData<MerchantListResponse>
+      >({
+        queryKey: MERCHANTS_KEY,
+      })
 
-      queryClient.setQueryData<InfiniteData<MerchantListResponse>>(
-        key,
-        (old) => {
-          if (!old) return old
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              merchants: page.merchants.filter((m) => m.id !== merchantId),
-            })),
-          }
-        },
-      )
+      updateMerchantInMerchantLists(queryClient, merchantId, (merchant) => ({
+        ...merchant,
+        status: 'terminated',
+      }))
 
       return { previous }
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(key, context.previous)
+        for (const [queryKey, data] of context.previous) {
+          queryClient.setQueryData(queryKey, data)
+        }
       }
-      toast.error('Failed to delete merchant.')
+      toast.error('Failed to terminate merchant.')
     },
     onSuccess: () => {
-      toast.success('Merchant deleted.')
+      toast.success('Merchant terminated.')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
   })
 }
 
-export function useBulkDeleteMutation() {
+export function useBulkTerminateMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (ids: string[]) => bulkDeleteMerchants(ids),
+    mutationFn: ({ ids, reason }: { ids: string[]; reason: string }) =>
+      bulkTerminateMerchants(ids, reason),
     onSuccess: () => {
-      toast.success('Merchants deleted.')
+      toast.success('Selected merchants terminated.')
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
     onError: () => {
-      toast.error('Failed to delete merchants.')
+      toast.error('Failed to terminate merchants.')
     },
   })
 }
@@ -202,8 +204,15 @@ export function useBulkPriorityMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ids, priority }: { ids: string[]; priority: Priority }) =>
-      bulkUpdatePriority(ids, priority),
+    mutationFn: ({
+      ids,
+      priority,
+      note,
+    }: {
+      ids: string[]
+      priority: Priority
+      note?: string
+    }) => bulkUpdatePriority(ids, priority, note),
     onSuccess: () => {
       toast.success('Priority updated for selected merchants.')
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })

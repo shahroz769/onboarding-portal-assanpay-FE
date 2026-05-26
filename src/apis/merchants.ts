@@ -49,26 +49,39 @@ export async function updateMerchantPriority({
   return response.data
 }
 
-// ─── Delete Merchant ────────────────────────────────────────────────────────
+// ─── Terminate Merchant ─────────────────────────────────────────────────────
 
-export async function deleteMerchant(merchantId: string) {
-  const response = await apiClient.delete(`/api/merchants/${merchantId}`)
+export async function terminateMerchant(merchantId: string, reason: string) {
+  const response = await apiClient.patch(
+    `/api/merchants/${merchantId}/terminate`,
+    {
+      reason,
+    },
+  )
   return response.data
 }
 
-// ─── Bulk Delete ────────────────────────────────────────────────────────────
+// ─── Bulk Terminate ─────────────────────────────────────────────────────────
 
-export async function bulkDeleteMerchants(ids: string[]) {
-  const response = await apiClient.post('/api/merchants/bulk-delete', { ids })
+export async function bulkTerminateMerchants(ids: string[], reason: string) {
+  const response = await apiClient.post('/api/merchants/bulk-terminate', {
+    ids,
+    reason,
+  })
   return response.data
 }
 
 // ─── Bulk Priority Update ───────────────────────────────────────────────────
 
-export async function bulkUpdatePriority(ids: string[], priority: Priority) {
+export async function bulkUpdatePriority(
+  ids: string[],
+  priority: Priority,
+  note?: string,
+) {
   const response = await apiClient.post('/api/merchants/bulk-priority', {
     ids,
     priority,
+    note,
   })
   return response.data
 }

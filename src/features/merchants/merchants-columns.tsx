@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { EyeIcon, PencilIcon, Trash2Icon } from 'lucide-react'
+import { BanIcon, EyeIcon, PencilIcon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
@@ -34,7 +34,12 @@ function getStatusBadgeClasses(status: string): string {
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
     case 'Pending':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+    case 'Testing':
+      return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300'
+    case 'Live':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
     case 'Suspended':
+    case 'Terminated':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     default:
       return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
@@ -53,7 +58,7 @@ interface CreateColumnsOptions {
   onSelectRow: (id: string, selected: boolean) => void
   onSelectAll: (selected: boolean) => void
   onPriorityClick: (merchant: MerchantListItem) => void
-  onDeleteClick: (merchant: MerchantListItem) => void
+  onTerminateClick: (merchant: MerchantListItem) => void
 }
 
 function getSortDirection(
@@ -75,10 +80,10 @@ export function createMerchantColumns({
   onSelectRow,
   onSelectAll,
   onPriorityClick,
-  onDeleteClick,
+  onTerminateClick,
 }: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
   const canEdit = userRole === 'admin' || userRole === 'supervisor'
-  const canDelete = userRole === 'admin'
+  const canTerminate = userRole === 'admin'
 
   const isAllSelected =
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
@@ -201,7 +206,7 @@ export function createMerchantColumns({
         />
       ),
       cell: (merchant) => {
-        const display = MERCHANT_STATUS_DISPLAY[merchant.onboardingStage]
+        const display = MERCHANT_STATUS_DISPLAY[merchant.status]
         return (
           <Badge className={getStatusBadgeClasses(display)}>{display}</Badge>
         )
@@ -312,20 +317,20 @@ export function createMerchantColumns({
               <TooltipContent>Edit</TooltipContent>
             </Tooltip>
           )}
-          {canDelete && (
+          {canTerminate && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => onDeleteClick(merchant)}
+                  onClick={() => onTerminateClick(merchant)}
                 >
-                  <Trash2Icon className="size-4" />
-                  <span className="sr-only">Delete</span>
+                  <BanIcon className="size-4" />
+                  <span className="sr-only">Terminate</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Delete</TooltipContent>
+              <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
         </div>

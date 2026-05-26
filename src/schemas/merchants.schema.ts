@@ -14,6 +14,9 @@ export const ONBOARDING_STAGES = [
 
 export type OnboardingStage = (typeof ONBOARDING_STAGES)[number]
 
+export const MERCHANT_STATUSES = [...ONBOARDING_STAGES, 'terminated'] as const
+export type MerchantStatus = (typeof MERCHANT_STATUSES)[number]
+
 export const ONBOARDING_STAGE_LABELS: Record<OnboardingStage, string> = {
   form_submitted: 'Form Submitted',
   documents_review: 'Documents Review',
@@ -40,15 +43,16 @@ export const BUSINESS_SCOPE_LABELS: Record<BusinessScope, string> = {
   international: 'International',
 }
 
-export const MERCHANT_STATUS_DISPLAY = {
+export const MERCHANT_STATUS_DISPLAY: Record<MerchantStatus, string> = {
   form_submitted: 'Pending',
   documents_review: 'In Progress',
   sub_merchant: 'In Progress',
   agreement: 'In Progress',
-  testing: 'In Progress',
-  live: 'Completed',
+  testing: 'Testing',
+  live: 'Live',
   suspended: 'Suspended',
-} as const satisfies Record<OnboardingStage, string>
+  terminated: 'Terminated',
+}
 
 export type MerchantStatusDisplay =
   (typeof MERCHANT_STATUS_DISPLAY)[OnboardingStage]
@@ -72,7 +76,7 @@ export const merchantListItemSchema = z.object({
   merchantNumber: z.number(),
   businessName: z.string(),
   onboardingStage: z.enum(ONBOARDING_STAGES),
-  status: z.enum(ONBOARDING_STAGES),
+  status: z.enum(MERCHANT_STATUSES),
   priority: z.enum(PRIORITIES),
   priorityNote: z.string().nullable(),
   createdAt: z.string(),
