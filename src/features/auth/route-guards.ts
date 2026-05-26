@@ -15,6 +15,13 @@ export async function requireAuthSession(params: {
     return
   }
 
+  if (import.meta.env.SSR) {
+    throw redirect({
+      to: '/login',
+      search: { redirect: sanitizeRedirect(params.redirectTo) },
+    })
+  }
+
   try {
     await ensureAuthSession(params.queryClient, params.auth)
   } catch {
@@ -31,6 +38,10 @@ export async function redirectAuthenticatedUser(params: {
   queryClient: QueryClient
   redirectTo?: string
 }) {
+  if (import.meta.env.SSR) {
+    return
+  }
+
   if (params.auth.isAuthenticated()) {
     throw redirect({ href: sanitizeRedirect(params.redirectTo) })
   }
