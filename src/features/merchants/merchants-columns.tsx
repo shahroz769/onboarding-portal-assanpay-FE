@@ -18,7 +18,6 @@ import type {
 } from '#/schemas/merchants.schema'
 import {
   MERCHANT_STATUS_DISPLAY,
-  ONBOARDING_STAGE_LABELS,
   PRIORITY_LABELS,
   BUSINESS_SCOPE_LABELS,
 } from '#/schemas/merchants.schema'
@@ -28,17 +27,12 @@ import type { RoleType } from '#/types/auth'
 
 function getStatusBadgeClasses(status: string): string {
   switch (status) {
-    case 'Completed':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-    case 'In Progress':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
     case 'Pending':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
     case 'Testing':
       return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300'
     case 'Live':
       return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-    case 'Suspended':
     case 'Terminated':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     default:
@@ -175,24 +169,6 @@ export function createMerchantColumns({
         </span>
       ),
       width: 80,
-    },
-
-    // Onboarding Stage
-    {
-      id: 'onboardingStage',
-      header: (
-        <DataTableColumnHeader
-          title="Onboarding Stage"
-          sortDirection={getSortDirection('onboardingStage', sortBy, sortOrder)}
-          onSort={() => onSort('onboardingStage')}
-        />
-      ),
-      cell: (merchant) => (
-        <Badge variant="secondary">
-          {ONBOARDING_STAGE_LABELS[merchant.onboardingStage]}
-        </Badge>
-      ),
-      width: 160,
     },
 
     // Status (derived)

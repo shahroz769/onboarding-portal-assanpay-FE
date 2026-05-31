@@ -130,6 +130,20 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
   },
+  case_created_from_flow_start: {
+    label: 'First case created automatically',
+    icon: FileText,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  case_created_from_flow_close: {
+    label: 'Next case created automatically',
+    icon: FileText,
+    iconClassName: 'text-blue-700 dark:text-blue-300',
+    iconWrapperClassName:
+      'border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60',
+  },
   next_case_created: {
     label: 'Next case created',
     icon: FileText,
@@ -139,6 +153,20 @@ const ACTION_META: Record<
   },
   sub_merchant_selected: {
     label: 'Sub-merchant selected',
+    icon: CheckCircle2,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
+  },
+  document_review_sub_merchant_selected: {
+    label: 'Sub-merchant selected',
+    icon: CheckCircle2,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
+  },
+  sub_merchant_inherited: {
+    label: 'Sub-merchant inherited',
     icon: CheckCircle2,
     iconClassName: 'text-sky-700 dark:text-sky-300',
     iconWrapperClassName:
@@ -193,6 +221,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  agreement_email_sent_manual: {
+    label: 'Agreement email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
   agreement_email_failed: {
     label: 'Agreement email failed',
     icon: MailWarning,
@@ -214,6 +249,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  mid_creation_email_sent_manual: {
+    label: 'MID credentials email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
   mid_creation_email_failed: {
     label: 'MID credentials email failed',
     icon: MailWarning,
@@ -228,6 +270,27 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
   },
+  live_activation_email_sent: {
+    label: 'Live email sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  live_activation_email_sent_manual: {
+    label: 'Live email sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  live_activation_email_failed: {
+    label: 'Live email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
   case_created_from_mid_go_live: {
     label: 'Live case created',
     icon: FileText,
@@ -237,6 +300,13 @@ const ACTION_META: Record<
   },
   testing_limits_applied: {
     label: 'Testing limits applied',
+    icon: Sliders,
+    iconClassName: 'text-indigo-700 dark:text-indigo-300',
+    iconWrapperClassName:
+      'border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60',
+  },
+  mid_creation_saved: {
+    label: 'MID creation saved',
     icon: Sliders,
     iconClassName: 'text-indigo-700 dark:text-indigo-300',
     iconWrapperClassName:
@@ -291,7 +361,7 @@ export function CaseHistoryTimeline({
         <div className="flex flex-col gap-4">
           {history.map((entry, index) => {
             const meta = ACTION_META[entry.action] ?? {
-              label: entry.action,
+              label: formatActionLabel(entry.action),
               icon: Clock3,
               iconClassName: 'text-muted-foreground',
               iconWrapperClassName: 'border-border bg-background',
@@ -560,6 +630,51 @@ function formatDetails(
   }
 
   if (
+    action === 'case_created_from_flow_start' &&
+    typeof details.targetQueueName === 'string'
+  ) {
+    parts.push('Created automatically after onboarding form submission')
+  }
+
+  if (action === 'case_created_from_flow_close') {
+    const sourceCaseNumber =
+      typeof details.sourceCaseNumber === 'string'
+        ? details.sourceCaseNumber
+        : null
+    const sourceQueueName =
+      typeof details.sourceQueueName === 'string' ? details.sourceQueueName : null
+
+    if (sourceCaseNumber && sourceQueueName) {
+      parts.push(
+        `Created automatically after ${sourceCaseNumber} (${sourceQueueName}) closed`,
+      )
+    } else if (sourceCaseNumber) {
+      parts.push(`Created automatically after ${sourceCaseNumber} closed`)
+    } else if (sourceQueueName) {
+      parts.push(`Created automatically after ${sourceQueueName} closed`)
+    } else {
+      parts.push('Created automatically after a configured case closed')
+    }
+  }
+
+  if (action === 'case_created_from_mid_go_live_email') {
+    const sourceCaseNumber =
+      typeof details.sourceCaseNumber === 'string'
+        ? details.sourceCaseNumber
+        : null
+    const sourceQueueName =
+      typeof details.sourceQueueName === 'string' ? details.sourceQueueName : null
+
+    if (sourceCaseNumber && sourceQueueName) {
+      parts.push(
+        `Created after ${sourceCaseNumber} (${sourceQueueName}) sent MID credentials`,
+      )
+    } else if (sourceCaseNumber) {
+      parts.push(`Created after ${sourceCaseNumber} sent MID credentials`)
+    }
+  }
+
+  if (
     action === 'next_case_created' &&
     typeof details.nextCaseNumber === 'string'
   ) {
@@ -593,6 +708,14 @@ function formatDetails(
   }
 
   return parts.join(' · ') || null
+}
+
+function formatActionLabel(action: string) {
+  return action
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }
 
 function formatHistoryParty(value: unknown) {

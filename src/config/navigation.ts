@@ -74,40 +74,6 @@ const navItems: NavItem[] = [
     url: '/configuration',
     icon: Settings2,
     roles: ['admin'],
-    items: [
-      {
-        title: 'Limits and MDR',
-        url: '/configuration/limits-and-mdr',
-      },
-      {
-        title: 'Agreements',
-        url: '/configuration/agreements',
-      },
-      {
-        title: 'Sub-Merchants',
-        url: '/configuration/sub-merchants',
-      },
-      {
-        title: 'Queues',
-        url: '/configuration/queues',
-      },
-      {
-        title: 'Case Triggering',
-        url: '/configuration/case-triggering',
-      },
-      {
-        title: 'Case Flow Rules',
-        url: '/configuration/case-flow-rules',
-      },
-      {
-        title: 'Link Deadlines',
-        url: '/configuration/link-deadlines',
-      },
-      {
-        title: 'Email Sending',
-        url: '/configuration/email-sending',
-      },
-    ],
   },
 ]
 

@@ -1,5 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   CheckCircle2,
   Clock3,
@@ -356,6 +357,16 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     }
 
     if (primaryAction.actionKind === 'mark-successful') {
+      if (
+        caseDetail.queue.slug === 'documents-review' &&
+        !caseDetail.documentReview?.subMerchantName?.trim()
+      ) {
+        toast.error(
+          'Select the sub-merchant name before marking this case as successful.',
+        )
+        return
+      }
+
       advanceStage.mutate()
     }
   }

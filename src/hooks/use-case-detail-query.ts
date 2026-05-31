@@ -34,6 +34,9 @@ import {
   confirmAgreementEmailManual,
   fetchMidCreationEmailPreview,
   confirmMidCreationEmailManual,
+  sendLiveEmail,
+  fetchLiveEmailPreview,
+  confirmLiveEmailManual,
 } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
@@ -42,6 +45,7 @@ import type {
   SaveFieldReviewsInput,
   SaveDocumentReviewSubMerchantInput,
   SendMidCreationEmailInput,
+  SendLiveEmailInput,
   SaveMidCreationDetailsInput,
   SelectSubMerchantFormInput,
 } from '#/schemas/cases.schema'
@@ -369,6 +373,31 @@ export function useSendMidCreationEmail(caseId: string) {
   })
 }
 
+export function useSendLiveEmail(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: SendLiveEmailInput) => sendLiveEmail(caseId, input),
+    onSuccess: (data) => {
+      if (data.status === 'sent') {
+        toast.success('Live email sent')
+      } else {
+        toast.error(
+          data.error
+            ? `Failed to send live email: ${data.error}`
+            : 'Failed to send live email',
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to send live email'))
+    },
+  })
+}
+
 export function useFetchResubmissionEmailPreview(caseId: string) {
   return useMutation({
     mutationFn: () => fetchResubmissionEmailPreview(caseId),
@@ -439,6 +468,33 @@ export function useConfirmMidCreationEmailManual(caseId: string) {
       confirmMidCreationEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('MID credentials email marked as sent')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
+    },
+  })
+}
+
+export function useFetchLiveEmailPreview(caseId: string) {
+  return useMutation({
+    mutationFn: (input: SendLiveEmailInput) =>
+      fetchLiveEmailPreview(caseId, input),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
+    },
+  })
+}
+
+export function useConfirmLiveEmailManual(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { tokenId: string; file: File } & SendLiveEmailInput) =>
+      confirmLiveEmailManual({ caseId, ...input }),
+    onSuccess: () => {
+      toast.success('Live email marked as sent')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: CASES_KEY })

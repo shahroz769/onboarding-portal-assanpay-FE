@@ -9,13 +9,17 @@ import { toast } from 'sonner'
 
 import {
   bulkUpdatePriority,
+  fetchMerchantDetail,
   fetchMerchants,
   bulkTerminateMerchants,
+  resetMerchantLimitsMdr,
   terminateMerchant,
+  updateMerchantLimitsMdr,
   updateMerchantPriority,
 } from '#/apis/merchants'
 import type {
   MerchantFilters,
+  MerchantLimitsMdr,
   MerchantListItem,
   MerchantListResponse,
   Priority,
@@ -56,6 +60,53 @@ export function merchantOptionsQueryOptions(search = '') {
         limit: 50,
       }),
     staleTime: 30_000,
+  })
+}
+
+export function merchantDetailKey(merchantId: string) {
+  return [...MERCHANTS_KEY, 'detail', merchantId] as const
+}
+
+export function merchantDetailQueryOptions(merchantId: string) {
+  return queryOptions({
+    queryKey: merchantDetailKey(merchantId),
+    queryFn: () => fetchMerchantDetail(merchantId),
+    staleTime: 30_000,
+  })
+}
+
+export function useUpdateMerchantLimitsMdrMutation(merchantId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: MerchantLimitsMdr) =>
+      updateMerchantLimitsMdr(merchantId, input),
+    onSuccess: () => {
+      toast.success('Limits and MDR updated for this merchant.')
+      queryClient.invalidateQueries({
+        queryKey: merchantDetailKey(merchantId),
+      })
+    },
+    onError: () => {
+      toast.error('Failed to update limits and MDR.')
+    },
+  })
+}
+
+export function useResetMerchantLimitsMdrMutation(merchantId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => resetMerchantLimitsMdr(merchantId),
+    onSuccess: () => {
+      toast.success('Reverted to global limits and MDR.')
+      queryClient.invalidateQueries({
+        queryKey: merchantDetailKey(merchantId),
+      })
+    },
+    onError: () => {
+      toast.error('Failed to reset limits and MDR.')
+    },
   })
 }
 

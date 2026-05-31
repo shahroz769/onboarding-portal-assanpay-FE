@@ -68,8 +68,6 @@ import type { EmailPreviewResult } from '#/apis/cases'
 
 import type { QueueRendererProps } from '../queue-registry'
 
-const MERCHANT_PORTAL_LOGIN_URL = 'https://merchant.assanpay.com/login'
-
 const credentialsSchema = z.object({
   email: z
     .string()
@@ -111,6 +109,9 @@ export default function TestingRenderer({
   const limits = configurationQuery.data?.limitsAndMdr.testing
   const limitsAndMdr = configurationQuery.data?.limitsAndMdr
   const linkDeadlines = configurationQuery.data?.linkDeadlines
+  const merchantPortalUrl =
+    configurationQuery.data?.merchantPortal.loginUrl ??
+    'https://merchant.assanpay.com/login'
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
   const portalMid = caseDetail.testing?.portalMid ?? null
@@ -159,8 +160,16 @@ export default function TestingRenderer({
         password: form.password,
         limitsAndMdr,
         goLiveDelayHours,
+        merchantPortalUrl,
       }),
-    [merchantName, form.email, form.password, limitsAndMdr, goLiveDelayHours],
+    [
+      merchantName,
+      form.email,
+      form.password,
+      limitsAndMdr,
+      goLiveDelayHours,
+      merchantPortalUrl,
+    ],
   )
 
   function updateField<TKey extends keyof CredentialsForm>(
@@ -522,6 +531,7 @@ function buildEmailPreview({
   password,
   limitsAndMdr,
   goLiveDelayHours,
+  merchantPortalUrl,
 }: {
   merchantName: string
   email: string
@@ -540,6 +550,7 @@ function buildEmailPreview({
     }
   }
   goLiveDelayHours: number | null
+  merchantPortalUrl: string
 }) {
   const subject = `Welcome to AssanPay - Your Merchant Portal Credentials`
   const goLiveAvailabilitySentence =
@@ -555,7 +566,7 @@ function buildEmailPreview({
 
 Welcome aboard AssanPay. Your merchant account is ready and your testing environment has been provisioned.
 
-Merchant Portal Link: ${MERCHANT_PORTAL_LOGIN_URL}
+Merchant Portal Link: ${merchantPortalUrl}
 
 Login Credentials
 ${credentialsBlock}

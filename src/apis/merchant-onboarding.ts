@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { apiClient } from '#/lib/api-client'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
+type MerchantLifecycleStatus = 'pending' | 'testing' | 'live' | 'terminated'
+
 export type MerchantDocument = {
   id: string
   documentType: string
@@ -43,8 +45,7 @@ export type MerchantSubmissionResponse = {
     accountNumberIban: string
     swiftCode: string | null
     nextOfKinRelation: string
-    status: string
-    onboardingStage: string
+    status: MerchantLifecycleStatus
     submittedAt: string
     createdAt: string
     updatedAt: string

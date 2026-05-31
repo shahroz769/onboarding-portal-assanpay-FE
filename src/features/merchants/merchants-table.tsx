@@ -10,8 +10,6 @@ import {
   DataTableToolbar,
 } from '#/components/data-table'
 import {
-  ONBOARDING_STAGES,
-  ONBOARDING_STAGE_LABELS,
   PRIORITIES,
   PRIORITY_LABELS,
   BUSINESS_SCOPES,
@@ -27,11 +25,6 @@ import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 
 // ─── Filter Option Configs ──────────────────────────────────────────────────
-
-const stageFilterOptions = ONBOARDING_STAGES.map((s) => ({
-  label: ONBOARDING_STAGE_LABELS[s],
-  value: s,
-}))
 
 const priorityFilterOptions = PRIORITIES.map((p) => ({
   label: PRIORITY_LABELS[p],
@@ -58,14 +51,6 @@ function Toolbar() {
           value={filters.search ?? ''}
           onChange={(v) => actions.setFilter('search', v || undefined)}
           placeholder="Search by ID or name..."
-        />
-        <DataTableFilter
-          title="Stage"
-          options={stageFilterOptions}
-          selectedValues={meta.commaToSet(filters.onboardingStage)}
-          onChange={(set) =>
-            actions.setFilter('onboardingStage', meta.setToCommaString(set))
-          }
         />
         <DataTableFilter
           title="Priority"

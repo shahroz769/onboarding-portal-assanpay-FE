@@ -11,6 +11,7 @@ import {
   fetchConfiguration,
   updateCaseFlowConfiguration,
   updateEmailSendingMode,
+  updateMerchantPortal,
   updateLimitsAndMdr,
   updateLinkDeadlines,
   updateQueueSla,
@@ -23,6 +24,7 @@ import type {
   EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
+  MerchantPortalSettings,
 } from '#/schemas/configuration.schema'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
@@ -86,6 +88,22 @@ export function useUpdateEmailSendingModeMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to save email sending mode.'))
+    },
+  })
+}
+
+export function useUpdateMerchantPortalMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: MerchantPortalSettings) => updateMerchantPortal(input),
+    onSuccess: async () => {
+      toast.success('Merchant portal settings saved.')
+      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
+    },
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to save merchant portal settings.'),
+      )
     },
   })
 }

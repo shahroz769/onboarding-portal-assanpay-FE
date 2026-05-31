@@ -7,7 +7,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import { cn } from '#/lib/utils'
-import { getSlaStatus } from '#/lib/sla'
+import { getCaseSlaStatus } from '#/lib/sla'
 import type { CaseListItem, CaseSortableColumn } from '#/schemas/cases.schema'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import type { RoleType } from '#/types/auth'
@@ -93,7 +93,13 @@ function PriorityCell({
 }
 
 function SlaCell({ item }: { item: CaseListItem }) {
-  const sla = getSlaStatus(item.createdAt, item.queueSlaHours)
+  const sla = getCaseSlaStatus({
+    createdAt: item.createdAt,
+    closedAt: item.closedAt,
+    status: item.status,
+    slaHours: item.queueSlaHours,
+    slaBreached: item.slaBreached,
+  })
   if (sla.isBreached) {
     return (
       <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">

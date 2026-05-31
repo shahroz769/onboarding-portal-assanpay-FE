@@ -35,3 +35,35 @@ export function getSlaStatus(
     hoursRemaining,
   }
 }
+
+export function getCaseSlaStatus({
+  createdAt,
+  closedAt,
+  status,
+  slaHours,
+  slaBreached,
+  now = new Date(),
+}: {
+  createdAt: string | Date
+  closedAt?: string | Date | null
+  status: string
+  slaHours: number | null | undefined
+  slaBreached?: boolean | null
+  now?: Date
+}): SlaStatus {
+  const evaluatedAt =
+    (status === 'closed' || status === 'error') && closedAt
+      ? new Date(closedAt)
+      : now
+
+  const sla = getSlaStatus(createdAt, slaHours, evaluatedAt)
+
+  if (typeof slaBreached === 'boolean') {
+    return {
+      ...sla,
+      isBreached: slaBreached,
+    }
+  }
+
+  return sla
+}

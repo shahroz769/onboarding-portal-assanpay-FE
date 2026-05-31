@@ -1,6 +1,8 @@
 import { apiClient } from '#/lib/api-client'
 import type {
+  MerchantDetailResponse,
   MerchantFilters,
+  MerchantLimitsMdr,
   MerchantListResponse,
   Priority,
 } from '#/schemas/merchants.schema'
@@ -26,6 +28,38 @@ export async function fetchMerchants(
   const response = await apiClient.get<MerchantListResponse>('/api/merchants', {
     params: query,
   })
+  return response.data
+}
+
+// ─── Merchant Detail ────────────────────────────────────────────────────────
+
+export async function fetchMerchantDetail(
+  merchantId: string,
+): Promise<MerchantDetailResponse> {
+  const response = await apiClient.get<MerchantDetailResponse>(
+    `/api/merchants/${merchantId}`,
+  )
+  return response.data
+}
+
+// ─── Per-Merchant Limits & MDR ──────────────────────────────────────────────
+
+export async function updateMerchantLimitsMdr(
+  merchantId: string,
+  input: MerchantLimitsMdr,
+) {
+  const response = await apiClient.patch<{
+    id: string
+    limitsAndMdr: MerchantLimitsMdr
+  }>(`/api/merchants/${merchantId}/limits-mdr`, input)
+  return response.data
+}
+
+export async function resetMerchantLimitsMdr(merchantId: string) {
+  const response = await apiClient.delete<{
+    id: string
+    limitsAndMdr: MerchantLimitsMdr
+  }>(`/api/merchants/${merchantId}/limits-mdr`)
   return response.data
 }
 

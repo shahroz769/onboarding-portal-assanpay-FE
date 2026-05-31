@@ -1,6 +1,6 @@
 import { Navigate, createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/_app/configuration/queues')({
+export const Route = createFileRoute('/_app/configuration/merchant-portal')({
   component: RouteComponent,
 })
 

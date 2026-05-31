@@ -119,7 +119,7 @@ function AppLayout() {
           {hidePageShell ? (
             <Outlet />
           ) : (
-            <div className="flex min-h-full shrink-0 flex-col rounded-xl border bg-background p-6 shadow-sm">
+            <div className="flex min-h-full shrink-0 flex-col rounded-xl bg-background">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">{title}</h1>

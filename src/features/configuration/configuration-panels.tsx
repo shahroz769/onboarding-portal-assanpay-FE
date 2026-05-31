@@ -1,18 +1,27 @@
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRight,
+  BadgeDollarSign,
   ExternalLink,
+  FileCheck2,
   FileText,
   FileUp,
+  GitBranch,
+  Landmark,
   LinkIcon,
+  Mail,
   Play,
   Plus,
+  Rocket,
   Save,
+  Send,
+  Store,
   Trash2,
+  Wallet,
+  Workflow,
   Upload,
   X,
 } from 'lucide-react'
@@ -27,7 +36,6 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
@@ -52,6 +60,7 @@ import {
 } from '#/components/ui/dialog'
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
@@ -60,6 +69,7 @@ import {
   FieldSet,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
@@ -71,6 +81,7 @@ import {
   useUpdateEmailSendingModeMutation,
   useUpdateLimitsAndMdrMutation,
   useUpdateLinkDeadlinesMutation,
+  useUpdateMerchantPortalMutation,
   useUpdateQueueSlaMutation,
   useUpdateQueueStatusMutation,
   useUploadAgreementDraftMutation,
@@ -84,16 +95,19 @@ import type {
   CaseFlowCloseBlocker,
   CaseFlowCloseTrigger,
   CaseFlowConfiguration,
+  CaseFlowCreationRequirement,
   CaseFlowStartRule,
   EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
+  MerchantPortalSettings,
 } from '#/schemas/configuration.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 import {
   emailSendingModeSchema,
   limitsAndMdrSettingsSchema,
   linkDeadlineSettingsSchema,
+  merchantPortalSettingsSchema,
 } from '#/schemas/configuration.schema'
 
 type QueueOption = Pick<
@@ -145,26 +159,34 @@ export function LimitsAndMdrPanel() {
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 lg:grid-cols-3">
         <LimitSection
+          icon={BadgeDollarSign}
+          colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
           title="Testing Limits"
+          description="Transaction ranges used before merchant go-live."
           prefix="testing"
           value={value.testing}
           errors={validationErrors}
           onChange={update}
         />
         <LimitSection
+          icon={Rocket}
+          colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
           title="Live Limits"
+          description="Production transaction ranges for live merchants."
           prefix="live"
           value={value.live}
           errors={validationErrors}
           onChange={update}
         />
         <RatesSection
+          icon={Wallet}
+          colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
           value={value.rates}
           errors={validationErrors}
           onChange={update}
         />
       </div>
-      <div className="flex justify-end">
+      <ConfigurationActionBar>
         <Button
           onClick={() => mutation.mutate(value)}
           disabled={mutation.isPending || hasValidationErrors(validationErrors)}
@@ -176,7 +198,7 @@ export function LimitsAndMdrPanel() {
           )}
           Save configuration
         </Button>
-      </div>
+      </ConfigurationActionBar>
     </div>
   )
 }
@@ -291,7 +313,12 @@ export function AgreementsPanel() {
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <ConfigurationSectionCard
+      icon={FileText}
+      colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      title="Agreement Drafts"
+      description="Upload and review agreement templates by business type."
+    >
       <DataTable
         columns={columns}
         data={data?.agreementDrafts ?? []}
@@ -303,7 +330,7 @@ export function AgreementsPanel() {
           </div>
         }
       />
-    </div>
+    </ConfigurationSectionCard>
   )
 }
 
@@ -379,7 +406,7 @@ export function SubMerchantsPanel() {
       },
       {
         id: 'actions',
-        header: <span className="block text-right">Action</span>,
+        header: <span className="block text-right">Actions</span>,
         width: 160,
         cell: (item) => (
           <div className="flex justify-end">
@@ -401,8 +428,13 @@ export function SubMerchantsPanel() {
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <AddSubMerchantHeaderAction existingNames={existingNames} />
+    <ConfigurationSectionCard
+      icon={Store}
+      colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      title="Sub-Merchants"
+      description="Manage draft forms and seller codes for sub-merchant onboarding."
+      action={<AddSubMerchantDialog existingNames={existingNames} />}
+    >
       <DataTable
         columns={columns}
         data={data?.subMerchants ?? []}
@@ -415,26 +447,7 @@ export function SubMerchantsPanel() {
           </div>
         }
       />
-    </div>
-  )
-}
-
-function AddSubMerchantHeaderAction({
-  existingNames,
-}: {
-  existingNames: Set<string>
-}) {
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
-
-  useEffect(() => {
-    setPortalTarget(document.getElementById('page-header-actions'))
-  }, [])
-
-  if (!portalTarget) return null
-
-  return createPortal(
-    <AddSubMerchantDialog existingNames={existingNames} />,
-    portalTarget,
+    </ConfigurationSectionCard>
   )
 }
 
@@ -710,7 +723,7 @@ function DraftFileDropzone({
           </div>
         )}
       </div>
-      <input
+      <Input
         ref={inputRef}
         id={inputId}
         aria-labelledby={labelId}
@@ -797,7 +810,7 @@ export function QueuesPanel() {
       },
       {
         id: 'actions',
-        header: <span className="block text-right">Action</span>,
+        header: <span className="block text-right">Actions</span>,
         width: 180,
         cell: (queue) => {
           const isActive = queue.isActive !== false
@@ -825,7 +838,12 @@ export function QueuesPanel() {
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <ConfigurationSectionCard
+      icon={Workflow}
+      colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+      title="Queues"
+      description="Manage queue availability, prefixes, and SLA hours."
+    >
       <DataTable
         columns={columns}
         data={queues}
@@ -837,7 +855,7 @@ export function QueuesPanel() {
           </div>
         }
       />
-    </div>
+    </ConfigurationSectionCard>
   )
 }
 
@@ -904,9 +922,6 @@ function QueueSlaCell({
               aria-invalid={!isValid ? true : undefined}
               onChange={(event) => setValue(event.target.value)}
             />
-            <FieldDescription>
-              Enter a whole number between 1 and 8760 hours.
-            </FieldDescription>
           </Field>
         </FieldGroup>
         <DialogFooter>
@@ -957,47 +972,58 @@ export function LinkDeadlinesPanel() {
   }
 
   return (
-    <FieldGroup>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {fields.map(([key, label]) => (
-          <Field key={key} data-invalid={Boolean(validationErrors[key])}>
-            <FieldLabel htmlFor={key}>{label}</FieldLabel>
-            <Input
-              id={key}
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              placeholder="No expiry"
-              value={value[key] ?? ''}
-              aria-invalid={Boolean(validationErrors[key])}
-              onChange={(event) => {
-                const raw = event.target.value
-                setForm((current) => ({
-                  ...(current ?? value),
-                  [key]: raw === '' ? null : Number(raw),
-                }))
-              }}
-            />
-            <FieldDescription>Hours. Leave blank for no expiry.</FieldDescription>
-            <FieldError>{validationErrors[key]}</FieldError>
-          </Field>
-        ))}
-      </div>
-      <div className="flex justify-end">
-        <Button
-          onClick={() => mutation.mutate(value)}
-          disabled={mutation.isPending || hasValidationErrors(validationErrors)}
-        >
-          {mutation.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <LinkIcon data-icon="inline-start" />
-          )}
-          Save deadlines
-        </Button>
-      </div>
-    </FieldGroup>
+    <ConfigurationSectionCard
+      icon={LinkIcon}
+      colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+      title="Link Deadlines"
+      description="Configure expiry and availability windows for secure links."
+    >
+      <FieldGroup>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {fields.map(([key, label]) => (
+            <Field key={key} data-invalid={Boolean(validationErrors[key])}>
+              <FieldLabel htmlFor={key}>{label}</FieldLabel>
+              <Input
+                id={key}
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                placeholder="No expiry"
+                value={value[key] ?? ''}
+                aria-invalid={Boolean(validationErrors[key])}
+                onChange={(event) => {
+                  const raw = event.target.value
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    [key]: raw === '' ? null : Number(raw),
+                  }))
+                }}
+              />
+              <FieldDescription>
+                Hours. Leave blank for no expiry.
+              </FieldDescription>
+              <FieldError>{validationErrors[key]}</FieldError>
+            </Field>
+          ))}
+        </div>
+        <ConfigurationActionBar>
+          <Button
+            onClick={() => mutation.mutate(value)}
+            disabled={
+              mutation.isPending || hasValidationErrors(validationErrors)
+            }
+          >
+            {mutation.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <LinkIcon data-icon="inline-start" />
+            )}
+            Save deadlines
+          </Button>
+        </ConfigurationActionBar>
+      </FieldGroup>
+    </ConfigurationSectionCard>
   )
 }
 
@@ -1016,10 +1042,13 @@ export function EmailSendingModePanel() {
       ? 'At least one mode must be enabled.'
       : null
 
-  function toggle(field: keyof EmailSendingMode) {
+  function setMode(field: keyof EmailSendingMode, checked: boolean) {
     setForm((prev) => {
-      const current = prev ?? data?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
-      return { ...current, [field]: !current[field] }
+      const current = prev ?? data?.emailSendingMode ?? {
+        autoEnabled: true,
+        manualEnabled: true,
+      }
+      return { ...current, [field]: checked }
     })
   }
 
@@ -1029,54 +1058,140 @@ export function EmailSendingModePanel() {
   }
 
   return (
-    <FieldGroup
-      title="Email Sending Mode"
-      description="Control whether emails can be sent automatically via Resend, manually via Gmail, or both."
-      footer={
-        <Button
-          size="sm"
-          disabled={mutation.isPending || hasError || !form}
-          onClick={handleSave}
-        >
-          {mutation.isPending ? <Spinner className="size-4 mr-1" /> : null}
-          Save
-        </Button>
-      }
+    <ConfigurationSectionCard
+      icon={Mail}
+      colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      title="Email Sending"
+      description="Choose how case emails are sent from the portal."
     >
-      <div className="space-y-4">
-        <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            className="size-4"
-            checked={value?.autoEnabled ?? true}
-            onChange={() => toggle('autoEnabled')}
-          />
-          <div>
-            <p className="text-sm font-medium">Auto (Resend)</p>
-            <p className="text-xs text-muted-foreground">
-              Emails are sent automatically through Resend when triggered.
-            </p>
-          </div>
-        </label>
-        <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            className="size-4"
-            checked={value?.manualEnabled ?? true}
-            onChange={() => toggle('manualEnabled')}
-          />
-          <div>
-            <p className="text-sm font-medium">Manual (Gmail)</p>
-            <p className="text-xs text-muted-foreground">
-              Agent receives subject and body to copy-paste and send from Gmail manually.
-            </p>
-          </div>
-        </label>
-        {bothDisabledError ? (
-          <p className="text-sm text-destructive">{bothDisabledError}</p>
-        ) : null}
-      </div>
-    </FieldGroup>
+      <FieldGroup>
+        <FieldSet>
+          <FieldLegend>Email Sending Mode</FieldLegend>
+
+          <Field orientation="horizontal">
+            <Checkbox
+              id="email-mode-auto"
+              checked={value?.autoEnabled ?? true}
+              onCheckedChange={(checked) => {
+                if (typeof checked === 'boolean') {
+                  setMode('autoEnabled', checked)
+                }
+              }}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="email-mode-auto">Auto (Resend)</FieldLabel>
+              <FieldDescription>
+                Emails are sent automatically through Resend when triggered.
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+
+          <Field orientation="horizontal">
+            <Checkbox
+              id="email-mode-manual"
+              checked={value?.manualEnabled ?? true}
+              onCheckedChange={(checked) => {
+                if (typeof checked === 'boolean') {
+                  setMode('manualEnabled', checked)
+                }
+              }}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="email-mode-manual">
+                Manual (Gmail)
+              </FieldLabel>
+              <FieldDescription>
+                Agent receives subject and body to copy-paste and send from
+                Gmail manually.
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+
+          <FieldError>{bothDisabledError}</FieldError>
+        </FieldSet>
+
+        <ConfigurationActionBar>
+          <Button
+            disabled={mutation.isPending || hasError || !form}
+            onClick={handleSave}
+          >
+            {mutation.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Save data-icon="inline-start" />
+            )}
+            Save email mode
+          </Button>
+        </ConfigurationActionBar>
+      </FieldGroup>
+    </ConfigurationSectionCard>
+  )
+}
+
+// ─── Merchant Portal ───────────────────────────────────────────────────────
+
+export function MerchantPortalPanel() {
+  const { data, isPending } = useQuery(configurationQueryOptions())
+  const mutation = useUpdateMerchantPortalMutation()
+  const [form, setForm] = useState<MerchantPortalSettings | null>(null)
+  const value = form ?? data?.merchantPortal ?? null
+  const validationErrors = value
+    ? getValidationErrors(merchantPortalSettingsSchema.safeParse(value))
+    : {}
+
+  if (isPending || !value) {
+    return <PanelLoading />
+  }
+
+  return (
+    <ConfigurationSectionCard
+      icon={Send}
+      colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+      title="Merchant Portal"
+      description="Configure the portal link used in Testing and Live case emails."
+    >
+      <FieldGroup>
+        <FieldSet>
+          <Field data-invalid={Boolean(validationErrors.loginUrl)}>
+            <FieldLabel htmlFor="merchant-portal-login-url">
+              Merchant portal login URL
+            </FieldLabel>
+            <Input
+              id="merchant-portal-login-url"
+              type="url"
+              value={value.loginUrl}
+              placeholder="https://merchant.assanpay.com/login"
+              aria-invalid={Boolean(validationErrors.loginUrl)}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...(current ?? value),
+                  loginUrl: event.target.value,
+                }))
+              }}
+            />
+            <FieldDescription>
+              This URL appears as the merchant portal link in customer emails.
+            </FieldDescription>
+            <FieldError>{validationErrors.loginUrl}</FieldError>
+          </Field>
+        </FieldSet>
+        <ConfigurationActionBar>
+          <Button
+            onClick={() => mutation.mutate(value)}
+            disabled={
+              mutation.isPending || hasValidationErrors(validationErrors)
+            }
+          >
+            {mutation.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Save data-icon="inline-start" />
+            )}
+            Save portal settings
+          </Button>
+        </ConfigurationActionBar>
+      </FieldGroup>
+    </ConfigurationSectionCard>
   )
 }
 
@@ -1112,44 +1227,47 @@ export function CaseTriggeringPanel() {
   }
 
   return (
-    <FieldGroup>
-      <FieldSet className="rounded-lg border p-4">
-        <FieldLegend>Manual Case Trigger</FieldLegend>
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start">
-          <Field>
-            <FieldLabel>Merchant</FieldLabel>
-            <MerchantCombobox
-              merchants={merchants}
-              value={selectedMerchant ?? null}
-              isFetching={merchantsQuery.isFetching}
-              onSearchValueChange={setMerchantSearch}
-              onValueChange={setSelectedMerchant}
-            />
-            {merchantsQuery.isFetching ? (
-              <p className="text-xs text-muted-foreground">Loading merchants</p>
-            ) : null}
-          </Field>
+    <ConfigurationSectionCard
+      icon={Play}
+      colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      title="Case Triggering"
+      description="Create a case manually for a selected merchant and queue."
+    >
+      <FieldGroup>
+        <FieldSet>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field>
+              <FieldLabel>Merchant</FieldLabel>
+              <MerchantCombobox
+                merchants={merchants}
+                value={selectedMerchant ?? null}
+                isFetching={merchantsQuery.isFetching}
+                onSearchValueChange={setMerchantSearch}
+                onValueChange={setSelectedMerchant}
+              />
+              {merchantsQuery.isFetching ? (
+                <FieldDescription>Loading merchants</FieldDescription>
+              ) : null}
+            </Field>
 
-          <Field
-            data-invalid={Boolean(selectedQueue && !selectedQueue.isActive)}
-          >
-            <FieldLabel>Queue</FieldLabel>
-            <QueueSelect
-              value={queueId}
-              queues={queues}
-              placeholder="Select queue"
-              onValueChange={setQueueId}
-            />
-            {selectedQueue && !selectedQueue.isActive ? (
-              <FieldError>This queue is inactive.</FieldError>
-            ) : null}
-          </Field>
-
-          <Button
-            className="xl:mt-6"
-            disabled={!canSubmit || createCase.isPending}
-            onClick={handleSubmit}
-          >
+            <Field
+              data-invalid={Boolean(selectedQueue && !selectedQueue.isActive)}
+            >
+              <FieldLabel>Queue</FieldLabel>
+              <QueueSelect
+                value={queueId}
+                queues={queues}
+                placeholder="Select queue"
+                onValueChange={setQueueId}
+              />
+              {selectedQueue && !selectedQueue.isActive ? (
+                <FieldError>This queue is inactive.</FieldError>
+              ) : null}
+            </Field>
+          </div>
+        </FieldSet>
+        <ConfigurationActionBar>
+          <Button disabled={!canSubmit || createCase.isPending} onClick={handleSubmit}>
             {createCase.isPending ? (
               <Spinner data-icon="inline-start" />
             ) : (
@@ -1157,9 +1275,9 @@ export function CaseTriggeringPanel() {
             )}
             Trigger case
           </Button>
-        </div>
-      </FieldSet>
-    </FieldGroup>
+        </ConfigurationActionBar>
+      </FieldGroup>
+    </ConfigurationSectionCard>
   )
 }
 
@@ -1187,13 +1305,12 @@ export function CaseFlowRulesPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>First case after submission</CardTitle>
-          <CardDescription>
-            When a merchant submits onboarding, automatically open these cases.
-          </CardDescription>
-          <CardAction>
+      <ConfigurationSectionCard
+        icon={Play}
+        colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+        title="First case after submission"
+        description="When a merchant submits onboarding, automatically open these cases."
+        action={
             <Button
               type="button"
               size="sm"
@@ -1215,9 +1332,8 @@ export function CaseFlowRulesPanel() {
               <Plus data-icon="inline-start" />
               Add rule
             </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
+        }
+      >
           {value.startRules.length === 0 ? (
             <RuleListEmpty message="No first-case rules configured yet." />
           ) : (
@@ -1244,17 +1360,14 @@ export function CaseFlowRulesPanel() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ConfigurationSectionCard>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Close triggers</CardTitle>
-          <CardDescription>
-            When a case closes, automatically open another case for the same
-            merchant.
-          </CardDescription>
-          <CardAction>
+      <ConfigurationSectionCard
+        icon={GitBranch}
+        colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+        title="Close triggers"
+        description="When a case closes, automatically open another case for the same merchant."
+        action={
             <Button
               type="button"
               size="sm"
@@ -1277,9 +1390,8 @@ export function CaseFlowRulesPanel() {
               <Plus data-icon="inline-start" />
               Add trigger
             </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
+        }
+      >
           {value.closeTriggers.length === 0 ? (
             <RuleListEmpty message="No close triggers configured yet." />
           ) : (
@@ -1306,16 +1418,14 @@ export function CaseFlowRulesPanel() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ConfigurationSectionCard>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Close requirements</CardTitle>
-          <CardDescription>
-            Prevent a case from closing until another case has closed first.
-          </CardDescription>
-          <CardAction>
+      <ConfigurationSectionCard
+        icon={FileCheck2}
+        colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        title="Close requirements"
+        description="Prevent a case from closing until another case has closed first."
+        action={
             <Button
               type="button"
               size="sm"
@@ -1337,9 +1447,8 @@ export function CaseFlowRulesPanel() {
               <Plus data-icon="inline-start" />
               Add requirement
             </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
+        }
+      >
           {value.closeBlockers.length === 0 ? (
             <RuleListEmpty message="No close requirements configured yet." />
           ) : (
@@ -1366,8 +1475,67 @@ export function CaseFlowRulesPanel() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ConfigurationSectionCard>
+
+      <ConfigurationSectionCard
+        icon={Landmark}
+        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        title="Case creation requirements"
+        description="Prevent creating a case until another case has closed successfully."
+        action={
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                update({
+                  ...value,
+                  creationRequirements: [
+                    ...value.creationRequirements,
+                    {
+                      targetQueueId: '',
+                      prerequisiteQueueId: '',
+                      isActive: true,
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Add requirement
+            </Button>
+        }
+      >
+          {value.creationRequirements.length === 0 ? (
+            <RuleListEmpty message="No case creation requirements configured yet." />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {value.creationRequirements.map((rule, index) => (
+                <CreationRequirementRow
+                  key={`creation-${index}`}
+                  rule={rule}
+                  queues={queues}
+                  onChange={(nextRule) => {
+                    const creationRequirements = [
+                      ...value.creationRequirements,
+                    ]
+                    creationRequirements[index] = nextRule
+                    update({ ...value, creationRequirements })
+                  }}
+                  onRemove={() =>
+                    update({
+                      ...value,
+                      creationRequirements:
+                        value.creationRequirements.filter(
+                          (_, i) => i !== index,
+                        ),
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+      </ConfigurationSectionCard>
 
       {formError ? (
         <Alert variant="destructive">
@@ -1376,10 +1544,12 @@ export function CaseFlowRulesPanel() {
         </Alert>
       ) : null}
 
-      <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur">
+      <ConfigurationActionBar>
         <Button
           disabled={mutation.isPending || Boolean(formError)}
-          onClick={() => mutation.mutate(value)}
+          onClick={() =>
+            mutation.mutate(getActiveCaseFlowConfiguration(value))
+          }
         >
           {mutation.isPending ? (
             <Spinner data-icon="inline-start" />
@@ -1388,7 +1558,7 @@ export function CaseFlowRulesPanel() {
           )}
           Save flow rules
         </Button>
-      </div>
+      </ConfigurationActionBar>
     </div>
   )
 }
@@ -1408,8 +1578,6 @@ function StartRuleRow({
 }) {
   return (
     <FlowRuleRow
-      active={rule.isActive}
-      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <div className="min-w-0 flex-1">
@@ -1440,8 +1608,6 @@ function CloseTriggerRuleRow({
 }) {
   return (
     <FlowRuleRow
-      active={rule.isActive}
-      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <FlowRuleRelation
@@ -1484,8 +1650,6 @@ function CloseBlockerRuleRow({
 }) {
   return (
     <FlowRuleRow
-      active={rule.isActive}
-      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <FlowRuleRelation
@@ -1504,6 +1668,48 @@ function CloseBlockerRuleRow({
               value={rule.prerequisiteQueueId}
               queues={queues}
               placeholder="Until this case closes"
+              onValueChange={(prerequisiteQueueId) =>
+                onChange({ ...rule, prerequisiteQueueId })
+              }
+            />
+          }
+        />
+      }
+    />
+  )
+}
+
+function CreationRequirementRow({
+  rule,
+  queues,
+  onChange,
+  onRemove,
+}: {
+  rule: CaseFlowCreationRequirement
+  queues: QueueOption[]
+  onChange: (rule: CaseFlowCreationRequirement) => void
+  onRemove: () => void
+}) {
+  return (
+    <FlowRuleRow
+      onRemove={onRemove}
+      fields={
+        <FlowRuleRelation
+          left={
+            <QueueSelect
+              value={rule.targetQueueId}
+              queues={queues}
+              placeholder="Before creating this case"
+              onValueChange={(targetQueueId) =>
+                onChange({ ...rule, targetQueueId })
+              }
+            />
+          }
+          right={
+            <QueueSelect
+              value={rule.prerequisiteQueueId}
+              queues={queues}
+              placeholder="Require this case closed"
               onValueChange={(prerequisiteQueueId) =>
                 onChange({ ...rule, prerequisiteQueueId })
               }
@@ -1536,26 +1742,15 @@ function FlowRuleRelation({
 
 function FlowRuleRow({
   fields,
-  active,
-  onActiveChange,
   onRemove,
 }: {
   fields: ReactNode
-  active: boolean
-  onActiveChange: (next: boolean) => void
   onRemove: () => void
 }) {
   return (
-    <div
-      className={cn(
-        'group flex flex-col gap-3 rounded-md border p-3 transition-colors',
-        'sm:flex-row sm:items-center',
-        active ? 'bg-card' : 'bg-muted/40',
-      )}
-    >
+    <div className="group flex flex-col gap-3 rounded-md bg-muted/30 p-3 transition-colors sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center">{fields}</div>
       <div className="flex items-center justify-end gap-1 sm:gap-2">
-        <RuleActiveToggle checked={active} onCheckedChange={onActiveChange} />
         <Button
           type="button"
           variant="ghost"
@@ -1568,29 +1763,6 @@ function FlowRuleRow({
         </Button>
       </div>
     </div>
-  )
-}
-
-function RuleActiveToggle({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean
-  onCheckedChange: (checked: boolean) => void
-}) {
-  const id = useId()
-  return (
-    <label
-      htmlFor={id}
-      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-    >
-      <Checkbox
-        id={id}
-        checked={checked}
-        onCheckedChange={(next) => onCheckedChange(next === true)}
-      />
-      <span>Active</span>
-    </label>
   )
 }
 
@@ -1709,6 +1881,10 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
       rule.blockedQueueId,
       rule.prerequisiteQueueId,
     ]),
+    ...value.creationRequirements.flatMap((rule) => [
+      rule.targetQueueId,
+      rule.prerequisiteQueueId,
+    ]),
   ]
   if (requiredIds.some((id) => !id)) return 'Select queues for every rule.'
 
@@ -1752,7 +1928,46 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
     return 'Each close requirement relation can only be configured once.'
   }
 
+  if (
+    value.creationRequirements.some(
+      (rule) => rule.targetQueueId === rule.prerequisiteQueueId,
+    )
+  ) {
+    return 'A queue cannot require itself before creation.'
+  }
+
+  if (
+    hasDuplicates(
+      value.creationRequirements.map(
+        (rule) => `${rule.targetQueueId}:${rule.prerequisiteQueueId}`,
+      ),
+    )
+  ) {
+    return 'Each case creation requirement relation can only be configured once.'
+  }
+
   return null
+}
+
+function getActiveCaseFlowConfiguration(
+  value: CaseFlowConfiguration,
+): CaseFlowConfiguration {
+  return {
+    ...value,
+    startRules: value.startRules.map((rule) => ({ ...rule, isActive: true })),
+    closeTriggers: value.closeTriggers.map((rule) => ({
+      ...rule,
+      isActive: true,
+    })),
+    closeBlockers: value.closeBlockers.map((rule) => ({
+      ...rule,
+      isActive: true,
+    })),
+    creationRequirements: value.creationRequirements.map((rule) => ({
+      ...rule,
+      isActive: true,
+    })),
+  }
 }
 
 function hasDuplicates(values: string[]) {
@@ -1760,21 +1975,31 @@ function hasDuplicates(values: string[]) {
 }
 
 function LimitSection({
+  icon,
+  colorClass,
   title,
+  description,
   prefix,
   value,
   errors,
   onChange,
 }: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  colorClass: string
   title: string
+  description: string
   prefix: 'testing' | 'live'
   value: LimitsAndMdrSettings['testing']
   errors: Record<string, string>
   onChange: (path: string, value: number) => void
 }) {
   return (
-    <FieldSet className="rounded-lg border p-4">
-      <FieldLegend>{title}</FieldLegend>
+    <ConfigurationSectionCard
+      icon={icon}
+      colorClass={colorClass}
+      title={title}
+      description={description}
+    >
       <FieldGroup>
         <AmountField
           id={`${prefix}-collection-min`}
@@ -1805,22 +2030,30 @@ function LimitSection({
           onChange={(next) => onChange(`${prefix}.disbursementMax`, next)}
         />
       </FieldGroup>
-    </FieldSet>
+    </ConfigurationSectionCard>
   )
 }
 
 function RatesSection({
+  icon,
+  colorClass,
   value,
   errors,
   onChange,
 }: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  colorClass: string
   value: LimitsAndMdrSettings['rates']
   errors: Record<string, string>
   onChange: (path: string, value: number) => void
 }) {
   return (
-    <FieldSet className="rounded-lg border p-4">
-      <FieldLegend>Commission Rates</FieldLegend>
+    <ConfigurationSectionCard
+      icon={icon}
+      colorClass={colorClass}
+      title="Commission Rates"
+      description="Global MDR and payout rates used by case emails and reviews."
+    >
       <FieldGroup>
         <AmountField
           id="rate-ewallets"
@@ -1851,7 +2084,78 @@ function RatesSection({
           onChange={(next) => onChange('rates.payout', next)}
         />
       </FieldGroup>
-    </FieldSet>
+    </ConfigurationSectionCard>
+  )
+}
+
+function ConfigurationSectionCard({
+  icon,
+  colorClass,
+  title,
+  description,
+  action,
+  children,
+}: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  colorClass: string
+  title: string
+  description: string
+  action?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <ConfigurationCardHeaderContent
+          icon={icon}
+          colorClass={colorClass}
+          title={title}
+          description={description}
+        />
+        {action ? <CardAction>{action}</CardAction> : null}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
+function ConfigurationActionBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Separator />
+      <div className="flex justify-end">{children}</div>
+    </div>
+  )
+}
+
+function ConfigurationCardHeaderContent({
+  icon,
+  colorClass,
+  title,
+  description,
+}: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  colorClass: string
+  title: string
+  description: string
+}) {
+  const Icon = icon
+
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          'flex size-10 items-center justify-center rounded-lg',
+          colorClass,
+        )}
+      >
+        <Icon className="size-5" />
+      </div>
+      <div>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </div>
+    </div>
   )
 }
 

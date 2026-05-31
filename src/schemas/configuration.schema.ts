@@ -103,11 +103,19 @@ export const caseFlowCloseBlockerSchema = z.object({
   isActive: z.boolean(),
 })
 
+export const caseFlowCreationRequirementSchema = z.object({
+  id: z.string().optional(),
+  targetQueueId: z.string(),
+  prerequisiteQueueId: z.string(),
+  isActive: z.boolean(),
+})
+
 export const caseFlowConfigurationSchema = z.object({
   queues: z.array(caseFlowQueueSchema),
   startRules: z.array(caseFlowStartRuleSchema),
   closeTriggers: z.array(caseFlowCloseTriggerSchema),
   closeBlockers: z.array(caseFlowCloseBlockerSchema),
+  creationRequirements: z.array(caseFlowCreationRequirementSchema).default([]),
 })
 
 export const emailSendingModeSchema = z
@@ -120,10 +128,15 @@ export const emailSendingModeSchema = z
     path: ['autoEnabled'],
   })
 
+export const merchantPortalSettingsSchema = z.object({
+  loginUrl: z.string().trim().url(),
+})
+
 export const configurationOverviewSchema = z.object({
   limitsAndMdr: limitsAndMdrSettingsSchema,
   linkDeadlines: linkDeadlineSettingsSchema,
   emailSendingMode: emailSendingModeSchema,
+  merchantPortal: merchantPortalSettingsSchema,
   agreementDrafts: z.array(agreementDraftSchema),
   subMerchants: z.array(subMerchantDraftSchema),
   businessTypes: z.array(businessTypeOptionSchema),
@@ -132,8 +145,12 @@ export const configurationOverviewSchema = z.object({
 export type LimitsAndMdrSettings = z.infer<typeof limitsAndMdrSettingsSchema>
 export type LinkDeadlineSettings = z.infer<typeof linkDeadlineSettingsSchema>
 export type EmailSendingMode = z.infer<typeof emailSendingModeSchema>
+export type MerchantPortalSettings = z.infer<typeof merchantPortalSettingsSchema>
 export type ConfigurationOverview = z.infer<typeof configurationOverviewSchema>
 export type CaseFlowConfiguration = z.infer<typeof caseFlowConfigurationSchema>
 export type CaseFlowStartRule = z.infer<typeof caseFlowStartRuleSchema>
 export type CaseFlowCloseTrigger = z.infer<typeof caseFlowCloseTriggerSchema>
 export type CaseFlowCloseBlocker = z.infer<typeof caseFlowCloseBlockerSchema>
+export type CaseFlowCreationRequirement = z.infer<
+  typeof caseFlowCreationRequirementSchema
+>

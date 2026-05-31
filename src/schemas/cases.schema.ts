@@ -65,6 +65,7 @@ export const caseListItemSchema = z.object({
   queueId: z.string(),
   queueName: z.string(),
   queueSlaHours: z.number().nullable().optional(),
+  slaBreached: z.boolean().nullable().optional(),
   merchantId: z.string(),
   merchantName: z.string(),
   ownerId: z.string().nullable(),
@@ -190,6 +191,7 @@ export const caseDetailSchema = z.object({
     status: z.enum(CASE_STATUSES),
     priority: z.enum(['normal', 'high']),
     closeOutcome: z.enum(CLOSE_OUTCOMES).nullable(),
+    slaBreached: z.boolean().nullable().optional(),
     closeReason: z.string().nullable(),
     closedAt: z.string().nullable(),
     createdAt: z.string(),
@@ -481,6 +483,12 @@ export const sendMidCreationEmailInputSchema = z.object({
 export type SendMidCreationEmailInput = z.infer<
   typeof sendMidCreationEmailInputSchema
 >
+
+export const sendLiveEmailInputSchema = z.object({
+  email: z.string().trim().email(),
+})
+
+export type SendLiveEmailInput = z.infer<typeof sendLiveEmailInputSchema>
 
 export type MidCreationEmailResponse = {
   status: 'sent' | 'failed'

@@ -52,8 +52,7 @@ function DataTableCellSkeleton({
   if (
     columnId === 'queueName' ||
     columnId === 'status' ||
-    columnId === 'priority' ||
-    columnId === 'onboardingStage'
+    columnId === 'priority'
   ) {
     return (
       <Skeleton

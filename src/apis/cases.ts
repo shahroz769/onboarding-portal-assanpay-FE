@@ -15,6 +15,7 @@ import type {
   SaveMidCreationDetailsResponse,
   SaveDocumentReviewSubMerchantInput,
   SaveWordpressWebsiteInput,
+  SendLiveEmailInput,
   SendMidCreationEmailInput,
   SelectSubMerchantFormInput,
   AgreementEmailResponse,
@@ -332,6 +333,17 @@ export async function sendMidCreationEmail(
   return response.data
 }
 
+export async function sendLiveEmail(
+  caseId: string,
+  input: SendLiveEmailInput,
+): Promise<MidCreationEmailResponse> {
+  const response = await apiClient.post<MidCreationEmailResponse>(
+    `/api/cases/${caseId}/live/send-mail`,
+    input,
+  )
+  return response.data
+}
+
 // ─── Email preview & manual confirm ─────────────────────────────────────────
 
 export interface EmailPreviewResult {
@@ -440,6 +452,39 @@ export async function confirmMidCreationEmailManual({
   formData.append('portalMid', String(input.portalMid))
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/testing/send-credentials-mail/manual`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+
+export async function fetchLiveEmailPreview(
+  caseId: string,
+  input: SendLiveEmailInput,
+): Promise<EmailPreviewResult> {
+  const response = await apiClient.post<EmailPreviewResult>(
+    `/api/cases/${caseId}/live/send-mail/preview`,
+    input,
+  )
+  return response.data
+}
+
+export async function confirmLiveEmailManual({
+  caseId,
+  tokenId,
+  file,
+  ...input
+}: {
+  caseId: string
+  tokenId: string
+  file: File
+} & SendLiveEmailInput): Promise<ManualEmailConfirmResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('tokenId', tokenId)
+  formData.append('email', input.email)
+  const response = await apiClient.post<ManualEmailConfirmResult>(
+    `/api/cases/${caseId}/live/send-mail/manual`,
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } },
   )

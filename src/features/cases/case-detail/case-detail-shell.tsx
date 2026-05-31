@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
-import { getSlaStatus } from '#/lib/sla'
+import { getCaseSlaStatus } from '#/lib/sla'
 import type { CaseDetail, CloseOutcome, QueueStage } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
@@ -280,10 +280,13 @@ const SLA_DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 })
 
 function CaseSlaBox({ caseDetail }: { caseDetail: CaseDetail }) {
-  const sla = getSlaStatus(
-    caseDetail.case.createdAt,
-    caseDetail.queue.slaHours,
-  )
+  const sla = getCaseSlaStatus({
+    createdAt: caseDetail.case.createdAt,
+    closedAt: caseDetail.case.closedAt,
+    status: caseDetail.case.status,
+    slaHours: caseDetail.queue.slaHours,
+    slaBreached: caseDetail.case.slaBreached,
+  })
 
   return (
     <Card className="gap-3 py-4">

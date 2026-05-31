@@ -5,6 +5,7 @@ import type {
   EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
+  MerchantPortalSettings,
 } from '#/schemas/configuration.schema'
 import {
   caseFlowConfigurationSchema,
@@ -40,6 +41,11 @@ export async function updateEmailSendingMode(input: EmailSendingMode) {
   return response.data
 }
 
+export async function updateMerchantPortal(input: MerchantPortalSettings) {
+  const response = await apiClient.put('/api/configuration/merchant-portal', input)
+  return response.data
+}
+
 export async function fetchCaseFlowConfiguration(): Promise<CaseFlowConfiguration> {
   const response = await apiClient.get('/api/configuration/case-flow')
   return caseFlowConfigurationSchema.parse(response.data)
@@ -48,7 +54,7 @@ export async function fetchCaseFlowConfiguration(): Promise<CaseFlowConfiguratio
 export async function updateCaseFlowConfiguration(
   input: CaseFlowConfiguration,
 ): Promise<CaseFlowConfiguration> {
-  const response = await apiClient.put('/api/configuration/case-flow', {
+  const payload = {
     startRules: input.startRules.map((rule) => ({
       targetQueueId: rule.targetQueueId,
       order: rule.order,
@@ -65,7 +71,18 @@ export async function updateCaseFlowConfiguration(
       prerequisiteQueueId: rule.prerequisiteQueueId,
       isActive: rule.isActive,
     })),
-  })
+    ...(input.creationRequirements.length > 0
+      ? {
+          creationRequirements: input.creationRequirements.map((rule) => ({
+            targetQueueId: rule.targetQueueId,
+            prerequisiteQueueId: rule.prerequisiteQueueId,
+            isActive: rule.isActive,
+          })),
+        }
+      : {}),
+  }
+
+  const response = await apiClient.put('/api/configuration/case-flow', payload)
   return caseFlowConfigurationSchema.parse(response.data)
 }
 
