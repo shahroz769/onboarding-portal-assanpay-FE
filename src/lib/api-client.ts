@@ -1,11 +1,11 @@
 import axios from 'axios'
 
+import { API_BASE_URL } from '#/config/client-env'
 import type { AuthClient } from '#/features/auth/auth-client'
 import { sanitizeRedirect } from '#/features/auth/redirect'
 import type { RefreshResponse } from '#/types/auth'
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+export { API_BASE_URL } from '#/config/client-env'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
