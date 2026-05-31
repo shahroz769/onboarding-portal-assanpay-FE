@@ -1,13 +1,15 @@
 import { Suspense } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
-import type { CloseOutcome, QueueStage } from '#/schemas/cases.schema'
+import { getSlaStatus } from '#/lib/sla'
+import type { CaseDetail, CloseOutcome, QueueStage } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
 import { getQueueRenderer } from './queue-registry'
@@ -54,6 +56,8 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
               <AlertDescription>{data.case.closeReason}</AlertDescription>
             </Alert>
           ) : null}
+
+          <CaseSlaBox caseDetail={data} />
 
           <Suspense fallback={<QueueRendererSkeleton />}>
             <QueueRenderer caseDetail={data} caseId={caseId} />
@@ -267,6 +271,54 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
       </span>
       <p className="wrap-break-word text-sm font-semibold">{value}</p>
     </div>
+  )
+}
+
+const SLA_DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
+function CaseSlaBox({ caseDetail }: { caseDetail: CaseDetail }) {
+  const sla = getSlaStatus(
+    caseDetail.case.createdAt,
+    caseDetail.queue.slaHours,
+  )
+
+  return (
+    <Card className="gap-3 py-4">
+      <CardContent className="flex flex-col gap-3 px-4 py-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Clock3 className="size-4 text-muted-foreground" />
+            <span className="text-sm font-semibold">SLA</span>
+          </div>
+          {sla.isBreached ? (
+            <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+              Breached
+            </Badge>
+          ) : (
+            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+              On Time
+            </Badge>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <InfoBlock
+            label="SLA Target"
+            value={`${sla.slaHours} ${sla.slaHours === 1 ? 'hour' : 'hours'}`}
+          />
+          <InfoBlock
+            label="Created At"
+            value={SLA_DATE_FORMAT.format(new Date(caseDetail.case.createdAt))}
+          />
+          <InfoBlock
+            label="SLA Deadline"
+            value={SLA_DATE_FORMAT.format(sla.deadline)}
+          />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

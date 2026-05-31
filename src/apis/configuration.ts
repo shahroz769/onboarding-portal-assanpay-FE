@@ -121,3 +121,16 @@ export async function updateQueueStatus({
   })
   return response.data
 }
+
+export async function updateQueueSla({
+  queueId,
+  slaHours,
+}: {
+  queueId: string
+  slaHours: number
+}) {
+  const response = await apiClient.patch(`/api/queues/${queueId}/sla`, {
+    slaHours,
+  })
+  return response.data
+}

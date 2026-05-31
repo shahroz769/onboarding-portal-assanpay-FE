@@ -50,6 +50,7 @@ export const queueSchema = z.object({
   slug: z.string(),
   prefix: z.string(),
   qcEnabled: z.boolean().optional(),
+  slaHours: z.number().optional(),
   isActive: z.boolean().optional(),
   createdAt: z.string(),
 })
@@ -63,6 +64,7 @@ export const caseListItemSchema = z.object({
   caseNumber: z.string(),
   queueId: z.string(),
   queueName: z.string(),
+  queueSlaHours: z.number().nullable().optional(),
   merchantId: z.string(),
   merchantName: z.string(),
   ownerId: z.string().nullable(),
@@ -200,6 +202,7 @@ export const caseDetailSchema = z.object({
     name: z.string(),
     slug: z.string(),
     qcEnabled: z.boolean(),
+    slaHours: z.number().nullable().optional(),
   }),
   merchant: z.record(z.string(), z.unknown()),
   documents: z.array(z.record(z.string(), z.unknown())),

@@ -61,6 +61,7 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
+import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
 import {
   caseFlowConfigurationQueryOptions,
@@ -70,6 +71,7 @@ import {
   useUpdateEmailSendingModeMutation,
   useUpdateLimitsAndMdrMutation,
   useUpdateLinkDeadlinesMutation,
+  useUpdateQueueSlaMutation,
   useUpdateQueueStatusMutation,
   useUploadAgreementDraftMutation,
 } from '#/hooks/use-configuration-query'
@@ -769,6 +771,18 @@ export function QueuesPanel() {
         cell: (queue) => <span className="truncate">{queue.prefix}</span>,
       },
       {
+        id: 'sla',
+        header: 'SLA',
+        width: 160,
+        cell: (queue) => (
+          <QueueSlaCell
+            queueId={queue.id}
+            queueName={queue.name}
+            slaHours={queue.slaHours ?? DEFAULT_SLA_HOURS}
+          />
+        ),
+      },
+      {
         id: 'status',
         header: 'Status',
         width: 140,
@@ -824,6 +838,94 @@ export function QueuesPanel() {
         }
       />
     </div>
+  )
+}
+
+function QueueSlaCell({
+  queueId,
+  queueName,
+  slaHours,
+}: {
+  queueId: string
+  queueName: string
+  slaHours: number
+}) {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState(String(slaHours))
+  const updateSla = useUpdateQueueSlaMutation()
+
+  useEffect(() => {
+    if (open) {
+      setValue(String(slaHours))
+    }
+  }, [open, slaHours])
+
+  const parsed = Number(value)
+  const isValid = Number.isInteger(parsed) && parsed >= 1 && parsed <= 8760
+
+  function handleSave() {
+    if (!isValid) return
+    updateSla.mutate(
+      { queueId, slaHours: parsed },
+      { onSuccess: () => setOpen(false) },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto cursor-pointer justify-start px-0 font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+        >
+          {slaHours} {slaHours === 1 ? 'hour' : 'hours'}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit SLA</DialogTitle>
+          <DialogDescription>
+            Set the SLA in hours for the {queueName} queue. Cases breach this SLA
+            when the configured hours pass after creation.
+          </DialogDescription>
+        </DialogHeader>
+        <FieldGroup>
+          <Field data-invalid={!isValid ? true : undefined}>
+            <FieldLabel htmlFor={`sla-${queueId}`}>SLA in Hours</FieldLabel>
+            <Input
+              id={`sla-${queueId}`}
+              type="number"
+              min={1}
+              max={8760}
+              step={1}
+              inputMode="numeric"
+              value={value}
+              aria-invalid={!isValid ? true : undefined}
+              onChange={(event) => setValue(event.target.value)}
+            />
+            <FieldDescription>
+              Enter a whole number between 1 and 8760 hours.
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!isValid || updateSla.isPending}
+          >
+            {updateSla.isPending ? <Spinner data-icon="inline-start" /> : null}
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

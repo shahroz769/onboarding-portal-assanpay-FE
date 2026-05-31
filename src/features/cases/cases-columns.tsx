@@ -7,6 +7,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import { cn } from '#/lib/utils'
+import { getSlaStatus } from '#/lib/sla'
 import type { CaseListItem, CaseSortableColumn } from '#/schemas/cases.schema'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import type { RoleType } from '#/types/auth'
@@ -87,6 +88,22 @@ function PriorityCell({
       <button type="button" onClick={() => onOpenPriority(item)}>
         {item.priority === 'high' ? 'High' : 'Normal'}
       </button>
+    </Badge>
+  )
+}
+
+function SlaCell({ item }: { item: CaseListItem }) {
+  const sla = getSlaStatus(item.createdAt, item.queueSlaHours)
+  if (sla.isBreached) {
+    return (
+      <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+        Breached
+      </Badge>
+    )
+  }
+  return (
+    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+      On Time
     </Badge>
   )
 }
@@ -218,6 +235,14 @@ export function createCaseColumns({
         </Badge>
       ),
       width: 120,
+    },
+
+    // SLA
+    {
+      id: 'sla',
+      header: 'SLA',
+      cell: (item) => <SlaCell item={item} />,
+      width: 110,
     },
 
     // Priority

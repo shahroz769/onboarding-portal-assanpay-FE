@@ -13,6 +13,7 @@ import {
   updateEmailSendingMode,
   updateLimitsAndMdr,
   updateLinkDeadlines,
+  updateQueueSla,
   updateQueueStatus,
   uploadAgreementDraft,
 } from '#/apis/configuration'
@@ -149,6 +150,23 @@ export function useUpdateQueueStatusMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to update queue status.'))
+    },
+  })
+}
+
+export function useUpdateQueueSlaMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateQueueSla,
+    onSuccess: async () => {
+      toast.success('Queue SLA updated.')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY }),
+        queryClient.invalidateQueries({ queryKey: QUEUES_KEY }),
+      ])
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update queue SLA.'))
     },
   })
 }
