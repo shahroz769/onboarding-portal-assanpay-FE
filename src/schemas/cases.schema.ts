@@ -317,6 +317,7 @@ export const caseDetailSchema = z.object({
         })
         .nullable(),
       portalMid: z.number().nullable().optional(),
+      credentialsReady: z.boolean().optional(),
     })
     .nullable()
     .optional(),
@@ -463,6 +464,8 @@ export type AgreementEmailResponse = {
 
 export const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
+  email: z.string().trim().email(),
+  password: z.string().min(8).max(128),
 })
 
 export type SaveMidCreationDetailsInput = z.infer<
@@ -471,14 +474,11 @@ export type SaveMidCreationDetailsInput = z.infer<
 
 export type SaveMidCreationDetailsResponse = {
   portalMid: number
+  email: string
   savedAt: string
 }
 
-export const sendMidCreationEmailInputSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(8).max(128),
-  portalMid: z.coerce.number().int().positive(),
-})
+export const sendMidCreationEmailInputSchema = z.object({})
 
 export type SendMidCreationEmailInput = z.infer<
   typeof sendMidCreationEmailInputSchema

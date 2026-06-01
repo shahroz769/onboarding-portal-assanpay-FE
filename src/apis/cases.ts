@@ -438,7 +438,6 @@ export async function confirmMidCreationEmailManual({
   caseId,
   tokenId,
   file,
-  ...input
 }: {
   caseId: string
   tokenId: string
@@ -447,9 +446,6 @@ export async function confirmMidCreationEmailManual({
   const formData = new FormData()
   formData.append('file', file)
   formData.append('tokenId', tokenId)
-  formData.append('email', input.email)
-  formData.append('password', input.password)
-  formData.append('portalMid', String(input.portalMid))
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/testing/send-credentials-mail/manual`,
     formData,

@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CreditCard,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Globe,
   Info,
   Save,
@@ -30,7 +32,18 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Spinner } from '#/components/ui/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
@@ -51,6 +64,15 @@ const midDetailsSchema = z.object({
     })
     .int('Portal MID must be a whole number.')
     .positive('Portal MID must be greater than zero.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required.')
+    .email('Enter a valid email.'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters.')
+    .max(128, 'Password is too long.'),
 })
 
 type MidDetailsForm = z.infer<typeof midDetailsSchema>
@@ -87,10 +109,15 @@ export default function MerchantIdRenderer({
   const isWorking = caseDetail.case.status === 'working'
   const canEdit = isCaseOwner && isWorking
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
+  const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
 
   const merchant = caseDetail.merchant
   const websiteCmsValue = getMerchantString(merchant, 'websiteCms')
   const businessWebsite = getMerchantString(merchant, 'businessWebsite')
+  const merchantEmail =
+    getMerchantString(merchant, 'businessEmail') ??
+    getMerchantString(merchant, 'email') ??
+    ''
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
   const limitsAndMdr = configurationQuery.data?.limitsAndMdr
@@ -102,8 +129,11 @@ export default function MerchantIdRenderer({
 
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
+    email: merchantEmail,
+    password: '',
   })
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [passwordVisible, setPasswordVisible] = useState(false)
 
   function updateField<TKey extends keyof MidDetailsForm>(
     key: TKey,
@@ -212,10 +242,11 @@ export default function MerchantIdRenderer({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Merchant Portal MID</CardTitle>
+              <CardTitle>Merchant Portal Credentials</CardTitle>
               <CardDescription>
-                Save the Portal MID created on the merchant platform before
-                closing this case successfully.
+                Save the credentials created on the merchant platform before
+                closing this case successfully. Testing can send these values
+                without viewing them.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -249,6 +280,65 @@ export default function MerchantIdRenderer({
               />
               <FieldError>{errors.portalMid}</FieldError>
             </Field>
+            <Field data-invalid={Boolean(errors.email)}>
+              <FieldLabel htmlFor="portal-email">Email</FieldLabel>
+              <Input
+                id="portal-email"
+                type="email"
+                autoComplete="off"
+                placeholder="merchant@example.com"
+                value={form.email}
+                disabled={!canEdit || saveMidCreationDetails.isPending}
+                aria-invalid={Boolean(errors.email)}
+                onChange={(event) => updateField('email', event.target.value)}
+              />
+              <FieldError>{errors.email}</FieldError>
+            </Field>
+            <Field data-invalid={Boolean(errors.password)}>
+              <FieldLabel htmlFor="portal-password">Password</FieldLabel>
+              <InputGroup
+                data-disabled={
+                  !canEdit || saveMidCreationDetails.isPending
+                    ? true
+                    : undefined
+                }
+              >
+                <InputGroupInput
+                  id="portal-password"
+                  type={passwordVisible ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
+                  value={form.password}
+                  disabled={!canEdit || saveMidCreationDetails.isPending}
+                  aria-invalid={Boolean(errors.password)}
+                  onChange={(event) =>
+                    updateField('password', event.target.value)
+                  }
+                />
+                <InputGroupAddon align="inline-end">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <InputGroupButton
+                        aria-label={
+                          passwordVisible ? 'Hide password' : 'Show password'
+                        }
+                        disabled={!canEdit || saveMidCreationDetails.isPending}
+                        size="icon-xs"
+                        onClick={() =>
+                          setPasswordVisible((current) => !current)
+                        }
+                      >
+                        {passwordVisible ? <EyeOff /> : <Eye />}
+                      </InputGroupButton>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {passwordVisible ? 'Hide password' : 'Show password'}
+                    </TooltipContent>
+                  </Tooltip>
+                </InputGroupAddon>
+              </InputGroup>
+              <FieldError>{errors.password}</FieldError>
+            </Field>
 
             <div className="flex flex-wrap justify-end gap-2">
               <Button
@@ -267,12 +357,12 @@ export default function MerchantIdRenderer({
         </CardContent>
       </Card>
 
-      {savedPortalMid ? (
+      {savedCredentialsReady ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Portal MID saved</AlertTitle>
+          <AlertTitle>Portal credentials saved</AlertTitle>
           <AlertDescription>
-            Portal MID {savedPortalMid} is saved. You can now mark this case as
+            Merchant portal credentials are saved. You can now mark this case as
             successful.
           </AlertDescription>
         </Alert>

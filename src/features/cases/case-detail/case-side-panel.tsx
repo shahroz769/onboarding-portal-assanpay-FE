@@ -54,7 +54,7 @@ function getPrimaryActionCopy(
     isSubMerchantFormCase: boolean
     hasSubMerchantFinalForm: boolean
     isMidCreationCase: boolean
-    hasMidCreationPortalMid: boolean
+    hasMidCreationCredentials: boolean
     isAgreementCase: boolean
     hasAgreementFinal: boolean
     hasAgreementClientSubmission: boolean
@@ -141,20 +141,20 @@ function getPrimaryActionCopy(
   }
 
   if (options.isMidCreationCase && status === 'working') {
-    if (options.hasMidCreationPortalMid) {
+    if (options.hasMidCreationCredentials) {
       return {
-        title: 'Portal MID saved',
+        title: 'Portal credentials saved',
         description:
-          'The merchant Portal MID is saved. You can now close this case successfully.',
+          'The merchant portal credentials are saved. You can now close this case successfully.',
         actionLabel: 'Mark as successful',
         actionKind: 'mark-successful' as const,
       }
     }
 
     return {
-      title: 'Portal MID required',
+      title: 'Portal credentials required',
       description:
-        'Save the merchant Portal MID in the case workspace before closing this case successfully.',
+        'Save the merchant portal MID, email, and password in the case workspace before closing this case successfully.',
       actionLabel: null,
       actionKind: 'mid-creation' as const,
     }
@@ -316,7 +316,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     isSubMerchantFormCase,
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
     isMidCreationCase,
-    hasMidCreationPortalMid: Boolean(caseDetail.testing?.portalMid),
+    hasMidCreationCredentials: Boolean(caseDetail.testing?.credentialsReady),
     isAgreementCase,
     hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
     hasAgreementClientSubmission: Boolean(
@@ -344,8 +344,11 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const unsuccessfulDisabled =
     !closeReason.trim() || closeUnsuccessful.isPending
+  const primaryActionPending = takeOwnership.isPending || advanceStage.isPending
 
   function handlePrimaryAction() {
+    if (primaryActionPending) return
+
     if (primaryAction.actionKind === 'take-ownership') {
       takeOwnership.mutate()
       return
@@ -444,20 +447,21 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                             : primaryAction.actionKind === 'sub-merchant-form'
                               ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
                               : primaryAction.actionKind === 'mid-creation'
-                                ? 'Save the Portal MID in the case workspace before closing this case.'
+                                ? 'Save the portal MID, email, and password in the case workspace before closing this case.'
                                 : primaryAction.actionKind === 'agreement'
                                   ? 'Complete the Agreement upload and mail workflow in the case workspace.'
                                   : primaryAction.actionKind ===
                                       'physical-agreement'
                                     ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
-                                  : isCaseOwner
-                                    ? 'When everything checks out, close this case successfully.'
-                                    : 'Only the current case owner can complete this case.'}
+                                    : isCaseOwner
+                                      ? 'When everything checks out, close this case successfully.'
+                                      : 'Only the current case owner can complete this case.'}
                     </p>
                     {showPrimaryActionButton ? (
                       <Button
                         onClick={handlePrimaryAction}
                         disabled={
+                          primaryActionPending ||
                           (primaryAction.actionKind !== 'take-ownership' &&
                             primaryAction.actionKind !== 'mark-successful' &&
                             primaryAction.actionKind !== 'review') ||

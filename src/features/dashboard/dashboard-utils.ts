@@ -17,7 +17,7 @@ export function formatPercent(value: number) {
 }
 
 export function formatDay(value: string) {
-  return format(new Date(value), 'MMM d')
+  return format(parseDateKey(value), 'MMM d')
 }
 
 export function formatDateTime(value: string | null) {
@@ -31,6 +31,12 @@ export function formatRelative(value: string | null) {
 }
 
 // ─── Status colors (chart palette) ──────────────────────────────────────────
+
+function parseDateKey(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return new Date(value)
+  return new Date(year, month - 1, day)
+}
 
 export const CASE_STATUS_COLORS: Record<CaseStatus, string> = {
   new: 'var(--chart-1)',
