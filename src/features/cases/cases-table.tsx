@@ -46,14 +46,13 @@ function QueueSelector() {
     setPortalTarget(document.getElementById('page-header-actions'))
   }, [])
 
-  const content = state.isQueuesLoading ? (
-    <Skeleton className="h-9 w-50" />
-  ) : (
+  const content = (
     <Select
       value={filters.queueId ?? 'all'}
       onValueChange={(value) =>
         actions.setFilter('queueId', value === 'all' ? undefined : value)
       }
+      disabled={state.isQueuesLoading}
     >
       <SelectTrigger className="w-50">
         <SelectValue placeholder="All Queues" />
@@ -104,9 +103,7 @@ function Toolbar() {
             }
           />
         )}
-        {state.hideOwnerFilter ? null : state.isUsersLoading ? (
-          <Skeleton className="h-9 w-32" />
-        ) : (
+        {state.hideOwnerFilter ? null : (
           <DataTableFilter
             title="Case Owner"
             options={ownerFilterOptions}
@@ -123,7 +120,9 @@ function Toolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         ) : null}
-        {state.isLoading ? null : (
+        {state.isLoading ? (
+          <Skeleton className="h-5 w-28" />
+        ) : (
           <span className="text-sm text-muted-foreground">
             Loaded {state.loadedCount} Cases
           </span>

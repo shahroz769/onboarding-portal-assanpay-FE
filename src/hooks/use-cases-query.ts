@@ -1,5 +1,6 @@
 import {
   infiniteQueryOptions,
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQueryClient,
@@ -39,6 +40,7 @@ export function casesInfiniteQueryOptions(filters: CaseFilters) {
       }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

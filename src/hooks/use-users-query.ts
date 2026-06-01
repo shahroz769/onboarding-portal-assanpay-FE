@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQueryClient,
@@ -23,6 +24,7 @@ export function usersQueryOptions(filters: Partial<UserRouteSearch> = {}) {
   return queryOptions({
     queryKey: [...USERS_KEY, filters],
     queryFn: () => fetchUsers(filters),
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

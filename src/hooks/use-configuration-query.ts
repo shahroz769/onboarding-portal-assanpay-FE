@@ -13,6 +13,7 @@ import {
   updateEmailSendingMode,
   updateMerchantPortal,
   updatePaymentMethods,
+  updatePayoutMethods,
   updateLimitsAndMdr,
   updateLinkDeadlines,
   updateQueueSla,
@@ -122,6 +123,20 @@ export function useUpdatePaymentMethodsMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to save payment methods.'))
+    },
+  })
+}
+
+export function useUpdatePayoutMethodsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: PaymentMethodSettings) => updatePayoutMethods(input),
+    onSuccess: async () => {
+      toast.success('Payout methods saved.')
+      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save payout methods.'))
     },
   })
 }

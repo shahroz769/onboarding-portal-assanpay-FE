@@ -20,12 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Skeleton } from '#/components/ui/skeleton'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
   usersQueryOptions,
   useBulkUpdateUserStatusMutation,
 } from '#/hooks/use-users-query'
-import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import type { UserRouteSearch } from '#/schemas/users.schema'
 import {
   USER_ROLE_LABELS,
@@ -85,8 +85,8 @@ export function UsersTableComposed({
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState<'active' | 'inactive'>('active')
   const usersQuery = useQuery(usersQueryOptions(filters))
-  const queuesQuery = useQuery(queuesQueryOptions())
   const bulkStatusMutation = useBulkUpdateUserStatusMutation()
+  const isTableLoading = usersQuery.isLoading || usersQuery.isFetching
 
   const users = usersQuery.data ?? []
   const allIds = useMemo(() => users.map((user) => user.id), [users])
@@ -160,9 +160,13 @@ export function UsersTableComposed({
                 />
               </DataTableToolbar.Filters>
               <DataTableToolbar.Actions>
-                <span className="text-sm text-muted-foreground">
-                  Loaded {users.length} Employees
-                </span>
+                {isTableLoading ? (
+                  <Skeleton className="h-5 w-32" />
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Loaded {users.length} Employees
+                  </span>
+                )}
               </DataTableToolbar.Actions>
             </DataTableToolbar>
           </div>
@@ -205,7 +209,7 @@ export function UsersTableComposed({
               data={users}
               getRowId={(user) => user.id}
               selectedIds={selectedIdSet}
-              isLoading={usersQuery.isLoading || queuesQuery.isLoading}
+              isLoading={isTableLoading}
               emptyContent={
                 <div className="flex flex-col items-center gap-1 text-muted-foreground">
                   <p className="text-sm">No users found.</p>

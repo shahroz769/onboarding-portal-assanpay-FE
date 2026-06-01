@@ -22,7 +22,7 @@ export const Route = createFileRoute('/_app/merchants/')({
   pendingMs: 0,
   pendingComponent: MerchantsRoutePending,
   loader: async ({ context, deps }) => {
-    await context.queryClient.ensureInfiniteQueryData(
+    void context.queryClient.prefetchInfiniteQuery(
       merchantsInfiniteQueryOptions({
         ...deps,
         createdAtFrom: undefined,

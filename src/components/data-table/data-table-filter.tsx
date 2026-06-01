@@ -97,7 +97,7 @@ export function DataTableFilter({
               >
                 <div
                   className={cn(
-                    'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-primary',
+                    'flex size-4 shrink-0 items-center justify-center rounded-lg border border-primary',
                     isSelected
                       ? 'bg-primary text-primary-foreground'
                       : 'opacity-50 [&_svg]:invisible',

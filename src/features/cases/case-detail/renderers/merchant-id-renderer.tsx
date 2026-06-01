@@ -12,7 +12,6 @@ import {
   Save,
   Send,
   ShieldCheck,
-  ToggleLeft,
   Wallet,
 } from 'lucide-react'
 import { z } from 'zod'
@@ -41,7 +40,6 @@ import {
   InputGroupInput,
 } from '#/components/ui/input-group'
 import { Spinner } from '#/components/ui/spinner'
-import { Switch } from '#/components/ui/switch'
 import {
   Tooltip,
   TooltipContent,
@@ -51,10 +49,7 @@ import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
-import {
-  PAYMENT_METHOD_OPTIONS,
-  paymentMethodSettingsSchema,
-} from '#/schemas/configuration.schema'
+import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
 import type { PaymentMethodSettings } from '#/schemas/configuration.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
@@ -64,12 +59,7 @@ const SHOPIFY_CARD_RATE = 3.5
 const DEFAULT_CARD_RATE = 3
 const E_WALLET_QR_RATE = 2.5
 const PAYOUT_RATE = 0
-const DEFAULT_PAYMENT_METHODS: PaymentMethodSettings =
-  PAYMENT_METHOD_OPTIONS.map((method) => ({
-    ...method,
-    collectionEnabled: true,
-    disbursementEnabled: !['qr', 'card'].includes(method.key),
-  }))
+const DEFAULT_METHODS: PaymentMethodSettings = []
 
 const midDetailsSchema = z.object({
   portalMid: z.coerce
@@ -88,6 +78,7 @@ const midDetailsSchema = z.object({
     .min(8, 'Password must be at least 8 characters.')
     .max(128, 'Password is too long.'),
   paymentMethods: paymentMethodSettingsSchema,
+  payoutMethods: paymentMethodSettingsSchema,
 })
 
 type MidDetailsForm = z.infer<typeof midDetailsSchema>
@@ -126,6 +117,7 @@ export default function MerchantIdRenderer({
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
   const savedPaymentMethods = caseDetail.testing?.paymentMethods ?? null
+  const savedPayoutMethods = caseDetail.testing?.payoutMethods ?? null
 
   const merchant = caseDetail.merchant
   const websiteCmsValue = getMerchantString(merchant, 'websiteCms')
@@ -140,6 +132,7 @@ export default function MerchantIdRenderer({
   const isShopify = websiteCmsValue === 'shopify'
   const limitsAndMdr = configurationQuery.data?.limitsAndMdr
   const configuredPaymentMethods = configurationQuery.data?.paymentMethods
+  const configuredPayoutMethods = configurationQuery.data?.payoutMethods
   const cardRate = isShopify
     ? `${limitsAndMdr?.rates.cardShopify ?? SHOPIFY_CARD_RATE}%`
     : `${limitsAndMdr?.rates.cardDefault ?? DEFAULT_CARD_RATE}%`
@@ -151,9 +144,9 @@ export default function MerchantIdRenderer({
     email: merchantEmail,
     password: '',
     paymentMethods:
-      savedPaymentMethods ??
-      configuredPaymentMethods ??
-      DEFAULT_PAYMENT_METHODS,
+      savedPaymentMethods ?? configuredPaymentMethods ?? DEFAULT_METHODS,
+    payoutMethods:
+      savedPayoutMethods ?? configuredPayoutMethods ?? DEFAULT_METHODS,
   })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [passwordVisible, setPasswordVisible] = useState(false)
@@ -165,6 +158,14 @@ export default function MerchantIdRenderer({
       paymentMethods: configuredPaymentMethods,
     }))
   }, [configuredPaymentMethods, savedPaymentMethods])
+
+  useEffect(() => {
+    if (savedPayoutMethods || !configuredPayoutMethods) return
+    setForm((current) => ({
+      ...current,
+      payoutMethods: configuredPayoutMethods,
+    }))
+  }, [configuredPayoutMethods, savedPayoutMethods])
 
   function updateField<TKey extends keyof MidDetailsForm>(
     key: TKey,
@@ -191,22 +192,6 @@ export default function MerchantIdRenderer({
     }
     setErrors({})
     await saveMidCreationDetails.mutateAsync(result.data)
-  }
-
-  function updatePaymentMethod(
-    methodKey: string,
-    key: 'collectionEnabled' | 'disbursementEnabled',
-    checked: boolean,
-  ) {
-    setForm((prev) => ({
-      ...prev,
-      paymentMethods: prev.paymentMethods.map((method) =>
-        method.key === methodKey ? { ...method, [key]: checked } : method,
-      ),
-    }))
-    if (errors.paymentMethods) {
-      setErrors((prev) => ({ ...prev, paymentMethods: undefined }))
-    }
   }
 
   return (
@@ -324,33 +309,43 @@ export default function MerchantIdRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Payment Methods</CardTitle>
               <CardDescription>
-                Enable collection and disbursement methods for this merchant.
+                Collection methods configured by admin for this merchant.
               </CardDescription>
             </div>
             <Badge variant="secondary">
-              <ToggleLeft />
-              Collection required
+              <Wallet />
+              Collection
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          <FieldGroup>
-            {form.paymentMethods.map((method) => (
-              <PaymentMethodRow
-                key={method.key}
-                method={method}
-                disabled={!canEdit || saveMidCreationDetails.isPending}
-                onChange={updatePaymentMethod}
-              />
-            ))}
-            {errors.paymentMethods ? (
-              <Alert variant="destructive">
-                <Info />
-                <AlertTitle>Collection method required</AlertTitle>
-                <AlertDescription>{errors.paymentMethods}</AlertDescription>
-              </Alert>
-            ) : null}
-          </FieldGroup>
+          <MethodList
+            methods={form.paymentMethods}
+            empty="No payment methods configured."
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <CardTitle>Payout Methods</CardTitle>
+              <CardDescription>
+                Payout methods configured by admin for this merchant.
+              </CardDescription>
+            </div>
+            <Badge variant="secondary">
+              <Send />
+              Payout
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <MethodList
+            methods={form.payoutMethods}
+            empty="No payout methods configured."
+          />
         </CardContent>
       </Card>
 
@@ -545,73 +540,31 @@ function RateGroup({
   )
 }
 
-function PaymentMethodRow({
-  method,
-  disabled,
-  onChange,
+function MethodList({
+  methods,
+  empty,
 }: {
-  method: PaymentMethodSettings[number]
-  disabled: boolean
-  onChange: (
-    methodKey: string,
-    key: 'collectionEnabled' | 'disbursementEnabled',
-    checked: boolean,
-  ) => void
+  methods: PaymentMethodSettings
+  empty: string
 }) {
-  return (
-    <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{method.label}</p>
-        <p className="text-xs text-muted-foreground">
-          Merchant portal availability
-        </p>
+  if (methods.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+        {empty}
       </div>
-      <MethodSwitch
-        id={`mid-${method.key}-collection`}
-        label="Collection"
-        checked={method.collectionEnabled}
-        disabled={disabled}
-        onCheckedChange={(checked) =>
-          onChange(method.key, 'collectionEnabled', checked)
-        }
-      />
-      <MethodSwitch
-        id={`mid-${method.key}-disbursement`}
-        label="Disbursement"
-        checked={method.disbursementEnabled}
-        disabled={disabled}
-        onCheckedChange={(checked) =>
-          onChange(method.key, 'disbursementEnabled', checked)
-        }
-      />
-    </div>
-  )
-}
+    )
+  }
 
-function MethodSwitch({
-  id,
-  label,
-  checked,
-  disabled,
-  onCheckedChange,
-}: {
-  id: string
-  label: string
-  checked: boolean
-  disabled: boolean
-  onCheckedChange: (checked: boolean) => void
-}) {
   return (
-    <div className="flex items-center justify-between gap-3 sm:min-w-36">
-      <label htmlFor={id} className="text-sm text-muted-foreground">
-        {label}
-      </label>
-      <Switch
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {methods.map((method) => (
+        <div
+          key={method.id}
+          className="rounded-md border bg-muted/20 px-3 py-2 text-sm font-medium"
+        >
+          {method.label}
+        </div>
+      ))}
     </div>
   )
 }

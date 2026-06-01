@@ -19,7 +19,6 @@ import {
   Save,
   Send,
   Store,
-  ToggleLeft,
   Trash2,
   Wallet,
   Workflow,
@@ -72,7 +71,6 @@ import {
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
-import { Switch } from '#/components/ui/switch'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
 import {
@@ -85,6 +83,7 @@ import {
   useUpdateLinkDeadlinesMutation,
   useUpdateMerchantPortalMutation,
   useUpdatePaymentMethodsMutation,
+  useUpdatePayoutMethodsMutation,
   useUpdateQueueSlaMutation,
   useUpdateQueueStatusMutation,
   useUploadAgreementDraftMutation,
@@ -461,71 +460,40 @@ export function SubMerchantsPanel() {
 export function PaymentMethodsPanel() {
   const { data, isPending } = useQuery(configurationQueryOptions())
   const mutation = useUpdatePaymentMethodsMutation()
-  const [form, setForm] = useState<PaymentMethodSettings | null>(null)
-  const value = form ?? data?.paymentMethods ?? null
-  const validationErrors = value
-    ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
-    : {}
-  const formError = validationErrors.paymentMethods
-
-  function updateMethod(
-    methodKey: string,
-    key: 'collectionEnabled' | 'disbursementEnabled',
-    nextValue: boolean,
-  ) {
-    setForm((current) => {
-      const base = current ?? data?.paymentMethods
-      if (!base) return current
-      return base.map((method) =>
-        method.key === methodKey ? { ...method, [key]: nextValue } : method,
-      )
-    })
-  }
-
-  if (isPending || !value) {
-    return <PanelLoading />
-  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <ConfigurationSectionCard
-        icon={ToggleLeft}
-        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
-        title="Payment Methods"
-        description="Configure collection and disbursement options available during MID Creation."
-      >
-        <FieldGroup>
-          {value.map((method) => (
-            <PaymentMethodConfigRow
-              key={method.key}
-              method={method}
-              disabled={mutation.isPending}
-              onChange={updateMethod}
-            />
-          ))}
-          {formError ? (
-            <Alert variant="destructive">
-              <AlertTitle>Payment method required</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
-        </FieldGroup>
-      </ConfigurationSectionCard>
+    <MethodListPanel
+      data={data?.paymentMethods ?? null}
+      isPending={isPending}
+      mutation={mutation}
+      icon={Wallet}
+      colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+      title="Payment Methods"
+      description="Manage collection methods available during MID Creation."
+      addLabel="Add payment method"
+      saveLabel="Save payment methods"
+      emptyMessage="No payment methods configured."
+    />
+  )
+}
 
-      <ConfigurationActionBar>
-        <Button
-          onClick={() => mutation.mutate(value)}
-          disabled={mutation.isPending || Boolean(formError)}
-        >
-          {mutation.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <Save data-icon="inline-start" />
-          )}
-          Save payment methods
-        </Button>
-      </ConfigurationActionBar>
-    </div>
+export function PayoutMethodsPanel() {
+  const { data, isPending } = useQuery(configurationQueryOptions())
+  const mutation = useUpdatePayoutMethodsMutation()
+
+  return (
+    <MethodListPanel
+      data={data?.payoutMethods ?? null}
+      isPending={isPending}
+      mutation={mutation}
+      icon={Send}
+      colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+      title="Payout Methods"
+      description="Manage payout methods available during MID Creation."
+      addLabel="Add payout method"
+      saveLabel="Save payout methods"
+      emptyMessage="No payout methods configured."
+    />
   )
 }
 
@@ -2165,75 +2133,160 @@ function RatesSection({
   )
 }
 
-function PaymentMethodConfigRow({
-  method,
-  disabled,
-  onChange,
+function MethodListPanel({
+  data,
+  isPending,
+  mutation,
+  icon,
+  colorClass,
+  title,
+  description,
+  addLabel,
+  saveLabel,
+  emptyMessage,
 }: {
-  method: PaymentMethodSettings[number]
-  disabled: boolean
-  onChange: (
-    methodKey: string,
-    key: 'collectionEnabled' | 'disbursementEnabled',
-    value: boolean,
-  ) => void
+  data: PaymentMethodSettings | null
+  isPending: boolean
+  mutation: {
+    isPending: boolean
+    mutate: (value: PaymentMethodSettings) => void
+  }
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  colorClass: string
+  title: string
+  description: string
+  addLabel: string
+  saveLabel: string
+  emptyMessage: string
 }) {
+  const [form, setForm] = useState<PaymentMethodSettings | null>(null)
+  const value = form ?? data ?? null
+  const validationErrors = value
+    ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
+    : {}
+  const formError = validationErrors.paymentMethods
+
+  useEffect(() => {
+    if (!data) return
+    setForm((current) => current ?? data)
+  }, [data])
+
+  function updateMethod(id: string, label: string) {
+    setForm((current) =>
+      (current ?? data ?? []).map((method) =>
+        method.id === id ? { ...method, label } : method,
+      ),
+    )
+  }
+
+  function addMethod() {
+    setForm((current) => [
+      ...(current ?? data ?? []),
+      { id: createMethodId(), label: '' },
+    ])
+  }
+
+  function removeMethod(id: string) {
+    setForm((current) =>
+      (current ?? data ?? []).filter((method) => method.id !== id),
+    )
+  }
+
+  if (isPending || !value) {
+    return <PanelLoading />
+  }
+
   return (
-    <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{method.label}</p>
-        <p className="text-xs text-muted-foreground">
-          Enable this method for merchant collection and disbursement flows.
-        </p>
-      </div>
-      <SwitchField
-        id={`config-${method.key}-collection`}
-        label="Collection"
-        checked={method.collectionEnabled}
-        disabled={disabled}
-        onCheckedChange={(checked) =>
-          onChange(method.key, 'collectionEnabled', checked)
+    <div className="flex flex-col gap-6">
+      <ConfigurationSectionCard
+        icon={icon}
+        colorClass={colorClass}
+        title={title}
+        description={description}
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addMethod}
+            disabled={mutation.isPending}
+          >
+            <Plus data-icon="inline-start" />
+            {addLabel}
+          </Button>
         }
-      />
-      <SwitchField
-        id={`config-${method.key}-disbursement`}
-        label="Disbursement"
-        checked={method.disbursementEnabled}
-        disabled={disabled}
-        onCheckedChange={(checked) =>
-          onChange(method.key, 'disbursementEnabled', checked)
-        }
-      />
+      >
+        <FieldGroup>
+          {value.length > 0 ? (
+            value.map((method, index) => (
+              <Field key={method.id}>
+                <FieldLabel htmlFor={`${method.id}-label`}>
+                  Method {index + 1}
+                </FieldLabel>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <Input
+                    id={`${method.id}-label`}
+                    value={method.label}
+                    onChange={(event) =>
+                      updateMethod(method.id, event.target.value)
+                    }
+                    disabled={mutation.isPending}
+                    placeholder="Method name"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeMethod(method.id)}
+                    disabled={mutation.isPending}
+                    aria-label="Remove method"
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              </Field>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+              {emptyMessage}
+            </div>
+          )}
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertTitle>Method names need attention</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+        </FieldGroup>
+      </ConfigurationSectionCard>
+
+      <ConfigurationActionBar>
+        <Button
+          onClick={() =>
+            mutation.mutate(
+              value
+                .map((method) => ({
+                  ...method,
+                  label: method.label.trim(),
+                }))
+                .filter((method) => method.label),
+            )
+          }
+          disabled={mutation.isPending || Boolean(formError)}
+        >
+          {mutation.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Save data-icon="inline-start" />
+          )}
+          {saveLabel}
+        </Button>
+      </ConfigurationActionBar>
     </div>
   )
 }
 
-function SwitchField({
-  id,
-  label,
-  checked,
-  disabled,
-  onCheckedChange,
-}: {
-  id: string
-  label: string
-  checked: boolean
-  disabled?: boolean
-  onCheckedChange: (checked: boolean) => void
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 sm:min-w-36">
-      <label htmlFor={id} className="text-sm text-muted-foreground">
-        {label}
-      </label>
-      <Switch
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
-    </div>
-  )
+function createMethodId() {
+  return crypto.randomUUID()
 }
 
 function ConfigurationSectionCard({

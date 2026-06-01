@@ -141,14 +141,22 @@ function CasesTableProvider({
   )
   const [priorityCase, setPriorityCase] = useState<CaseListItem | null>(null)
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery(
-      casesInfiniteQueryOptions({
-        ...filters,
-        createdAtFrom: undefined,
-        createdAtTo: undefined,
-      }),
-    )
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
+    casesInfiniteQueryOptions({
+      ...filters,
+      createdAtFrom: undefined,
+      createdAtTo: undefined,
+    }),
+  )
+
+  const isTableLoading = isLoading || (isFetching && !isFetchingNextPage)
 
   const { data: queues = [], isLoading: isQueuesLoading } =
     useQuery(queuesQueryOptions())
@@ -307,7 +315,7 @@ function CasesTableProvider({
       hideOwnerFilter,
       hideStatusFilter,
       userRole,
-      isLoading,
+      isLoading: isTableLoading,
       loadedCount,
       hasNextPage,
       isFetchingNextPage,
@@ -331,7 +339,7 @@ function CasesTableProvider({
       hideOwnerFilter,
       hideStatusFilter,
       isFetchingNextPage,
-      isLoading,
+      isTableLoading,
       isQueuesLoading,
       isUsersLoading,
       priorityCase,

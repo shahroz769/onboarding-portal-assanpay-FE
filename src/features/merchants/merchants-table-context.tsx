@@ -182,8 +182,16 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     [filters],
   )
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
+
+  const isTableLoading = isLoading || (isFetching && !isFetchingNextPage)
 
   const updatePriority = useUpdatePriorityMutation()
   const terminateMerchant = useTerminateMerchantMutation()
@@ -336,7 +344,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       selectedIds,
       filters,
       userRole,
-      isLoading,
+      isLoading: isTableLoading,
       loadedCount,
       hasNextPage,
       isFetchingNextPage,
@@ -354,7 +362,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       flatData,
       hasNextPage,
       isFetchingNextPage,
-      isLoading,
+      isTableLoading,
       priorityTarget,
       selectedIds,
       terminateMerchant.isPending,

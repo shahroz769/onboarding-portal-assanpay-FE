@@ -58,6 +58,11 @@ export async function updatePaymentMethods(input: PaymentMethodSettings) {
   return response.data
 }
 
+export async function updatePayoutMethods(input: PaymentMethodSettings) {
+  const response = await apiClient.put('/api/configuration/payout-methods', input)
+  return response.data
+}
+
 export async function fetchCaseFlowConfiguration(): Promise<CaseFlowConfiguration> {
   const response = await apiClient.get('/api/configuration/case-flow')
   return caseFlowConfigurationSchema.parse(response.data)

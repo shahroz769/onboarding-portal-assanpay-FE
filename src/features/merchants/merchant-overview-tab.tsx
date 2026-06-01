@@ -3,7 +3,7 @@ import {
   Activity,
   Building2,
   CalendarClock,
-  ToggleLeft,
+  Send,
   Wallet,
 } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
@@ -183,14 +183,27 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
       </ProfileSection>
 
       <ProfileSection
-        icon={ToggleLeft}
+        icon={Wallet}
         colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
         title="Payment Methods"
-        description="Collection and disbursement status saved from MID Creation."
+        description="Collection methods saved from MID Creation."
       >
-        {detail.paymentMethods.map((method) => (
-          <PaymentMethodStatus key={method.key} method={method} />
-        ))}
+        <MethodList
+          methods={detail.paymentMethods}
+          empty="No payment methods configured."
+        />
+      </ProfileSection>
+
+      <ProfileSection
+        icon={Send}
+        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        title="Payout Methods"
+        description="Payout methods saved from MID Creation."
+      >
+        <MethodList
+          methods={detail.payoutMethods}
+          empty="No payout methods configured."
+        />
       </ProfileSection>
     </div>
   )
@@ -247,30 +260,25 @@ function RateRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function PaymentMethodStatus({
-  method,
+function MethodList({
+  methods,
+  empty,
 }: {
-  method: MerchantDetailResponse['paymentMethods'][number]
+  methods: MerchantDetailResponse['paymentMethods']
+  empty: string
 }) {
+  if (methods.length === 0) return <span className="text-sm">{empty}</span>
   return (
-    <div className="flex flex-col gap-2 rounded-md border bg-muted/20 p-3">
-      <p className="text-sm font-medium">{method.label}</p>
-      <div className="flex flex-wrap gap-2">
-        <StatusBadge label="Collection" enabled={method.collectionEnabled} />
-        <StatusBadge
-          label="Disbursement"
-          enabled={method.disbursementEnabled}
-        />
-      </div>
-    </div>
-  )
-}
-
-function StatusBadge({ label, enabled }: { label: string; enabled: boolean }) {
-  return (
-    <Badge variant={enabled ? 'secondary' : 'outline'}>
-      {label}: {enabled ? 'Enabled' : 'Disabled'}
-    </Badge>
+    <>
+      {methods.map((method) => (
+        <div
+          key={method.id}
+          className="rounded-md border bg-muted/20 p-3 text-sm font-medium"
+        >
+          {method.label}
+        </div>
+      ))}
+    </>
   )
 }
 

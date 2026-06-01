@@ -3,13 +3,8 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from '#/components/ui/table'
-
-const stickyHeaderClassName =
-  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]'
 
 type SkeletonCellKind =
   | 'checkbox'
@@ -28,9 +23,6 @@ interface SkeletonColumn {
 }
 
 export function DataTableRouteSkeleton({
-  filterCount = 3,
-  searchWidth = 384,
-  filterWidths,
   actionWidth = 144,
   columns,
   columnWidths,
@@ -44,8 +36,10 @@ export function DataTableRouteSkeleton({
   columnWidths?: number[]
   rowCount?: number
 }) {
-  const resolvedFilterWidths =
-    filterWidths ?? Array.from({ length: filterCount }, () => 112)
+  void filterCount
+  void searchWidth
+  void filterWidths
+
   const resolvedColumns =
     columns ??
     (columnWidths ?? Array.from({ length: 10 }, () => 140)).map((width) => ({
@@ -56,23 +50,7 @@ export function DataTableRouteSkeleton({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="shrink-0">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <div
-              className="flex h-9 max-w-sm items-center gap-2 rounded-md border bg-background px-3"
-              style={{ width: searchWidth }}
-            >
-              <Skeleton className="size-4 shrink-0 rounded-sm" />
-              <Skeleton className="h-4 min-w-0 flex-1" />
-            </div>
-            {resolvedFilterWidths.map((width, index) => (
-              <Skeleton
-                key={index}
-                className="h-8 rounded-md"
-                style={{ width }}
-              />
-            ))}
-          </div>
+        <div className="flex justify-end">
           <Skeleton className="h-5" style={{ width: actionWidth }} />
         </div>
       </div>
@@ -80,17 +58,8 @@ export function DataTableRouteSkeleton({
       <div className="shrink-0" />
 
       <div className="min-h-0 flex-1">
-        <div className="view-transition-none h-full overflow-auto rounded-md border will-change-transform">
+        <div className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform">
           <Table className="table-fixed">
-            <TableHeader className={stickyHeaderClassName}>
-              <TableRow>
-                {resolvedColumns.map((column, index) => (
-                  <TableHead key={index} style={{ width: column.width }}>
-                    <HeaderSkeleton column={column} />
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
             <TableBody>
               {Array.from({ length: rowCount }).map((_, rowIndex) => (
                 <TableRow
@@ -112,18 +81,6 @@ export function DataTableRouteSkeleton({
   )
 }
 
-function HeaderSkeleton({ column }: { column: SkeletonColumn }) {
-  if (column.kind === 'checkbox') {
-    return <Skeleton className="size-4 rounded-[4px]" />
-  }
-
-  const width =
-    column.headerWidth ??
-    Math.max(Math.min(column.width - 24, column.width), 16)
-
-  return <Skeleton className="h-4" style={{ width }} />
-}
-
 function CellSkeleton({
   column,
   rowIndex,
@@ -133,7 +90,7 @@ function CellSkeleton({
 }) {
   switch (column.kind) {
     case 'checkbox':
-      return <Skeleton className="size-4 rounded-[4px]" />
+      return <Skeleton className="size-4 rounded-lg" />
     case 'badge':
       return (
         <Skeleton

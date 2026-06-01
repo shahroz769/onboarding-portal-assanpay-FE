@@ -137,35 +137,28 @@ export const merchantPortalSettingsSchema = z.object({
   loginUrl: z.string().trim().url(),
 })
 
-export const PAYMENT_METHOD_OPTIONS = [
-  { key: 'easypaisa', label: 'Easypaisa' },
-  { key: 'jazzcash', label: 'Jazzcash' },
-  { key: 'zindigi', label: 'Zindigi' },
-  { key: 'qr', label: 'QR' },
-  { key: 'card', label: 'Card' },
-] as const
-
-export const paymentMethodKeySchema = z.enum([
-  'easypaisa',
-  'jazzcash',
-  'zindigi',
-  'qr',
-  'card',
-])
-
 export const paymentMethodSettingsSchema = z
   .array(
     z.object({
-      key: paymentMethodKeySchema,
-      label: z.string(),
-      collectionEnabled: z.boolean(),
-      disbursementEnabled: z.boolean(),
+      id: z.string().trim().min(1).max(80),
+      label: z.string().trim().min(1).max(80),
     }),
   )
-  .length(PAYMENT_METHOD_OPTIONS.length)
-  .refine((methods) => methods.some((method) => method.collectionEnabled), {
-    message: 'At least one collection method must be enabled.',
-    path: ['paymentMethods'],
+  .max(50)
+  .superRefine((methods, ctx) => {
+    const seen = new Set<string>()
+    for (const method of methods) {
+      const key = method.label.trim().toLowerCase()
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Method names must be unique.',
+          path: ['paymentMethods'],
+        })
+        return
+      }
+      seen.add(key)
+    }
   })
 
 export const configurationOverviewSchema = z.object({
@@ -174,6 +167,7 @@ export const configurationOverviewSchema = z.object({
   emailSendingMode: emailSendingModeSchema,
   merchantPortal: merchantPortalSettingsSchema,
   paymentMethods: paymentMethodSettingsSchema,
+  payoutMethods: paymentMethodSettingsSchema,
   agreementDrafts: z.array(agreementDraftSchema),
   subMerchants: z.array(subMerchantDraftSchema),
   businessTypes: z.array(businessTypeOptionSchema),

@@ -36,7 +36,7 @@ function DataTableCellSkeleton({
   rowIndex: number
 }) {
   if (columnId === 'select') {
-    return <Skeleton className="size-4 rounded-[4px]" />
+    return <Skeleton className="size-4 rounded-lg" />
   }
 
   if (columnId === 'actions') {
@@ -149,7 +149,7 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="view-transition-none h-full overflow-auto rounded-md border will-change-transform">
+      <div className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform">
         <Table className="table-fixed">
           <TableHeader className={stickyHeaderClassName}>
             {headerRow}
@@ -185,7 +185,7 @@ export function DataTable<TData>({
             {headerRow}
           </TableHeader>
         </Table>
-        <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div className="flex min-h-0 flex-1 items-center justify-center bg-background">
           {emptyContent ?? (
             <div className="flex flex-col items-center gap-1 text-muted-foreground">
               <p className="text-sm">No cases found.</p>
@@ -200,7 +200,7 @@ export function DataTable<TData>({
   return (
     <div
       ref={scrollContainerRef}
-      className="view-transition-none h-full overflow-auto rounded-md border will-change-transform"
+      className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform"
     >
       <Table className="table-fixed">
         <TableHeader className={stickyHeaderClassName}>{headerRow}</TableHeader>

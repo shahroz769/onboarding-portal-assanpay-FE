@@ -32,6 +32,8 @@ import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.use
 import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
 import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.configuration.sub-merchants'
 import { Route as AppConfigurationQueuesRouteImport } from './routes/_app.configuration.queues'
+import { Route as AppConfigurationPayoutMethodsRouteImport } from './routes/_app.configuration.payout-methods'
+import { Route as AppConfigurationPaymentMethodsRouteImport } from './routes/_app.configuration.payment-methods'
 import { Route as AppConfigurationMerchantPortalRouteImport } from './routes/_app.configuration.merchant-portal'
 import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
 import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
@@ -165,6 +167,18 @@ const AppConfigurationQueuesRoute = AppConfigurationQueuesRouteImport.update({
   path: '/queues',
   getParentRoute: () => AppConfigurationRoute,
 } as any)
+const AppConfigurationPayoutMethodsRoute =
+  AppConfigurationPayoutMethodsRouteImport.update({
+    id: '/payout-methods',
+    path: '/payout-methods',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationPaymentMethodsRoute =
+  AppConfigurationPaymentMethodsRouteImport.update({
+    id: '/payment-methods',
+    path: '/payment-methods',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
 const AppConfigurationMerchantPortalRoute =
   AppConfigurationMerchantPortalRouteImport.update({
     id: '/merchant-portal',
@@ -256,6 +270,8 @@ export interface FileRoutesByFullPath {
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
+  '/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
+  '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
@@ -287,6 +303,8 @@ export interface FileRoutesByTo {
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
+  '/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
+  '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
@@ -325,6 +343,8 @@ export interface FileRoutesById {
   '/_app/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/_app/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/_app/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
+  '/_app/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
+  '/_app/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/_app/configuration/queues': typeof AppConfigurationQueuesRoute
   '/_app/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
@@ -363,6 +383,8 @@ export interface FileRouteTypes {
     | '/configuration/limits-and-mdr'
     | '/configuration/link-deadlines'
     | '/configuration/merchant-portal'
+    | '/configuration/payment-methods'
+    | '/configuration/payout-methods'
     | '/configuration/queues'
     | '/configuration/sub-merchants'
     | '/merchants/$merchantId'
@@ -394,6 +416,8 @@ export interface FileRouteTypes {
     | '/configuration/limits-and-mdr'
     | '/configuration/link-deadlines'
     | '/configuration/merchant-portal'
+    | '/configuration/payment-methods'
+    | '/configuration/payout-methods'
     | '/configuration/queues'
     | '/configuration/sub-merchants'
     | '/merchants/$merchantId'
@@ -431,6 +455,8 @@ export interface FileRouteTypes {
     | '/_app/configuration/limits-and-mdr'
     | '/_app/configuration/link-deadlines'
     | '/_app/configuration/merchant-portal'
+    | '/_app/configuration/payment-methods'
+    | '/_app/configuration/payout-methods'
     | '/_app/configuration/queues'
     | '/_app/configuration/sub-merchants'
     | '/_app/merchants/$merchantId'
@@ -617,6 +643,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfigurationQueuesRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
+    '/_app/configuration/payout-methods': {
+      id: '/_app/configuration/payout-methods'
+      path: '/payout-methods'
+      fullPath: '/configuration/payout-methods'
+      preLoaderRoute: typeof AppConfigurationPayoutMethodsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/payment-methods': {
+      id: '/_app/configuration/payment-methods'
+      path: '/payment-methods'
+      fullPath: '/configuration/payment-methods'
+      preLoaderRoute: typeof AppConfigurationPaymentMethodsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
     '/_app/configuration/merchant-portal': {
       id: '/_app/configuration/merchant-portal'
       path: '/merchant-portal'
@@ -732,6 +772,8 @@ interface AppConfigurationRouteChildren {
   AppConfigurationLimitsAndMdrRoute: typeof AppConfigurationLimitsAndMdrRoute
   AppConfigurationLinkDeadlinesRoute: typeof AppConfigurationLinkDeadlinesRoute
   AppConfigurationMerchantPortalRoute: typeof AppConfigurationMerchantPortalRoute
+  AppConfigurationPaymentMethodsRoute: typeof AppConfigurationPaymentMethodsRoute
+  AppConfigurationPayoutMethodsRoute: typeof AppConfigurationPayoutMethodsRoute
   AppConfigurationQueuesRoute: typeof AppConfigurationQueuesRoute
   AppConfigurationSubMerchantsRoute: typeof AppConfigurationSubMerchantsRoute
   AppConfigurationIndexRoute: typeof AppConfigurationIndexRoute
@@ -745,6 +787,8 @@ const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationLimitsAndMdrRoute: AppConfigurationLimitsAndMdrRoute,
   AppConfigurationLinkDeadlinesRoute: AppConfigurationLinkDeadlinesRoute,
   AppConfigurationMerchantPortalRoute: AppConfigurationMerchantPortalRoute,
+  AppConfigurationPaymentMethodsRoute: AppConfigurationPaymentMethodsRoute,
+  AppConfigurationPayoutMethodsRoute: AppConfigurationPayoutMethodsRoute,
   AppConfigurationQueuesRoute: AppConfigurationQueuesRoute,
   AppConfigurationSubMerchantsRoute: AppConfigurationSubMerchantsRoute,
   AppConfigurationIndexRoute: AppConfigurationIndexRoute,

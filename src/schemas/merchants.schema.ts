@@ -248,6 +248,7 @@ export const merchantDetailResponseSchema = z.object({
     isOverridden: z.boolean(),
   }),
   paymentMethods: paymentMethodSettingsSchema,
+  payoutMethods: paymentMethodSettingsSchema,
 })
 
 export type MerchantDetailResponse = z.infer<

@@ -1,5 +1,6 @@
 import {
   infiniteQueryOptions,
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQueryClient,
@@ -45,6 +46,7 @@ export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
       }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }
