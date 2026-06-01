@@ -12,6 +12,7 @@ import {
   updateCaseFlowConfiguration,
   updateEmailSendingMode,
   updateMerchantPortal,
+  updatePaymentMethods,
   updateLimitsAndMdr,
   updateLinkDeadlines,
   updateQueueSla,
@@ -25,6 +26,7 @@ import type {
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
   MerchantPortalSettings,
+  PaymentMethodSettings,
 } from '#/schemas/configuration.schema'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
@@ -87,7 +89,9 @@ export function useUpdateEmailSendingModeMutation() {
       await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to save email sending mode.'))
+      toast.error(
+        getApiErrorMessage(error, 'Failed to save email sending mode.'),
+      )
     },
   })
 }
@@ -104,6 +108,20 @@ export function useUpdateMerchantPortalMutation() {
       toast.error(
         getApiErrorMessage(error, 'Failed to save merchant portal settings.'),
       )
+    },
+  })
+}
+
+export function useUpdatePaymentMethodsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: PaymentMethodSettings) => updatePaymentMethods(input),
+    onSuccess: async () => {
+      toast.success('Payment methods saved.')
+      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save payment methods.'))
     },
   })
 }

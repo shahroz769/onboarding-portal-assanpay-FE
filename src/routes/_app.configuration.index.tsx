@@ -7,6 +7,7 @@ import {
   Send,
   Store,
   Timer,
+  ToggleLeft,
   Wallet,
   Workflow,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ import {
   LimitsAndMdrPanel,
   LinkDeadlinesPanel,
   MerchantPortalPanel,
+  PaymentMethodsPanel,
   QueuesPanel,
   SubMerchantsPanel,
 } from '#/features/configuration/configuration-panels'
@@ -64,6 +66,10 @@ function RouteComponent() {
           <Store />
           Sub-Merchants
         </TabsTrigger>
+        <TabsTrigger value="payment-methods">
+          <ToggleLeft />
+          Payment Methods
+        </TabsTrigger>
         <TabsTrigger value="queues">
           <Workflow />
           Queues
@@ -100,6 +106,10 @@ function RouteComponent() {
 
       <TabsContent value="sub-merchants">
         <SubMerchantsPanel />
+      </TabsContent>
+
+      <TabsContent value="payment-methods">
+        <PaymentMethodsPanel />
       </TabsContent>
 
       <TabsContent value="queues">

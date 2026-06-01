@@ -35,6 +35,7 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   caseHistoryQueryOptions,
@@ -109,6 +110,10 @@ export default function LiveRenderer({
     getMerchantString(caseDetail.merchant, 'email') ??
     getMerchantString(caseDetail.merchant, 'businessEmail') ??
     ''
+  const activeWhatsappNumber = getMerchantString(
+    caseDetail.merchant,
+    'activeWhatsappNumber',
+  )
   const merchantName =
     getMerchantString(caseDetail.merchant, 'businessName') ?? 'Merchant'
 
@@ -385,6 +390,32 @@ export default function LiveRenderer({
               ) : (
                 <ManualEmailPanel
                   preview={manualPreview}
+                  onConfirm={handleManualConfirm}
+                  isPending={confirmManual.isPending}
+                />
+              )
+            }
+            whatsappContent={
+              !manualPreview ? (
+                <Button
+                  onClick={handleLoadManualPreview}
+                  disabled={fetchPreview.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {fetchPreview.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {fetchPreview.isPending
+                    ? 'Loading preview...'
+                    : 'Load WhatsApp message'}
+                </Button>
+              ) : (
+                <WhatsAppMessagePanel
+                  preview={manualPreview}
+                  phoneNumber={activeWhatsappNumber}
                   onConfirm={handleManualConfirm}
                   isPending={confirmManual.isPending}
                 />

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { paymentMethodSettingsSchema } from './configuration.schema'
 
 // ─── Enum Constants with Labels ─────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ export const merchantDetailRecordSchema = z.object({
   submitterEmail: z.string(),
   ownerFullName: z.string(),
   ownerPhone: z.string(),
+  activeWhatsappNumber: z.string().nullable(),
   businessName: z.string(),
   businessPhone: z.string(),
   businessEmail: z.string(),
@@ -245,6 +247,7 @@ export const merchantDetailResponseSchema = z.object({
     global: merchantLimitsMdrSchema,
     isOverridden: z.boolean(),
   }),
+  paymentMethods: paymentMethodSettingsSchema,
 })
 
 export type MerchantDetailResponse = z.infer<

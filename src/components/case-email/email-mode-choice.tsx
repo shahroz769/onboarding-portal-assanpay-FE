@@ -1,36 +1,62 @@
+import type { ReactNode } from 'react'
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import type { EmailSendingMode } from '#/schemas/configuration.schema'
 
 interface EmailModeChoiceProps {
   mode: EmailSendingMode
-  autoContent: React.ReactNode
-  manualContent: React.ReactNode
+  autoContent: ReactNode
+  manualContent: ReactNode
+  whatsappContent?: ReactNode
 }
 
-export function EmailModeChoice({ mode, autoContent, manualContent }: EmailModeChoiceProps) {
-  // Both enabled — show tabs
-  if (mode.autoEnabled && mode.manualEnabled) {
+type ModeTab = {
+  value: string
+  label: string
+  content: ReactNode
+}
+
+export function EmailModeChoice({
+  mode,
+  autoContent,
+  manualContent,
+  whatsappContent,
+}: EmailModeChoiceProps) {
+  const enabledTabs = [
+    mode.autoEnabled
+      ? { value: 'auto', label: 'Auto (Resend)', content: autoContent }
+      : null,
+    mode.manualEnabled
+      ? { value: 'manual', label: 'Manual (Gmail)', content: manualContent }
+      : null,
+    whatsappContent
+      ? { value: 'whatsapp', label: 'WhatsApp', content: whatsappContent }
+      : null,
+  ].filter((tab): tab is ModeTab => Boolean(tab))
+
+  if (enabledTabs.length > 1) {
     return (
-      <Tabs defaultValue="auto">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="auto">Auto (Resend)</TabsTrigger>
-          <TabsTrigger value="manual">Manual (Gmail)</TabsTrigger>
+      <Tabs defaultValue={enabledTabs[0]?.value}>
+        <TabsList
+          className="grid w-full"
+          style={{
+            gridTemplateColumns: `repeat(${enabledTabs.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {enabledTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="auto" className="pt-4">
-          {autoContent}
-        </TabsContent>
-        <TabsContent value="manual" className="pt-4">
-          {manualContent}
-        </TabsContent>
+        {enabledTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value} className="pt-4">
+            {tab.content}
+          </TabsContent>
+        ))}
       </Tabs>
     )
   }
 
-  // Only auto
-  if (mode.autoEnabled) {
-    return <>{autoContent}</>
-  }
-
-  // Only manual
-  return <>{manualContent}</>
+  return <>{enabledTabs[0]?.content ?? null}</>
 }

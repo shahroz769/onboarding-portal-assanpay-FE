@@ -39,6 +39,7 @@ import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   useSendAgreementEmail,
@@ -106,15 +107,23 @@ export default function AgreementRenderer({
   const fetchPreview = useFetchAgreementEmailPreview(caseId)
   const confirmManual = useConfirmAgreementEmailManual(caseId)
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [reviewContext, setReviewContext] = useState<AgreementReviewContext>('final')
+  const [reviewContext, setReviewContext] =
+    useState<AgreementReviewContext>('final')
   const [remarks, setRemarks] = useState('')
   const [remarksError, setRemarksError] = useState<string | null>(null)
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
 
-  const emailMode = config?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
+  const emailMode = config?.emailSendingMode ?? {
+    autoEnabled: true,
+    manualEnabled: true,
+  }
 
   const agreement = caseDetail.agreement ?? null
   const merchant = caseDetail.merchant
+  const activeWhatsappNumber =
+    typeof merchant.activeWhatsappNumber === 'string'
+      ? merchant.activeWhatsappNumber
+      : null
   const merchantType = String(
     agreement?.businessType ?? merchant.merchantType ?? '',
   )
@@ -143,7 +152,9 @@ export default function AgreementRenderer({
   async function handleAutoSend() {
     const trimmedRemarks = remarks.trim()
     if (reviewContext === 'client') {
-      const result = clientAgreementReviewSchema.safeParse({ remarks: trimmedRemarks })
+      const result = clientAgreementReviewSchema.safeParse({
+        remarks: trimmedRemarks,
+      })
       if (!result.success) {
         setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
         return
@@ -158,14 +169,18 @@ export default function AgreementRenderer({
   async function handleLoadPreview() {
     const trimmedRemarks = remarks.trim()
     if (reviewContext === 'client') {
-      const result = clientAgreementReviewSchema.safeParse({ remarks: trimmedRemarks })
+      const result = clientAgreementReviewSchema.safeParse({
+        remarks: trimmedRemarks,
+      })
       if (!result.success) {
         setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
         return
       }
     }
     setRemarksError(null)
-    const data = await fetchPreview.mutateAsync({ remarks: trimmedRemarks || null })
+    const data = await fetchPreview.mutateAsync({
+      remarks: trimmedRemarks || null,
+    })
     setPreview(data)
   }
 
@@ -313,7 +328,9 @@ export default function AgreementRenderer({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {reviewContext === 'client' ? 'Review Client Agreement' : 'Review Agreement'}
+              {reviewContext === 'client'
+                ? 'Review Client Agreement'
+                : 'Review Agreement'}
             </DialogTitle>
             <DialogDescription>
               {reviewContext === 'client'
@@ -349,11 +366,22 @@ export default function AgreementRenderer({
             mode={emailMode}
             autoContent={
               <DialogFooter>
-                <Button variant="outline" onClick={() => setReviewOpen(false)} disabled={sendAgreement.isPending}>
+                <Button
+                  variant="outline"
+                  onClick={() => setReviewOpen(false)}
+                  disabled={sendAgreement.isPending}
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleAutoSend} disabled={sendAgreement.isPending}>
-                  {sendAgreement.isPending ? <Spinner data-icon="inline-start" /> : <MailCheck data-icon="inline-start" />}
+                <Button
+                  onClick={handleAutoSend}
+                  disabled={sendAgreement.isPending}
+                >
+                  {sendAgreement.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
                   {sendAgreement.isPending ? 'Sending' : 'Send mail'}
                 </Button>
               </DialogFooter>
@@ -366,12 +394,44 @@ export default function AgreementRenderer({
                   variant="outline"
                   className="w-full"
                 >
-                  {fetchPreview.isPending ? <Spinner data-icon="inline-start" /> : <MailCheck data-icon="inline-start" />}
-                  {fetchPreview.isPending ? 'Loading preview…' : 'Load email preview'}
+                  {fetchPreview.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {fetchPreview.isPending
+                    ? 'Loading preview…'
+                    : 'Load email preview'}
                 </Button>
               ) : (
                 <ManualEmailPanel
                   preview={preview}
+                  onConfirm={handleManualConfirm}
+                  isPending={confirmManual.isPending}
+                />
+              )
+            }
+            whatsappContent={
+              !preview ? (
+                <Button
+                  onClick={handleLoadPreview}
+                  disabled={fetchPreview.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {fetchPreview.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {fetchPreview.isPending
+                    ? 'Loading preview...'
+                    : 'Load WhatsApp message'}
+                </Button>
+              ) : (
+                <WhatsAppMessagePanel
+                  preview={preview}
+                  phoneNumber={activeWhatsappNumber}
                   onConfirm={handleManualConfirm}
                   isPending={confirmManual.isPending}
                 />

@@ -19,6 +19,7 @@ import {
   Save,
   Send,
   Store,
+  ToggleLeft,
   Trash2,
   Wallet,
   Workflow,
@@ -71,6 +72,7 @@ import {
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
+import { Switch } from '#/components/ui/switch'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
 import {
@@ -82,6 +84,7 @@ import {
   useUpdateLimitsAndMdrMutation,
   useUpdateLinkDeadlinesMutation,
   useUpdateMerchantPortalMutation,
+  useUpdatePaymentMethodsMutation,
   useUpdateQueueSlaMutation,
   useUpdateQueueStatusMutation,
   useUploadAgreementDraftMutation,
@@ -101,6 +104,7 @@ import type {
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
   MerchantPortalSettings,
+  PaymentMethodSettings,
 } from '#/schemas/configuration.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 import {
@@ -108,6 +112,7 @@ import {
   limitsAndMdrSettingsSchema,
   linkDeadlineSettingsSchema,
   merchantPortalSettingsSchema,
+  paymentMethodSettingsSchema,
 } from '#/schemas/configuration.schema'
 
 type QueueOption = Pick<
@@ -448,6 +453,79 @@ export function SubMerchantsPanel() {
         }
       />
     </ConfigurationSectionCard>
+  )
+}
+
+// ─── Payment Methods ────────────────────────────────────────────────────────
+
+export function PaymentMethodsPanel() {
+  const { data, isPending } = useQuery(configurationQueryOptions())
+  const mutation = useUpdatePaymentMethodsMutation()
+  const [form, setForm] = useState<PaymentMethodSettings | null>(null)
+  const value = form ?? data?.paymentMethods ?? null
+  const validationErrors = value
+    ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
+    : {}
+  const formError = validationErrors.paymentMethods
+
+  function updateMethod(
+    methodKey: string,
+    key: 'collectionEnabled' | 'disbursementEnabled',
+    nextValue: boolean,
+  ) {
+    setForm((current) => {
+      const base = current ?? data?.paymentMethods
+      if (!base) return current
+      return base.map((method) =>
+        method.key === methodKey ? { ...method, [key]: nextValue } : method,
+      )
+    })
+  }
+
+  if (isPending || !value) {
+    return <PanelLoading />
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <ConfigurationSectionCard
+        icon={ToggleLeft}
+        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        title="Payment Methods"
+        description="Configure collection and disbursement options available during MID Creation."
+      >
+        <FieldGroup>
+          {value.map((method) => (
+            <PaymentMethodConfigRow
+              key={method.key}
+              method={method}
+              disabled={mutation.isPending}
+              onChange={updateMethod}
+            />
+          ))}
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertTitle>Payment method required</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+        </FieldGroup>
+      </ConfigurationSectionCard>
+
+      <ConfigurationActionBar>
+        <Button
+          onClick={() => mutation.mutate(value)}
+          disabled={mutation.isPending || Boolean(formError)}
+        >
+          {mutation.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Save data-icon="inline-start" />
+          )}
+          Save payment methods
+        </Button>
+      </ConfigurationActionBar>
+    </div>
   )
 }
 
@@ -904,8 +982,8 @@ function QueueSlaCell({
         <DialogHeader>
           <DialogTitle>Edit SLA</DialogTitle>
           <DialogDescription>
-            Set the SLA in hours for the {queueName} queue. Cases breach this SLA
-            when the configured hours pass after creation.
+            Set the SLA in hours for the {queueName} queue. Cases breach this
+            SLA when the configured hours pass after creation.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
@@ -1035,7 +1113,9 @@ export function EmailSendingModePanel() {
   const [form, setForm] = useState<EmailSendingMode | null>(null)
   const value = form ?? data?.emailSendingMode ?? null
 
-  const validationResult = value ? emailSendingModeSchema.safeParse(value) : null
+  const validationResult = value
+    ? emailSendingModeSchema.safeParse(value)
+    : null
   const hasError = validationResult ? !validationResult.success : false
   const bothDisabledError =
     value && !value.autoEnabled && !value.manualEnabled
@@ -1044,10 +1124,11 @@ export function EmailSendingModePanel() {
 
   function setMode(field: keyof EmailSendingMode, checked: boolean) {
     setForm((prev) => {
-      const current = prev ?? data?.emailSendingMode ?? {
-        autoEnabled: true,
-        manualEnabled: true,
-      }
+      const current = prev ??
+        data?.emailSendingMode ?? {
+          autoEnabled: true,
+          manualEnabled: true,
+        }
       return { ...current, [field]: checked }
     })
   }
@@ -1267,7 +1348,10 @@ export function CaseTriggeringPanel() {
           </div>
         </FieldSet>
         <ConfigurationActionBar>
-          <Button disabled={!canSubmit || createCase.isPending} onClick={handleSubmit}>
+          <Button
+            disabled={!canSubmit || createCase.isPending}
+            onClick={handleSubmit}
+          >
             {createCase.isPending ? (
               <Spinner data-icon="inline-start" />
             ) : (
@@ -1311,55 +1395,53 @@ export function CaseFlowRulesPanel() {
         title="First case after submission"
         description="When a merchant submits onboarding, automatically open these cases."
         action={
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                update({
-                  ...value,
-                  startRules: [
-                    ...value.startRules,
-                    {
-                      targetQueueId: '',
-                      order: value.startRules.length + 1,
-                      isActive: true,
-                    },
-                  ],
-                })
-              }
-            >
-              <Plus data-icon="inline-start" />
-              Add rule
-            </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              update({
+                ...value,
+                startRules: [
+                  ...value.startRules,
+                  {
+                    targetQueueId: '',
+                    order: value.startRules.length + 1,
+                    isActive: true,
+                  },
+                ],
+              })
+            }
+          >
+            <Plus data-icon="inline-start" />
+            Add rule
+          </Button>
         }
       >
-          {value.startRules.length === 0 ? (
-            <RuleListEmpty message="No first-case rules configured yet." />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {value.startRules.map((rule, index) => (
-                <StartRuleRow
-                  key={`start-${index}`}
-                  rule={rule}
-                  queues={queues}
-                  onChange={(nextRule) => {
-                    const startRules = [...value.startRules]
-                    startRules[index] = nextRule
-                    update({ ...value, startRules })
-                  }}
-                  onRemove={() =>
-                    update({
-                      ...value,
-                      startRules: value.startRules.filter(
-                        (_, i) => i !== index,
-                      ),
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {value.startRules.length === 0 ? (
+          <RuleListEmpty message="No first-case rules configured yet." />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {value.startRules.map((rule, index) => (
+              <StartRuleRow
+                key={`start-${index}`}
+                rule={rule}
+                queues={queues}
+                onChange={(nextRule) => {
+                  const startRules = [...value.startRules]
+                  startRules[index] = nextRule
+                  update({ ...value, startRules })
+                }}
+                onRemove={() =>
+                  update({
+                    ...value,
+                    startRules: value.startRules.filter((_, i) => i !== index),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
       </ConfigurationSectionCard>
 
       <ConfigurationSectionCard
@@ -1368,56 +1450,56 @@ export function CaseFlowRulesPanel() {
         title="Close triggers"
         description="When a case closes, automatically open another case for the same merchant."
         action={
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                update({
-                  ...value,
-                  closeTriggers: [
-                    ...value.closeTriggers,
-                    {
-                      sourceQueueId: '',
-                      targetQueueId: '',
-                      order: value.closeTriggers.length + 1,
-                      isActive: true,
-                    },
-                  ],
-                })
-              }
-            >
-              <Plus data-icon="inline-start" />
-              Add trigger
-            </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              update({
+                ...value,
+                closeTriggers: [
+                  ...value.closeTriggers,
+                  {
+                    sourceQueueId: '',
+                    targetQueueId: '',
+                    order: value.closeTriggers.length + 1,
+                    isActive: true,
+                  },
+                ],
+              })
+            }
+          >
+            <Plus data-icon="inline-start" />
+            Add trigger
+          </Button>
         }
       >
-          {value.closeTriggers.length === 0 ? (
-            <RuleListEmpty message="No close triggers configured yet." />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {value.closeTriggers.map((rule, index) => (
-                <CloseTriggerRuleRow
-                  key={`trigger-${index}`}
-                  rule={rule}
-                  queues={queues}
-                  onChange={(nextRule) => {
-                    const closeTriggers = [...value.closeTriggers]
-                    closeTriggers[index] = nextRule
-                    update({ ...value, closeTriggers })
-                  }}
-                  onRemove={() =>
-                    update({
-                      ...value,
-                      closeTriggers: value.closeTriggers.filter(
-                        (_, i) => i !== index,
-                      ),
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {value.closeTriggers.length === 0 ? (
+          <RuleListEmpty message="No close triggers configured yet." />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {value.closeTriggers.map((rule, index) => (
+              <CloseTriggerRuleRow
+                key={`trigger-${index}`}
+                rule={rule}
+                queues={queues}
+                onChange={(nextRule) => {
+                  const closeTriggers = [...value.closeTriggers]
+                  closeTriggers[index] = nextRule
+                  update({ ...value, closeTriggers })
+                }}
+                onRemove={() =>
+                  update({
+                    ...value,
+                    closeTriggers: value.closeTriggers.filter(
+                      (_, i) => i !== index,
+                    ),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
       </ConfigurationSectionCard>
 
       <ConfigurationSectionCard
@@ -1426,55 +1508,55 @@ export function CaseFlowRulesPanel() {
         title="Close requirements"
         description="Prevent a case from closing until another case has closed first."
         action={
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                update({
-                  ...value,
-                  closeBlockers: [
-                    ...value.closeBlockers,
-                    {
-                      blockedQueueId: '',
-                      prerequisiteQueueId: '',
-                      isActive: true,
-                    },
-                  ],
-                })
-              }
-            >
-              <Plus data-icon="inline-start" />
-              Add requirement
-            </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              update({
+                ...value,
+                closeBlockers: [
+                  ...value.closeBlockers,
+                  {
+                    blockedQueueId: '',
+                    prerequisiteQueueId: '',
+                    isActive: true,
+                  },
+                ],
+              })
+            }
+          >
+            <Plus data-icon="inline-start" />
+            Add requirement
+          </Button>
         }
       >
-          {value.closeBlockers.length === 0 ? (
-            <RuleListEmpty message="No close requirements configured yet." />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {value.closeBlockers.map((rule, index) => (
-                <CloseBlockerRuleRow
-                  key={`blocker-${index}`}
-                  rule={rule}
-                  queues={queues}
-                  onChange={(nextRule) => {
-                    const closeBlockers = [...value.closeBlockers]
-                    closeBlockers[index] = nextRule
-                    update({ ...value, closeBlockers })
-                  }}
-                  onRemove={() =>
-                    update({
-                      ...value,
-                      closeBlockers: value.closeBlockers.filter(
-                        (_, i) => i !== index,
-                      ),
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {value.closeBlockers.length === 0 ? (
+          <RuleListEmpty message="No close requirements configured yet." />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {value.closeBlockers.map((rule, index) => (
+              <CloseBlockerRuleRow
+                key={`blocker-${index}`}
+                rule={rule}
+                queues={queues}
+                onChange={(nextRule) => {
+                  const closeBlockers = [...value.closeBlockers]
+                  closeBlockers[index] = nextRule
+                  update({ ...value, closeBlockers })
+                }}
+                onRemove={() =>
+                  update({
+                    ...value,
+                    closeBlockers: value.closeBlockers.filter(
+                      (_, i) => i !== index,
+                    ),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
       </ConfigurationSectionCard>
 
       <ConfigurationSectionCard
@@ -1483,58 +1565,55 @@ export function CaseFlowRulesPanel() {
         title="Case creation requirements"
         description="Prevent creating a case until another case has closed successfully."
         action={
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                update({
-                  ...value,
-                  creationRequirements: [
-                    ...value.creationRequirements,
-                    {
-                      targetQueueId: '',
-                      prerequisiteQueueId: '',
-                      isActive: true,
-                    },
-                  ],
-                })
-              }
-            >
-              <Plus data-icon="inline-start" />
-              Add requirement
-            </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              update({
+                ...value,
+                creationRequirements: [
+                  ...value.creationRequirements,
+                  {
+                    targetQueueId: '',
+                    prerequisiteQueueId: '',
+                    isActive: true,
+                  },
+                ],
+              })
+            }
+          >
+            <Plus data-icon="inline-start" />
+            Add requirement
+          </Button>
         }
       >
-          {value.creationRequirements.length === 0 ? (
-            <RuleListEmpty message="No case creation requirements configured yet." />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {value.creationRequirements.map((rule, index) => (
-                <CreationRequirementRow
-                  key={`creation-${index}`}
-                  rule={rule}
-                  queues={queues}
-                  onChange={(nextRule) => {
-                    const creationRequirements = [
-                      ...value.creationRequirements,
-                    ]
-                    creationRequirements[index] = nextRule
-                    update({ ...value, creationRequirements })
-                  }}
-                  onRemove={() =>
-                    update({
-                      ...value,
-                      creationRequirements:
-                        value.creationRequirements.filter(
-                          (_, i) => i !== index,
-                        ),
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {value.creationRequirements.length === 0 ? (
+          <RuleListEmpty message="No case creation requirements configured yet." />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {value.creationRequirements.map((rule, index) => (
+              <CreationRequirementRow
+                key={`creation-${index}`}
+                rule={rule}
+                queues={queues}
+                onChange={(nextRule) => {
+                  const creationRequirements = [...value.creationRequirements]
+                  creationRequirements[index] = nextRule
+                  update({ ...value, creationRequirements })
+                }}
+                onRemove={() =>
+                  update({
+                    ...value,
+                    creationRequirements: value.creationRequirements.filter(
+                      (_, i) => i !== index,
+                    ),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
       </ConfigurationSectionCard>
 
       {formError ? (
@@ -1547,9 +1626,7 @@ export function CaseFlowRulesPanel() {
       <ConfigurationActionBar>
         <Button
           disabled={mutation.isPending || Boolean(formError)}
-          onClick={() =>
-            mutation.mutate(getActiveCaseFlowConfiguration(value))
-          }
+          onClick={() => mutation.mutate(getActiveCaseFlowConfiguration(value))}
         >
           {mutation.isPending ? (
             <Spinner data-icon="inline-start" />
@@ -2085,6 +2162,77 @@ function RatesSection({
         />
       </FieldGroup>
     </ConfigurationSectionCard>
+  )
+}
+
+function PaymentMethodConfigRow({
+  method,
+  disabled,
+  onChange,
+}: {
+  method: PaymentMethodSettings[number]
+  disabled: boolean
+  onChange: (
+    methodKey: string,
+    key: 'collectionEnabled' | 'disbursementEnabled',
+    value: boolean,
+  ) => void
+}) {
+  return (
+    <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{method.label}</p>
+        <p className="text-xs text-muted-foreground">
+          Enable this method for merchant collection and disbursement flows.
+        </p>
+      </div>
+      <SwitchField
+        id={`config-${method.key}-collection`}
+        label="Collection"
+        checked={method.collectionEnabled}
+        disabled={disabled}
+        onCheckedChange={(checked) =>
+          onChange(method.key, 'collectionEnabled', checked)
+        }
+      />
+      <SwitchField
+        id={`config-${method.key}-disbursement`}
+        label="Disbursement"
+        checked={method.disbursementEnabled}
+        disabled={disabled}
+        onCheckedChange={(checked) =>
+          onChange(method.key, 'disbursementEnabled', checked)
+        }
+      />
+    </div>
+  )
+}
+
+function SwitchField({
+  id,
+  label,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  id: string
+  label: string
+  checked: boolean
+  disabled?: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 sm:min-w-36">
+      <label htmlFor={id} className="text-sm text-muted-foreground">
+        {label}
+      </label>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+      />
+    </div>
   )
 }
 

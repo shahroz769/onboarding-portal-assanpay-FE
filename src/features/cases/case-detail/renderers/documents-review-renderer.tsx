@@ -149,6 +149,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     fields: [
       { key: 'ownerFullName', label: 'Owner Full Name' },
       { key: 'ownerPhone', label: 'Owner Phone Number' },
+      { key: 'activeWhatsappNumber', label: 'Active WhatsApp Number' },
     ],
   },
   {
@@ -579,7 +580,8 @@ export default function DocumentsReviewRenderer({
                       {subMerchantError}
                     </p>
                   ) : null}
-                  {!configurationQuery.isLoading && subMerchants.length === 0 ? (
+                  {!configurationQuery.isLoading &&
+                  subMerchants.length === 0 ? (
                     <p className="text-sm text-destructive">
                       Add sub-merchants in configuration before selecting one.
                     </p>

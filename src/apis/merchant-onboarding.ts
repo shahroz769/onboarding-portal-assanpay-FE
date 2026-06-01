@@ -27,6 +27,7 @@ export type MerchantSubmissionResponse = {
     submitterEmail: string
     ownerFullName: string
     ownerPhone: string
+    activeWhatsappNumber: string | null
     businessName: string
     businessPhone: string
     businessEmail: string

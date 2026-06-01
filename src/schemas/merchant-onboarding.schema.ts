@@ -95,6 +95,10 @@ const kinRelationValues = KIN_RELATIONS.map((o) => o.value) as [
   ...string[],
 ]
 const bankNameValues = BANK_NAMES as unknown as [string, ...string[]]
+export const localMobileNumberSchema = z
+  .string()
+  .trim()
+  .regex(/^03\d{9}$/, 'Must be a valid mobile number.')
 
 // ── Form Schema ─────────────────────────────────────────────────────────────
 
@@ -107,7 +111,8 @@ export const merchantOnboardingSchema = z.object({
 
   // Section 2: Owner
   ownerFullName: z.string().min(1, 'Owner full name is required.'),
-  ownerPhone: z.string().min(1, 'Owner phone number is required.'),
+  ownerPhone: localMobileNumberSchema,
+  activeWhatsappNumber: localMobileNumberSchema,
 
   // Section 3: Business Information
   businessName: z.string().min(1, 'Business name is required.'),
@@ -171,7 +176,6 @@ export type DocumentFieldName =
   | 'owner_cnic_back'
   | 'next_of_kin_cnic_front'
   | 'next_of_kin_cnic_back'
-  | 'utility_bill'
   | 'company_ntn'
   | 'authority_letter'
   | 'taxpayer_registration_certificate'
@@ -195,7 +199,6 @@ export const DOCUMENT_LABELS: Record<DocumentFieldName, string> = {
   owner_cnic_back: 'Owner CNIC Back',
   next_of_kin_cnic_front: 'Next Of Kin CNIC Front',
   next_of_kin_cnic_back: 'Next Of Kin CNIC Back',
-  utility_bill: 'Utility Bill',
   company_ntn: 'Company NTN',
   authority_letter: 'Authority Letter',
   taxpayer_registration_certificate: 'Taxpayer Registration Certificate',
@@ -220,7 +223,6 @@ export const BASE_DOCUMENTS: DocumentFieldName[] = [
   'owner_cnic_back',
   'next_of_kin_cnic_front',
   'next_of_kin_cnic_back',
-  'utility_bill',
 ]
 
 type MerchantTypeKey = (typeof MERCHANT_TYPES)[number]['value']

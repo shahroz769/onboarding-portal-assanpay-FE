@@ -165,6 +165,10 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
       >
         <ReadField label="Owner full name" value={merchant.ownerFullName} />
         <ReadField label="Owner phone" value={merchant.ownerPhone} />
+        <ReadField
+          label="Active WhatsApp number"
+          value={merchant.activeWhatsappNumber}
+        />
       </Section>
 
       <Section
@@ -344,7 +348,9 @@ function DocumentRow({
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
-              {file.documentType ? documentTypeLabel(file.documentType) : file.label}
+              {file.documentType
+                ? documentTypeLabel(file.documentType)
+                : file.label}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {file.originalName}

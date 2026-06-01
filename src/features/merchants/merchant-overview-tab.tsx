@@ -1,5 +1,11 @@
 import { format } from 'date-fns'
-import { Activity, Building2, CalendarClock, Wallet } from 'lucide-react'
+import {
+  Activity,
+  Building2,
+  CalendarClock,
+  ToggleLeft,
+  Wallet,
+} from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 
 import { Badge } from '#/components/ui/badge'
@@ -13,10 +19,7 @@ import {
 import { cn } from '#/lib/utils'
 import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
 
-import {
-  formatNumber,
-  isCaseOpen,
-} from './merchant-detail-helpers'
+import { formatNumber, isCaseOpen } from './merchant-detail-helpers'
 
 type MerchantOverviewTabProps = {
   detail: MerchantDetailResponse
@@ -24,7 +27,10 @@ type MerchantOverviewTabProps = {
 
 function formatDate(value: string | null, withTime = false) {
   if (!value) return '—'
-  return format(new Date(value), withTime ? 'dd MMM yyyy, hh:mm a' : 'dd MMM yyyy')
+  return format(
+    new Date(value),
+    withTime ? 'dd MMM yyyy, hh:mm a' : 'dd MMM yyyy',
+  )
 }
 
 function SectionIcon({
@@ -175,6 +181,17 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
           value={`${limitsAndMdr.effective.rates.payout}%`}
         />
       </ProfileSection>
+
+      <ProfileSection
+        icon={ToggleLeft}
+        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        title="Payment Methods"
+        description="Collection and disbursement status saved from MID Creation."
+      >
+        {detail.paymentMethods.map((method) => (
+          <PaymentMethodStatus key={method.key} method={method} />
+        ))}
+      </ProfileSection>
     </div>
   )
 }
@@ -210,13 +227,7 @@ function ProfileSection({
   )
 }
 
-function Detail({
-  label,
-  value,
-}: {
-  label: string
-  value: ReactNode
-}) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -233,6 +244,33 @@ function RateRow({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium tabular-nums">{value}</span>
     </div>
+  )
+}
+
+function PaymentMethodStatus({
+  method,
+}: {
+  method: MerchantDetailResponse['paymentMethods'][number]
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-md border bg-muted/20 p-3">
+      <p className="text-sm font-medium">{method.label}</p>
+      <div className="flex flex-wrap gap-2">
+        <StatusBadge label="Collection" enabled={method.collectionEnabled} />
+        <StatusBadge
+          label="Disbursement"
+          enabled={method.disbursementEnabled}
+        />
+      </div>
+    </div>
+  )
+}
+
+function StatusBadge({ label, enabled }: { label: string; enabled: boolean }) {
+  return (
+    <Badge variant={enabled ? 'secondary' : 'outline'}>
+      {label}: {enabled ? 'Enabled' : 'Disabled'}
+    </Badge>
   )
 }
 

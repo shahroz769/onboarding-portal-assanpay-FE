@@ -6,6 +6,7 @@ import type {
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
   MerchantPortalSettings,
+  PaymentMethodSettings,
 } from '#/schemas/configuration.schema'
 import {
   caseFlowConfigurationSchema,
@@ -42,7 +43,18 @@ export async function updateEmailSendingMode(input: EmailSendingMode) {
 }
 
 export async function updateMerchantPortal(input: MerchantPortalSettings) {
-  const response = await apiClient.put('/api/configuration/merchant-portal', input)
+  const response = await apiClient.put(
+    '/api/configuration/merchant-portal',
+    input,
+  )
+  return response.data
+}
+
+export async function updatePaymentMethods(input: PaymentMethodSettings) {
+  const response = await apiClient.put(
+    '/api/configuration/payment-methods',
+    input,
+  )
   return response.data
 }
 

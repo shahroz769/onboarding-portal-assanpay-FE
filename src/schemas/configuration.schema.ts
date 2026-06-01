@@ -22,7 +22,12 @@ export const linkDeadlineSettingsSchema = z.object({
   passwordResetHours: z.coerce.number().int().min(1).max(8760).nullable(),
   newPasswordSetHours: z.coerce.number().int().min(1).max(8760).nullable(),
   agreementLinkHours: z.coerce.number().int().min(1).max(8760).nullable(),
-  documentsReviewResubmissionHours: z.coerce.number().int().min(1).max(8760).nullable(),
+  documentsReviewResubmissionHours: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(8760)
+    .nullable(),
   goLiveAvailabilityHours: z.coerce.number().int().min(1).max(8760).nullable(),
 })
 
@@ -132,11 +137,43 @@ export const merchantPortalSettingsSchema = z.object({
   loginUrl: z.string().trim().url(),
 })
 
+export const PAYMENT_METHOD_OPTIONS = [
+  { key: 'easypaisa', label: 'Easypaisa' },
+  { key: 'jazzcash', label: 'Jazzcash' },
+  { key: 'zindigi', label: 'Zindigi' },
+  { key: 'qr', label: 'QR' },
+  { key: 'card', label: 'Card' },
+] as const
+
+export const paymentMethodKeySchema = z.enum([
+  'easypaisa',
+  'jazzcash',
+  'zindigi',
+  'qr',
+  'card',
+])
+
+export const paymentMethodSettingsSchema = z
+  .array(
+    z.object({
+      key: paymentMethodKeySchema,
+      label: z.string(),
+      collectionEnabled: z.boolean(),
+      disbursementEnabled: z.boolean(),
+    }),
+  )
+  .length(PAYMENT_METHOD_OPTIONS.length)
+  .refine((methods) => methods.some((method) => method.collectionEnabled), {
+    message: 'At least one collection method must be enabled.',
+    path: ['paymentMethods'],
+  })
+
 export const configurationOverviewSchema = z.object({
   limitsAndMdr: limitsAndMdrSettingsSchema,
   linkDeadlines: linkDeadlineSettingsSchema,
   emailSendingMode: emailSendingModeSchema,
   merchantPortal: merchantPortalSettingsSchema,
+  paymentMethods: paymentMethodSettingsSchema,
   agreementDrafts: z.array(agreementDraftSchema),
   subMerchants: z.array(subMerchantDraftSchema),
   businessTypes: z.array(businessTypeOptionSchema),
@@ -145,7 +182,11 @@ export const configurationOverviewSchema = z.object({
 export type LimitsAndMdrSettings = z.infer<typeof limitsAndMdrSettingsSchema>
 export type LinkDeadlineSettings = z.infer<typeof linkDeadlineSettingsSchema>
 export type EmailSendingMode = z.infer<typeof emailSendingModeSchema>
-export type MerchantPortalSettings = z.infer<typeof merchantPortalSettingsSchema>
+export type MerchantPortalSettings = z.infer<
+  typeof merchantPortalSettingsSchema
+>
+export type PaymentMethodSettings = z.infer<typeof paymentMethodSettingsSchema>
+export type PaymentMethod = PaymentMethodSettings[number]
 export type ConfigurationOverview = z.infer<typeof configurationOverviewSchema>
 export type CaseFlowConfiguration = z.infer<typeof caseFlowConfigurationSchema>
 export type CaseFlowStartRule = z.infer<typeof caseFlowStartRuleSchema>

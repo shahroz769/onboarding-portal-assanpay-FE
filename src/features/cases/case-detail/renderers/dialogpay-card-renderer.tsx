@@ -118,6 +118,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     fields: [
       { key: 'ownerFullName', label: 'Owner Full Name' },
       { key: 'ownerPhone', label: 'Owner Phone Number' },
+      { key: 'activeWhatsappNumber', label: 'Active WhatsApp Number' },
     ],
   },
   {

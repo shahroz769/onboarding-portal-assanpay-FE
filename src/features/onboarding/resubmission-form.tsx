@@ -192,7 +192,12 @@ const FIELD_CONFIGS: Partial<Record<string, FieldConfig>> = {
   ownerPhone: {
     kind: 'text',
     section: 'owner',
-    placeholder: 'Enter phone number',
+    placeholder: '03XXXXXXXXX',
+  },
+  activeWhatsappNumber: {
+    kind: 'text',
+    section: 'owner',
+    placeholder: '03XXXXXXXXX',
   },
   businessName: {
     kind: 'text',
@@ -375,6 +380,14 @@ function validateTextField(rejection: ResubmissionRejection, value: string) {
     if (!emailPattern.test(trimmed)) {
       return 'Must be a valid email address.'
     }
+  }
+
+  if (
+    (rejection.fieldName === 'ownerPhone' ||
+      rejection.fieldName === 'activeWhatsappNumber') &&
+    !/^03\d{9}$/.test(trimmed)
+  ) {
+    return 'Must be a valid mobile number.'
   }
 
   if (rejection.fieldName === 'businessWebsite') {

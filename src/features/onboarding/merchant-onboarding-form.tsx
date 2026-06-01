@@ -183,6 +183,7 @@ export function MerchantOnboardingForm({
       email: '',
       ownerFullName: '',
       ownerPhone: '',
+      activeWhatsappNumber: '',
       businessName: '',
       businessPhone: '',
       businessEmail: '',
@@ -498,11 +499,59 @@ export function MerchantOnboardingForm({
                     <Input
                       id={field.name}
                       name={field.name}
+                      type="tel"
+                      inputMode="numeric"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(
+                          getNumericInputValue(event.target.value, false).slice(
+                            0,
+                            11,
+                          ),
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
-                      placeholder="Enter phone number"
+                      placeholder="03XXXXXXXXX"
+                      autoComplete="tel"
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                )
+              }}
+            />
+
+            <form.Field
+              name="activeWhatsappNumber"
+              children={(field) => {
+                const isInvalid = getIsInvalid(field)
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Active WhatsApp Number *
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="tel"
+                      inputMode="numeric"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(
+                          getNumericInputValue(event.target.value, false).slice(
+                            0,
+                            11,
+                          ),
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
+                      aria-invalid={isInvalid}
+                      placeholder="03XXXXXXXXX"
+                      autoComplete="tel"
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />

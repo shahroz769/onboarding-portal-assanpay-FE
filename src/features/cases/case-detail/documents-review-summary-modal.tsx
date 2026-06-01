@@ -16,6 +16,7 @@ import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   useSendForResubmission,
@@ -53,12 +54,17 @@ export function DocumentsReviewSummaryModal({
   const isConfirmingRef = useRef(false)
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
 
-  const emailMode = config?.emailSendingMode ?? { autoEnabled: true, manualEnabled: true }
+  const emailMode = config?.emailSendingMode ?? {
+    autoEnabled: true,
+    manualEnabled: true,
+  }
 
   const merchant = caseDetail.merchant as {
     submitterEmail?: string | null
+    activeWhatsappNumber?: string | null
   } | null
   const submitterEmail = merchant?.submitterEmail ?? null
+  const activeWhatsappNumber = merchant?.activeWhatsappNumber ?? null
   const rejectedItems = reviewSummary?.rejectedItems ?? []
 
   const isCaseOwner = Boolean(
@@ -105,7 +111,11 @@ export function DocumentsReviewSummaryModal({
   const autoContent = (
     <div className="flex flex-col gap-4">
       <RecipientPreview email={submitterEmail} />
-      {hasRejections ? <RejectionsList items={rejectedItems} /> : <EmptyState />}
+      {hasRejections ? (
+        <RejectionsList items={rejectedItems} />
+      ) : (
+        <EmptyState />
+      )}
       <DialogFooter className="gap-2 sm:gap-2">
         <Button
           variant="outline"
@@ -114,7 +124,10 @@ export function DocumentsReviewSummaryModal({
         >
           Cancel
         </Button>
-        <Button onClick={handleAutoConfirm} disabled={!canTrigger || sendForResubmission.isPending}>
+        <Button
+          onClick={handleAutoConfirm}
+          disabled={!canTrigger || sendForResubmission.isPending}
+        >
           {sendForResubmission.isPending ? (
             <Spinner data-icon="inline-start" />
           ) : (
@@ -128,19 +141,60 @@ export function DocumentsReviewSummaryModal({
 
   const manualContent = (
     <div className="flex flex-col gap-4">
-      {hasRejections ? <RejectionsList items={rejectedItems} /> : <EmptyState />}
+      {hasRejections ? (
+        <RejectionsList items={rejectedItems} />
+      ) : (
+        <EmptyState />
+      )}
       {!preview ? (
         <Button
           onClick={handleLoadPreview}
           disabled={!canTrigger || fetchPreview.isPending}
           variant="outline"
         >
-          {fetchPreview.isPending ? <Spinner data-icon="inline-start" /> : <Send data-icon="inline-start" />}
+          {fetchPreview.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Send data-icon="inline-start" />
+          )}
           {fetchPreview.isPending ? 'Loading preview…' : 'Load email preview'}
         </Button>
       ) : (
         <ManualEmailPanel
           preview={preview}
+          onConfirm={handleManualConfirm}
+          isPending={confirmManual.isPending}
+        />
+      )}
+    </div>
+  )
+
+  const whatsappContent = (
+    <div className="flex flex-col gap-4">
+      {hasRejections ? (
+        <RejectionsList items={rejectedItems} />
+      ) : (
+        <EmptyState />
+      )}
+      {!preview ? (
+        <Button
+          onClick={handleLoadPreview}
+          disabled={!canTrigger || fetchPreview.isPending}
+          variant="outline"
+        >
+          {fetchPreview.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Send data-icon="inline-start" />
+          )}
+          {fetchPreview.isPending
+            ? 'Loading preview...'
+            : 'Load WhatsApp message'}
+        </Button>
+      ) : (
+        <WhatsAppMessagePanel
+          preview={preview}
+          phoneNumber={activeWhatsappNumber}
           onConfirm={handleManualConfirm}
           isPending={confirmManual.isPending}
         />
@@ -166,6 +220,7 @@ export function DocumentsReviewSummaryModal({
           mode={emailMode}
           autoContent={autoContent}
           manualContent={manualContent}
+          whatsappContent={whatsappContent}
         />
       </DialogContent>
     </Dialog>

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { paymentMethodSettingsSchema } from './configuration.schema'
 
 // ─── Case Status Enum ───────────────────────────────────────────────────────
 
@@ -318,6 +319,7 @@ export const caseDetailSchema = z.object({
         .nullable(),
       portalMid: z.number().nullable().optional(),
       credentialsReady: z.boolean().optional(),
+      paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -466,6 +468,7 @@ export const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
+  paymentMethods: paymentMethodSettingsSchema,
 })
 
 export type SaveMidCreationDetailsInput = z.infer<
@@ -475,6 +478,7 @@ export type SaveMidCreationDetailsInput = z.infer<
 export type SaveMidCreationDetailsResponse = {
   portalMid: number
   email: string
+  paymentMethods: z.infer<typeof paymentMethodSettingsSchema>
   savedAt: string
 }
 

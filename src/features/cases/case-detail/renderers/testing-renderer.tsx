@@ -29,13 +29,19 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
+import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   caseHistoryQueryOptions,
+  useConfirmMidCreationEmailManual,
+  useFetchMidCreationEmailPreview,
   useMarkTestingLimitsApplied,
   useSendMidCreationEmail,
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import type { EmailPreviewResult } from '#/apis/cases'
 
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -48,6 +54,12 @@ export default function TestingRenderer({
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
   const markLimitsApplied = useMarkTestingLimitsApplied(caseId)
   const sendCredentialsEmail = useSendMidCreationEmail(caseId)
+  const fetchPreview = useFetchMidCreationEmailPreview(caseId)
+  const confirmManual = useConfirmMidCreationEmailManual(caseId)
+  const emailMode = configurationQuery.data?.emailSendingMode ?? {
+    autoEnabled: true,
+    manualEnabled: true,
+  }
   const limits = configurationQuery.data?.limitsAndMdr.testing
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
@@ -70,16 +82,39 @@ export default function TestingRenderer({
     credentialsReady &&
     !credentialsEmailSent &&
     !historyQuery.isPending
+  const activeWhatsappNumber =
+    typeof caseDetail.merchant.activeWhatsappNumber === 'string'
+      ? caseDetail.merchant.activeWhatsappNumber
+      : null
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [manualPreview, setManualPreview] = useState<EmailPreviewResult | null>(
+    null,
+  )
 
   function handleReview() {
     if (!canSendCredentials) return
+    setManualPreview(null)
     setReviewOpen(true)
   }
 
   async function handleSendMail() {
     if (!canSendCredentials) return
     await sendCredentialsEmail.mutateAsync({})
+    setReviewOpen(false)
+  }
+
+  async function handleLoadManualPreview() {
+    if (!canSendCredentials) return
+    const data = await fetchPreview.mutateAsync({})
+    setManualPreview(data)
+  }
+
+  async function handleManualConfirm(file: File) {
+    if (!manualPreview) return
+    await confirmManual.mutateAsync({
+      tokenId: manualPreview.tokenId,
+      file,
+    })
     setReviewOpen(false)
   }
 
@@ -239,34 +274,92 @@ export default function TestingRenderer({
             <MailCheck />
             <AlertTitle>Credentials stay hidden</AlertTitle>
             <AlertDescription>
-              The system will send the saved merchant portal credentials and
-              Go-Live link. The MID, email, and password are not shown in this
-              Testing case.
+              Send the saved merchant portal credentials and Go-Live link by
+              email or WhatsApp, then save the sent-message screenshot for
+              manual delivery.
             </AlertDescription>
           </Alert>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setReviewOpen(false)}
-              disabled={sendCredentialsEmail.isPending}
-            >
-              Back
-            </Button>
-            <Button
-              onClick={handleSendMail}
-              disabled={sendCredentialsEmail.isPending || credentialsEmailSent}
-            >
-              {sendCredentialsEmail.isPending ? (
-                <Spinner data-icon="inline-start" />
+          <EmailModeChoice
+            mode={emailMode}
+            autoContent={
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setReviewOpen(false)}
+                  disabled={sendCredentialsEmail.isPending}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSendMail}
+                  disabled={
+                    sendCredentialsEmail.isPending || credentialsEmailSent
+                  }
+                >
+                  {sendCredentialsEmail.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {sendCredentialsEmail.isPending
+                    ? 'Sending mail'
+                    : 'Send mail to client'}
+                </Button>
+              </DialogFooter>
+            }
+            manualContent={
+              !manualPreview ? (
+                <Button
+                  onClick={handleLoadManualPreview}
+                  disabled={fetchPreview.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {fetchPreview.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {fetchPreview.isPending
+                    ? 'Loading preview...'
+                    : 'Load email preview'}
+                </Button>
               ) : (
-                <MailCheck data-icon="inline-start" />
-              )}
-              {sendCredentialsEmail.isPending
-                ? 'Sending mail'
-                : 'Send mail to client'}
-            </Button>
-          </DialogFooter>
+                <ManualEmailPanel
+                  preview={manualPreview}
+                  onConfirm={handleManualConfirm}
+                  isPending={confirmManual.isPending}
+                />
+              )
+            }
+            whatsappContent={
+              !manualPreview ? (
+                <Button
+                  onClick={handleLoadManualPreview}
+                  disabled={fetchPreview.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {fetchPreview.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <MailCheck data-icon="inline-start" />
+                  )}
+                  {fetchPreview.isPending
+                    ? 'Loading preview...'
+                    : 'Load WhatsApp message'}
+                </Button>
+              ) : (
+                <WhatsAppMessagePanel
+                  preview={manualPreview}
+                  phoneNumber={activeWhatsappNumber}
+                  onConfirm={handleManualConfirm}
+                  isPending={confirmManual.isPending}
+                />
+              )
+            }
+          />
         </DialogContent>
       </Dialog>
     </div>
