@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const LOCAL_API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-const CLOUDFLARE_API_BASE_URL = 'https://assanpay-be.shahrozahmed.workers.dev'
+const CLOUDFLARE_API_BASE_URL = 'https://onboard.assanpay.net'
 
 const apiBaseUrlSchema = z
   .string()
