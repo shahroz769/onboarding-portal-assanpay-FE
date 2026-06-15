@@ -22,7 +22,7 @@ import {
   useSaveDocumentReviewSubMerchant,
   useSaveFieldReviews,
 } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import {
   Card,
   CardContent,
@@ -290,7 +290,7 @@ export default function DocumentsReviewRenderer({
   const { user } = useAuth()
   const saveFieldReviews = useSaveFieldReviews(caseId)
   const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
-  const configurationQuery = useQuery(configurationQueryOptions())
+  const subMerchantOptionsQuery = useQuery(subMerchantOptionsQueryOptions())
   const { merchant, fieldReviews, currentStage } = caseDetail
   const { draftReviews, saveRejectedReview, clearRejectedReview } =
     useDocumentsReviewDraft()
@@ -329,7 +329,7 @@ export default function DocumentsReviewRenderer({
     caseDetail.documentReview?.subMerchantId ?? '',
   )
   const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
-  const subMerchants = configurationQuery.data?.subMerchants ?? []
+  const subMerchants = subMerchantOptionsQuery.data ?? []
 
   const sections = useMemo(() => {
     return REVIEW_SECTIONS.map((section) => {
@@ -531,7 +531,7 @@ export default function DocumentsReviewRenderer({
                       disabled={
                         !isEditable ||
                         saveSubMerchant.isPending ||
-                        configurationQuery.isLoading ||
+                        subMerchantOptionsQuery.isLoading ||
                         subMerchants.length === 0
                       }
                     >
@@ -580,7 +580,13 @@ export default function DocumentsReviewRenderer({
                       {subMerchantError}
                     </p>
                   ) : null}
-                  {!configurationQuery.isLoading &&
+                  {subMerchantOptionsQuery.isError ? (
+                    <p className="text-sm text-destructive">
+                      Unable to load configured sub-merchants.
+                    </p>
+                  ) : null}
+                  {!subMerchantOptionsQuery.isLoading &&
+                  !subMerchantOptionsQuery.isError &&
                   subMerchants.length === 0 ? (
                     <p className="text-sm text-destructive">
                       Add sub-merchants in configuration before selecting one.

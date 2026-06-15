@@ -29,6 +29,7 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { cn } from '#/lib/utils'
 
 interface AgreementUploadFormProps {
@@ -115,9 +116,7 @@ export function AgreementUploadForm({
         setSubmitted(true)
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : 'Failed to submit agreement.',
-        )
+        toast.error(getApiErrorMessage(err, 'Unable to submit agreement.'))
       },
     })
   }

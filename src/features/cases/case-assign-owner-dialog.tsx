@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
+import { AlertCircleIcon, CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { cn } from '#/lib/utils'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import {
   Command,
@@ -38,7 +40,6 @@ interface CaseAssignOwnerDialogProps {
   caseId: string
   caseNumber: string
   currentOwnerId: string | null
-  currentOwnerName: string | null
 }
 
 export function CaseAssignOwnerDialog({
@@ -47,7 +48,6 @@ export function CaseAssignOwnerDialog({
   caseId,
   caseNumber,
   currentOwnerId,
-  currentOwnerName,
 }: CaseAssignOwnerDialogProps) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -55,36 +55,35 @@ export function CaseAssignOwnerDialog({
 
   const { data: users = [] } = useQuery(usersQueryOptions())
   const assignMutation = useAssignCaseMutation()
+  const resetAssignMutation = assignMutation.reset
 
   const options = [
-    { label: 'Unassigned', value: '__unassigned__' },
+    { label: 'AP System (New)', value: 'ap-system' },
     ...users.map((u) => ({ label: u.name, value: u.id })),
   ]
-
-  const internalValue =
-    selectedUserId === null ? '__unassigned__' : selectedUserId
-  const resolvedOwnerId =
-    internalValue === '__unassigned__' ? null : internalValue
-  const hasChanged = initialized && resolvedOwnerId !== currentOwnerId
+  const selectedValue = selectedUserId ?? 'ap-system'
+  const hasChanged = initialized && selectedUserId !== currentOwnerId
   const selectedLabel =
-    options.find((o) => o.value === internalValue)?.label ?? 'Select owner...'
+    options.find((o) => o.value === selectedValue)?.label ?? 'Select owner...'
 
   useEffect(() => {
     if (open) {
       setSelectedUserId(currentOwnerId)
       setInitialized(false)
+      resetAssignMutation()
     }
-  }, [open, currentOwnerId])
+  }, [open, currentOwnerId, resetAssignMutation])
 
   function handleSelect(value: string) {
-    setSelectedUserId(value === '__unassigned__' ? null : value)
+    setSelectedUserId(value === 'ap-system' ? null : value)
     setInitialized(true)
     setPopoverOpen(false)
+    resetAssignMutation()
   }
 
   function handleSubmit() {
     assignMutation.mutate(
-      { caseId, ownerId: resolvedOwnerId },
+      { caseId, ownerId: selectedUserId },
       {
         onSuccess: () => onOpenChange(false),
       },
@@ -97,13 +96,9 @@ export function CaseAssignOwnerDialog({
         <DialogHeader>
           <DialogTitle>Assign Case Owner</DialogTitle>
           <DialogDescription>
-            Change the owner for case{' '}
-            <span className="font-mono font-medium">{caseNumber}</span>.
-            Currently assigned to{' '}
-            <span className="font-medium">
-              {currentOwnerName ?? 'AP System'}
-            </span>
-            .
+            Assign or transfer case{' '}
+            <span className="font-mono font-medium">{caseNumber}</span>. Setting
+            AP System returns the case to New.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +139,7 @@ export function CaseAssignOwnerDialog({
                           data-icon="inline-end"
                           className={cn(
                             'ml-auto',
-                            internalValue === option.value
+                            selectedValue === option.value
                               ? 'opacity-100'
                               : 'opacity-0',
                           )}
@@ -158,6 +153,18 @@ export function CaseAssignOwnerDialog({
           </Popover>
         </Field>
 
+        {assignMutation.error ? (
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertDescription>
+              {getApiErrorMessage(
+                assignMutation.error,
+                'Unable to assign this case.',
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
@@ -167,7 +174,7 @@ export function CaseAssignOwnerDialog({
             disabled={!hasChanged || assignMutation.isPending}
           >
             {assignMutation.isPending && <Spinner data-icon="inline-start" />}
-            Assign
+            Save owner
           </Button>
         </DialogFooter>
       </DialogContent>

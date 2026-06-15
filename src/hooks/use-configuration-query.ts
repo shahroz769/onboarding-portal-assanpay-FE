@@ -9,6 +9,7 @@ import {
   createSubMerchantDraft,
   fetchCaseFlowConfiguration,
   fetchConfiguration,
+  fetchSubMerchantOptions,
   updateCaseFlowConfiguration,
   updateEmailSendingMode,
   updateMerchantPortal,
@@ -32,6 +33,10 @@ import type {
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export const CONFIGURATION_KEY = ['configuration'] as const
+export const SUB_MERCHANT_OPTIONS_KEY = [
+  ...CONFIGURATION_KEY,
+  'sub-merchants',
+] as const
 export const CASE_FLOW_CONFIGURATION_KEY = [
   'configuration',
   'case-flow',
@@ -41,6 +46,14 @@ export function configurationQueryOptions() {
   return queryOptions({
     queryKey: CONFIGURATION_KEY,
     queryFn: fetchConfiguration,
+    staleTime: 60_000,
+  })
+}
+
+export function subMerchantOptionsQueryOptions() {
+  return queryOptions({
+    queryKey: SUB_MERCHANT_OPTIONS_KEY,
+    queryFn: fetchSubMerchantOptions,
     staleTime: 60_000,
   })
 }

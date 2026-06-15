@@ -171,6 +171,7 @@ export function createCaseColumns({
         <Checkbox
           checked={selectedIds.has(item.id)}
           onCheckedChange={(value) => onSelectRow(item.id, !!value)}
+          disabled={!canEdit}
           aria-label="Select row"
         />
       ),

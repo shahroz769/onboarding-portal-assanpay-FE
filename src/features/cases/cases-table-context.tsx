@@ -21,6 +21,7 @@ import {
   useBulkAssignCasesMutation,
   usersQueryOptions,
 } from '#/hooks/use-cases-query'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
   CaseListItem,
@@ -48,6 +49,7 @@ interface CasesTableState {
   isUsersLoading: boolean
   bulkAssignOwnerId: string | null
   isBulkAssignPending: boolean
+  bulkAssignError: string | null
   assignOwnerCase: CaseListItem | null
   priorityCase: CaseListItem | null
 }
@@ -136,6 +138,7 @@ function CasesTableProvider({
   const [bulkAssignOwnerId, setBulkAssignOwnerId] = useState<string | null>(
     null,
   )
+  const [bulkAssignError, setBulkAssignError] = useState<string | null>(null)
   const [assignOwnerCase, setAssignOwnerCase] = useState<CaseListItem | null>(
     null,
   )
@@ -171,7 +174,13 @@ function CasesTableProvider({
     [data],
   )
   const loadedCount = flatData.length
-  const allIds = useMemo(() => flatData.map((c) => c.id), [flatData])
+  const assignableIds = useMemo(
+    () =>
+      userRole === 'admin' || userRole === 'supervisor'
+        ? flatData.map((item) => item.id)
+        : [],
+    [flatData, userRole],
+  )
   const filtersKey = useMemo(
     () =>
       JSON.stringify({
@@ -209,7 +218,7 @@ function CasesTableProvider({
         return prev
       }
 
-      const visibleIds = new Set(allIds)
+      const visibleIds = new Set(assignableIds)
       const next = new Set(Array.from(prev).filter((id) => visibleIds.has(id)))
 
       if (next.size === prev.size) {
@@ -222,7 +231,7 @@ function CasesTableProvider({
 
       return next
     })
-  }, [allIds])
+  }, [assignableIds])
 
   const handleSelectRow = useCallback((id: string, selected: boolean) => {
     setSelectedIdSet((prev) => {
@@ -240,9 +249,9 @@ function CasesTableProvider({
 
   const handleSelectAll = useCallback(
     (selected: boolean) => {
-      setSelectedIdSet(selected ? new Set(allIds) : new Set())
+      setSelectedIdSet(selected ? new Set(assignableIds) : new Set())
     },
-    [allIds],
+    [assignableIds],
   )
 
   const selectedIds = useMemo(() => Array.from(selectedIdSet), [selectedIdSet])
@@ -255,7 +264,7 @@ function CasesTableProvider({
         sortOrder: filters.sortOrder,
         onSort: handleSort,
         selectedIds: selectedIdSet,
-        allIds,
+        allIds: assignableIds,
         onSelectRow: handleSelectRow,
         onSelectAll: handleSelectAll,
         onOpenAssignOwner: setAssignOwnerCase,
@@ -263,7 +272,7 @@ function CasesTableProvider({
       }),
     [
       userRole,
-      allIds,
+      assignableIds,
       filters.sortBy,
       filters.sortOrder,
       handleSelectAll,
@@ -296,7 +305,12 @@ function CasesTableProvider({
         onSuccess: () => {
           setSelectedIdSet(new Set())
           setBulkAssignOwnerId(null)
+          setBulkAssignError(null)
         },
+        onError: (error) =>
+          setBulkAssignError(
+            getApiErrorMessage(error, 'Unable to assign the selected cases.'),
+          ),
       },
     )
   }, [bulkAssign, bulkAssignOwnerId, selectedIds])
@@ -325,12 +339,14 @@ function CasesTableProvider({
       isUsersLoading,
       bulkAssignOwnerId,
       isBulkAssignPending: bulkAssign.isPending,
+      bulkAssignError,
       assignOwnerCase,
       priorityCase,
     }),
     [
       assignOwnerCase,
       bulkAssign.isPending,
+      bulkAssignError,
       bulkAssignOwnerId,
       caseUsers,
       filters,
@@ -354,7 +370,10 @@ function CasesTableProvider({
     () => ({
       setFilter,
       fetchNextPage: handleFetchNextPage,
-      setBulkAssignOwnerId,
+      setBulkAssignOwnerId: (value) => {
+        setBulkAssignOwnerId(value)
+        setBulkAssignError(null)
+      },
       submitBulkAssign,
       openAssignOwnerDialog: setAssignOwnerCase,
       closeAssignOwnerDialog: () => setAssignOwnerCase(null),

@@ -7,15 +7,22 @@ import type {
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
+  SubMerchantOption,
 } from '#/schemas/configuration.schema'
 import {
   caseFlowConfigurationSchema,
   configurationOverviewSchema,
+  subMerchantOptionsSchema,
 } from '#/schemas/configuration.schema'
 
 export async function fetchConfiguration(): Promise<ConfigurationOverview> {
   const response = await apiClient.get('/api/configuration')
   return configurationOverviewSchema.parse(response.data)
+}
+
+export async function fetchSubMerchantOptions(): Promise<SubMerchantOption[]> {
+  const response = await apiClient.get('/api/configuration/sub-merchants')
+  return subMerchantOptionsSchema.parse(response.data)
 }
 
 export async function updateLimitsAndMdr(input: LimitsAndMdrSettings) {
@@ -59,7 +66,10 @@ export async function updatePaymentMethods(input: PaymentMethodSettings) {
 }
 
 export async function updatePayoutMethods(input: PaymentMethodSettings) {
-  const response = await apiClient.put('/api/configuration/payout-methods', input)
+  const response = await apiClient.put(
+    '/api/configuration/payout-methods',
+    input,
+  )
   return response.data
 }
 

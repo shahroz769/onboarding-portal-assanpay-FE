@@ -23,6 +23,7 @@ import type {
   ResubmissionContext,
   ResubmissionRejection,
 } from '#/apis/merchant-onboarding'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -625,9 +626,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
         setSubmitted(true)
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : 'Failed to submit updates.',
-        )
+        toast.error(getApiErrorMessage(err, 'Unable to submit updates.'))
       },
     })
   }

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { ComponentType, KeyboardEvent, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import {
@@ -71,6 +70,7 @@ import {
   ALLOWED_EXTENSIONS,
 } from '#/schemas/merchant-onboarding.schema'
 import { useSubmitMerchantOnboardingMutation } from '#/apis/merchant-onboarding'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   DocumentFieldName,
   MerchantOnboardingFormValues,
@@ -176,6 +176,7 @@ export function MerchantOnboardingForm({
   const [documentErrors, setDocumentErrors] = useState<
     Partial<Record<DocumentFieldName, string>>
   >({})
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
   const submitMerchantOnboardingMutation = useSubmitMerchantOnboardingMutation()
 
   const form = useForm({
@@ -207,6 +208,7 @@ export function MerchantOnboardingForm({
       onSubmit: merchantOnboardingSchema,
     },
     onSubmitInvalid: ({ formApi }) => {
+      setSubmissionError(null)
       const fieldErrors = Object.values(formApi.state.fieldMeta).flatMap(
         (fieldMeta) => fieldMeta.errors,
       )
@@ -223,6 +225,8 @@ export function MerchantOnboardingForm({
       firstInvalidElement?.focus()
     },
     onSubmit: async ({ value }) => {
+      setSubmissionError(null)
+
       // Validate documents
       const docErrors = validateDocuments(value.merchantType)
       if (Object.keys(docErrors).length > 0) {
@@ -252,15 +256,12 @@ export function MerchantOnboardingForm({
         onSubmittedChange?.(true)
         toast.success('Form submitted successfully!')
       } catch (error: unknown) {
-        if (isAxiosError(error) && error.response?.data) {
-          const data = error.response.data as {
-            message?: string
-            errors?: Partial<Record<DocumentFieldName, string>>
-          }
-          toast.error(data.message ?? 'Submission failed. Please try again.')
-        } else {
-          toast.error('An unexpected error occurred. Please try again.')
-        }
+        const message = getApiErrorMessage(
+          error,
+          'Unable to submit the application. Please try again.',
+        )
+        setSubmissionError(message)
+        toast.error(message)
       }
     },
   })
@@ -1328,6 +1329,11 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Submit */}
+      {submissionError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{submissionError}</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex justify-end gap-3">
         <Button
           type="button"
@@ -1336,6 +1342,7 @@ export function MerchantOnboardingForm({
             form.reset()
             setDocuments({})
             setDocumentErrors({})
+            setSubmissionError(null)
           }}
         >
           Reset

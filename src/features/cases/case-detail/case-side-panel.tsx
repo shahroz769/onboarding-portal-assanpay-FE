@@ -362,7 +362,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     if (primaryAction.actionKind === 'mark-successful') {
       if (
         caseDetail.queue.slug === 'documents-review' &&
-        !caseDetail.documentReview?.subMerchantName?.trim()
+        !caseDetail.documentReview.subMerchantName.trim()
       ) {
         toast.error(
           'Select the sub-merchant name before marking this case as successful.',
@@ -587,7 +587,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent value="chatter" className="min-h-0">
             <Suspense fallback={<SidePanelSkeleton />}>
-              <CaseChatter caseId={caseId} embedded />
+              <CaseChatter caseId={caseId} canPost={isCaseOwner} embedded />
             </Suspense>
           </TabsContent>
 

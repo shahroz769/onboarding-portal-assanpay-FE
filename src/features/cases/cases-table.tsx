@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { UserIcon } from 'lucide-react'
+import { AlertCircleIcon, UserIcon } from 'lucide-react'
 
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import {
@@ -144,44 +145,52 @@ function BulkActions() {
       visibleCount={state.flatData.length}
     >
       {canAssign ? (
-        <div className="flex items-center gap-2">
-          {state.isUsersLoading ? (
-            <Skeleton className="h-8 w-40" />
-          ) : (
-            <Select
-              value={state.bulkAssignOwnerId ?? 'unassigned'}
-              onValueChange={(value) =>
-                actions.setBulkAssignOwnerId(
-                  value === 'unassigned' ? null : value,
-                )
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {state.isUsersLoading ? (
+              <Skeleton className="h-8 w-40" />
+            ) : (
+              <Select
+                value={state.bulkAssignOwnerId ?? 'ap-system'}
+                onValueChange={(value) =>
+                  actions.setBulkAssignOwnerId(
+                    value === 'ap-system' ? null : value,
+                  )
+                }
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue placeholder="Select owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ap-system">AP System (New)</SelectItem>
+                    {state.users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={actions.submitBulkAssign}
+              disabled={
+                state.isBulkAssignPending || state.selectedIds.length === 0
               }
             >
-              <SelectTrigger size="sm">
-                <SelectValue placeholder="Select owner" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {state.users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={actions.submitBulkAssign}
-            disabled={
-              state.isBulkAssignPending || state.selectedIds.length === 0
-            }
-          >
-            <UserIcon data-icon="inline-start" />
-            Assign Owner
-          </Button>
+              <UserIcon data-icon="inline-start" />
+              Assign Owner
+            </Button>
+          </div>
+          {state.bulkAssignError ? (
+            <Alert variant="destructive" className="max-w-xl">
+              <AlertCircleIcon />
+              <AlertDescription>{state.bulkAssignError}</AlertDescription>
+            </Alert>
+          ) : null}
         </div>
       ) : null}
     </DataTableSelectionInfo>
@@ -224,7 +233,6 @@ function Dialogs() {
           caseId={state.assignOwnerCase.id}
           caseNumber={state.assignOwnerCase.caseNumber}
           currentOwnerId={state.assignOwnerCase.ownerId}
-          currentOwnerName={state.assignOwnerCase.ownerName}
         />
       ) : null}
       {state.priorityCase ? (

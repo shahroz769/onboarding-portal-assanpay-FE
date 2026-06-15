@@ -10,6 +10,7 @@ import {
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ import type { CaseComment } from '#/schemas/cases.schema'
 
 interface CaseChatterProps {
   caseId: string
+  canPost?: boolean
   embedded?: boolean
 }
 
@@ -90,9 +92,11 @@ function getMentionMatch(
 
   if (!match) return null
 
+  const query = match[2]
+
   return {
-    query: match[2] ?? '',
-    start: caretPosition - (match[2]?.length ?? 0) - 1,
+    query,
+    start: caretPosition - query.length - 1,
     end: caretPosition,
   }
 }
@@ -141,7 +145,11 @@ function buildCommentThreads(comments: CaseComment[]) {
   }
 }
 
-export function CaseChatter({ caseId, embedded = false }: CaseChatterProps) {
+export function CaseChatter({
+  caseId,
+  canPost = false,
+  embedded = false,
+}: CaseChatterProps) {
   const { data: comments } = useSuspenseQuery(caseCommentsQueryOptions(caseId))
   const { data: users } = useSuspenseQuery(usersQueryOptions())
   const createComment = useCreateComment(caseId)
@@ -236,96 +244,105 @@ export function CaseChatter({ caseId, embedded = false }: CaseChatterProps) {
 
   const contentBody = (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <Popover open={Boolean(activeMention)}>
-        <PopoverAnchor asChild>
-          <form
-            onSubmit={handleSubmit}
-            className="rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
-              {replyTarget ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  <CornerDownRight className="size-3.5" />
-                  <span>
-                    Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
-                    {replyTarget.content}
-                  </span>
+      {canPost ? (
+        <Popover open={Boolean(activeMention)}>
+          <PopoverAnchor asChild>
+            <form
+              onSubmit={handleSubmit}
+              className="rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
+                {replyTarget ? (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <CornerDownRight className="size-3.5" />
+                    <span>
+                      Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
+                      {replyTarget.content}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      className="ml-auto"
+                      onClick={() => setReplyTarget(null)}
+                    >
+                      <X />
+                    </Button>
+                  </div>
+                ) : null}
+
+                <Textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(event) => {
+                    setContent(event.target.value)
+                    setCursorPosition(event.target.selectionStart)
+                  }}
+                  onSelect={(event) =>
+                    setCursorPosition(event.currentTarget.selectionStart)
+                  }
+                  onClick={(event) =>
+                    setCursorPosition(event.currentTarget.selectionStart)
+                  }
+                  placeholder={
+                    replyTarget
+                      ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
+                      : 'Write a review note. Use @ to mention a teammate.'
+                  }
+                  className="h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 shadow-none focus-visible:ring-0"
+                />
+
+                <div className="flex flex-wrap items-center justify-end gap-3">
                   <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="ml-auto"
-                    onClick={() => setReplyTarget(null)}
+                    type="submit"
+                    disabled={!content.trim() || createComment.isPending}
                   >
-                    <X />
+                    {createComment.isPending ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : (
+                      <SendHorizontal data-icon="inline-start" />
+                    )}
+                    {createComment.isPending ? 'Posting reply' : 'Post update'}
                   </Button>
                 </div>
-              ) : null}
-
-              <Textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(event) => {
-                  setContent(event.target.value)
-                  setCursorPosition(event.target.selectionStart ?? 0)
-                }}
-                onSelect={(event) =>
-                  setCursorPosition(event.currentTarget.selectionStart ?? 0)
-                }
-                onClick={(event) =>
-                  setCursorPosition(event.currentTarget.selectionStart ?? 0)
-                }
-                placeholder={
-                  replyTarget
-                    ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
-                    : 'Write a review note. Use @ to mention a teammate.'
-                }
-                className="h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 shadow-none focus-visible:ring-0"
-              />
-
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <Button
-                  type="submit"
-                  disabled={!content.trim() || createComment.isPending}
-                >
-                  {createComment.isPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <SendHorizontal data-icon="inline-start" />
-                  )}
-                  {createComment.isPending ? 'Posting reply' : 'Post update'}
-                </Button>
               </div>
-            </div>
-          </form>
-        </PopoverAnchor>
+            </form>
+          </PopoverAnchor>
 
-        <PopoverContent align="start" className="w-80 p-0">
-          <Command shouldFilter={false}>
-            <CommandInput placeholder="Mention a teammate" />
-            <CommandList>
-              <CommandEmpty>No matching users found.</CommandEmpty>
-              <CommandGroup heading="Team members">
-                {mentionCandidates.slice(0, 8).map((candidate) => (
-                  <CommandItem
-                    key={candidate.id}
-                    value={candidate.id}
-                    onSelect={() =>
-                      handleSelectMention(candidate.id, candidate.username)
-                    }
-                  >
-                    <UserRound />
-                    <span>{candidate.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      @{candidate.username}
-                    </span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+          <PopoverContent align="start" className="w-80 p-0">
+            <Command shouldFilter={false}>
+              <CommandInput placeholder="Mention a teammate" />
+              <CommandList>
+                <CommandEmpty>No matching users found.</CommandEmpty>
+                <CommandGroup heading="Team members">
+                  {mentionCandidates.slice(0, 8).map((candidate) => (
+                    <CommandItem
+                      key={candidate.id}
+                      value={candidate.id}
+                      onSelect={() =>
+                        handleSelectMention(candidate.id, candidate.username)
+                      }
+                    >
+                      <UserRound />
+                      <span>{candidate.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        @{candidate.username}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Alert>
+          <AlertTitle>Read-only chatter</AlertTitle>
+          <AlertDescription>
+            Only the current case owner can post updates or replies.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex min-h-0 flex-1 overflow-y-auto pr-1">
         {threads.roots.length === 0 ? (
@@ -337,7 +354,7 @@ export function CaseChatter({ caseId, embedded = false }: CaseChatterProps) {
                 key={comment.id}
                 comment={comment}
                 childrenByParent={threads.childrenByParent}
-                onReply={setReplyTarget}
+                onReply={canPost ? setReplyTarget : undefined}
               />
             ))}
           </div>
@@ -380,7 +397,7 @@ function CommentThread({
 }: {
   comment: CaseComment
   childrenByParent: Map<string, CaseComment[]>
-  onReply: (comment: CaseComment) => void
+  onReply?: (comment: CaseComment) => void
   depth?: number
 }) {
   const replies = childrenByParent.get(comment.id) ?? []
@@ -419,17 +436,19 @@ function CommentThread({
             <p className="mt-3 wrap-break-word whitespace-pre-wrap text-sm leading-6 text-foreground/90">
               {renderCommentText(comment.content)}
             </p>
-            <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={() => onReply(comment)}
-              >
-                <CornerDownRight data-icon="inline-start" />
-                Reply
-              </Button>
-            </div>
+            {onReply ? (
+              <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => onReply(comment)}
+                >
+                  <CornerDownRight data-icon="inline-start" />
+                  Reply
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

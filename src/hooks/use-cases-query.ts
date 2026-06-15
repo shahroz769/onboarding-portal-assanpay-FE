@@ -16,6 +16,7 @@ import {
   updateCasePriority,
 } from '#/apis/cases'
 import { fetchUsers } from '#/apis/users'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { CaseFilters } from '#/schemas/cases.schema'
 
 export const CASES_KEY = ['cases'] as const
@@ -94,8 +95,8 @@ export function useBulkAssignCasesMutation() {
       toast.success('Cases assigned successfully.')
       await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to assign cases.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to assign cases.'))
     },
   })
 }
@@ -115,8 +116,8 @@ export function useAssignCaseMutation() {
       toast.success('Case owner updated.')
       await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to assign case owner.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to assign case owner.'))
     },
   })
 }

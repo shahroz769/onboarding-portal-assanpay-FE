@@ -53,6 +53,27 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
   },
+  owner_assigned: {
+    label: 'Owner assigned',
+    icon: UserRoundCheck,
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    iconWrapperClassName:
+      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
+  },
+  owner_transferred: {
+    label: 'Ownership transferred',
+    icon: UserRoundCheck,
+    iconClassName: 'text-violet-700 dark:text-violet-300',
+    iconWrapperClassName:
+      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
+  },
+  owner_unassigned: {
+    label: 'Returned to AP System',
+    icon: RotateCcw,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
   stage_advanced: {
     label: 'Stage advanced',
     icon: CheckCircle2,
@@ -443,7 +464,13 @@ function formatDetails(
   if (!details) return null
 
   if (
-    (action === 'ownership_taken' || action === 'owner_changed') &&
+    [
+      'ownership_taken',
+      'owner_changed',
+      'owner_assigned',
+      'owner_transferred',
+      'owner_unassigned',
+    ].includes(action) &&
     typeof details.toOwner === 'string'
   ) {
     const fromOwner = formatHistoryParty(details.fromOwner)
@@ -642,7 +669,9 @@ function formatDetails(
         ? details.sourceCaseNumber
         : null
     const sourceQueueName =
-      typeof details.sourceQueueName === 'string' ? details.sourceQueueName : null
+      typeof details.sourceQueueName === 'string'
+        ? details.sourceQueueName
+        : null
 
     if (sourceCaseNumber && sourceQueueName) {
       parts.push(
@@ -663,7 +692,9 @@ function formatDetails(
         ? details.sourceCaseNumber
         : null
     const sourceQueueName =
-      typeof details.sourceQueueName === 'string' ? details.sourceQueueName : null
+      typeof details.sourceQueueName === 'string'
+        ? details.sourceQueueName
+        : null
 
     if (sourceCaseNumber && sourceQueueName) {
       parts.push(

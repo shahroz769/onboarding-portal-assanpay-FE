@@ -61,7 +61,11 @@ function QueueSummary({
   user: UserListItem
   kind: 'view' | 'work'
 }) {
-  if (kind === 'view' && user.queueViewScope === 'all') {
+  const hasAllQueueAccess =
+    user.roleType !== 'agent' ||
+    (kind === 'view' && user.queueViewScope === 'all')
+
+  if (hasAllQueueAccess) {
     return <Badge variant="secondary">All Queues</Badge>
   }
 

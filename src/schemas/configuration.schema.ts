@@ -78,6 +78,13 @@ export const subMerchantDraftSchema = z.object({
   updatedAt: z.string(),
 })
 
+export const subMerchantOptionSchema = subMerchantDraftSchema.pick({
+  id: true,
+  name: true,
+})
+
+export const subMerchantOptionsSchema = z.array(subMerchantOptionSchema)
+
 export const caseFlowQueueSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -182,6 +189,7 @@ export type MerchantPortalSettings = z.infer<
 export type PaymentMethodSettings = z.infer<typeof paymentMethodSettingsSchema>
 export type PaymentMethod = PaymentMethodSettings[number]
 export type ConfigurationOverview = z.infer<typeof configurationOverviewSchema>
+export type SubMerchantOption = z.infer<typeof subMerchantOptionSchema>
 export type CaseFlowConfiguration = z.infer<typeof caseFlowConfigurationSchema>
 export type CaseFlowStartRule = z.infer<typeof caseFlowStartRuleSchema>
 export type CaseFlowCloseTrigger = z.infer<typeof caseFlowCloseTriggerSchema>
