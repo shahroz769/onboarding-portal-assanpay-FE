@@ -126,8 +126,8 @@ export function useAdvanceStage(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to advance stage')
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to advance stage'))
     },
   })
 }
