@@ -161,9 +161,7 @@ export default function AgreementRenderer({
       }
     }
     await sendAgreement.mutateAsync({ remarks: trimmedRemarks || null })
-    setReviewOpen(false)
-    setRemarks('')
-    setRemarksError(null)
+    setPreview(null)
   }
 
   async function handleLoadPreview() {
@@ -184,15 +182,19 @@ export default function AgreementRenderer({
     setPreview(data)
   }
 
-  async function handleManualConfirm(file: File) {
+  async function handleManualConfirm(
+    file: File,
+    channel: 'email' | 'whatsapp',
+  ) {
     if (!preview) return
     const trimmedRemarks = remarks.trim()
     await confirmManual.mutateAsync({
       tokenId: preview.tokenId,
       remarks: trimmedRemarks || null,
       file,
+      channel,
     })
-    setReviewOpen(false)
+    if (channel === 'whatsapp') setReviewOpen(false)
   }
 
   return (
@@ -406,7 +408,7 @@ export default function AgreementRenderer({
               ) : (
                 <ManualEmailPanel
                   preview={preview}
-                  onConfirm={handleManualConfirm}
+                  onConfirm={(file) => handleManualConfirm(file, 'email')}
                   isPending={confirmManual.isPending}
                 />
               )
@@ -432,7 +434,7 @@ export default function AgreementRenderer({
                 <WhatsAppMessagePanel
                   preview={preview}
                   phoneNumber={activeWhatsappNumber}
-                  onConfirm={handleManualConfirm}
+                  onConfirm={(file) => handleManualConfirm(file, 'whatsapp')}
                   isPending={confirmManual.isPending}
                 />
               )

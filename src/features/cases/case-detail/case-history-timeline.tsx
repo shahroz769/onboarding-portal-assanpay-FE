@@ -13,9 +13,11 @@ import {
   Upload,
   UserRoundCheck,
   Globe,
+  ExternalLink,
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -109,12 +111,26 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  resubmission_email_sent_manual: {
+    label: 'Resubmission email sent',
+    icon: MailCheck,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
   resubmission_email_failed: {
     label: 'Resubmission email failed',
     icon: MailWarning,
     iconClassName: 'text-rose-700 dark:text-rose-300',
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
+  resubmission_whatsapp_sent_manual: {
+    label: 'WhatsApp sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
   },
   client_resubmitted: {
     label: 'Client resubmitted',
@@ -249,6 +265,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  agreement_whatsapp_sent_manual: {
+    label: 'Agreement WhatsApp sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
   agreement_email_failed: {
     label: 'Agreement email failed',
     icon: MailWarning,
@@ -277,6 +300,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  mid_creation_whatsapp_sent_manual: {
+    label: 'MID credentials WhatsApp sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
   mid_creation_email_failed: {
     label: 'MID credentials email failed',
     icon: MailWarning,
@@ -300,6 +330,13 @@ const ACTION_META: Record<
   },
   live_activation_email_sent_manual: {
     label: 'Live email sent',
+    icon: MailCheck,
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    iconWrapperClassName:
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
+  },
+  live_activation_whatsapp_sent_manual: {
+    label: 'Live WhatsApp sent',
     icon: MailCheck,
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     iconWrapperClassName:
@@ -389,6 +426,7 @@ export function CaseHistoryTimeline({
             }
             const Icon = meta.icon
             const detailsText = formatDetails(entry.action, entry.details)
+            const proofFile = getHistoryProofFile(entry.details)
 
             return (
               <div key={entry.id} className="relative pl-8">
@@ -416,6 +454,23 @@ export function CaseHistoryTimeline({
                           <p className="wrap-break-word whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                             {detailsText}
                           </p>
+                        ) : null}
+                        {proofFile ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="outline" className="max-w-64 truncate">
+                              {proofFile.originalName}
+                            </Badge>
+                            <Button asChild variant="outline" size="sm">
+                              <a
+                                href={proofFile.googleDriveWebViewLink}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink data-icon="inline-start" />
+                                Open proof
+                              </a>
+                            </Button>
+                          </div>
                         ) : null}
                       </div>
                     </div>
@@ -520,16 +575,22 @@ function formatDetails(
   }
 
   if (
-    action === 'resubmission_email_sent' &&
+    [
+      'resubmission_email_sent',
+      'resubmission_email_sent_manual',
+      'resubmission_whatsapp_sent_manual',
+    ].includes(action) &&
     typeof details.recipient === 'string'
   ) {
     const rejectedFields = Array.isArray(details.rejectedFields)
       ? details.rejectedFields.length
       : null
+    const channel =
+      action === 'resubmission_whatsapp_sent_manual' ? 'WhatsApp to' : 'Sent to'
     parts.push(
       rejectedFields && rejectedFields > 0
-        ? `Sent to ${details.recipient} for ${rejectedFields} rejected item${rejectedFields === 1 ? '' : 's'}`
-        : `Sent to ${details.recipient}`,
+        ? `${channel} ${details.recipient} for ${rejectedFields} rejected item${rejectedFields === 1 ? '' : 's'}`
+        : `${channel} ${details.recipient}`,
     )
   }
 
@@ -605,10 +666,18 @@ function formatDetails(
   }
 
   if (
-    action === 'agreement_email_sent' &&
+    [
+      'agreement_email_sent',
+      'agreement_email_sent_manual',
+      'agreement_whatsapp_sent_manual',
+    ].includes(action) &&
     typeof details.recipient === 'string'
   ) {
-    parts.push(`Sent to ${details.recipient}`)
+    parts.push(
+      action === 'agreement_whatsapp_sent_manual'
+        ? `WhatsApp to ${details.recipient}`
+        : `Sent to ${details.recipient}`,
+    )
   }
 
   if (
@@ -626,10 +695,18 @@ function formatDetails(
   }
 
   if (
-    action === 'mid_creation_email_sent' &&
+    [
+      'mid_creation_email_sent',
+      'mid_creation_email_sent_manual',
+      'mid_creation_whatsapp_sent_manual',
+    ].includes(action) &&
     typeof details.recipient === 'string'
   ) {
-    parts.push(`Sent to ${details.recipient}`)
+    parts.push(
+      action === 'mid_creation_whatsapp_sent_manual'
+        ? `WhatsApp to ${details.recipient}`
+        : `Sent to ${details.recipient}`,
+    )
     if (typeof details.availableAt === 'string') {
       parts.push(`Go-Live unlocks ${formatDateTime(details.availableAt)}`)
     }
@@ -640,6 +717,21 @@ function formatDetails(
     typeof details.error === 'string'
   ) {
     parts.push(`Delivery failed: ${details.error}`)
+  }
+
+  if (
+    [
+      'live_activation_email_sent',
+      'live_activation_email_sent_manual',
+      'live_activation_whatsapp_sent_manual',
+    ].includes(action) &&
+    typeof details.recipient === 'string'
+  ) {
+    parts.push(
+      action === 'live_activation_whatsapp_sent_manual'
+        ? `WhatsApp to ${details.recipient}`
+        : `Sent to ${details.recipient}`,
+    )
   }
 
   if (
@@ -739,6 +831,24 @@ function formatDetails(
   }
 
   return parts.join(' · ') || null
+}
+
+function getHistoryProofFile(details: Record<string, unknown> | null) {
+  const proofFile = details?.proofFile
+  if (!proofFile || typeof proofFile !== 'object') return null
+
+  const file = proofFile as Record<string, unknown>
+  if (
+    typeof file.originalName !== 'string' ||
+    typeof file.googleDriveWebViewLink !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    originalName: file.originalName,
+    googleDriveWebViewLink: file.googleDriveWebViewLink,
+  }
 }
 
 function formatActionLabel(action: string) {

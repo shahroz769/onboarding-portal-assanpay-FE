@@ -168,7 +168,7 @@ export default function LiveRenderer({
 
   async function handleSendMail() {
     await sendLiveEmail.mutateAsync(form)
-    setReviewOpen(false)
+    setManualPreview(null)
   }
 
   async function handleLoadManualPreview() {
@@ -176,14 +176,18 @@ export default function LiveRenderer({
     setManualPreview(data)
   }
 
-  async function handleManualConfirm(file: File) {
+  async function handleManualConfirm(
+    file: File,
+    channel: 'email' | 'whatsapp',
+  ) {
     if (!manualPreview) return
     await confirmManual.mutateAsync({
       tokenId: manualPreview.tokenId,
       file,
+      channel,
       ...form,
     })
-    setReviewOpen(false)
+    if (channel === 'whatsapp') setReviewOpen(false)
   }
 
   return (
@@ -390,7 +394,7 @@ export default function LiveRenderer({
               ) : (
                 <ManualEmailPanel
                   preview={manualPreview}
-                  onConfirm={handleManualConfirm}
+                  onConfirm={(file) => handleManualConfirm(file, 'email')}
                   isPending={confirmManual.isPending}
                 />
               )
@@ -416,7 +420,7 @@ export default function LiveRenderer({
                 <WhatsAppMessagePanel
                   preview={manualPreview}
                   phoneNumber={activeWhatsappNumber}
-                  onConfirm={handleManualConfirm}
+                  onConfirm={(file) => handleManualConfirm(file, 'whatsapp')}
                   isPending={confirmManual.isPending}
                 />
               )

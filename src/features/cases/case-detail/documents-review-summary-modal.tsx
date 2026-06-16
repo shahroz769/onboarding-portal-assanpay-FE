@@ -82,13 +82,20 @@ export function DocumentsReviewSummaryModal({
     isCaseOwner &&
     isDocumentsReviewCase &&
     isWorkingStage
+  const canLoadMessage =
+    canTrigger ||
+    (hasRejections &&
+      hasRecipient &&
+      isCaseOwner &&
+      isDocumentsReviewCase &&
+      caseDetail.case.status === 'awaiting_client')
 
   async function handleAutoConfirm() {
     if (!canTrigger || isConfirmingRef.current) return
     isConfirmingRef.current = true
     try {
       const data = await sendForResubmission.mutateAsync()
-      if (data.status === 'sent') onOpenChange(false)
+      if (data.status === 'sent') setPreview(null)
     } catch {
       // already toasted
     } finally {
@@ -97,15 +104,18 @@ export function DocumentsReviewSummaryModal({
   }
 
   async function handleLoadPreview() {
-    if (!canTrigger) return
+    if (!canLoadMessage) return
     const data = await fetchPreview.mutateAsync()
     setPreview(data)
   }
 
-  async function handleManualConfirm(file: File) {
+  async function handleManualConfirm(
+    file: File,
+    channel: 'email' | 'whatsapp',
+  ) {
     if (!preview) return
-    await confirmManual.mutateAsync({ tokenId: preview.tokenId, file })
-    onOpenChange(false)
+    await confirmManual.mutateAsync({ tokenId: preview.tokenId, file, channel })
+    if (channel === 'whatsapp') onOpenChange(false)
   }
 
   const autoContent = (
@@ -162,7 +172,7 @@ export function DocumentsReviewSummaryModal({
       ) : (
         <ManualEmailPanel
           preview={preview}
-          onConfirm={handleManualConfirm}
+          onConfirm={(file) => handleManualConfirm(file, 'email')}
           isPending={confirmManual.isPending}
         />
       )}
@@ -179,7 +189,7 @@ export function DocumentsReviewSummaryModal({
       {!preview ? (
         <Button
           onClick={handleLoadPreview}
-          disabled={!canTrigger || fetchPreview.isPending}
+          disabled={!canLoadMessage || fetchPreview.isPending}
           variant="outline"
         >
           {fetchPreview.isPending ? (
@@ -195,7 +205,7 @@ export function DocumentsReviewSummaryModal({
         <WhatsAppMessagePanel
           preview={preview}
           phoneNumber={activeWhatsappNumber}
-          onConfirm={handleManualConfirm}
+          onConfirm={(file) => handleManualConfirm(file, 'whatsapp')}
           isPending={confirmManual.isPending}
         />
       )}

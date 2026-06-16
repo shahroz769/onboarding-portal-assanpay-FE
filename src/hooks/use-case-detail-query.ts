@@ -38,6 +38,7 @@ import {
   fetchLiveEmailPreview,
   confirmLiveEmailManual,
 } from '#/apis/cases'
+import type { ManualCommunicationChannel } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   CloseUnsuccessfulInput,
@@ -410,7 +411,11 @@ export function useFetchResubmissionEmailPreview(caseId: string) {
 export function useConfirmResubmissionEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { tokenId: string; file: File }) =>
+    mutationFn: (input: {
+      tokenId: string
+      file: File
+      channel?: ManualCommunicationChannel
+    }) =>
       confirmResubmissionEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Resubmission email marked as sent')
@@ -437,7 +442,12 @@ export function useFetchAgreementEmailPreview(caseId: string) {
 export function useConfirmAgreementEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { tokenId: string; remarks?: string | null; file: File }) =>
+    mutationFn: (input: {
+      tokenId: string
+      remarks?: string | null
+      file: File
+      channel?: ManualCommunicationChannel
+    }) =>
       confirmAgreementEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Agreement email marked as sent')
@@ -464,7 +474,13 @@ export function useFetchMidCreationEmailPreview(caseId: string) {
 export function useConfirmMidCreationEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { tokenId: string; file: File } & SendMidCreationEmailInput) =>
+    mutationFn: (
+      input: {
+        tokenId: string
+        file: File
+        channel?: ManualCommunicationChannel
+      } & SendMidCreationEmailInput,
+    ) =>
       confirmMidCreationEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('MID credentials email marked as sent')
@@ -491,7 +507,13 @@ export function useFetchLiveEmailPreview(caseId: string) {
 export function useConfirmLiveEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { tokenId: string; file: File } & SendLiveEmailInput) =>
+    mutationFn: (
+      input: {
+        tokenId: string
+        file: File
+        channel?: ManualCommunicationChannel
+      } & SendLiveEmailInput,
+    ) =>
       confirmLiveEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Live email marked as sent')
