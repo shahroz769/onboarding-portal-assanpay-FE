@@ -26,7 +26,10 @@ export function DataTableRouteSkeleton({
   actionWidth = 144,
   columns,
   columnWidths,
+  filterCount,
+  filterWidths,
   rowCount = 10,
+  searchWidth,
 }: {
   filterCount?: number
   searchWidth?: number
