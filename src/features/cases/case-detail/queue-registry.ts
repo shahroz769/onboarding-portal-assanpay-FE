@@ -25,6 +25,16 @@ const registry: Partial<Record<string, QueueRendererLoader>> = {
 
 const loadedComponents = new Map<string, LazyQueueRenderer>()
 
+export async function preloadQueueRenderer(queueSlug: string) {
+  const loader = registry[queueSlug]
+  if (!loader) {
+    await import('./renderers/fallback-renderer')
+    return
+  }
+
+  await loader()
+}
+
 export function getQueueRenderer(queueSlug: string): LazyQueueRenderer {
   if (loadedComponents.has(queueSlug)) {
     return loadedComponents.get(queueSlug)!

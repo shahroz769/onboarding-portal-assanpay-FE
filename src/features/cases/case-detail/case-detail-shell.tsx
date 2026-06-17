@@ -4,14 +4,14 @@ import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
-import { Skeleton } from '#/components/ui/skeleton'
+import { Card, CardContent } from '#/components/ui/card'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
 import type { CaseDetail, CloseOutcome, QueueStage } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
+import { CaseQueueWorkspaceSkeleton } from './case-detail-skeletons'
 import { getQueueRenderer } from './queue-registry'
 import { DocumentsReviewDraftProvider } from './renderers/documents-review-draft-context'
 
@@ -59,7 +59,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
 
           <CaseSlaBox caseDetail={data} />
 
-          <Suspense fallback={<QueueRendererSkeleton />}>
+          <Suspense fallback={<CaseQueueWorkspaceSkeleton />}>
             <QueueRenderer caseDetail={data} caseId={caseId} />
           </Suspense>
         </div>
@@ -82,98 +82,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
   return pageContent
 }
 
-export function CaseDetailShellSkeleton() {
-  return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card className="gap-4 py-4">
-            <CardContent className="grid gap-3 px-4 py-0 md:grid-cols-3">
-              <div className="rounded-lg bg-muted p-2 md:col-span-3">
-                <div className="grid grid-cols-4 gap-2">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className="h-9 w-full rounded-md" />
-                  ))}
-                </div>
-              </div>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col gap-1 rounded-xl border bg-muted/20 px-3 py-2.5"
-                >
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="gap-4 py-4">
-            <CardHeader>
-              <Skeleton className="h-5 w-44" />
-              <Skeleton className="h-4 w-72" />
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="grid gap-3 rounded-xl border bg-muted/10 p-3 md:grid-cols-[minmax(0,1fr)_8rem]"
-                >
-                  <div className="flex min-w-0 flex-col gap-2">
-                    <Skeleton className="h-4 w-44" />
-                    <Skeleton className="h-3 w-full max-w-md" />
-                  </div>
-                  <Skeleton className="h-8 w-full rounded-md" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-0 xl:self-start">
-          <Card className="min-h-128 gap-4 py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
-            <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-0">
-              <div className="grid h-9 w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1">
-                <Skeleton className="h-7 rounded-md" />
-                <Skeleton className="h-7 rounded-md" />
-                <Skeleton className="h-7 rounded-md" />
-              </div>
-
-              <div className="flex h-full flex-col gap-3">
-                <div className="rounded-xl border bg-background p-3">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="mt-1 h-9 w-40 rounded-md" />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border bg-background p-3">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-28 w-full rounded-md" />
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <Skeleton className="h-9 w-48 rounded-md" />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border bg-background p-3">
-                  <Skeleton className="h-4 w-36" />
-                  <div className="mt-3 flex flex-col gap-3">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
-}
+export { CaseDetailShellSkeleton } from './case-detail-skeletons'
 
 function CaseStagesBlock({
   stages,
@@ -320,22 +229,6 @@ function CaseSlaBox({ caseDetail }: { caseDetail: CaseDetail }) {
             value={SLA_DATE_FORMAT.format(sla.deadline)}
           />
         </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function QueueRendererSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-44" />
-        <Skeleton className="h-4 w-72" />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
       </CardContent>
     </Card>
   )

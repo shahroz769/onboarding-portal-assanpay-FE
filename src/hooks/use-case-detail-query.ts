@@ -89,15 +89,22 @@ export async function preloadCaseDetailPageQueries(
   queryClient: QueryClient,
   caseId: string,
 ) {
-  const detailPromise = queryClient.ensureQueryData(
+  const detail = await queryClient.ensureQueryData(
     caseDetailQueryOptions(caseId),
   )
 
-  void queryClient.prefetchQuery(caseCommentsQueryOptions(caseId))
-  void queryClient.prefetchQuery(caseHistoryQueryOptions(caseId))
-  void queryClient.prefetchQuery(usersQueryOptions())
+  const { preloadQueueRenderer } = await import(
+    '#/features/cases/case-detail/queue-registry'
+  )
 
-  return detailPromise
+  await Promise.all([
+    preloadQueueRenderer(detail.queue.slug),
+    queryClient.prefetchQuery(caseCommentsQueryOptions(caseId)),
+    queryClient.prefetchQuery(caseHistoryQueryOptions(caseId)),
+    queryClient.prefetchQuery(usersQueryOptions()),
+  ])
+
+  return detail
 }
 
 export function useTakeOwnership(caseId: string) {
