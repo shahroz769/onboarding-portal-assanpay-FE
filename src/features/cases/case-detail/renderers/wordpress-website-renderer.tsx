@@ -107,6 +107,7 @@ export default function WordpressWebsiteRenderer({
     wordpressWebsite?.subMerchantLogoScreenshots ?? []
   const documentReviewSubMerchantName =
     caseDetail.documentReview?.subMerchantName ?? null
+  const portalMuid = caseDetail.testing?.portalMuid ?? null
   const isComplete = Boolean(
     savedLink && savedScreenshots.length > 0 && savedLogoScreenshots.length > 0,
   )
@@ -221,6 +222,14 @@ export default function WordpressWebsiteRenderer({
               </ReadonlyValue>
               <FieldDescription>
                 Selected internally during document review.
+              </FieldDescription>
+            </Field>
+
+            <Field>
+              <FieldLabel>Portal MUID</FieldLabel>
+              <ReadonlyValue>{portalMuid ?? 'Not saved'}</ReadonlyValue>
+              <FieldDescription>
+                Saved internally during MID creation.
               </FieldDescription>
             </Field>
 

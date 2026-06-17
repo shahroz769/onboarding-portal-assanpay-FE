@@ -68,6 +68,12 @@ const midDetailsSchema = z.object({
     })
     .int('Portal MID must be a whole number.')
     .positive('Portal MID must be greater than zero.'),
+  portalMuid: z.coerce
+    .number({
+      error: 'Portal MUID is required.',
+    })
+    .int('Portal MUID must be a whole number.')
+    .positive('Portal MUID must be greater than zero.'),
   email: z
     .string()
     .trim()
@@ -115,6 +121,7 @@ export default function MerchantIdRenderer({
   const isWorking = caseDetail.case.status === 'working'
   const canEdit = isCaseOwner && isWorking
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
+  const savedPortalMuid = caseDetail.testing?.portalMuid ?? null
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
   const savedPaymentMethods = caseDetail.testing?.paymentMethods ?? null
   const savedPayoutMethods = caseDetail.testing?.payoutMethods ?? null
@@ -141,6 +148,7 @@ export default function MerchantIdRenderer({
 
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
+    portalMuid: savedPortalMuid ?? Number.NaN,
     email: merchantEmail,
     password: '',
     paymentMethods:
@@ -390,6 +398,29 @@ export default function MerchantIdRenderer({
                 }
               />
               <FieldError>{errors.portalMid}</FieldError>
+            </Field>
+            <Field data-invalid={Boolean(errors.portalMuid)}>
+              <FieldLabel htmlFor="portal-muid">Portal MUID</FieldLabel>
+              <Input
+                id="portal-muid"
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                placeholder="Enter Portal MUID"
+                value={Number.isFinite(form.portalMuid) ? form.portalMuid : ''}
+                disabled={!canEdit || saveMidCreationDetails.isPending}
+                aria-invalid={Boolean(errors.portalMuid)}
+                onChange={(event) =>
+                  updateField(
+                    'portalMuid',
+                    event.target.value === ''
+                      ? Number.NaN
+                      : Number(event.target.value),
+                  )
+                }
+              />
+              <FieldError>{errors.portalMuid}</FieldError>
             </Field>
             <Field data-invalid={Boolean(errors.email)}>
               <FieldLabel htmlFor="portal-email">Email</FieldLabel>

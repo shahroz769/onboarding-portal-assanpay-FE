@@ -318,6 +318,7 @@ export const caseDetailSchema = z.object({
         })
         .nullable(),
       portalMid: z.number().nullable().optional(),
+      portalMuid: z.number().nullable().optional(),
       credentialsReady: z.boolean().optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
       payoutMethods: paymentMethodSettingsSchema.nullable().optional(),
@@ -467,6 +468,7 @@ export type AgreementEmailResponse = {
 
 export const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
+  portalMuid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
   paymentMethods: paymentMethodSettingsSchema,
@@ -479,6 +481,7 @@ export type SaveMidCreationDetailsInput = z.infer<
 
 export type SaveMidCreationDetailsResponse = {
   portalMid: number
+  portalMuid: number
   email: string
   paymentMethods: z.infer<typeof paymentMethodSettingsSchema>
   payoutMethods: z.infer<typeof paymentMethodSettingsSchema>
