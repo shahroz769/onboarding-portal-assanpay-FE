@@ -176,6 +176,9 @@ function renderCommentText(content: string) {
   )
 }
 
+const composerTypographyClassName =
+  'text-base leading-6 break-words whitespace-pre-wrap [overflow-wrap:anywhere] md:text-sm'
+
 function renderComposerText(
   content: string,
   validUsernames: ReadonlySet<string>,
@@ -191,7 +194,7 @@ function renderComposerText(
         key={`${part}-${index}`}
         className={
           isValidMention
-            ? 'rounded-full bg-sky-500/10 px-1 font-semibold text-sky-700'
+            ? 'rounded-sm bg-sky-500/10 text-sky-700 [box-decoration-break:clone]'
             : undefined
         }
       >
@@ -270,6 +273,7 @@ export function CaseChatter({
 
   const formRef = useRef<HTMLFormElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const pendingCursorRef = useRef<number | null>(null)
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
   const threads = buildCommentThreads(comments)
@@ -299,6 +303,18 @@ export function CaseChatter({
     )
   }, [activeMention?.start])
 
+  useLayoutEffect(() => {
+    if (pendingCursorRef.current === null || !textareaRef.current) return
+
+    const nextCursorPosition = pendingCursorRef.current
+    pendingCursorRef.current = null
+    textareaRef.current.focus()
+    textareaRef.current.setSelectionRange(
+      nextCursorPosition,
+      nextCursorPosition,
+    )
+  }, [content])
+
   const mentionQuery = mentionSearch.trim().toLowerCase()
   const hasMentionQuery = mentionQuery.length > 0
   const mentionCandidates = users.filter((candidate) => {
@@ -314,14 +330,16 @@ export function CaseChatter({
   const mentionResultsHeight = Math.min(256, 44 + mentionResults.length * 36)
 
   function handleSelectMention(userId: string, name: string) {
-    if (!activeMention) return
+    const mention = getMentionMatch(content, cursorPosition)
+    if (!mention) return
 
-    const before = content.slice(0, activeMention.start)
-    const after = content.slice(activeMention.end)
+    const before = content.slice(0, mention.start)
+    const after = content.slice(mention.end)
     const token = `@${name}`
     const nextContent = `${before}${token} ${after}`
     const nextCursorPosition = before.length + token.length + 1
 
+    pendingCursorRef.current = nextCursorPosition
     setContent(nextContent)
     setCursorPosition(nextCursorPosition)
     setMentionMap((currentMap) => ({
@@ -329,15 +347,6 @@ export function CaseChatter({
       [token]: userId,
     }))
     setMentionSearch('')
-
-    requestAnimationFrame(() => {
-      if (!textareaRef.current) return
-      textareaRef.current.focus()
-      textareaRef.current.setSelectionRange(
-        nextCursorPosition,
-        nextCursorPosition,
-      )
-    })
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -422,7 +431,7 @@ export function CaseChatter({
                 <div className="relative min-h-6 min-w-0">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 z-0 min-h-6 overflow-hidden whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90 [overflow-wrap:anywhere]"
+                    className={`pointer-events-none absolute inset-0 z-0 min-h-6 overflow-hidden text-foreground/90 ${composerTypographyClassName}`}
                   >
                     <div
                       style={{
@@ -456,7 +465,7 @@ export function CaseChatter({
                         ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
                         : 'Write a review note. Use @ to mention a teammate.'
                     }
-                    className="scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0"
+                    className={`scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0 ${composerTypographyClassName}`}
                   />
                 </div>
 
