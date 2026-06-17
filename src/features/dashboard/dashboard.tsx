@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { Skeleton } from '#/components/ui/skeleton'
 import {
   DASHBOARD_KEY,
   dashboardQueryOptions,
@@ -13,6 +12,7 @@ import { DashboardFilterBar } from './dashboard-filter-bar'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
 import { DashboardQueueTable } from './dashboard-queue-table'
 import { DashboardRiskTables } from './dashboard-risk-tables'
+import { DashboardSkeleton } from './dashboard-skeleton'
 
 type DashboardProps = {
   search: DashboardRouteSearch
@@ -63,20 +63,4 @@ function FilterBarPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, target)
 }
 
-export function DashboardSkeleton() {
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Skeleton key={index} className="h-24 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-80 rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-64 rounded-xl" />
-    </div>
-  )
-}
+export { DashboardSkeleton } from './dashboard-skeleton'
