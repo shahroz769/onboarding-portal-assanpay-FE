@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
-import { UserForm } from '#/features/users/user-form'
+import { UserForm, UserFormSkeleton } from '#/features/users/user-form'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { useCreateUserMutation } from '#/hooks/use-users-query'
 import type { UserFormValues } from '#/schemas/users.schema'
@@ -11,8 +11,10 @@ export const Route = createFileRoute('/_app/user-management/user-creation')({
     subtitle: 'Create an employee account and send the password setup email.',
   },
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(queuesQueryOptions())
+    void context.queryClient.prefetchQuery(queuesQueryOptions())
   },
+  pendingMs: 0,
+  pendingComponent: UserFormSkeleton,
   component: RouteComponent,
 })
 

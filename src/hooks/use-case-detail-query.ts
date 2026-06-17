@@ -40,6 +40,7 @@ import {
 } from '#/apis/cases'
 import type { ManualCommunicationChannel } from '#/apis/cases'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { merchantDetailKey } from '#/hooks/use-merchants-query'
 import type {
   CloseUnsuccessfulInput,
   CreateCommentInput,
@@ -415,8 +416,7 @@ export function useConfirmResubmissionEmailManual(caseId: string) {
       tokenId: string
       file: File
       channel?: ManualCommunicationChannel
-    }) =>
-      confirmResubmissionEmailManual({ caseId, ...input }),
+    }) => confirmResubmissionEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Resubmission email marked as sent')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
@@ -447,8 +447,7 @@ export function useConfirmAgreementEmailManual(caseId: string) {
       remarks?: string | null
       file: File
       channel?: ManualCommunicationChannel
-    }) =>
-      confirmAgreementEmailManual({ caseId, ...input }),
+    }) => confirmAgreementEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Agreement email marked as sent')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
@@ -480,8 +479,7 @@ export function useConfirmMidCreationEmailManual(caseId: string) {
         file: File
         channel?: ManualCommunicationChannel
       } & SendMidCreationEmailInput,
-    ) =>
-      confirmMidCreationEmailManual({ caseId, ...input }),
+    ) => confirmMidCreationEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('MID credentials email marked as sent')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
@@ -513,8 +511,7 @@ export function useConfirmLiveEmailManual(caseId: string) {
         file: File
         channel?: ManualCommunicationChannel
       } & SendLiveEmailInput,
-    ) =>
-      confirmLiveEmailManual({ caseId, ...input }),
+    ) => confirmLiveEmailManual({ caseId, ...input }),
     onSuccess: () => {
       toast.success('Live email marked as sent')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
@@ -527,7 +524,7 @@ export function useConfirmLiveEmailManual(caseId: string) {
   })
 }
 
-export function useSaveMidCreationDetails(caseId: string) {
+export function useSaveMidCreationDetails(caseId: string, merchantId?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -538,6 +535,11 @@ export function useSaveMidCreationDetails(caseId: string) {
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: CASES_KEY })
+      if (merchantId) {
+        queryClient.invalidateQueries({
+          queryKey: merchantDetailKey(merchantId),
+        })
+      }
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to save MID details'))

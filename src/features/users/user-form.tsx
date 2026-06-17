@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Separator } from '#/components/ui/separator'
+import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Badge } from '#/components/ui/badge'
 import { ScrollArea } from '#/components/ui/scroll-area'
@@ -307,6 +308,10 @@ export function UserForm({
   const isAllWorkQueuesSelected =
     allVisibleWorkQueueIds.length > 0 &&
     allVisibleWorkQueueIds.every((queueId) => workQueueIds.includes(queueId))
+
+  if (queuesQuery.isPending) {
+    return <UserFormSkeleton />
+  }
 
   return (
     <form
@@ -695,5 +700,61 @@ export function UserForm({
         />
       </div>
     </form>
+  )
+}
+
+export function UserFormSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <Skeleton className="size-10 rounded-lg" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup className="grid gap-6 sm:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Field key={index}>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-9 w-full" />
+              </Field>
+            ))}
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <Skeleton className="size-10 rounded-lg" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-80 max-w-full" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup className="grid gap-6 lg:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <Field key={index}>
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-4 w-64 max-w-full" />
+              </Field>
+            ))}
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      <div className="mt-auto flex justify-end gap-3">
+        <Skeleton className="h-9 w-20 rounded-md" />
+        <Skeleton className="h-9 w-28 rounded-md" />
+      </div>
+    </div>
   )
 }

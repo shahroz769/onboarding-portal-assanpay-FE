@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { MerchantDetails } from '#/features/merchants/merchant-details'
+import {
+  MerchantDetails,
+  MerchantDetailsSkeleton,
+} from '#/features/merchants/merchant-details'
 import { merchantDetailQueryOptions } from '#/hooks/use-merchants-query'
 
 export const Route = createFileRoute('/_app/merchants/$merchantId')({
@@ -8,10 +11,13 @@ export const Route = createFileRoute('/_app/merchants/$merchantId')({
     title: 'Merchant Details',
     hidePageShell: true,
   },
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
+  loader: ({ context, params }) => {
+    void context.queryClient.prefetchQuery(
       merchantDetailQueryOptions(params.merchantId),
-    ),
+    )
+  },
+  pendingMs: 0,
+  pendingComponent: MerchantDetailsSkeleton,
   component: MerchantDetailsRoute,
 })
 

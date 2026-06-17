@@ -1,9 +1,14 @@
-import { Navigate, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/configuration/')({
-  component: RouteComponent,
+  staticData: {
+    title: 'Configuration',
+    subtitle: 'Manage portal-wide workflow and onboarding settings.',
+  },
+  beforeLoad: () => {
+    throw redirect({
+      to: '/configuration/limits-and-mdr',
+      replace: true,
+    })
+  },
 })
-
-function RouteComponent() {
-  return <Navigate to="/configuration/limits-and-mdr" replace />
-}

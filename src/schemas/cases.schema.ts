@@ -471,8 +471,14 @@ export const saveMidCreationDetailsInputSchema = z.object({
   portalMuid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
-  paymentMethods: paymentMethodSettingsSchema,
-  payoutMethods: paymentMethodSettingsSchema,
+  paymentMethods: paymentMethodSettingsSchema.min(
+    1,
+    'Select at least one payment method.',
+  ),
+  payoutMethods: paymentMethodSettingsSchema.min(
+    1,
+    'Select at least one payout method.',
+  ),
 })
 
 export type SaveMidCreationDetailsInput = z.infer<

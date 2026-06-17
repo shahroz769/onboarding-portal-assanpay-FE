@@ -71,6 +71,7 @@ import {
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
+import { ConfigurationPanelSkeleton } from './configuration-route-skeleton'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
 import {
@@ -1076,7 +1077,7 @@ export function LinkDeadlinesPanel() {
 // ─── Email Sending Mode ───────────────────────────────────────────────────────
 
 export function EmailSendingModePanel() {
-  const { data } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(configurationQueryOptions())
   const mutation = useUpdateEmailSendingModeMutation()
   const [form, setForm] = useState<EmailSendingMode | null>(null)
   const value = form ?? data?.emailSendingMode ?? null
@@ -1104,6 +1105,10 @@ export function EmailSendingModePanel() {
   function handleSave() {
     if (!value || hasError) return
     mutation.mutate(value)
+  }
+
+  if (isPending || !value) {
+    return <PanelLoading />
   }
 
   return (
@@ -1273,6 +1278,10 @@ export function CaseTriggeringPanel() {
         },
       },
     )
+  }
+
+  if (merchantsQuery.isPending || queuesQuery.isPending) {
+    return <PanelLoading />
   }
 
   return (
@@ -2389,12 +2398,7 @@ function AmountField({
 }
 
 function PanelLoading() {
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Spinner />
-      Loading configuration
-    </div>
-  )
+  return <ConfigurationPanelSkeleton />
 }
 
 function formatDate(value: string) {

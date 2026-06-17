@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BanIcon, EyeIcon, PencilIcon } from 'lucide-react'
+import { BanIcon, EyeIcon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
@@ -277,22 +277,6 @@ export function createMerchantColumns({
             </TooltipTrigger>
             <TooltipContent>View</TooltipContent>
           </Tooltip>
-          {canEdit && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8" asChild>
-                  <Link
-                    to="/onboarding-form"
-                    search={{ merchantId: merchant.id }}
-                  >
-                    <PencilIcon className="size-4" />
-                    <span className="sr-only">Edit</span>
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Edit</TooltipContent>
-            </Tooltip>
-          )}
           {canTerminate && (
             <Tooltip>
               <TooltipTrigger asChild>

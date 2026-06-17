@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { CaseTriggeringPanel } from '#/features/configuration/configuration-panels'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import {
@@ -14,14 +15,14 @@ export const Route = createFileRoute('/_app/configuration/case-triggering')({
     subtitle: 'Manage automatic case creation rules.',
   },
   loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(configurationQueryOptions()),
-      context.queryClient.ensureQueryData(caseFlowConfigurationQueryOptions()),
-      context.queryClient.ensureQueryData(
-        queuesQueryOptions({ includeInactive: true }),
-      ),
-      context.queryClient.ensureQueryData(merchantOptionsQueryOptions()),
-    ])
+    void context.queryClient.prefetchQuery(configurationQueryOptions())
+    void context.queryClient.prefetchQuery(caseFlowConfigurationQueryOptions())
+    void context.queryClient.prefetchQuery(
+      queuesQueryOptions({ includeInactive: true }),
+    )
+    void context.queryClient.prefetchQuery(merchantOptionsQueryOptions())
   },
+  pendingMs: 0,
+  pendingComponent: ConfigurationPanelSkeleton,
   component: CaseTriggeringPanel,
 })

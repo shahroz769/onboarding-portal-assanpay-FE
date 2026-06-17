@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
   FieldError,
@@ -83,8 +84,14 @@ const midDetailsSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters.')
     .max(128, 'Password is too long.'),
-  paymentMethods: paymentMethodSettingsSchema,
-  payoutMethods: paymentMethodSettingsSchema,
+  paymentMethods: paymentMethodSettingsSchema.min(
+    1,
+    'Select at least one payment method.',
+  ),
+  payoutMethods: paymentMethodSettingsSchema.min(
+    1,
+    'Select at least one payout method.',
+  ),
 })
 
 type MidDetailsForm = z.infer<typeof midDetailsSchema>
@@ -113,7 +120,6 @@ export default function MerchantIdRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const saveMidCreationDetails = useSaveMidCreationDetails(caseId)
   const configurationQuery = useQuery(configurationQueryOptions())
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
@@ -123,10 +129,16 @@ export default function MerchantIdRenderer({
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
   const savedPortalMuid = caseDetail.testing?.portalMuid ?? null
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
-  const savedPaymentMethods = caseDetail.testing?.paymentMethods ?? null
-  const savedPayoutMethods = caseDetail.testing?.payoutMethods ?? null
+  const savedPaymentMethods = savedCredentialsReady
+    ? (caseDetail.testing?.paymentMethods ?? null)
+    : null
+  const savedPayoutMethods = savedCredentialsReady
+    ? (caseDetail.testing?.payoutMethods ?? null)
+    : null
 
   const merchant = caseDetail.merchant
+  const merchantId = getMerchantString(merchant, 'id') ?? undefined
+  const saveMidCreationDetails = useSaveMidCreationDetails(caseId, merchantId)
   const websiteCmsValue = getMerchantString(merchant, 'websiteCms')
   const businessWebsite = getMerchantString(merchant, 'businessWebsite')
   const bankName = getMerchantString(merchant, 'bankName')
@@ -140,6 +152,14 @@ export default function MerchantIdRenderer({
   const limitsAndMdr = configurationQuery.data?.limitsAndMdr
   const configuredPaymentMethods = configurationQuery.data?.paymentMethods
   const configuredPayoutMethods = configurationQuery.data?.payoutMethods
+  const availablePaymentMethods = mergeMethods(
+    configuredPaymentMethods ?? DEFAULT_METHODS,
+    formSafeMethods(savedPaymentMethods),
+  )
+  const availablePayoutMethods = mergeMethods(
+    configuredPayoutMethods ?? DEFAULT_METHODS,
+    formSafeMethods(savedPayoutMethods),
+  )
   const cardRate = isShopify
     ? `${limitsAndMdr?.rates.cardShopify ?? SHOPIFY_CARD_RATE}%`
     : `${limitsAndMdr?.rates.cardDefault ?? DEFAULT_CARD_RATE}%`
@@ -151,29 +171,19 @@ export default function MerchantIdRenderer({
     portalMuid: savedPortalMuid ?? Number.NaN,
     email: merchantEmail,
     password: '',
-    paymentMethods:
-      savedPaymentMethods ?? configuredPaymentMethods ?? DEFAULT_METHODS,
-    payoutMethods:
-      savedPayoutMethods ?? configuredPayoutMethods ?? DEFAULT_METHODS,
+    paymentMethods: savedPaymentMethods ?? DEFAULT_METHODS,
+    payoutMethods: savedPayoutMethods ?? DEFAULT_METHODS,
   })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [passwordVisible, setPasswordVisible] = useState(false)
 
   useEffect(() => {
-    if (savedPaymentMethods || !configuredPaymentMethods) return
     setForm((current) => ({
       ...current,
-      paymentMethods: configuredPaymentMethods,
+      paymentMethods: savedPaymentMethods ?? current.paymentMethods,
+      payoutMethods: savedPayoutMethods ?? current.payoutMethods,
     }))
-  }, [configuredPaymentMethods, savedPaymentMethods])
-
-  useEffect(() => {
-    if (savedPayoutMethods || !configuredPayoutMethods) return
-    setForm((current) => ({
-      ...current,
-      payoutMethods: configuredPayoutMethods,
-    }))
-  }, [configuredPayoutMethods, savedPayoutMethods])
+  }, [savedPaymentMethods, savedPayoutMethods])
 
   function updateField<TKey extends keyof MidDetailsForm>(
     key: TKey,
@@ -183,6 +193,18 @@ export default function MerchantIdRenderer({
     if (errors[key]) {
       setErrors((prev) => ({ ...prev, [key]: undefined }))
     }
+  }
+
+  function toggleMethod(
+    field: 'paymentMethods' | 'payoutMethods',
+    method: PaymentMethodSettings[number],
+    checked: boolean,
+  ) {
+    const currentMethods = form[field]
+    const nextMethods = checked
+      ? mergeMethods(currentMethods, [method])
+      : currentMethods.filter((item) => item.id !== method.id)
+    updateField(field, nextMethods)
   }
 
   async function handleSave() {
@@ -328,8 +350,15 @@ export default function MerchantIdRenderer({
         </CardHeader>
         <CardContent>
           <MethodList
-            methods={form.paymentMethods}
+            idPrefix="mid-payment-method"
+            availableMethods={availablePaymentMethods}
+            selectedMethods={form.paymentMethods}
+            disabled={!canEdit || saveMidCreationDetails.isPending}
             empty="No payment methods configured."
+            error={errors.paymentMethods}
+            onToggle={(method, checked) =>
+              toggleMethod('paymentMethods', method, checked)
+            }
           />
         </CardContent>
       </Card>
@@ -351,8 +380,15 @@ export default function MerchantIdRenderer({
         </CardHeader>
         <CardContent>
           <MethodList
-            methods={form.payoutMethods}
+            idPrefix="mid-payout-method"
+            availableMethods={availablePayoutMethods}
+            selectedMethods={form.payoutMethods}
+            disabled={!canEdit || saveMidCreationDetails.isPending}
             empty="No payout methods configured."
+            error={errors.payoutMethods}
+            onToggle={(method, checked) =>
+              toggleMethod('payoutMethods', method, checked)
+            }
           />
         </CardContent>
       </Card>
@@ -572,13 +608,23 @@ function RateGroup({
 }
 
 function MethodList({
-  methods,
+  idPrefix,
+  availableMethods,
+  selectedMethods,
+  disabled,
   empty,
+  error,
+  onToggle,
 }: {
-  methods: PaymentMethodSettings
+  idPrefix: string
+  availableMethods: PaymentMethodSettings
+  selectedMethods: PaymentMethodSettings
+  disabled: boolean
   empty: string
+  error?: string
+  onToggle: (method: PaymentMethodSettings[number], checked: boolean) => void
 }) {
-  if (methods.length === 0) {
+  if (availableMethods.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
         {empty}
@@ -586,16 +632,62 @@ function MethodList({
     )
   }
 
+  const selectedIds = new Set(selectedMethods.map((method) => method.id))
+
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {methods.map((method) => (
-        <div
-          key={method.id}
-          className="rounded-md border bg-muted/20 px-3 py-2 text-sm font-medium"
-        >
-          {method.label}
-        </div>
-      ))}
-    </div>
+    <Field data-invalid={Boolean(error)}>
+      <FieldGroup className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {availableMethods.map((method) => {
+          const checked = selectedIds.has(method.id)
+          const checkboxId = `${idPrefix}-${method.id}`
+          return (
+            <Field
+              key={method.id}
+              orientation="horizontal"
+              data-disabled={disabled ? true : undefined}
+              className={cn(
+                'rounded-md border bg-muted/20 px-3 py-2',
+                checked && 'border-primary bg-primary/5',
+              )}
+            >
+              <Checkbox
+                id={checkboxId}
+                checked={checked}
+                disabled={disabled}
+                aria-invalid={Boolean(error)}
+                onCheckedChange={(nextChecked) => {
+                  if (typeof nextChecked === 'boolean') {
+                    onToggle(method, nextChecked)
+                  }
+                }}
+              />
+              <FieldLabel htmlFor={checkboxId} className="font-medium">
+                {method.label}
+              </FieldLabel>
+            </Field>
+          )
+        })}
+      </FieldGroup>
+      <FieldError>{error}</FieldError>
+    </Field>
   )
+}
+
+function formSafeMethods(methods: PaymentMethodSettings | null) {
+  return methods ?? DEFAULT_METHODS
+}
+
+function mergeMethods(
+  currentMethods: PaymentMethodSettings,
+  nextMethods: PaymentMethodSettings,
+) {
+  const merged = [...currentMethods]
+  const seen = new Set(merged.map((method) => method.id))
+  for (const method of nextMethods) {
+    if (!seen.has(method.id)) {
+      merged.push(method)
+      seen.add(method.id)
+    }
+  }
+  return merged
 }

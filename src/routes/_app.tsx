@@ -2,8 +2,10 @@ import {
   Outlet,
   Link,
   createFileRoute,
-  useMatches,
+  useRouter,
+  useRouterState,
 } from '@tanstack/react-router'
+import { useStore } from '@tanstack/react-store'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
@@ -37,7 +39,14 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
-  const matches = useMatches()
+  const router = useRouter()
+  const currentMatches = useRouterState({
+    select: (state) => state.matches,
+  })
+  const pendingMatches = useStore(router.stores.pendingMatches)
+  const isLoading = useStore(router.stores.isLoading)
+  const matches =
+    isLoading && pendingMatches.length > 0 ? pendingMatches : currentMatches
   const isCaseDetailRoute = matches.some(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
@@ -53,7 +62,7 @@ function AppLayout() {
         hidePageShell?: boolean
       }
     | undefined
-  const title = staticData?.title ?? 'Dashboard'
+  const title = staticData?.title ?? ''
   const subtitle = staticData?.subtitle
   const hidePageShell =
     isCaseDetailRoute || (staticData?.hidePageShell ?? false)
