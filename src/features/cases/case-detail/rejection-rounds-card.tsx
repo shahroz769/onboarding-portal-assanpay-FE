@@ -29,6 +29,7 @@ import {
 } from '#/components/ui/collapsible'
 import { Separator } from '#/components/ui/separator'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
+import { cn } from '#/lib/utils'
 import type { CaseHistory } from '#/schemas/cases.schema'
 
 interface RejectionRoundsCardProps {
@@ -197,9 +198,9 @@ export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
     : latestRound.rejectedFields.length
 
   return (
-    <Card className="gap-4 py-4">
+    <Card className="min-w-0 gap-4 py-4">
       <CardHeader className="gap-2 px-4">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-wrap items-start gap-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
             <RotateCcw className="size-4 text-muted-foreground" />
           </div>
@@ -216,8 +217,8 @@ export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
           </CardAction>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 px-4">
-        <div className="grid grid-cols-2 gap-2">
+      <CardContent className="min-w-0 flex flex-col gap-3 px-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
           <SummaryMetric
             label="Latest round"
             value={`Round ${latestRound.index}`}
@@ -235,9 +236,9 @@ export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
 
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-muted/20 px-3 py-2">
+    <div className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-semibold">{value}</p>
+      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
     </div>
   )
 }
@@ -248,20 +249,29 @@ function RoundRow({ round }: { round: Round }) {
   const resubmittedAt = formatDate(round.resubmittedEntry?.createdAt ?? null)
 
   return (
-    <Collapsible className="rounded-xl border bg-background shadow-xs">
-      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/35">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-muted/30">
+    <Collapsible className="min-w-0 overflow-hidden rounded-xl border bg-background shadow-xs">
+      <CollapsibleTrigger className="group flex w-full min-w-0 items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/35">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-full border',
+              getRoundIconClasses(round).wrapper,
+            )}
+          >
             {round.emailFailed ? (
-              <ShieldAlert className="size-4 text-destructive" />
+              <ShieldAlert
+                className={cn('size-4', getRoundIconClasses(round).icon)}
+              />
             ) : round.resubmittedEntry ? (
-              <Inbox className="size-4 text-muted-foreground" />
+              <Inbox
+                className={cn('size-4', getRoundIconClasses(round).icon)}
+              />
             ) : (
-              <Send className="size-4 text-muted-foreground" />
+              <Send className={cn('size-4', getRoundIconClasses(round).icon)} />
             )}
           </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <span className="text-sm font-semibold">Round {round.index}</span>
               <RoundStatusBadge round={round} />
             </div>
@@ -270,11 +280,11 @@ function RoundRow({ round }: { round: Round }) {
             </p>
           </div>
         </div>
-        <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <Separator />
-        <div className="flex flex-col gap-3 p-3 text-sm">
+        <div className="min-w-0 p-3 text-sm">
           {round.emailFailed ? (
             <Alert variant="destructive">
               <ShieldAlert />
@@ -295,6 +305,30 @@ function RoundRow({ round }: { round: Round }) {
       </CollapsibleContent>
     </Collapsible>
   )
+}
+
+function getRoundIconClasses(round: Round) {
+  if (round.emailFailed) {
+    return {
+      icon: 'text-rose-700 dark:text-rose-300',
+      wrapper:
+        'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+    }
+  }
+
+  if (round.resubmittedEntry) {
+    return {
+      icon: 'text-teal-700 dark:text-teal-300',
+      wrapper:
+        'border-teal-200 bg-teal-100 dark:border-teal-800 dark:bg-teal-950/60',
+    }
+  }
+
+  return {
+    icon: 'text-cyan-700 dark:text-cyan-300',
+    wrapper:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  }
 }
 
 function RoundStatusBadge({ round }: { round: Round }) {
@@ -319,21 +353,27 @@ function RoundDetails({
   resubmittedAt: string | null
 }) {
   return (
-    <>
-      <DetailBlock
+    <div className="flex min-w-0 flex-col gap-0">
+      <TimelineDetailBlock
         icon={MailCheck}
         label="Sent to"
         title={round.recipient ?? 'Recipient unavailable'}
         description={expiresAt ? `Link expires ${expiresAt}` : null}
       />
 
-      <DetailListBlock
+      <TimelineDetailBlock
+        icon={ShieldAlert}
         label={`Fields requested (${round.rejectedFields.length})`}
-        items={round.rejectedFields}
-      />
+      >
+        {round.rejectedFields.length > 0 ? (
+          <InlineItemList items={round.rejectedFields} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Not recorded</p>
+        )}
+      </TimelineDetailBlock>
 
       {round.resubmittedEntry ? (
-        <DetailBlock
+        <TimelineDetailBlock
           icon={Inbox}
           label={
             resubmittedAt
@@ -349,13 +389,13 @@ function RoundDetails({
           ) : round.fieldsUpdated.length > 0 ? (
             <InlineItemList items={round.fieldsUpdated} />
           ) : null}
-        </DetailBlock>
+        </TimelineDetailBlock>
       ) : null}
-    </>
+    </div>
   )
 }
 
-function DetailBlock({
+function TimelineDetailBlock({
   icon: Icon,
   label,
   title,
@@ -364,51 +404,43 @@ function DetailBlock({
 }: {
   icon: typeof MailCheck
   label: string
-  title: string
+  title?: string
   description?: string | null
   children?: ReactNode
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-muted/20 p-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background">
-        <Icon className="size-4 text-muted-foreground" />
+    <div className="grid min-w-0 grid-cols-[2rem_1fr] gap-3 border-b py-3 last:border-b-0 first:pt-0 last:pb-0">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/30">
+        <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="mt-1 wrap-break-word text-sm font-medium">{title}</p>
-        {description ? (
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        {title ? (
+          <p className="mt-1 break-words text-sm font-medium [overflow-wrap:anywhere]">
+            {title}
+          </p>
         ) : null}
-        {children ? <div className="mt-3">{children}</div> : null}
+        {description ? (
+          <p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
+            {description}
+          </p>
+        ) : null}
+        {children ? <div className="mt-2 min-w-0">{children}</div> : null}
       </div>
-    </div>
-  )
-}
-
-function DetailListBlock({
-  label,
-  items,
-}: {
-  label: string
-  items: Array<string>
-}) {
-  return (
-    <div className="rounded-lg border bg-muted/20 p-3">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      {items.length > 0 ? (
-        <InlineItemList items={items} />
-      ) : (
-        <p className="mt-2 text-sm text-muted-foreground">Not recorded</p>
-      )}
     </div>
   )
 }
 
 function InlineItemList({ items }: { items: Array<string> }) {
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
+    <div className="flex min-w-0 flex-wrap gap-2">
       {items.map((item) => (
-        <Badge key={item} variant="outline" className="max-w-full truncate">
+        <Badge
+          key={item}
+          variant="outline"
+          className="min-w-0 max-w-full truncate"
+          title={item}
+        >
           {item}
         </Badge>
       ))}
@@ -418,13 +450,13 @@ function InlineItemList({ items }: { items: Array<string> }) {
 
 function FieldDetailsList({ fields }: { fields: Round['fieldDetails'] }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       {fields.map((field) => (
         <div
           key={`${field.fieldName}-${field.action ?? 'text'}`}
-          className="rounded-md border bg-background px-3 py-2"
+          className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2"
         >
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <p className="min-w-0 flex-1 truncate text-sm font-medium">
               {field.label}
             </p>
@@ -435,7 +467,7 @@ function FieldDetailsList({ fields }: { fields: Round['fieldDetails'] }) {
             ) : null}
           </div>
           {field.previousFileUrl || field.nextFileUrl ? (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex min-w-0 flex-wrap gap-2">
               {field.previousFileUrl ? (
                 <FileLink href={field.previousFileUrl} label="Previous file" />
               ) : null}
@@ -452,10 +484,10 @@ function FieldDetailsList({ fields }: { fields: Round['fieldDetails'] }) {
 
 function FileLink({ href, label }: { href: string; label: string }) {
   return (
-    <Button asChild variant="outline" size="xs">
+    <Button asChild variant="outline" size="xs" className="max-w-full">
       <a href={href} target="_blank" rel="noreferrer">
         <ExternalLink data-icon="inline-start" />
-        {label}
+        <span className="truncate">{label}</span>
       </a>
     </Button>
   )

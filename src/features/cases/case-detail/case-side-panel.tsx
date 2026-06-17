@@ -383,13 +383,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   }
 
   return (
-    <Card className="min-h-128 gap-4 py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-0">
+    <Card className="min-h-128 w-full min-w-0 max-w-full gap-4 overflow-hidden py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
+      <CardContent className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 px-4 py-0">
         <Tabs
           defaultValue="resolution"
-          className="flex min-h-0 flex-1 flex-col gap-3"
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden"
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full min-w-0 grid-cols-3">
             <TabsTrigger value="resolution">
               <ShieldAlert />
               Resolution
@@ -404,33 +404,38 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="resolution" className="min-h-0">
-            <div className="flex h-full flex-col gap-3">
-              {isClosed ? (
-                <Alert
-                  variant={
-                    caseDetail.case.closeOutcome === 'successful'
-                      ? 'default'
-                      : 'destructive'
-                  }
-                >
-                  {caseDetail.case.closeOutcome === 'successful' ? (
-                    <CheckCircle2 />
-                  ) : (
-                    <ShieldAlert />
-                  )}
-                  <AlertTitle>
-                    {caseDetail.case.closeOutcome === 'successful'
-                      ? 'Closed successfully'
-                      : 'Closed unsuccessfully'}
-                  </AlertTitle>
-                  {caseDetail.case.closeReason ? (
-                    <AlertDescription>
-                      {caseDetail.case.closeReason}
-                    </AlertDescription>
-                  ) : null}
-                </Alert>
-              ) : null}
+          <TabsContent
+            value="resolution"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+          >
+            <Suspense fallback={<ResolutionTabSkeleton />}>
+              <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden overflow-y-auto pb-1">
+                {isClosed ? (
+                  <Alert
+                    className="min-w-0"
+                    variant={
+                      caseDetail.case.closeOutcome === 'successful'
+                        ? 'default'
+                        : 'destructive'
+                    }
+                  >
+                    {caseDetail.case.closeOutcome === 'successful' ? (
+                      <CheckCircle2 />
+                    ) : (
+                      <ShieldAlert />
+                    )}
+                    <AlertTitle>
+                      {caseDetail.case.closeOutcome === 'successful'
+                        ? 'Closed successfully'
+                        : 'Closed unsuccessfully'}
+                    </AlertTitle>
+                    {caseDetail.case.closeReason ? (
+                      <AlertDescription className="min-w-0 break-words">
+                        {caseDetail.case.closeReason}
+                      </AlertDescription>
+                    ) : null}
+                  </Alert>
+                ) : null}
 
               {!isClosed ? (
                 <div className="rounded-xl border bg-background p-3">
@@ -577,22 +582,31 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 </div>
               ) : null}
 
-              {isDocumentReviewCase ? (
-                <RejectionRoundsCard caseId={caseId} />
-              ) : null}
+                {isDocumentReviewCase ? (
+                  <RejectionRoundsCard caseId={caseId} />
+                ) : null}
 
-              {isAgreementCase ? <AgreementRoundsCard caseId={caseId} /> : null}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="chatter" className="min-h-0">
-            <Suspense fallback={<SidePanelSkeleton />}>
-              <CaseChatter caseId={caseId} canPost={isCaseOwner} embedded />
+                {isAgreementCase ? (
+                  <AgreementRoundsCard caseId={caseId} />
+                ) : null}
+              </div>
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="history" className="min-h-0">
-            <Suspense fallback={<SidePanelSkeleton />}>
+          <TabsContent
+            value="chatter"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+          >
+            <Suspense fallback={<ChatterTabSkeleton />}>
+              <CaseChatter caseId={caseId} canPost embedded />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent
+            value="history"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+          >
+            <Suspense fallback={<HistoryTabSkeleton />}>
               <CaseHistoryTimeline caseId={caseId} embedded />
             </Suspense>
           </TabsContent>
@@ -664,13 +678,151 @@ function AwaitingClientAlert({
   )
 }
 
-function SidePanelSkeleton() {
+function ResolutionTabSkeleton() {
   return (
-    <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">
-      <Skeleton className="h-5 w-40" />
-      <Skeleton className="h-20 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
+    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
+      <div className="grid min-w-0 grid-cols-[calc(var(--spacing)*4)_1fr] gap-x-3 rounded-lg border bg-card px-4 py-3">
+        <Skeleton className="mt-0.5 size-4 rounded-full" />
+        <Skeleton className="h-4 w-36 max-w-full" />
+      </div>
+
+      <div className="min-w-0 rounded-xl border bg-background p-3">
+        <div className="flex min-w-0 flex-col gap-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="mt-1 h-9 w-36 rounded-md" />
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card py-4 shadow-sm">
+        <div className="flex min-w-0 items-start gap-3 px-4">
+          <Skeleton className="size-9 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-4 w-36 max-w-full" />
+            <Skeleton className="mt-2 h-4 w-full" />
+          </div>
+          <Skeleton className="h-5 w-20 shrink-0 rounded-full" />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3 px-4">
+          <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
+            <div className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-4 w-16" />
+            </div>
+            <div className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-4 w-8" />
+            </div>
+          </div>
+
+          <div className="min-w-0 overflow-hidden rounded-xl border bg-background">
+            <div className="flex min-w-0 items-center justify-between gap-3 px-3 py-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <Skeleton className="size-8 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
+                  <Skeleton className="mt-2 h-3 w-32 max-w-full" />
+                </div>
+              </div>
+              <Skeleton className="size-4 shrink-0" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChatterTabSkeleton() {
+  return (
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden">
+      <div className="min-w-0 rounded-2xl border border-border/70 bg-background p-3 shadow-sm">
+        <Skeleton className="h-6 w-full rounded-md" />
+        <div className="mt-3 flex justify-end">
+          <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="w-full min-w-0 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-4 w-32 max-w-full" />
+                    <Skeleton className="mt-1 h-3 w-24 max-w-full" />
+                  </div>
+                  <Skeleton className="h-3 w-24 shrink-0" />
+                </div>
+                <Skeleton className="mt-3 h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-3/4" />
+                <div className="mt-3 border-t border-border/60 pt-2">
+                  <Skeleton className="h-6 w-16 rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="ml-3 min-w-0 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
+          <div className="w-full min-w-0 rounded-xl border border-border/70 bg-background/95 p-3 shadow-sm">
+            <div className="flex min-w-0 items-start gap-3">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-4 w-28 max-w-full" />
+                <Skeleton className="mt-3 h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-2/3" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function HistoryTabSkeleton() {
+  return (
+    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden rounded-xl border bg-muted/10 p-3">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-3 w-full max-w-72" />
+      </div>
+      <div className="flex min-w-0 flex-col gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="relative min-w-0 pl-8">
+            {index > 0 ? (
+              <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
+            ) : null}
+            {index < 3 ? (
+              <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
+            ) : null}
+            <Skeleton className="absolute left-3.5 top-1/2 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+            <div className="relative rounded-xl border bg-background p-4">
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <Skeleton className="h-4 w-28 max-w-full" />
+                  <Skeleton className="mt-2 h-4 w-full" />
+                  {index % 2 === 0 ? (
+                    <Skeleton className="mt-2 h-4 w-3/4" />
+                  ) : null}
+                </div>
+                <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
+                  <Skeleton className="h-5 w-28 max-w-full rounded-full" />
+                  <Skeleton className="h-4 w-24 max-w-full rounded-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

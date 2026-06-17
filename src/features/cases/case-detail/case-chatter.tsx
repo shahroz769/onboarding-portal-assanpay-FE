@@ -1,4 +1,11 @@
-import { useDeferredValue, useRef, useState } from 'react'
+import {
+  useDeferredValue,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CornerDownRight,
@@ -28,6 +35,7 @@ import {
   CommandList,
 } from '#/components/ui/command'
 import { Popover, PopoverAnchor, PopoverContent } from '#/components/ui/popover'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import {
@@ -47,6 +55,11 @@ type MentionMatch = {
   query: string
   start: number
   end: number
+}
+
+type AnchorPosition = {
+  left: number
+  top: number
 }
 
 function compareCommentsByNewest(first: CaseComment, second: CaseComment) {
@@ -101,6 +114,51 @@ function getMentionMatch(
   }
 }
 
+function getTextareaCaretPosition(
+  textarea: HTMLTextAreaElement,
+  position: number,
+  relativeTo: HTMLElement,
+): AnchorPosition {
+  const computed = window.getComputedStyle(textarea)
+  const mirror = document.createElement('div')
+  const marker = document.createElement('span')
+  const textareaRect = textarea.getBoundingClientRect()
+  const relativeRect = relativeTo.getBoundingClientRect()
+
+  mirror.style.position = 'fixed'
+  mirror.style.left = `${textareaRect.left}px`
+  mirror.style.top = `${textareaRect.top}px`
+  mirror.style.width = `${textareaRect.width}px`
+  mirror.style.height = `${textareaRect.height}px`
+  mirror.style.visibility = 'hidden'
+  mirror.style.overflow = 'hidden'
+  mirror.style.whiteSpace = 'pre-wrap'
+  mirror.style.overflowWrap = 'break-word'
+  mirror.style.boxSizing = computed.boxSizing
+  mirror.style.padding = computed.padding
+  mirror.style.border = computed.border
+  mirror.style.font = computed.font
+  mirror.style.letterSpacing = computed.letterSpacing
+  mirror.style.lineHeight = computed.lineHeight
+  mirror.style.textTransform = computed.textTransform
+  mirror.style.tabSize = computed.tabSize
+
+  mirror.textContent = textarea.value.slice(0, position) || '\u200b'
+  marker.textContent = '\u200b'
+  mirror.appendChild(marker)
+  document.body.appendChild(mirror)
+
+  const markerRect = marker.getBoundingClientRect()
+  const nextPosition = {
+    left: markerRect.left - relativeRect.left,
+    top: markerRect.bottom - relativeRect.top - textarea.scrollTop,
+  }
+
+  mirror.remove()
+
+  return nextPosition
+}
+
 function renderCommentText(content: string) {
   const parts = content.split(/(@[^\s]+)/g).filter(Boolean)
 
@@ -108,7 +166,7 @@ function renderCommentText(content: string) {
     part.startsWith('@') ? (
       <span
         key={`${part}-${index}`}
-        className="rounded-full bg-sky-500/10 px-1.5 py-0.5 font-semibold text-sky-700"
+        className="break-all rounded-full bg-sky-500/10 px-1.5 py-0.5 font-semibold text-sky-700"
       >
         {part}
       </span>
@@ -116,6 +174,31 @@ function renderCommentText(content: string) {
       <span key={`${part}-${index}`}>{part}</span>
     ),
   )
+}
+
+function renderComposerText(
+  content: string,
+  validUsernames: ReadonlySet<string>,
+) {
+  const parts = content.split(/(@[A-Za-z0-9._-]+)/g)
+
+  return parts.map((part, index) => {
+    const isValidMention =
+      part.startsWith('@') && validUsernames.has(part.slice(1).toLowerCase())
+
+    return (
+      <span
+        key={`${part}-${index}`}
+        className={
+          isValidMention
+            ? 'rounded-full bg-sky-500/10 px-1 font-semibold text-sky-700'
+            : undefined
+        }
+      >
+        {part}
+      </span>
+    )
+  })
 }
 
 function buildCommentThreads(comments: CaseComment[]) {
@@ -145,6 +228,28 @@ function buildCommentThreads(comments: CaseComment[]) {
   }
 }
 
+function getThreadReplies(
+  commentId: string,
+  childrenByParent: Map<string, CaseComment[]>,
+) {
+  const stack = [...(childrenByParent.get(commentId) ?? [])].reverse()
+  const replies: CaseComment[] = []
+
+  while (stack.length > 0) {
+    const reply = stack.pop()
+    if (!reply) continue
+
+    replies.push(reply)
+    const children = childrenByParent.get(reply.id) ?? []
+
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      stack.push(children[index])
+    }
+  }
+
+  return replies
+}
+
 export function CaseChatter({
   caseId,
   canPost = false,
@@ -158,24 +263,55 @@ export function CaseChatter({
   const [cursorPosition, setCursorPosition] = useState(0)
   const [replyTarget, setReplyTarget] = useState<CaseComment | null>(null)
   const [mentionMap, setMentionMap] = useState<Record<string, string>>({})
+  const [mentionSearch, setMentionSearch] = useState('')
+  const [mentionAnchorPosition, setMentionAnchorPosition] =
+    useState<AnchorPosition>({ left: 0, top: 0 })
+  const [composerScrollTop, setComposerScrollTop] = useState(0)
 
+  const formRef = useRef<HTMLFormElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
   const threads = buildCommentThreads(comments)
+  const validUsernames = useMemo(
+    () => new Set(users.map((user) => user.username.toLowerCase())),
+    [users],
+  )
 
+  useEffect(() => {
+    setMentionSearch(activeMention?.query ?? '')
+  }, [activeMention?.query])
+
+  useLayoutEffect(() => {
+    if (!activeMention || !textareaRef.current || !formRef.current) return
+
+    const nextPosition = getTextareaCaretPosition(
+      textareaRef.current,
+      activeMention.start,
+      formRef.current,
+    )
+
+    setMentionAnchorPosition((currentPosition) =>
+      currentPosition.left === nextPosition.left &&
+      currentPosition.top === nextPosition.top
+        ? currentPosition
+        : nextPosition,
+    )
+  }, [activeMention?.start])
+
+  const mentionQuery = mentionSearch.trim().toLowerCase()
+  const hasMentionQuery = mentionQuery.length > 0
   const mentionCandidates = users.filter((candidate) => {
-    if (!activeMention) return false
-
-    const query = activeMention.query.trim().toLowerCase()
-    if (!query) return true
+    if (!activeMention || !hasMentionQuery) return false
 
     return (
-      candidate.name.toLowerCase().includes(query) ||
-      candidate.username.toLowerCase().includes(query) ||
-      candidate.email.toLowerCase().includes(query)
+      candidate.name.toLowerCase().includes(mentionQuery) ||
+      candidate.username.toLowerCase().includes(mentionQuery) ||
+      candidate.email.toLowerCase().includes(mentionQuery)
     )
   })
+  const mentionResults = mentionCandidates.slice(0, 8)
+  const mentionResultsHeight = Math.min(256, 44 + mentionResults.length * 36)
 
   function handleSelectMention(userId: string, name: string) {
     if (!activeMention) return
@@ -192,6 +328,7 @@ export function CaseChatter({
       ...currentMap,
       [token]: userId,
     }))
+    setMentionSearch('')
 
     requestAnimationFrame(() => {
       if (!textareaRef.current) return
@@ -243,19 +380,30 @@ export function CaseChatter({
   )
 
   const contentBody = (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
       {canPost ? (
         <Popover open={Boolean(activeMention)}>
-          <PopoverAnchor asChild>
-            <form
-              onSubmit={handleSubmit}
-              className="rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
-            >
+          <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            className="relative min-w-0 rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
+          >
+            <PopoverAnchor asChild>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute size-1 opacity-0"
+                style={{
+                  left: mentionAnchorPosition.left,
+                  top: mentionAnchorPosition.top,
+                }}
+              />
+            </PopoverAnchor>
+
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {replyTarget ? (
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <CornerDownRight className="size-3.5" />
-                    <span>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <CornerDownRight className="size-3.5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">
                       Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
                       {replyTarget.content}
                     </span>
@@ -271,26 +419,46 @@ export function CaseChatter({
                   </div>
                 ) : null}
 
-                <Textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(event) => {
-                    setContent(event.target.value)
-                    setCursorPosition(event.target.selectionStart)
-                  }}
-                  onSelect={(event) =>
-                    setCursorPosition(event.currentTarget.selectionStart)
-                  }
-                  onClick={(event) =>
-                    setCursorPosition(event.currentTarget.selectionStart)
-                  }
-                  placeholder={
-                    replyTarget
-                      ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
-                      : 'Write a review note. Use @ to mention a teammate.'
-                  }
-                  className="h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 shadow-none focus-visible:ring-0"
-                />
+                <div className="relative min-h-6 min-w-0">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 z-0 min-h-6 overflow-hidden whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90 [overflow-wrap:anywhere]"
+                  >
+                    <div
+                      style={{
+                        transform: `translateY(-${composerScrollTop}px)`,
+                      }}
+                    >
+                      {content
+                        ? renderComposerText(content, validUsernames)
+                        : null}
+                    </div>
+                  </div>
+
+                  <Textarea
+                    ref={textareaRef}
+                    value={content}
+                    onChange={(event) => {
+                      setContent(event.target.value)
+                      setCursorPosition(event.target.selectionStart)
+                    }}
+                    onSelect={(event) =>
+                      setCursorPosition(event.currentTarget.selectionStart)
+                    }
+                    onClick={(event) =>
+                      setCursorPosition(event.currentTarget.selectionStart)
+                    }
+                    onScroll={(event) =>
+                      setComposerScrollTop(event.currentTarget.scrollTop)
+                    }
+                    placeholder={
+                      replyTarget
+                        ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
+                        : 'Write a review note. Use @ to mention a teammate.'
+                    }
+                    className="scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 leading-6 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0"
+                  />
+                </div>
 
                 <div className="flex flex-wrap items-center justify-end gap-3">
                   <Button
@@ -306,32 +474,50 @@ export function CaseChatter({
                   </Button>
                 </div>
               </div>
-            </form>
-          </PopoverAnchor>
+          </form>
 
-          <PopoverContent align="start" className="w-80 p-0">
+          <PopoverContent
+            align="start"
+            side="bottom"
+            sideOffset={6}
+            className="w-80 p-0"
+          >
             <Command shouldFilter={false}>
-              <CommandInput placeholder="Mention a teammate" />
-              <CommandList>
-                <CommandEmpty>No matching users found.</CommandEmpty>
-                <CommandGroup heading="Team members">
-                  {mentionCandidates.slice(0, 8).map((candidate) => (
-                    <CommandItem
-                      key={candidate.id}
-                      value={candidate.id}
-                      onSelect={() =>
-                        handleSelectMention(candidate.id, candidate.username)
-                      }
-                    >
-                      <UserRound />
-                      <span>{candidate.name}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        @{candidate.username}
-                      </span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
+              <CommandInput
+                value={mentionSearch}
+                onValueChange={setMentionSearch}
+                placeholder="Search employees"
+              />
+              {hasMentionQuery ? (
+                <CommandList className="max-h-none overflow-hidden">
+                  {mentionCandidates.length === 0 ? (
+                    <CommandEmpty>No matching users found.</CommandEmpty>
+                  ) : (
+                    <ScrollArea style={{ height: mentionResultsHeight }}>
+                      <CommandGroup heading="Team members">
+                        {mentionResults.map((candidate) => (
+                          <CommandItem
+                            key={candidate.id}
+                            value={candidate.id}
+                            onSelect={() =>
+                              handleSelectMention(
+                                candidate.id,
+                                candidate.username,
+                              )
+                            }
+                          >
+                            <UserRound />
+                            <span>{candidate.name}</span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              @{candidate.username}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </ScrollArea>
+                  )}
+                </CommandList>
+              ) : null}
             </Command>
           </PopoverContent>
         </Popover>
@@ -339,12 +525,12 @@ export function CaseChatter({
         <Alert>
           <AlertTitle>Read-only chatter</AlertTitle>
           <AlertDescription>
-            Only the current case owner can post updates or replies.
+            You need access to this case before you can post updates or replies.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="flex min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="scrollbar-none flex min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         {threads.roots.length === 0 ? (
           emptyState
         ) : (
@@ -393,86 +579,87 @@ function CommentThread({
   comment,
   childrenByParent,
   onReply,
-  depth = 0,
 }: {
   comment: CaseComment
   childrenByParent: Map<string, CaseComment[]>
   onReply?: (comment: CaseComment) => void
-  depth?: number
 }) {
-  const replies = childrenByParent.get(comment.id) ?? []
-  const isNestedReply = depth > 0
+  const replies = getThreadReplies(comment.id, childrenByParent)
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
-      <div
-        className={[
-          'w-full rounded-2xl border border-border/70 p-4 shadow-sm transition-colors',
-          isNestedReply
-            ? 'bg-background/95 shadow-[0_1px_2px_rgba(15,23,42,0.04)]'
-            : 'bg-card',
-        ].join(' ')}
-      >
-        <div className="flex items-start gap-3">
-          <Avatar className="size-10 shrink-0">
-            <AvatarFallback>{getInitials(comment.authorName)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold tracking-tight">
-                  {comment.authorName ?? 'Unknown'}
-                </p>
-                {formatUsername(comment.authorUsername) ? (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {formatUsername(comment.authorUsername)}
-                  </p>
-                ) : null}
-              </div>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                {formatDateTime(comment.createdAt)}
-              </span>
-            </div>
-            <p className="mt-3 wrap-break-word whitespace-pre-wrap text-sm leading-6 text-foreground/90">
-              {renderCommentText(comment.content)}
-            </p>
-            {onReply ? (
-              <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => onReply(comment)}
-                >
-                  <CornerDownRight data-icon="inline-start" />
-                  Reply
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      <CommentCard comment={comment} onReply={onReply} />
 
       {replies.length > 0 ? (
-        <div className="relative ml-5 flex min-w-0 flex-col gap-3 pl-7">
-          {/* Continuous vertical thread rail */}
-          <div className="absolute left-2.25 top-0 bottom-6 w-0.5 rounded-full bg-linear-to-b from-primary/30 via-primary/20 to-transparent" />
-          {replies.map((reply, index) => (
+        <div className="relative ml-3 flex min-w-0 flex-col gap-3 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
+          {replies.map((reply) => (
             <div key={reply.id} className="relative min-w-0">
-              {/* Curved elbow connector */}
-              <div className="absolute -left-4.75 top-0 h-5.5 w-5 rounded-bl-xl border-b-2 border-l-2 border-primary/30" />
-              {/* Junction dot */}
-              <div className="absolute -left-0.75 top-4.5 size-2.5 rounded-full bg-primary/25 ring-2 ring-background" />
-              <CommentThread
-                comment={reply}
-                childrenByParent={childrenByParent}
-                onReply={onReply}
-                depth={depth + 1}
-              />
+              <div className="absolute -left-[21px] top-5 hidden h-px w-4 bg-border sm:block" />
+              <CommentCard comment={reply} onReply={onReply} nested />
             </div>
           ))}
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function CommentCard({
+  comment,
+  onReply,
+  nested = false,
+}: {
+  comment: CaseComment
+  onReply?: (comment: CaseComment) => void
+  nested?: boolean
+}) {
+  return (
+    <div
+      className={[
+        'w-full min-w-0 rounded-xl border border-border/70 p-3 shadow-sm transition-colors sm:p-4',
+        nested
+          ? 'bg-background/95 shadow-[0_1px_2px_rgba(15,23,42,0.04)]'
+          : 'bg-card',
+      ].join(' ')}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <Avatar className="size-9 shrink-0 sm:size-10">
+          <AvatarFallback>{getInitials(comment.authorName)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold tracking-tight">
+                {comment.authorName ?? 'Unknown'}
+              </p>
+              {formatUsername(comment.authorUsername) ? (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {formatUsername(comment.authorUsername)}
+                </p>
+              ) : null}
+            </div>
+            <span className="max-w-full truncate text-xs font-medium text-muted-foreground sm:shrink-0">
+              {formatDateTime(comment.createdAt)}
+            </span>
+          </div>
+          <p className="mt-3 break-words whitespace-pre-wrap text-sm leading-6 text-foreground/90 [overflow-wrap:anywhere]">
+            {renderCommentText(comment.content)}
+          </p>
+          {onReply ? (
+            <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => onReply(comment)}
+              >
+                <CornerDownRight data-icon="inline-start" />
+                Reply
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }

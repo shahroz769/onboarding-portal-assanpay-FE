@@ -416,7 +416,7 @@ export function CaseHistoryTimeline({
           No history has been recorded for this case yet.
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           {history.map((entry, index) => {
             const meta = ACTION_META[entry.action] ?? {
               label: formatActionLabel(entry.action),
@@ -429,7 +429,7 @@ export function CaseHistoryTimeline({
             const proofFile = getHistoryProofFile(entry.details)
 
             return (
-              <div key={entry.id} className="relative pl-8">
+              <div key={entry.id} className="relative min-w-0 pl-8">
                 {index > 0 ? (
                   <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
                 ) : null}
@@ -443,40 +443,55 @@ export function CaseHistoryTimeline({
                   <Icon className={`size-4 ${meta.iconClassName}`} />
                 </div>
 
-                <div className="relative rounded-xl border bg-background p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="relative min-w-0 rounded-xl border bg-background p-4">
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 flex-col gap-2">
                         <p className="truncate text-sm font-semibold tracking-tight">
                           {entry.actorName ?? 'System'}
                         </p>
                         {detailsText ? (
-                          <p className="wrap-break-word whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                          <p className="break-words whitespace-pre-wrap text-sm leading-6 text-muted-foreground [overflow-wrap:anywhere]">
                             {detailsText}
                           </p>
                         ) : null}
                         {proofFile ? (
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="max-w-64 truncate">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="min-w-0 max-w-full truncate"
+                              title={proofFile.originalName}
+                            >
                               {proofFile.originalName}
                             </Badge>
-                            <Button asChild variant="outline" size="sm">
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="max-w-full"
+                            >
                               <a
                                 href={proofFile.googleDriveWebViewLink}
                                 target="_blank"
                                 rel="noreferrer"
                               >
                                 <ExternalLink data-icon="inline-start" />
-                                Open proof
+                                <span className="truncate">Open proof</span>
                               </a>
                             </Button>
                           </div>
                         ) : null}
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <Badge variant="secondary">{meta.label}</Badge>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
+                      <Badge
+                        variant="secondary"
+                        className="min-w-0 max-w-full truncate"
+                        title={meta.label}
+                      >
+                        {meta.label}
+                      </Badge>
+                      <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                         {formatDateTime(entry.createdAt)}
                       </span>
                     </div>
@@ -492,7 +507,7 @@ export function CaseHistoryTimeline({
 
   if (embedded) {
     return (
-      <div className="flex h-full flex-col gap-3 rounded-xl border bg-muted/10 p-3">
+      <div className="scrollbar-none flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/10 p-3">
         {content}
       </div>
     )
