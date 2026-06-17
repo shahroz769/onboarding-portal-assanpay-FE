@@ -154,7 +154,7 @@ function getPrimaryActionCopy(
     return {
       title: 'Portal credentials required',
       description:
-        'Save the merchant portal MID, email, and password in the case workspace before closing this case successfully.',
+        'Save the merchant portal MID, MUID, email, and password in the case workspace before closing this case successfully.',
       actionLabel: null,
       actionKind: 'mid-creation' as const,
     }
@@ -447,7 +447,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                             : primaryAction.actionKind === 'sub-merchant-form'
                               ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
                               : primaryAction.actionKind === 'mid-creation'
-                                ? 'Save the portal MID, email, and password in the case workspace before closing this case.'
+                                ? 'Save the portal MID, MUID, email, and password in the case workspace before closing this case.'
                                 : primaryAction.actionKind === 'agreement'
                                   ? 'Complete the Agreement upload and mail workflow in the case workspace.'
                                   : primaryAction.actionKind ===

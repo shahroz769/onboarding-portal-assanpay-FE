@@ -232,7 +232,7 @@ export default function TestingRenderer({
               <AlertDescription>
                 {credentialsReady
                   ? 'Merchant portal credentials were saved in the MID Creation case. They are hidden in Testing and will be sent by the system.'
-                  : 'Save the portal MID, email, and password in the MID Creation case before sending this mail.'}
+                  : 'Save the portal MID, MUID, email, and password in the MID Creation case before sending this mail.'}
               </AlertDescription>
             </Alert>
 
@@ -254,8 +254,8 @@ export default function TestingRenderer({
           <Info />
           <AlertTitle>Portal credentials required</AlertTitle>
           <AlertDescription>
-            Save the portal MID, email, and password in the MID Creation case
-            before sending credentials from Testing.
+            Save the portal MID, MUID, email, and password in the MID Creation
+            case before sending credentials from Testing.
           </AlertDescription>
         </Alert>
       ) : credentialsEmailSent ? (

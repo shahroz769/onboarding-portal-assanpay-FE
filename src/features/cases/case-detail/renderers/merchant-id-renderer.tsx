@@ -69,12 +69,11 @@ const midDetailsSchema = z.object({
     })
     .int('Portal MID must be a whole number.')
     .positive('Portal MID must be greater than zero.'),
-  portalMuid: z.coerce
-    .number({
-      error: 'Portal MUID is required.',
-    })
-    .int('Portal MUID must be a whole number.')
-    .positive('Portal MUID must be greater than zero.'),
+  portalMuid: z
+    .string()
+    .trim()
+    .min(1, 'Portal MUID is required.')
+    .uuid('Portal MUID must be a valid UUID.'),
   email: z
     .string()
     .trim()
@@ -168,7 +167,7 @@ export default function MerchantIdRenderer({
 
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
-    portalMuid: savedPortalMuid ?? Number.NaN,
+    portalMuid: savedPortalMuid ?? '',
     email: merchantEmail,
     password: '',
     paymentMethods: savedPaymentMethods ?? DEFAULT_METHODS,
@@ -439,21 +438,14 @@ export default function MerchantIdRenderer({
               <FieldLabel htmlFor="portal-muid">Portal MUID</FieldLabel>
               <Input
                 id="portal-muid"
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                placeholder="Enter Portal MUID"
-                value={Number.isFinite(form.portalMuid) ? form.portalMuid : ''}
+                type="text"
+                inputMode="text"
+                placeholder="589365dc-e5fd-40ec-a7d6-75cb9a0c3bea"
+                value={form.portalMuid}
                 disabled={!canEdit || saveMidCreationDetails.isPending}
                 aria-invalid={Boolean(errors.portalMuid)}
                 onChange={(event) =>
-                  updateField(
-                    'portalMuid',
-                    event.target.value === ''
-                      ? Number.NaN
-                      : Number(event.target.value),
-                  )
+                  updateField('portalMuid', event.target.value)
                 }
               />
               <FieldError>{errors.portalMuid}</FieldError>
@@ -549,7 +541,7 @@ export default function MerchantIdRenderer({
           <Info />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
-            Only the current case owner can save the Portal MID.
+            Only the current case owner can save the Portal MID and MUID.
           </AlertDescription>
         </Alert>
       ) : null}
