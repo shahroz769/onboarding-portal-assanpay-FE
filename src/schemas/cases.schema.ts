@@ -58,6 +58,9 @@ export const queueSchema = z.object({
 
 export type Queue = z.infer<typeof queueSchema>
 
+export const CLOSE_OUTCOMES = ['successful', 'unsuccessful'] as const
+export type CloseOutcome = (typeof CLOSE_OUTCOMES)[number]
+
 // ─── Case List Item Schema ──────────────────────────────────────────────────
 
 export const caseListItemSchema = z.object({
@@ -73,6 +76,7 @@ export const caseListItemSchema = z.object({
   ownerName: z.string().nullable(),
   status: z.enum(CASE_STATUSES),
   priority: z.enum(['normal', 'high']),
+  closeOutcome: z.enum(CLOSE_OUTCOMES).nullable(),
   closedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -181,9 +185,6 @@ export const fieldReviewSchema = z.object({
 export type FieldReview = z.infer<typeof fieldReviewSchema>
 
 // ─── Case Detail Response ───────────────────────────────────────────────────
-
-export const CLOSE_OUTCOMES = ['successful', 'unsuccessful'] as const
-export type CloseOutcome = (typeof CLOSE_OUTCOMES)[number]
 
 export const caseDetailSchema = z.object({
   case: z.object({

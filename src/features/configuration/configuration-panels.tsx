@@ -105,6 +105,7 @@ import type {
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
+  ConfigurationOverview,
 } from '#/schemas/configuration.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 import {
@@ -130,6 +131,7 @@ const numberInputProps = {
 }
 const MAX_DRAFT_BYTES = 5 * 1024 * 1024
 const DRAFT_EXTENSIONS = new Set(['.pdf', '.doc', '.docx'])
+type AgreementDraft = ConfigurationOverview['agreementDrafts'][number]
 
 // ─── Limits & MDR ───────────────────────────────────────────────────────────
 
@@ -212,15 +214,8 @@ export function LimitsAndMdrPanel() {
 
 export function AgreementsPanel() {
   const { data, isPending } = useQuery(configurationQueryOptions())
-  const uploadDraft = useUploadAgreementDraftMutation()
-  const [files, setFiles] = useState<Record<string, File | null>>({})
-  const [fileErrors, setFileErrors] = useState<Record<string, string | null>>(
-    {},
-  )
 
-  type Draft = NonNullable<typeof data>['agreementDrafts'][number]
-
-  const columns = useMemo<DataTableColumnDef<Draft>[]>(
+  const columns = useMemo<DataTableColumnDef<AgreementDraft>[]>(
     () => [
       {
         id: 'businessType',
@@ -236,14 +231,17 @@ export function AgreementsPanel() {
         width: 280,
         cell: (draft) =>
           draft.googleDriveWebViewLink ? (
-            <a
-              href={draft.googleDriveWebViewLink}
-              target="_blank"
-              rel="noreferrer"
-              className="truncate text-primary underline-offset-2 hover:underline"
-            >
-              {draft.originalName}
-            </a>
+            <div className="flex min-w-0 items-center gap-2">
+              <FileCheck2 className="shrink-0 text-muted-foreground" />
+              <a
+                href={draft.googleDriveWebViewLink}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 truncate text-primary underline-offset-2 hover:underline"
+              >
+                {draft.originalName}
+              </a>
+            </div>
           ) : (
             <span className="text-muted-foreground">No draft</span>
           ),
@@ -262,59 +260,10 @@ export function AgreementsPanel() {
         id: 'upload',
         header: <span className="block text-right">Upload</span>,
         width: 380,
-        cell: (draft) => (
-          <div className="flex items-center justify-end gap-2">
-            <Field
-              data-invalid={Boolean(fileErrors[draft.businessType])}
-              className="max-w-56"
-            >
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                aria-invalid={Boolean(fileErrors[draft.businessType])}
-                onChange={(event) => {
-                  const file = event.target.files?.item(0) ?? null
-                  setFiles((current) => ({
-                    ...current,
-                    [draft.businessType]: file,
-                  }))
-                  setFileErrors((current) => ({
-                    ...current,
-                    [draft.businessType]: getDraftFileError(file),
-                  }))
-                }}
-              />
-              <FieldError>{fileErrors[draft.businessType]}</FieldError>
-            </Field>
-            <Button
-              variant="outline"
-              disabled={
-                !files[draft.businessType] ||
-                Boolean(fileErrors[draft.businessType]) ||
-                uploadDraft.isPending
-              }
-              onClick={() => {
-                const file = files[draft.businessType]
-                if (file) {
-                  uploadDraft.mutate({
-                    businessType: draft.businessType,
-                    file,
-                  })
-                }
-              }}
-            >
-              {uploadDraft.isPending ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <FileUp data-icon="inline-start" />
-              )}
-              Upload
-            </Button>
-          </div>
-        ),
+        cell: (draft) => <AgreementDraftUploadCell draft={draft} />,
       },
     ],
-    [fileErrors, files, uploadDraft],
+    [],
   )
 
   return (
@@ -336,6 +285,65 @@ export function AgreementsPanel() {
         }
       />
     </ConfigurationSectionCard>
+  )
+}
+
+function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
+  const inputId = useId()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadDraft = useUploadAgreementDraftMutation()
+  const [file, setFile] = useState<File | null>(null)
+  const fileError = getDraftFileError(file)
+
+  function handleUpload() {
+    if (!file || fileError || uploadDraft.isPending) return
+
+    uploadDraft.mutate(
+      {
+        businessType: draft.businessType,
+        file,
+      },
+      {
+        onSuccess: () => {
+          setFile(null)
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+        },
+      },
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <Field data-invalid={Boolean(fileError)} className="max-w-56">
+        <Input
+          ref={fileInputRef}
+          id={inputId}
+          type="file"
+          accept=".pdf,.doc,.docx"
+          aria-invalid={Boolean(fileError)}
+          disabled={uploadDraft.isPending}
+          onChange={(event) => {
+            setFile(event.target.files?.item(0) ?? null)
+          }}
+        />
+        <FieldError>{fileError}</FieldError>
+      </Field>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={!file || Boolean(fileError) || uploadDraft.isPending}
+        onClick={handleUpload}
+      >
+        {uploadDraft.isPending ? (
+          <Spinner data-icon="inline-start" />
+        ) : (
+          <FileUp data-icon="inline-start" />
+        )}
+        {uploadDraft.isPending ? 'Uploading' : 'Upload'}
+      </Button>
+    </div>
   )
 }
 
@@ -1125,7 +1133,7 @@ export function EmailSendingModePanel() {
           <Field orientation="horizontal">
             <Checkbox
               id="email-mode-auto"
-              checked={value?.autoEnabled ?? true}
+              checked={value.autoEnabled}
               onCheckedChange={(checked) => {
                 if (typeof checked === 'boolean') {
                   setMode('autoEnabled', checked)
@@ -1143,7 +1151,7 @@ export function EmailSendingModePanel() {
           <Field orientation="horizontal">
             <Checkbox
               id="email-mode-manual"
-              checked={value?.manualEnabled ?? true}
+              checked={value.manualEnabled}
               onCheckedChange={(checked) => {
                 if (typeof checked === 'boolean') {
                   setMode('manualEnabled', checked)

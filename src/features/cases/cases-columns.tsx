@@ -14,8 +14,12 @@ import type { RoleType } from '#/types/auth'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getStatusBadgeClasses(status: string): string {
-  switch (status) {
+function getStatusBadgeClasses(item: CaseListItem): string {
+  if (item.status === 'closed' && item.closeOutcome === 'unsuccessful') {
+    return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+  }
+
+  switch (item.status) {
     case 'new':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
     case 'working':
@@ -33,10 +37,22 @@ function getStatusBadgeClasses(status: string): string {
   }
 }
 
+function getStatusLabel(item: CaseListItem) {
+  if (item.status === 'closed' && item.closeOutcome === 'unsuccessful') {
+    return 'Closed Unsuccessful'
+  }
+
+  return CASE_STATUS_LABELS[item.status]
+}
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—'
   const date = new Date(dateStr)
   return format(date, 'MMM dd, yyyy h:mm a')
+}
+
+function isCaseClosed(item: CaseListItem) {
+  return item.status === 'closed' || item.status === 'error' || !!item.closedAt
 }
 
 function OwnerCell({
@@ -150,6 +166,7 @@ export function createCaseColumns({
   onOpenAssignOwner,
   onOpenPriority,
 }: CreateColumnsOptions): DataTableColumnDef<CaseListItem>[] {
+  const assignableIdSet = new Set(allIds)
   const isAllSelected =
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
   const isSomeSelected =
@@ -164,6 +181,7 @@ export function createCaseColumns({
         <Checkbox
           checked={isAllSelected || (isSomeSelected && 'indeterminate')}
           onCheckedChange={(value) => onSelectAll(!!value)}
+          disabled={!canEdit || allIds.length === 0}
           aria-label="Select all"
         />
       ),
@@ -171,7 +189,7 @@ export function createCaseColumns({
         <Checkbox
           checked={selectedIds.has(item.id)}
           onCheckedChange={(value) => onSelectRow(item.id, !!value)}
-          disabled={!canEdit}
+          disabled={!canEdit || !assignableIdSet.has(item.id)}
           aria-label="Select row"
         />
       ),
@@ -237,8 +255,8 @@ export function createCaseColumns({
         />
       ),
       cell: (item) => (
-        <Badge className={getStatusBadgeClasses(item.status)}>
-          {CASE_STATUS_LABELS[item.status]}
+        <Badge className={getStatusBadgeClasses(item)}>
+          {getStatusLabel(item)}
         </Badge>
       ),
       width: 120,
@@ -273,7 +291,7 @@ export function createCaseColumns({
       cell: (item) => (
         <OwnerCell
           item={item}
-          canEdit={canEdit}
+          canEdit={canEdit && !isCaseClosed(item)}
           onOpenAssignOwner={onOpenAssignOwner}
         />
       ),

@@ -177,7 +177,14 @@ function CasesTableProvider({
   const assignableIds = useMemo(
     () =>
       userRole === 'admin' || userRole === 'supervisor'
-        ? flatData.map((item) => item.id)
+        ? flatData
+            .filter(
+              (item) =>
+                item.status !== 'closed' &&
+                item.status !== 'error' &&
+                !item.closedAt,
+            )
+            .map((item) => item.id)
         : [],
     [flatData, userRole],
   )

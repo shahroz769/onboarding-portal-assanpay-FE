@@ -107,16 +107,40 @@ export async function preloadCaseDetailPageQueries(
   return detail
 }
 
+function invalidateCaseWorkflowQueries(
+  queryClient: QueryClient,
+  caseId: string,
+) {
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: [...CASE_DETAIL_KEY, caseId],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...CASE_HISTORY_KEY, caseId],
+    }),
+    queryClient.invalidateQueries({ queryKey: CASES_KEY }),
+  ])
+}
+
+function invalidateCaseDetailQueries(queryClient: QueryClient, caseId: string) {
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: [...CASE_DETAIL_KEY, caseId],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...CASE_HISTORY_KEY, caseId],
+    }),
+  ])
+}
+
 export function useTakeOwnership(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: () => takeOwnership(caseId),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('Ownership taken successfully')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: () => {
       toast.error('Failed to take ownership')
@@ -129,11 +153,9 @@ export function useAdvanceStage(caseId: string) {
 
   return useMutation({
     mutationFn: () => advanceStage(caseId),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('Stage advanced successfully')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to advance stage'))
@@ -147,10 +169,9 @@ export function useSaveFieldReviews(caseId: string) {
   return useMutation({
     mutationFn: (input: SaveFieldReviewsInput) =>
       saveFieldReviews(caseId, input),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseDetailQueries(queryClient, caseId)
       toast.success('Field reviews saved')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to save field reviews'))
@@ -233,7 +254,9 @@ export function useSendForResubmission(caseId: string) {
 
   return useMutation({
     mutationFn: () => sendForResubmission(caseId),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
+
       if (data.status === 'sent') {
         toast.success('Email sent — case moved to Awaiting Client')
       } else {
@@ -243,9 +266,6 @@ export function useSendForResubmission(caseId: string) {
             : 'Failed to send resubmission email',
         )
       }
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(
@@ -336,7 +356,9 @@ export function useSendAgreementEmail(caseId: string) {
   return useMutation({
     mutationFn: (input: { remarks?: string | null }) =>
       sendAgreementEmail(caseId, input),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
+
       if (data.status === 'sent') {
         toast.success('Agreement email sent')
       } else {
@@ -346,9 +368,6 @@ export function useSendAgreementEmail(caseId: string) {
             : 'Failed to send agreement email',
         )
       }
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to send agreement email'))
@@ -362,7 +381,9 @@ export function useSendMidCreationEmail(caseId: string) {
   return useMutation({
     mutationFn: (input: SendMidCreationEmailInput) =>
       sendMidCreationEmail(caseId, input),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
+
       if (data.status === 'sent') {
         toast.success('MID credentials email sent')
       } else {
@@ -372,9 +393,6 @@ export function useSendMidCreationEmail(caseId: string) {
             : 'Failed to send MID credentials',
         )
       }
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to send MID credentials'))
@@ -387,7 +405,9 @@ export function useSendLiveEmail(caseId: string) {
 
   return useMutation({
     mutationFn: (input: SendLiveEmailInput) => sendLiveEmail(caseId, input),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
+
       if (data.status === 'sent') {
         toast.success('Live email sent')
       } else {
@@ -397,9 +417,6 @@ export function useSendLiveEmail(caseId: string) {
             : 'Failed to send live email',
         )
       }
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to send live email'))
@@ -424,11 +441,9 @@ export function useConfirmResubmissionEmailManual(caseId: string) {
       file: File
       channel?: ManualCommunicationChannel
     }) => confirmResubmissionEmailManual({ caseId, ...input }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('Resubmission email marked as sent')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
@@ -455,11 +470,9 @@ export function useConfirmAgreementEmailManual(caseId: string) {
       file: File
       channel?: ManualCommunicationChannel
     }) => confirmAgreementEmailManual({ caseId, ...input }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('Agreement email marked as sent')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
@@ -487,11 +500,9 @@ export function useConfirmMidCreationEmailManual(caseId: string) {
         channel?: ManualCommunicationChannel
       } & SendMidCreationEmailInput,
     ) => confirmMidCreationEmailManual({ caseId, ...input }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('MID credentials email marked as sent')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
@@ -519,11 +530,9 @@ export function useConfirmLiveEmailManual(caseId: string) {
         channel?: ManualCommunicationChannel
       } & SendLiveEmailInput,
     ) => confirmLiveEmailManual({ caseId, ...input }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
       toast.success('Live email marked as sent')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))

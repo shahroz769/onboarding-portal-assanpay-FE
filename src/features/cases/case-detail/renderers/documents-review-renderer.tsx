@@ -297,8 +297,11 @@ export default function DocumentsReviewRenderer({
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
+  const isWorkingCase = caseDetail.case.status === 'working'
+  const isAwaitingClient = caseDetail.case.status === 'awaiting_client'
   const isEditable =
     isCaseOwner &&
+    isWorkingCase &&
     (currentStage?.category === 'in_progress' ||
       (currentStage == null && caseDetail.case.closeOutcome == null))
   const merchantData = merchant
@@ -403,6 +406,8 @@ export default function DocumentsReviewRenderer({
   }, [caseDetail.documents, merchantData.merchantType])
 
   function openRejectDialog(item: { key: string; label: string }) {
+    if (!isEditable) return
+
     const existing = draftReviews[item.key]
     setRejectDialog({
       open: true,
@@ -423,6 +428,8 @@ export default function DocumentsReviewRenderer({
   }
 
   async function confirmReject() {
+    if (!isEditable) return
+
     const trimmedRemarks = rejectDialog.remarks.trim()
     const dialogItem = rejectDialog.item
 
@@ -455,6 +462,8 @@ export default function DocumentsReviewRenderer({
   }
 
   async function deleteReject() {
+    if (!isEditable) return
+
     const dialogItem = rejectDialog.item
 
     if (!dialogItem) {
@@ -596,6 +605,18 @@ export default function DocumentsReviewRenderer({
               </FieldGroup>
             </div>
 
+            {isAwaitingClient ? (
+              <Alert>
+                <Info />
+                <AlertTitle>Awaiting client resubmission</AlertTitle>
+                <AlertDescription>
+                  Rejection changes are locked until the client submits updated
+                  details. You can reject items again after the case returns to
+                  working.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
             <Separator />
 
             {sections.map((section, index) => (
@@ -707,6 +728,7 @@ export default function DocumentsReviewRenderer({
               <Textarea
                 id="reject-remarks"
                 value={rejectDialog.remarks}
+                disabled={!isEditable || saveFieldReviews.isPending}
                 onChange={(event) =>
                   setRejectDialog((current) => ({
                     ...current,
@@ -732,7 +754,7 @@ export default function DocumentsReviewRenderer({
               <Button
                 variant="destructive"
                 onClick={deleteReject}
-                disabled={saveFieldReviews.isPending}
+                disabled={!isEditable || saveFieldReviews.isPending}
               >
                 {isDeletingReject ? <Spinner data-icon="inline-start" /> : null}
                 Delete
@@ -748,7 +770,7 @@ export default function DocumentsReviewRenderer({
             )}
             <Button
               onClick={confirmReject}
-              disabled={saveFieldReviews.isPending}
+              disabled={!isEditable || saveFieldReviews.isPending}
             >
               {isSavingReject ? <Spinner data-icon="inline-start" /> : null}
               Save

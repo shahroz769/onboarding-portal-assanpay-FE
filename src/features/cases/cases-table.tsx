@@ -233,6 +233,11 @@ function Dialogs() {
           caseId={state.assignOwnerCase.id}
           caseNumber={state.assignOwnerCase.caseNumber}
           currentOwnerId={state.assignOwnerCase.ownerId}
+          isClosed={
+            state.assignOwnerCase.status === 'closed' ||
+            state.assignOwnerCase.status === 'error' ||
+            !!state.assignOwnerCase.closedAt
+          }
         />
       ) : null}
       {state.priorityCase ? (

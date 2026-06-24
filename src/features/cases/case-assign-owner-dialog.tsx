@@ -40,6 +40,7 @@ interface CaseAssignOwnerDialogProps {
   caseId: string
   caseNumber: string
   currentOwnerId: string | null
+  isClosed: boolean
 }
 
 export function CaseAssignOwnerDialog({
@@ -48,6 +49,7 @@ export function CaseAssignOwnerDialog({
   caseId,
   caseNumber,
   currentOwnerId,
+  isClosed,
 }: CaseAssignOwnerDialogProps) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -82,6 +84,8 @@ export function CaseAssignOwnerDialog({
   }
 
   function handleSubmit() {
+    if (isClosed) return
+
     assignMutation.mutate(
       { caseId, ownerId: selectedUserId },
       {
@@ -102,6 +106,15 @@ export function CaseAssignOwnerDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {isClosed ? (
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertDescription>
+              This case is closed. Ownership cannot be assigned or transferred.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         <Field>
           <FieldLabel className="sr-only">Owner</FieldLabel>
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -111,6 +124,7 @@ export function CaseAssignOwnerDialog({
                 role="combobox"
                 aria-expanded={popoverOpen}
                 className="w-full justify-between font-normal"
+                disabled={isClosed}
               >
                 {selectedLabel}
                 <ChevronsUpDownIcon
@@ -132,6 +146,7 @@ export function CaseAssignOwnerDialog({
                       <CommandItem
                         key={option.value}
                         value={option.label}
+                        disabled={isClosed}
                         onSelect={() => handleSelect(option.value)}
                       >
                         {option.label}
@@ -171,7 +186,7 @@ export function CaseAssignOwnerDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!hasChanged || assignMutation.isPending}
+            disabled={isClosed || !hasChanged || assignMutation.isPending}
           >
             {assignMutation.isPending && <Spinner data-icon="inline-start" />}
             Save owner
