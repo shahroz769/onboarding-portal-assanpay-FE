@@ -113,9 +113,18 @@ export function DocumentsReviewSummaryModal({
     file: File,
     channel: 'email' | 'whatsapp',
   ) {
-    if (!preview) return
-    await confirmManual.mutateAsync({ tokenId: preview.tokenId, file, channel })
-    if (channel === 'whatsapp') onOpenChange(false)
+    if (!preview || isConfirmingRef.current) return
+    isConfirmingRef.current = true
+    try {
+      await confirmManual.mutateAsync({
+        tokenId: preview.tokenId,
+        file,
+        channel,
+      })
+      if (channel === 'whatsapp') onOpenChange(false)
+    } finally {
+      isConfirmingRef.current = false
+    }
   }
 
   const autoContent = (

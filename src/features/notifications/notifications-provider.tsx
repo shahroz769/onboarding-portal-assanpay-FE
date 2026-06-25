@@ -58,13 +58,20 @@ export function NotificationsProvider() {
       onEvent: (notification: Notification) => {
         applyIncomingNotificationToCache(qcRef.current, notification)
         if (notification.caseId && notification.type === 'case_resubmitted') {
-          void qcRef.current.invalidateQueries({
-            queryKey: [...CASE_DETAIL_KEY, notification.caseId],
-          })
-          void qcRef.current.invalidateQueries({
-            queryKey: [...CASE_HISTORY_KEY, notification.caseId],
-          })
-          void qcRef.current.invalidateQueries({ queryKey: CASES_KEY })
+          void Promise.all([
+            qcRef.current.invalidateQueries({
+              queryKey: [...CASE_DETAIL_KEY, notification.caseId],
+              refetchType: 'all',
+            }),
+            qcRef.current.invalidateQueries({
+              queryKey: [...CASE_HISTORY_KEY, notification.caseId],
+              refetchType: 'all',
+            }),
+            qcRef.current.invalidateQueries({
+              queryKey: CASES_KEY,
+              refetchType: 'all',
+            }),
+          ])
         }
         if (
           notification.caseId &&

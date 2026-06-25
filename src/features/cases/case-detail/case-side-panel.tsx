@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -24,6 +24,7 @@ import {
   caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
+  useSaveDocumentReviewSubMerchant,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
@@ -39,6 +40,12 @@ import {
 } from './renderers/documents-review-shared'
 import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
 
+const DOCUMENT_REVIEW_RESUBMISSION_SENT_ACTIONS = new Set([
+  'resubmission_email_sent',
+  'resubmission_email_sent_manual',
+  'resubmission_whatsapp_sent_manual',
+])
+
 interface CaseSidePanelProps {
   caseDetail: CaseDetail
   caseId: string
@@ -51,6 +58,8 @@ function getPrimaryActionCopy(
     isReviewApproved: boolean
     hasActiveRejections: boolean
     hasResubmittedUpdates: boolean
+    hasDocumentReviewResubmissionSent: boolean
+    isDocumentReviewHistoryPending: boolean
     isSubMerchantFormCase: boolean
     hasSubMerchantFinalForm: boolean
     isMidCreationCase: boolean
@@ -184,6 +193,37 @@ function getPrimaryActionCopy(
     options.isDocumentReviewCase &&
     status === 'working' &&
     !options.hasActiveRejections &&
+    options.isDocumentReviewHistoryPending
+  ) {
+    return {
+      title: 'Checking client contact',
+      description:
+        'Checking whether an auto email, manual Gmail resend, or WhatsApp message has been completed before closure.',
+      actionLabel: null,
+      actionKind: 'document-review-communication' as const,
+    }
+  }
+
+  if (
+    options.isDocumentReviewCase &&
+    status === 'working' &&
+    !options.hasActiveRejections &&
+    !options.hasDocumentReviewResubmissionSent
+  ) {
+    return {
+      title: 'Client contact required',
+      description:
+        'Complete at least one resubmission request by auto email, manual Gmail, or WhatsApp before closing this case successfully.',
+      actionLabel: null,
+      actionKind: 'document-review-communication' as const,
+    }
+  }
+
+  if (
+    options.isDocumentReviewCase &&
+    status === 'working' &&
+    !options.hasActiveRejections &&
+    options.hasDocumentReviewResubmissionSent &&
     options.hasResubmittedUpdates
   ) {
     return {
@@ -198,7 +238,8 @@ function getPrimaryActionCopy(
   if (
     options.isDocumentReviewCase &&
     status === 'working' &&
-    !options.hasActiveRejections
+    !options.hasActiveRejections &&
+    options.hasDocumentReviewResubmissionSent
   ) {
     return {
       title: options.isReviewApproved
@@ -285,9 +326,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const takeOwnership = useTakeOwnership(caseId)
   const advanceStage = useAdvanceStage(caseId)
   const closeUnsuccessful = useCloseUnsuccessful(caseId)
+  const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
+  const caseHistoryQuery = useQuery(caseHistoryQueryOptions(caseId))
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [primaryActionInFlight, setPrimaryActionInFlight] = useState(false)
+  const primaryActionLockedRef = useRef(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
   const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
@@ -307,12 +352,22 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       caseDetail.latestResubmissionRequestedAt,
     ),
   )
+  const hasDocumentReviewResubmissionSent = useMemo(
+    () =>
+      caseHistoryQuery.data?.some((entry) =>
+        DOCUMENT_REVIEW_RESUBMISSION_SENT_ACTIONS.has(entry.action),
+      ) ?? false,
+    [caseHistoryQuery.data],
+  )
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {
     isDocumentReviewCase,
     isReviewApproved,
     hasActiveRejections,
     hasResubmittedUpdates,
+    hasDocumentReviewResubmissionSent,
+    isDocumentReviewHistoryPending:
+      isDocumentReviewCase && caseHistoryQuery.isPending,
     isSubMerchantFormCase,
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
     isMidCreationCase,
@@ -339,39 +394,108 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'sub-merchant-form' &&
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'agreement' &&
-    primaryAction.actionKind !== 'physical-agreement'
+    primaryAction.actionKind !== 'physical-agreement' &&
+    primaryAction.actionKind !== 'document-review-communication'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const unsuccessfulDisabled =
     !closeReason.trim() || closeUnsuccessful.isPending
-  const primaryActionPending = takeOwnership.isPending || advanceStage.isPending
+  const primaryActionPending =
+    primaryActionInFlight ||
+    takeOwnership.isPending ||
+    advanceStage.isPending ||
+    saveSubMerchant.isPending
 
-  function handlePrimaryAction() {
-    if (primaryActionPending) return
+  async function saveChangedSubMerchantBeforeReview() {
+    if (
+      !documentsReviewDraft?.isSubMerchantChanged ||
+      !documentsReviewDraft.selectedSubMerchantId
+    ) {
+      return
+    }
+
+    await saveSubMerchant.mutateAsync({
+      subMerchantId: documentsReviewDraft.selectedSubMerchantId,
+    })
+  }
+
+  async function handlePrimaryAction() {
+    if (primaryActionPending || primaryActionLockedRef.current) return
+    primaryActionLockedRef.current = true
+    setPrimaryActionInFlight(true)
 
     if (primaryAction.actionKind === 'take-ownership') {
-      takeOwnership.mutate()
+      takeOwnership.mutate(undefined, {
+        onSettled: () => {
+          primaryActionLockedRef.current = false
+          setPrimaryActionInFlight(false)
+        },
+      })
       return
     }
 
     if (primaryAction.actionKind === 'review') {
-      setReviewModalOpen(true)
+      try {
+        await saveChangedSubMerchantBeforeReview()
+        setReviewModalOpen(true)
+      } catch {
+        // Mutation hook already surfaces the backend error via toast.
+      } finally {
+        primaryActionLockedRef.current = false
+        setPrimaryActionInFlight(false)
+      }
       return
     }
 
     if (primaryAction.actionKind === 'mark-successful') {
       if (
         caseDetail.queue.slug === 'documents-review' &&
-        !caseDetail.documentReview?.subMerchantName.trim()
+        !(
+          documentsReviewDraft?.selectedSubMerchantId ||
+          caseDetail.documentReview?.subMerchantName?.trim()
+        )
       ) {
         toast.error(
           'Select the sub-merchant name before marking this case as successful.',
         )
+        primaryActionLockedRef.current = false
+        setPrimaryActionInFlight(false)
         return
       }
 
-      advanceStage.mutate()
+      if (
+        caseDetail.queue.slug === 'documents-review' &&
+        !hasDocumentReviewResubmissionSent
+      ) {
+        toast.error(
+          'Complete auto email, manual Gmail, or WhatsApp before marking this case as successful.',
+        )
+        primaryActionLockedRef.current = false
+        setPrimaryActionInFlight(false)
+        return
+      }
+
+      if (caseDetail.queue.slug === 'documents-review') {
+        try {
+          await saveChangedSubMerchantBeforeReview()
+        } catch {
+          primaryActionLockedRef.current = false
+          setPrimaryActionInFlight(false)
+          return
+        }
+      }
+
+      advanceStage.mutate(undefined, {
+        onSettled: () => {
+          primaryActionLockedRef.current = false
+          setPrimaryActionInFlight(false)
+        },
+      })
+      return
     }
+
+    primaryActionLockedRef.current = false
+    setPrimaryActionInFlight(false)
   }
 
   function handleCloseUnsuccessful() {
@@ -437,150 +561,161 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                   </Alert>
                 ) : null}
 
-              {!isClosed ? (
-                <div className="rounded-xl border bg-background p-3">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      {primaryAction.actionKind === 'take-ownership'
-                        ? 'Take ownership first to move the case into active review.'
-                        : primaryAction.actionKind === 'review'
-                          ? isCaseOwner
-                            ? 'Review the rejected fields and email the client to request a resubmission.'
-                            : 'Only the current case owner can review rejected fields and request a resubmission.'
-                          : primaryAction.actionKind === 'awaiting-client'
-                            ? 'Waiting for the client to update the requested fields.'
-                            : primaryAction.actionKind === 'sub-merchant-form'
-                              ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
-                              : primaryAction.actionKind === 'mid-creation'
-                                ? 'Save the portal MID, MUID, email, and password in the case workspace before closing this case.'
-                                : primaryAction.actionKind === 'agreement'
-                                  ? 'Complete the Agreement upload and mail workflow in the case workspace.'
-                                  : primaryAction.actionKind ===
-                                      'physical-agreement'
-                                    ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
-                                    : isCaseOwner
-                                      ? 'When everything checks out, close this case successfully.'
-                                      : 'Only the current case owner can complete this case.'}
-                    </p>
-                    {showPrimaryActionButton ? (
-                      <Button
-                        onClick={handlePrimaryAction}
-                        disabled={
-                          primaryActionPending ||
-                          (primaryAction.actionKind !== 'take-ownership' &&
-                            primaryAction.actionKind !== 'mark-successful' &&
-                            primaryAction.actionKind !== 'review') ||
-                          (primaryAction.actionKind === 'review' &&
-                            (!hasActiveRejections || !isCaseOwner)) ||
-                          (primaryAction.actionKind === 'mark-successful' &&
-                            hasOwner &&
-                            !isCaseOwner)
-                        }
-                      >
-                        {primaryAction.actionKind === 'take-ownership' ? (
-                          takeOwnership.isPending ? (
+                {!isClosed ? (
+                  <div className="rounded-xl border bg-background p-3">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {primaryAction.actionKind === 'take-ownership'
+                          ? 'Take ownership first to move the case into active review.'
+                          : primaryAction.actionKind === 'review'
+                            ? isCaseOwner
+                              ? 'Review the rejected fields and email the client to request a resubmission.'
+                              : 'Only the current case owner can review rejected fields and request a resubmission.'
+                            : primaryAction.actionKind === 'awaiting-client'
+                              ? 'Waiting for the client to update the requested fields.'
+                              : primaryAction.actionKind === 'sub-merchant-form'
+                                ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
+                                : primaryAction.actionKind === 'mid-creation'
+                                  ? 'Save the portal MID, MUID, email, and password in the case workspace before closing this case.'
+                                  : primaryAction.actionKind === 'agreement'
+                                    ? 'Complete the Agreement upload and mail workflow in the case workspace.'
+                                    : primaryAction.actionKind ===
+                                        'physical-agreement'
+                                      ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
+                                      : primaryAction.actionKind ===
+                                          'document-review-communication'
+                                        ? 'Complete auto email, manual Gmail, or WhatsApp before closing this case successfully.'
+                                        : isCaseOwner
+                                          ? 'When everything checks out, close this case successfully.'
+                                          : 'Only the current case owner can complete this case.'}
+                      </p>
+                      {showPrimaryActionButton ? (
+                        <Button
+                          onClick={handlePrimaryAction}
+                          disabled={
+                            primaryActionPending ||
+                            (primaryAction.actionKind !== 'take-ownership' &&
+                              primaryAction.actionKind !== 'mark-successful' &&
+                              primaryAction.actionKind !== 'review') ||
+                            (primaryAction.actionKind === 'review' &&
+                              (!hasActiveRejections || !isCaseOwner)) ||
+                            (primaryAction.actionKind === 'mark-successful' &&
+                              hasOwner &&
+                              !isCaseOwner)
+                          }
+                        >
+                          {primaryAction.actionKind === 'take-ownership' ? (
+                            takeOwnership.isPending ? (
+                              <Spinner data-icon="inline-start" />
+                            ) : (
+                              <UserRoundPlus data-icon="inline-start" />
+                            )
+                          ) : primaryAction.actionKind === 'review' ? (
+                            primaryActionPending ? (
+                              <Spinner data-icon="inline-start" />
+                            ) : (
+                              <Send data-icon="inline-start" />
+                            )
+                          ) : advanceStage.isPending ? (
                             <Spinner data-icon="inline-start" />
                           ) : (
-                            <UserRoundPlus data-icon="inline-start" />
-                          )
-                        ) : primaryAction.actionKind === 'review' ? (
-                          <Send data-icon="inline-start" />
-                        ) : advanceStage.isPending ? (
+                            <CheckCircle2 data-icon="inline-start" />
+                          )}
+                          {primaryAction.actionKind === 'take-ownership'
+                            ? takeOwnership.isPending
+                              ? 'Taking ownership'
+                              : 'Take ownership'
+                            : primaryAction.actionKind === 'review'
+                              ? primaryActionPending
+                                ? 'Opening review'
+                                : 'Review'
+                              : primaryAction.actionKind === 'mark-successful'
+                                ? primaryActionPending
+                                  ? 'Closing case'
+                                  : 'Mark as successful'
+                                : 'No successful action available'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {isDocumentReviewCase &&
+                hasOwner &&
+                status === 'awaiting_client' ? (
+                  <AwaitingClientAlert
+                    caseId={caseId}
+                    action="resubmission_email_sent"
+                    title="Awaiting client resubmission"
+                    description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
+                  />
+                ) : null}
+
+                {isAgreementCase && hasOwner && status === 'awaiting_client' ? (
+                  <AwaitingClientAlert
+                    caseId={caseId}
+                    action="agreement_email_sent"
+                    title="Awaiting client agreement"
+                    description="We emailed the client a secure link to upload the signed agreement. The case will return to working as soon as they submit."
+                  />
+                ) : null}
+
+                {isDocumentReviewCase &&
+                hasOwner &&
+                category === 'in_progress' &&
+                isReviewApproved ? (
+                  <Alert>
+                    <CheckCircle2 />
+                    <AlertTitle>Review approved</AlertTitle>
+                    <AlertDescription>
+                      All document-review items are approved in the database.
+                      You can now mark this case as successful.
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {canCloseUnsuccessfully ? (
+                  <div className="rounded-xl border bg-background p-3">
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel htmlFor="close-reason">Reason</FieldLabel>
+                        <Textarea
+                          value={closeReason}
+                          id="close-reason"
+                          onChange={(event) =>
+                            setCloseReason(event.target.value)
+                          }
+                          placeholder="Write closing reason"
+                          className="min-h-28 resize-none"
+                        />
+                      </Field>
+                    </FieldGroup>
+
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="destructive"
+                        onClick={handleCloseUnsuccessful}
+                        disabled={unsuccessfulDisabled}
+                      >
+                        {closeUnsuccessful.isPending ? (
                           <Spinner data-icon="inline-start" />
                         ) : (
-                          <CheckCircle2 data-icon="inline-start" />
+                          <ShieldAlert data-icon="inline-start" />
                         )}
-                        {primaryAction.actionKind === 'take-ownership'
-                          ? takeOwnership.isPending
-                            ? 'Taking ownership'
-                            : 'Take ownership'
-                          : primaryAction.actionKind === 'review'
-                            ? 'Review'
-                            : primaryAction.actionKind === 'mark-successful'
-                              ? advanceStage.isPending
-                                ? 'Closing case'
-                                : 'Mark as successful'
-                              : 'No successful action available'}
+                        {closeUnsuccessful.isPending
+                          ? 'Closing unsuccessfully'
+                          : 'Close as unsuccessful'}
                       </Button>
-                    ) : null}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {isDocumentReviewCase &&
-              hasOwner &&
-              status === 'awaiting_client' ? (
-                <AwaitingClientAlert
-                  caseId={caseId}
-                  action="resubmission_email_sent"
-                  title="Awaiting client resubmission"
-                  description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
-                />
-              ) : null}
-
-              {isAgreementCase && hasOwner && status === 'awaiting_client' ? (
-                <AwaitingClientAlert
-                  caseId={caseId}
-                  action="agreement_email_sent"
-                  title="Awaiting client agreement"
-                  description="We emailed the client a secure link to upload the signed agreement. The case will return to working as soon as they submit."
-                />
-              ) : null}
-
-              {isDocumentReviewCase &&
-              hasOwner &&
-              category === 'in_progress' &&
-              isReviewApproved ? (
-                <Alert>
-                  <CheckCircle2 />
-                  <AlertTitle>Review approved</AlertTitle>
-                  <AlertDescription>
-                    All document-review items are approved in the database. You
-                    can now mark this case as successful.
-                  </AlertDescription>
-                </Alert>
-              ) : null}
-
-              {canCloseUnsuccessfully ? (
-                <div className="rounded-xl border bg-background p-3">
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="close-reason">Reason</FieldLabel>
-                      <Textarea
-                        value={closeReason}
-                        id="close-reason"
-                        onChange={(event) => setCloseReason(event.target.value)}
-                        placeholder="Write closing reason"
-                        className="min-h-28 resize-none"
-                      />
-                    </Field>
-                  </FieldGroup>
-
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      variant="destructive"
-                      onClick={handleCloseUnsuccessful}
-                      disabled={unsuccessfulDisabled}
-                    >
-                      {closeUnsuccessful.isPending ? (
-                        <Spinner data-icon="inline-start" />
-                      ) : (
-                        <ShieldAlert data-icon="inline-start" />
-                      )}
-                      {closeUnsuccessful.isPending
-                        ? 'Closing unsuccessfully'
-                        : 'Close as unsuccessful'}
-                    </Button>
+                {!isClosed && hasOwner && !isInProgress && !isNew ? (
+                  <div className="rounded-xl border border-dashed bg-background px-3 py-4 text-sm text-muted-foreground">
+                    This case is not in a stage that can be resolved from the
+                    side panel yet.
                   </div>
-                </div>
-              ) : null}
-
-              {!isClosed && hasOwner && !isInProgress && !isNew ? (
-                <div className="rounded-xl border border-dashed bg-background px-3 py-4 text-sm text-muted-foreground">
-                  This case is not in a stage that can be resolved from the side
-                  panel yet.
-                </div>
-              ) : null}
+                ) : null}
 
                 {isDocumentReviewCase ? (
                   <RejectionRoundsCard caseId={caseId} />

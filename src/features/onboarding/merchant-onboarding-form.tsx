@@ -321,6 +321,15 @@ export function MerchantOnboardingForm({
     [documents],
   )
 
+  const resetFormState = useCallback(() => {
+    form.reset()
+    setDocuments({})
+    setDocumentErrors({})
+    setSubmissionError(null)
+    setSubmissionData(null)
+    onSubmittedChange?.(false)
+  }, [form, onSubmittedChange])
+
   const handleDocumentChange = useCallback(
     (name: DocumentFieldName, file: File | null) => {
       setDocuments((prev) => {
@@ -375,7 +384,12 @@ export function MerchantOnboardingForm({
   // ── Success View ────────────────────────────────────────────────────────
 
   if (submissionData) {
-    return <SubmissionSuccess data={submissionData} />
+    return (
+      <SubmissionSuccess
+        data={submissionData}
+        onNewSubmission={resetFormState}
+      />
+    )
   }
 
   // ── Business-type specific docs ─────────────────────────────────────────
@@ -1338,12 +1352,7 @@ export function MerchantOnboardingForm({
         <Button
           type="button"
           variant="outline"
-          onClick={() => {
-            form.reset()
-            setDocuments({})
-            setDocumentErrors({})
-            setSubmissionError(null)
-          }}
+          onClick={resetFormState}
         >
           Reset
         </Button>

@@ -109,7 +109,7 @@ export function isUpdatedInLatestResubmissionRound(
   }
 
   const reviewedAt = new Date(review.updatedAt).getTime()
-  return Number.isNaN(reviewedAt) || resubmittedAt > reviewedAt
+  return Number.isNaN(reviewedAt) || resubmittedAt >= reviewedAt
 }
 
 export function createDocumentsReviewDraft(

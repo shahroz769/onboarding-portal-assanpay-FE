@@ -1106,7 +1106,16 @@ export function EmailSendingModePanel() {
           autoEnabled: true,
           manualEnabled: true,
         }
-      return { ...current, [field]: checked }
+      const next = { ...current, [field]: checked }
+
+      if (!next.autoEnabled && !next.manualEnabled) {
+        return {
+          ...next,
+          [field === 'autoEnabled' ? 'manualEnabled' : 'autoEnabled']: true,
+        }
+      }
+
+      return next
     })
   }
 

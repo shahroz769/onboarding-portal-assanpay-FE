@@ -105,14 +105,14 @@ const ACTION_META: Record<
       'border-orange-200 bg-orange-100 dark:border-orange-800 dark:bg-orange-950/60',
   },
   resubmission_email_sent: {
-    label: 'Resubmission email sent',
+    label: 'Auto resubmission email sent',
     icon: MailCheck,
     iconClassName: 'text-cyan-700 dark:text-cyan-300',
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
   resubmission_email_sent_manual: {
-    label: 'Resubmission email sent',
+    label: 'Manual Gmail sent',
     icon: MailCheck,
     iconClassName: 'text-cyan-700 dark:text-cyan-300',
     iconWrapperClassName:
@@ -126,7 +126,7 @@ const ACTION_META: Record<
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
   resubmission_whatsapp_sent_manual: {
-    label: 'WhatsApp sent',
+    label: 'Manual WhatsApp sent',
     icon: MailCheck,
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     iconWrapperClassName:
@@ -427,6 +427,7 @@ export function CaseHistoryTimeline({
             const Icon = meta.icon
             const detailsText = formatDetails(entry.action, entry.details)
             const proofFile = getHistoryProofFile(entry.details)
+            const proofLabel = getHistoryProofLabel(entry.action)
 
             return (
               <div key={entry.id} className="relative min-w-0 pl-8">
@@ -476,7 +477,7 @@ export function CaseHistoryTimeline({
                                 rel="noreferrer"
                               >
                                 <ExternalLink data-icon="inline-start" />
-                                <span className="truncate">Open proof</span>
+                                <span className="truncate">{proofLabel}</span>
                               </a>
                             </Button>
                           </div>
@@ -595,18 +596,28 @@ function formatDetails(
       'resubmission_email_sent_manual',
       'resubmission_whatsapp_sent_manual',
     ].includes(action) &&
-    typeof details.recipient === 'string'
+    (typeof details.recipient === 'string' ||
+      typeof details.whatsappRecipient === 'string' ||
+      typeof details.emailRecipient === 'string')
   ) {
     const rejectedFields = Array.isArray(details.rejectedFields)
       ? details.rejectedFields.length
       : null
-    const channel =
-      action === 'resubmission_whatsapp_sent_manual' ? 'WhatsApp to' : 'Sent to'
-    parts.push(
-      rejectedFields && rejectedFields > 0
-        ? `${channel} ${details.recipient} for ${rejectedFields} rejected item${rejectedFields === 1 ? '' : 's'}`
-        : `${channel} ${details.recipient}`,
-    )
+    const isWhatsapp = action === 'resubmission_whatsapp_sent_manual'
+    const recipient = getCommunicationRecipient(details, isWhatsapp)
+    const prefix = isWhatsapp
+      ? recipient
+        ? `WhatsApp to ${recipient}`
+        : 'WhatsApp sent'
+      : `Sent to ${recipient}`
+
+    if (recipient || isWhatsapp) {
+      parts.push(
+        rejectedFields && rejectedFields > 0
+          ? `${prefix} for ${rejectedFields} rejected item${rejectedFields === 1 ? '' : 's'}`
+          : prefix,
+      )
+    }
   }
 
   if (
@@ -864,6 +875,39 @@ function getHistoryProofFile(details: Record<string, unknown> | null) {
     originalName: file.originalName,
     googleDriveWebViewLink: file.googleDriveWebViewLink,
   }
+}
+
+function getHistoryProofLabel(action: string) {
+  if (action.includes('whatsapp')) return 'Open WhatsApp proof'
+  if (action.includes('email')) return 'Open Gmail proof'
+  return 'Open proof'
+}
+
+function getCommunicationRecipient(
+  details: Record<string, unknown>,
+  isWhatsapp: boolean,
+) {
+  if (isWhatsapp) {
+    if (typeof details.whatsappRecipient === 'string') {
+      return details.whatsappRecipient
+    }
+    if (
+      typeof details.recipient === 'string' &&
+      !looksLikeEmail(details.recipient)
+    ) {
+      return details.recipient
+    }
+    return null
+  }
+
+  if (typeof details.emailRecipient === 'string') {
+    return details.emailRecipient
+  }
+  return typeof details.recipient === 'string' ? details.recipient : null
+}
+
+function looksLikeEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
 }
 
 function formatActionLabel(action: string) {

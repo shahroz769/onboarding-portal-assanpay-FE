@@ -1,5 +1,6 @@
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, FilePlus2 } from 'lucide-react'
 
+import { Button } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -11,9 +12,13 @@ import type { MerchantSubmissionResponse } from '#/apis/merchant-onboarding'
 
 type SubmissionSuccessProps = {
   data: MerchantSubmissionResponse
+  onNewSubmission: () => void
 }
 
-export function SubmissionSuccess({ data }: SubmissionSuccessProps) {
+export function SubmissionSuccess({
+  data,
+  onNewSubmission,
+}: SubmissionSuccessProps) {
   return (
     <div className="flex flex-col items-center gap-6 py-12">
       <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500/10">
@@ -60,6 +65,11 @@ export function SubmissionSuccess({ data }: SubmissionSuccessProps) {
           </dl>
         </CardContent>
       </Card>
+
+      <Button type="button" onClick={onNewSubmission}>
+        <FilePlus2 data-icon="inline-start" />
+        Submit another application
+      </Button>
     </div>
   )
 }

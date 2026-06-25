@@ -18,10 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { useAuth } from '#/features/auth/auth-client'
-import {
-  useSaveDocumentReviewSubMerchant,
-  useSaveFieldReviews,
-} from '#/hooks/use-case-detail-query'
+import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
 import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import {
   Card,
@@ -289,11 +286,15 @@ export default function DocumentsReviewRenderer({
 }: QueueRendererProps) {
   const { user } = useAuth()
   const saveFieldReviews = useSaveFieldReviews(caseId)
-  const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
   const subMerchantOptionsQuery = useQuery(subMerchantOptionsQueryOptions())
   const { merchant, fieldReviews, currentStage } = caseDetail
-  const { draftReviews, saveRejectedReview, clearRejectedReview } =
-    useDocumentsReviewDraft()
+  const {
+    draftReviews,
+    selectedSubMerchantId,
+    setSelectedSubMerchantId,
+    saveRejectedReview,
+    clearRejectedReview,
+  } = useDocumentsReviewDraft()
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
@@ -328,9 +329,6 @@ export default function DocumentsReviewRenderer({
   const [rejectDialogAction, setRejectDialogAction] = useState<
     'save' | 'delete' | null
   >(null)
-  const [selectedSubMerchantId, setSelectedSubMerchantId] = useState(
-    caseDetail.documentReview?.subMerchantId ?? '',
-  )
   const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
   const subMerchants = subMerchantOptionsQuery.data ?? []
 
@@ -497,16 +495,6 @@ export default function DocumentsReviewRenderer({
   const isDeletingReject =
     saveFieldReviews.isPending && rejectDialogAction === 'delete'
 
-  async function handleSaveSubMerchant() {
-    if (!selectedSubMerchantId) {
-      setSubMerchantError('Select a sub-merchant before closing this case.')
-      return
-    }
-
-    setSubMerchantError(null)
-    await saveSubMerchant.mutateAsync({ subMerchantId: selectedSubMerchantId })
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <Card className="py-4">
@@ -527,63 +515,60 @@ export default function DocumentsReviewRenderer({
               </div>
               <FieldGroup>
                 <Field data-invalid={Boolean(subMerchantError)}>
-                  <FieldLabel htmlFor="document-review-sub-merchant">
+                  <FieldLabel
+                    htmlFor="document-review-sub-merchant"
+                    className="w-full max-w-full flex-wrap items-center justify-between"
+                  >
                     Sub-merchant name
-                  </FieldLabel>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Select
-                      value={selectedSubMerchantId}
-                      onValueChange={(value) => {
-                        setSelectedSubMerchantId(value)
-                        setSubMerchantError(null)
-                      }}
-                      disabled={
-                        !isEditable ||
-                        saveSubMerchant.isPending ||
-                        subMerchantOptionsQuery.isLoading ||
-                        subMerchants.length === 0
-                      }
-                    >
-                      <SelectTrigger
-                        id="document-review-sub-merchant"
-                        className="w-full"
-                        aria-invalid={Boolean(subMerchantError)}
+                    {caseDetail.documentReview?.subMerchantName ? (
+                      <Badge
+                        variant="outline"
+                        className="ml-auto max-w-64 truncate font-normal"
                       >
-                        <SelectValue placeholder="Select sub-merchant" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {subMerchants.map((subMerchant) => (
-                            <SelectItem
-                              key={subMerchant.id}
-                              value={subMerchant.id}
-                            >
-                              {subMerchant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      onClick={handleSaveSubMerchant}
-                      disabled={!isEditable || saveSubMerchant.isPending}
+                        {caseDetail.documentReview.subMerchantName}
+                      </Badge>
+                    ) : null}
+                  </FieldLabel>
+                  <Select
+                    value={selectedSubMerchantId}
+                    onValueChange={(value) => {
+                      setSelectedSubMerchantId(value)
+                      setSubMerchantError(null)
+                    }}
+                    disabled={
+                      !isEditable ||
+                      subMerchantOptionsQuery.isLoading ||
+                      subMerchants.length === 0
+                    }
+                  >
+                    <SelectTrigger
+                      id="document-review-sub-merchant"
+                      className="w-full"
+                      aria-invalid={Boolean(subMerchantError)}
                     >
-                      {saveSubMerchant.isPending ? (
-                        <Spinner data-icon="inline-start" />
-                      ) : null}
-                      Save
-                    </Button>
-                  </div>
+                      <SelectValue placeholder="Select sub-merchant" />
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      align="start"
+                      className="w-[var(--radix-select-trigger-width)]"
+                    >
+                      <SelectGroup>
+                        {subMerchants.map((subMerchant) => (
+                          <SelectItem
+                            key={subMerchant.id}
+                            value={subMerchant.id}
+                          >
+                            {subMerchant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   <FieldDescription>
                     Required for the case owner before successful closure. This
-                    selection is internal and is not sent to the merchant.
+                    selection is saved when you click Review.
                   </FieldDescription>
-                  {caseDetail.documentReview?.subMerchantName ? (
-                    <FieldDescription>
-                      Saved: {caseDetail.documentReview.subMerchantName}
-                    </FieldDescription>
-                  ) : null}
                   {subMerchantError ? (
                     <p className="text-sm text-destructive">
                       {subMerchantError}

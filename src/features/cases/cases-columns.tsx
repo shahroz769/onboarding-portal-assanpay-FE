@@ -52,7 +52,12 @@ function formatDate(dateStr: string | null): string {
 }
 
 function isCaseClosed(item: CaseListItem) {
-  return item.status === 'closed' || item.status === 'error' || !!item.closedAt
+  return (
+    item.status === 'closed' ||
+    item.status === 'error' ||
+    !!item.closeOutcome ||
+    !!item.closedAt
+  )
 }
 
 function OwnerCell({
@@ -259,7 +264,7 @@ export function createCaseColumns({
           {getStatusLabel(item)}
         </Badge>
       ),
-      width: 120,
+      width: 160,
     },
 
     // SLA

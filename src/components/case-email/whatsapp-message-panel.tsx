@@ -55,14 +55,6 @@ export function WhatsAppMessagePanel({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={copyMessage}>
-          {copied ? (
-            <Check data-icon="inline-start" />
-          ) : (
-            <Copy data-icon="inline-start" />
-          )}
-          {copied ? 'Copied' : 'Copy message'}
-        </Button>
         <Button type="button" asChild disabled={!whatsappUrl}>
           <a
             href={whatsappUrl || undefined}
@@ -76,9 +68,30 @@ export function WhatsAppMessagePanel({
         </Button>
       </div>
 
-      <pre className="max-h-64 select-all overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 font-sans text-sm leading-relaxed">
-        {preview.body}
-      </pre>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Message
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1 px-2 text-xs"
+            onClick={copyMessage}
+          >
+            {copied ? (
+              <Check className="size-3" />
+            ) : (
+              <Copy className="size-3" />
+            )}
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
+        </div>
+        <pre className="max-h-64 select-all overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 font-sans text-sm leading-relaxed">
+          {preview.body}
+        </pre>
+      </div>
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

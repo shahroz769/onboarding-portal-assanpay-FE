@@ -182,6 +182,7 @@ function CasesTableProvider({
               (item) =>
                 item.status !== 'closed' &&
                 item.status !== 'error' &&
+                !item.closeOutcome &&
                 !item.closedAt,
             )
             .map((item) => item.id)

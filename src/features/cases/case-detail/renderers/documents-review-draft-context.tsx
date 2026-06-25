@@ -4,23 +4,24 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState
-  
+  useState,
 } from 'react'
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react'
 
 import type { CaseDetail } from '#/schemas/cases.schema'
 
 import {
   createDocumentsReviewDraft,
-  getDocumentsReviewSummaryFromDraft
-  
+  getDocumentsReviewSummaryFromDraft,
 } from './documents-review-shared'
-import type {DocumentsReviewDraftMap} from './documents-review-shared';
+import type { DocumentsReviewDraftMap } from './documents-review-shared'
 
 type DocumentsReviewDraftContextValue = {
   draftReviews: DocumentsReviewDraftMap
   reviewSummary: ReturnType<typeof getDocumentsReviewSummaryFromDraft>
+  selectedSubMerchantId: string
+  isSubMerchantChanged: boolean
+  setSelectedSubMerchantId: (subMerchantId: string) => void
   saveRejectedReview: (fieldName: string, remarks: string) => void
   clearRejectedReview: (fieldName: string) => void
 }
@@ -38,12 +39,21 @@ export function DocumentsReviewDraftProvider({
   const [draftReviews, setDraftReviews] = useState(() =>
     createDocumentsReviewDraft(caseDetail.fieldReviews),
   )
+  const initialSubMerchantId = caseDetail.documentReview?.subMerchantId ?? ''
+  const [selectedSubMerchantId, setSelectedSubMerchantId] =
+    useState(initialSubMerchantId)
 
   useEffect(() => {
     startTransition(() => {
       setDraftReviews(createDocumentsReviewDraft(caseDetail.fieldReviews))
     })
   }, [caseDetail.fieldReviews])
+
+  useEffect(() => {
+    startTransition(() => {
+      setSelectedSubMerchantId(initialSubMerchantId)
+    })
+  }, [initialSubMerchantId])
 
   const value = useMemo<DocumentsReviewDraftContextValue>(
     () => ({
@@ -52,6 +62,9 @@ export function DocumentsReviewDraftProvider({
         caseDetail,
         draftReviews,
       ),
+      selectedSubMerchantId,
+      isSubMerchantChanged: selectedSubMerchantId !== initialSubMerchantId,
+      setSelectedSubMerchantId,
       saveRejectedReview: (fieldName, remarks) => {
         setDraftReviews((currentDraft) => ({
           ...currentDraft,
@@ -71,7 +84,7 @@ export function DocumentsReviewDraftProvider({
         }))
       },
     }),
-    [caseDetail, draftReviews],
+    [caseDetail, draftReviews, initialSubMerchantId, selectedSubMerchantId],
   )
 
   return (
