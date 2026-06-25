@@ -42,30 +42,39 @@ type Round = {
   resubmittedEntry: CaseHistory | null
   rejectedFields: Array<string>
   fieldsUpdated: Array<string>
-  fieldDetails: Array<{
-    fieldName: string
-    label: string
-    type?: 'text' | 'document'
-    action?: 'replace' | 'remove'
-    previousFileName?: string | null
-    previousFileUrl?: string | null
-    nextFileName?: string | null
-    nextFileUrl?: string | null
-  }>
+  rejectedFieldDetails: Array<RoundFieldDetail>
+  fieldDetails: Array<RoundFieldDetail>
   expiresAt: string | null
   recipient: string | null
   emailFailed: boolean
   emailError: string | null
 }
 
+type RoundFieldDetail = {
+  fieldName: string
+  label: string
+  type?: 'text' | 'document'
+  action?: 'replace' | 'remove'
+  rejectionReason?: string | null
+  previousValue?: string | null
+  submittedValue?: string | null
+  previousFileName?: string | null
+  previousFileUrl?: string | null
+  nextFileName?: string | null
+  nextFileUrl?: string | null
+}
+
 function formatDate(value: string | null) {
   if (!value) return null
 
   try {
+    const date = new Date(value)
+    if (date.getUTCFullYear() >= 9999) return 'No Expiry'
+
     return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
-    }).format(new Date(value))
+    }).format(date)
   } catch {
     return null
   }
@@ -84,7 +93,7 @@ function getOptionalString(value: unknown) {
   return typeof value === 'string' ? value : null
 }
 
-function getFieldDetails(value: unknown): Round['fieldDetails'] {
+function getFieldDetails(value: unknown): Array<RoundFieldDetail> {
   if (!Array.isArray(value)) return []
 
   return value.flatMap((item) => {
@@ -108,12 +117,35 @@ function getFieldDetails(value: unknown): Round['fieldDetails'] {
           detail.action === 'replace' || detail.action === 'remove'
             ? detail.action
             : undefined,
+        rejectionReason: getOptionalString(detail.rejectionReason),
+        previousValue: getOptionalString(detail.previousValue),
+        submittedValue: getOptionalString(detail.submittedValue),
         previousFileName: getOptionalString(detail.previousFileName),
         previousFileUrl: getOptionalString(detail.previousFileUrl),
         nextFileName: getOptionalString(detail.nextFileName),
         nextFileUrl: getOptionalString(detail.nextFileUrl),
       },
     ]
+  })
+}
+
+function mergeFieldDetails(
+  rejectedDetails: Array<RoundFieldDetail>,
+  submittedDetails: Array<RoundFieldDetail>,
+) {
+  if (submittedDetails.length === 0) return []
+  const rejectedByField = new Map(
+    rejectedDetails.map((detail) => [detail.fieldName, detail] as const),
+  )
+
+  return submittedDetails.map((submitted) => {
+    const rejected = rejectedByField.get(submitted.fieldName)
+    return {
+      ...rejected,
+      ...submitted,
+      rejectionReason:
+        submitted.rejectionReason ?? rejected?.rejectionReason ?? null,
+    }
   })
 }
 
@@ -134,6 +166,7 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
             ? getStringList(details.rejectedFieldLabels)
             : getStringList(details.rejectedFields),
         fieldsUpdated: [],
+        rejectedFieldDetails: getFieldDetails(details.rejectedFieldDetails),
         fieldDetails: [],
         expiresAt:
           typeof details.expiresAt === 'string' ? details.expiresAt : null,
@@ -153,6 +186,7 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
         resubmittedEntry: null,
         rejectedFields: [],
         fieldsUpdated: [],
+        rejectedFieldDetails: [],
         fieldDetails: [],
         expiresAt: null,
         recipient: null,
@@ -172,7 +206,10 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
         getStringList(details.fieldsUpdatedLabels).length > 0
           ? getStringList(details.fieldsUpdatedLabels)
           : getStringList(details.fieldsUpdated)
-      last.fieldDetails = getFieldDetails(details.fieldsUpdatedDetails)
+      last.fieldDetails = mergeFieldDetails(
+        last.rejectedFieldDetails,
+        getFieldDetails(details.fieldsUpdatedDetails),
+      )
     }
   }
 
@@ -358,14 +395,22 @@ function RoundDetails({
         icon={MailCheck}
         label="Sent to"
         title={round.recipient ?? 'Recipient unavailable'}
-        description={expiresAt ? `Link expires ${expiresAt}` : null}
+        description={
+          expiresAt
+            ? expiresAt === 'No Expiry'
+              ? expiresAt
+              : `Link expires ${expiresAt}`
+            : null
+        }
       />
 
       <TimelineDetailBlock
         icon={ShieldAlert}
         label={`Fields requested (${round.rejectedFields.length})`}
       >
-        {round.rejectedFields.length > 0 ? (
+        {round.rejectedFieldDetails.length > 0 ? (
+          <FieldAuditList fields={round.rejectedFieldDetails} mode="rejected" />
+        ) : round.rejectedFields.length > 0 ? (
           <InlineItemList items={round.rejectedFields} />
         ) : (
           <p className="text-sm text-muted-foreground">Not recorded</p>
@@ -385,7 +430,7 @@ function RoundDetails({
           } updated`}
         >
           {round.fieldDetails.length > 0 ? (
-            <FieldDetailsList fields={round.fieldDetails} />
+            <FieldAuditList fields={round.fieldDetails} mode="resubmitted" />
           ) : round.fieldsUpdated.length > 0 ? (
             <InlineItemList items={round.fieldsUpdated} />
           ) : null}
@@ -448,7 +493,13 @@ function InlineItemList({ items }: { items: Array<string> }) {
   )
 }
 
-function FieldDetailsList({ fields }: { fields: Round['fieldDetails'] }) {
+function FieldAuditList({
+  fields,
+  mode,
+}: {
+  fields: Array<RoundFieldDetail>
+  mode: 'rejected' | 'resubmitted'
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       {fields.map((field) => (
@@ -466,18 +517,55 @@ function FieldDetailsList({ fields }: { fields: Round['fieldDetails'] }) {
               </Badge>
             ) : null}
           </div>
+          {field.rejectionReason ? (
+            <ValueBlock label="Rejection reason" value={field.rejectionReason} />
+          ) : mode === 'rejected' ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Rejection reason was not recorded.
+            </p>
+          ) : null}
+          {field.type === 'text' ? (
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {field.previousValue != null ? (
+                <ValueBlock label="Previous value" value={field.previousValue} />
+              ) : null}
+              {field.submittedValue != null ? (
+                <ValueBlock
+                  label="Resubmitted value"
+                  value={field.submittedValue}
+                />
+              ) : null}
+            </div>
+          ) : null}
           {field.previousFileUrl || field.nextFileUrl ? (
             <div className="mt-2 flex min-w-0 flex-wrap gap-2">
               {field.previousFileUrl ? (
-                <FileLink href={field.previousFileUrl} label="Previous file" />
+                <FileLink
+                  href={field.previousFileUrl}
+                  label={field.previousFileName ?? 'Previous file'}
+                />
               ) : null}
               {field.nextFileUrl ? (
-                <FileLink href={field.nextFileUrl} label="New file" />
+                <FileLink
+                  href={field.nextFileUrl}
+                  label={field.nextFileName ?? 'New file'}
+                />
               ) : null}
             </div>
           ) : null}
         </div>
       ))}
+    </div>
+  )
+}
+
+function ValueBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md border bg-background px-2.5 py-2">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-sm [overflow-wrap:anywhere]">
+        {value || 'Empty'}
+      </p>
     </div>
   )
 }

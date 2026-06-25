@@ -8,6 +8,7 @@ import {
   CASE_COMMENTS_KEY,
   CASE_DETAIL_KEY,
   CASE_HISTORY_KEY,
+  invalidateCaseWorkflowQueries,
 } from '#/hooks/use-case-detail-query'
 import { CASES_KEY } from '#/hooks/use-cases-query'
 import {
@@ -58,20 +59,7 @@ export function NotificationsProvider() {
       onEvent: (notification: Notification) => {
         applyIncomingNotificationToCache(qcRef.current, notification)
         if (notification.caseId && notification.type === 'case_resubmitted') {
-          void Promise.all([
-            qcRef.current.invalidateQueries({
-              queryKey: [...CASE_DETAIL_KEY, notification.caseId],
-              refetchType: 'all',
-            }),
-            qcRef.current.invalidateQueries({
-              queryKey: [...CASE_HISTORY_KEY, notification.caseId],
-              refetchType: 'all',
-            }),
-            qcRef.current.invalidateQueries({
-              queryKey: CASES_KEY,
-              refetchType: 'all',
-            }),
-          ])
+          void invalidateCaseWorkflowQueries(qcRef.current, notification.caseId)
         }
         if (
           notification.caseId &&
@@ -100,9 +88,20 @@ export function NotificationsProvider() {
     if (!userId) return
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
-        void queryClient.invalidateQueries({
-          queryKey: NOTIFICATIONS_UNREAD_KEY,
-        })
+        void Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: NOTIFICATIONS_UNREAD_KEY,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: CASE_DETAIL_KEY,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: CASE_HISTORY_KEY,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: CASES_KEY,
+          }),
+        ])
       }
     }
     document.addEventListener('visibilitychange', onVisible)

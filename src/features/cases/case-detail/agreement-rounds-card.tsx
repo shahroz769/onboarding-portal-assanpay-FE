@@ -56,10 +56,13 @@ function formatDate(value: string | null) {
   if (!value) return null
 
   try {
+    const date = new Date(value)
+    if (date.getUTCFullYear() >= 9999) return 'No Expiry'
+
     return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
-    }).format(new Date(value))
+    }).format(date)
   } catch {
     return null
   }
@@ -335,7 +338,13 @@ function AgreementRoundDetails({ round }: { round: AgreementRound }) {
           icon={MailCheck}
           label={sentAt ? `Email sent ${sentAt}` : 'Email sent'}
           title={round.recipient ?? 'Recipient unavailable'}
-          description={expiresAt ? `Link expires ${expiresAt}` : null}
+          description={
+            expiresAt
+              ? expiresAt === 'No Expiry'
+                ? expiresAt
+                : `Link expires ${expiresAt}`
+              : null
+          }
         >
           {round.remarks ? (
             <p className="text-sm text-muted-foreground">{round.remarks}</p>

@@ -565,10 +565,6 @@ export default function DocumentsReviewRenderer({
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  <FieldDescription>
-                    Required for the case owner before successful closure. This
-                    selection is saved when you click Review.
-                  </FieldDescription>
                   {subMerchantError ? (
                     <p className="text-sm text-destructive">
                       {subMerchantError}

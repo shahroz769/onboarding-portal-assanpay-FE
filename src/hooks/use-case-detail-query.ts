@@ -107,7 +107,7 @@ export async function preloadCaseDetailPageQueries(
   return detail
 }
 
-function invalidateCaseWorkflowQueries(
+export function invalidateCaseWorkflowQueries(
   queryClient: QueryClient,
   caseId: string,
 ) {
