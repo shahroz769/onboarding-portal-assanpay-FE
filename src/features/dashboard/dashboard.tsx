@@ -10,6 +10,7 @@ import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
 import { DashboardCharts } from './dashboard-charts'
 import { DashboardFilterBar } from './dashboard-filter-bar'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
+import { DashboardPortalMids } from './dashboard-portal-mids'
 import { DashboardQueueTable } from './dashboard-queue-table'
 import { DashboardRiskTables } from './dashboard-risk-tables'
 import { DashboardSkeleton } from './dashboard-skeleton'
@@ -42,6 +43,7 @@ export function Dashboard({ search, onChange }: DashboardProps) {
         <>
           <DashboardKpiCards data={query.data} />
           <DashboardCharts data={query.data} />
+          <DashboardPortalMids data={query.data} />
           <DashboardQueueTable data={query.data} />
           <DashboardRiskTables data={query.data} />
         </>

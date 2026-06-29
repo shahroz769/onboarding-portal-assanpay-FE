@@ -1,8 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import {
   Table,
@@ -52,7 +48,9 @@ function ChartCardSkeleton({
         <Skeleton className={cn('h-4 max-w-full', descriptionWidth)} />
       </CardHeader>
       <CardContent>
-        <Skeleton className={cn('aspect-auto w-full rounded-md', chartClassName)} />
+        <Skeleton
+          className={cn('aspect-auto w-full rounded-md', chartClassName)}
+        />
       </CardContent>
     </Card>
   )
@@ -95,6 +93,24 @@ function QueueTableSkeleton() {
             ))}
           </TableBody>
         </Table>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PortalMidsSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-4 w-80 max-w-full" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <Skeleton className="h-12 w-full rounded-md" />
+        <div className="flex justify-end gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-28" />
+        </div>
       </CardContent>
     </Card>
   )
@@ -220,6 +236,8 @@ export function DashboardSkeleton() {
           chartClassName="h-64"
         />
       </div>
+
+      <PortalMidsSkeleton />
 
       <QueueTableSkeleton />
 

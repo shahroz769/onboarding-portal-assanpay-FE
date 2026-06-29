@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
-import { Checkbox } from '#/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -21,13 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '#/components/ui/field'
+import { FieldGroup } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
@@ -37,7 +30,6 @@ import {
   caseHistoryQueryOptions,
   useConfirmMidCreationEmailManual,
   useFetchMidCreationEmailPreview,
-  useMarkTestingLimitsApplied,
   useSendMidCreationEmail,
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
@@ -52,7 +44,6 @@ export default function TestingRenderer({
   const { user } = useAuth()
   const configurationQuery = useQuery(configurationQueryOptions())
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
-  const markLimitsApplied = useMarkTestingLimitsApplied(caseId)
   const sendCredentialsEmail = useSendMidCreationEmail(caseId)
   const fetchPreview = useFetchMidCreationEmailPreview(caseId)
   const confirmManual = useConfirmMidCreationEmailManual(caseId)
@@ -68,18 +59,19 @@ export default function TestingRenderer({
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
   const isWorking = caseDetail.case.status === 'working'
-  const canConfirm = isCaseOwner && isWorking && !limitsAppliedAt
   const credentialsEmailSent = Boolean(
     historyQuery.data?.some(
       (entry) =>
         entry.action === 'mid_creation_email_sent' ||
-        entry.action === 'mid_creation_email_sent_manual',
+        entry.action === 'mid_creation_email_sent_manual' ||
+        entry.action === 'mid_creation_whatsapp_sent_manual',
     ),
   )
   const canSendCredentials =
     isCaseOwner &&
     isWorking &&
     credentialsReady &&
+    Boolean(limitsAppliedAt) &&
     !credentialsEmailSent &&
     !historyQuery.isPending
   const activeWhatsappNumber =
@@ -130,7 +122,8 @@ export default function TestingRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Testing Limits</CardTitle>
               <CardDescription>
-                Confirm the merchant testing limits before closing this case.
+                Testing limits must be applied from the dashboard before
+                credentials can be sent.
               </CardDescription>
             </div>
             <Badge variant={limitsAppliedAt ? 'secondary' : 'outline'}>
@@ -151,56 +144,24 @@ export default function TestingRenderer({
             />
           </div>
 
-          <FieldGroup>
-            <Field orientation="horizontal" data-disabled={!canConfirm}>
-              <Checkbox
-                id="testing-limits-applied"
-                checked={Boolean(limitsAppliedAt)}
-                disabled={!canConfirm || markLimitsApplied.isPending}
-                onCheckedChange={(checked) => {
-                  if (checked === true) {
-                    markLimitsApplied.mutate()
-                  }
-                }}
-              />
-              <FieldContent>
-                <FieldLabel htmlFor="testing-limits-applied">
-                  I have applied the testing limits
-                </FieldLabel>
-                <FieldDescription>
-                  Mark as successful is available after this confirmation is
-                  saved.
-                </FieldDescription>
-              </FieldContent>
-            </Field>
-          </FieldGroup>
-
-          {markLimitsApplied.isPending ? (
-            <Button disabled variant="outline">
-              <Spinner data-icon="inline-start" />
-              Saving confirmation
-            </Button>
-          ) : null}
-
           {limitsAppliedAt ? (
             <Alert>
               <CheckCircle2 />
-              <AlertTitle>Limits applied</AlertTitle>
+              <AlertTitle>Limits have been applied</AlertTitle>
               <AlertDescription>
-                Confirmed{limitsAppliedBy ? ` by ${limitsAppliedBy}` : ''}. The
-                case can now be marked as successful.
+                Confirmed{limitsAppliedBy ? ` by ${limitsAppliedBy}` : ''}.
               </AlertDescription>
             </Alert>
-          ) : !canConfirm && isWorking ? (
+          ) : (
             <Alert>
               <Info />
-              <AlertTitle>Owner action required</AlertTitle>
+              <AlertTitle>Limits have not been applied</AlertTitle>
               <AlertDescription>
-                Only the current case owner can confirm that testing limits were
-                applied.
+                Apply limits for this portal MID from the dashboard before
+                sending credentials.
               </AlertDescription>
             </Alert>
-          ) : null}
+          )}
         </CardContent>
       </Card>
 
@@ -208,10 +169,10 @@ export default function TestingRenderer({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Send Credentials Mail</CardTitle>
+              <CardTitle>Send Credentials</CardTitle>
               <CardDescription>
-                Send the saved merchant portal credentials and Go-Live link
-                without viewing the MID, email, or password.
+                Send the saved merchant portal credentials and Go-Live link by
+                auto Resend, manual Gmail, or WhatsApp.
               </CardDescription>
             </div>
             <Badge variant={credentialsEmailSent ? 'secondary' : 'outline'}>
@@ -231,8 +192,8 @@ export default function TestingRenderer({
               </AlertTitle>
               <AlertDescription>
                 {credentialsReady
-                  ? 'Merchant portal credentials were saved in the MID Creation case. They are hidden in Testing and will be sent by the system.'
-                  : 'Save the portal MID, MUID, email, and password in the MID Creation case before sending this mail.'}
+                  ? 'Merchant portal credentials were saved in the MID Creation case. They are hidden in Testing and can be delivered by auto Resend, manual Gmail, or WhatsApp.'
+                  : 'Save the portal MID and email in the MID Creation case before sending this mail.'}
               </AlertDescription>
             </Alert>
 
@@ -242,7 +203,7 @@ export default function TestingRenderer({
                 disabled={!canSendCredentials || sendCredentialsEmail.isPending}
               >
                 <Mail data-icon="inline-start" />
-                Send mail
+                Send Credentials
               </Button>
             </div>
           </FieldGroup>
@@ -254,16 +215,26 @@ export default function TestingRenderer({
           <Info />
           <AlertTitle>Portal credentials required</AlertTitle>
           <AlertDescription>
-            Save the portal MID, MUID, email, and password in the MID Creation
-            case before sending credentials from Testing.
+            Save the portal MID and email in the MID Creation case before
+            sending credentials from Testing.
+          </AlertDescription>
+        </Alert>
+      ) : credentialsReady && !limitsAppliedAt && isWorking ? (
+        <Alert>
+          <Info />
+          <AlertTitle>Limits have not been applied</AlertTitle>
+          <AlertDescription>
+            Apply limits from the dashboard before sending credentials to the
+            client.
           </AlertDescription>
         </Alert>
       ) : credentialsEmailSent ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Credentials email already sent</AlertTitle>
+          <AlertTitle>Credentials already sent</AlertTitle>
           <AlertDescription>
-            Merchant portal credentials were sent for this Testing case.
+            Merchant portal credentials were sent for this Testing case. Mark as
+            successful is now available.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -271,7 +242,7 @@ export default function TestingRenderer({
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send credentials mail</DialogTitle>
+            <DialogTitle>Send credentials</DialogTitle>
           </DialogHeader>
 
           <Alert>
@@ -279,8 +250,8 @@ export default function TestingRenderer({
             <AlertTitle>Credentials stay hidden</AlertTitle>
             <AlertDescription>
               Send the saved merchant portal credentials and Go-Live link by
-              email or WhatsApp, then save the sent-message screenshot for
-              manual delivery.
+              auto Resend, manual Gmail, or WhatsApp. Manual Gmail and WhatsApp
+              require a sent-message screenshot.
             </AlertDescription>
           </Alert>
 

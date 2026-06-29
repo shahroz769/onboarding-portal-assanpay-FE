@@ -173,6 +173,20 @@ export const merchantDocumentSchema = z.object({
 
 export type MerchantDocument = z.infer<typeof merchantDocumentSchema>
 
+const merchantAgreementFileSchema = z.object({
+  id: z.string(),
+  caseId: z.string(),
+  caseNumber: z.string(),
+  originalName: z.string(),
+  mimeType: z.string(),
+  sizeBytes: z.number(),
+  googleDriveWebViewLink: z.string(),
+  googleDriveDownloadLink: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export type MerchantAgreementFile = z.infer<typeof merchantAgreementFileSchema>
+
 export const merchantCaseSchema = z.object({
   id: z.string(),
   caseNumber: z.string(),
@@ -234,6 +248,15 @@ export const merchantDetailResponseSchema = z.object({
     limitsMdrOverride: merchantLimitsMdrSchema.nullable(),
   }),
   documents: z.array(merchantDocumentSchema),
+  agreements: z
+    .object({
+      clientSignedAgreement: merchantAgreementFileSchema.nullable(),
+      physicalAgreement: merchantAgreementFileSchema.nullable(),
+    })
+    .default({
+      clientSignedAgreement: null,
+      physicalAgreement: null,
+    }),
   cases: z.array(merchantCaseSchema),
   timeline: z.array(merchantTimelineEventSchema),
   milestones: z.object({

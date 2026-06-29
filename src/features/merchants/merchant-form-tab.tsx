@@ -22,17 +22,15 @@ import {
 import { Separator } from '#/components/ui/separator'
 import { cn } from '#/lib/utils'
 import type {
+  MerchantAgreementFile,
   MerchantDetailResponse,
   MerchantDocument,
-  MerchantTimelineEvent,
 } from '#/schemas/merchants.schema'
 
 import {
-  documentStatusBadgeClasses,
   documentTypeLabel,
   formatCurrency,
   formatNumber,
-  humanize,
   kinRelationLabel,
   merchantTypeLabel,
   websiteCmsLabel,
@@ -47,7 +45,7 @@ type DocumentFileView = {
   documentType?: string
   label: string
   originalName: string
-  status?: MerchantDocument['status']
+  statusLabel?: string
   googleDriveWebViewLink: string | null
 }
 
@@ -56,16 +54,6 @@ type DocumentSubmissionGroup = {
   title: string
   description: string
   files: DocumentFileView[]
-}
-
-type ResubmissionFieldDetail = {
-  type?: unknown
-  label?: unknown
-  action?: unknown
-  previousFileName?: unknown
-  previousFileUrl?: unknown
-  nextFileName?: unknown
-  nextFileUrl?: unknown
 }
 
 function SectionIcon({
@@ -140,10 +128,11 @@ function ReadField({
 }
 
 export function MerchantFormTab({ detail }: MerchantFormTabProps) {
-  const { merchant, documents, timeline } = detail
-  const documentSubmissionGroups = getDocumentSubmissionGroups(
+  const { agreements, documents, merchant } = detail
+  const documentReviewApproved = isDocumentReviewApproved(detail)
+  const documentSubmissionGroup = getCurrentDocumentSubmissionGroup(
     documents,
-    timeline,
+    documentReviewApproved,
   )
 
   return (
@@ -291,19 +280,43 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {documentSubmissionGroups.length === 0 ? (
+          {documentSubmissionGroup.files.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
               No documents uploaded.
             </p>
           ) : (
-            documentSubmissionGroups.map((group, groupIndex) => (
-              <DocumentSubmissionSection
-                key={group.id}
-                group={group}
-                showSeparator={groupIndex > 0}
-              />
-            ))
+            <DocumentSubmissionSection group={documentSubmissionGroup} />
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <SectionIcon
+              icon={FileText}
+              colorClass="bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+            />
+            <div>
+              <CardTitle>Agreements</CardTitle>
+              <CardDescription>
+                Client signed and scanned physical agreement files.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <AgreementRow
+            title="Client signed agreement"
+            emptyText="Client signed agreement has not been uploaded yet."
+            file={agreements.clientSignedAgreement}
+          />
+          <Separator />
+          <AgreementRow
+            title="Physical agreement scanned"
+            emptyText="Physical agreement scan has not been uploaded yet."
+            file={agreements.physicalAgreement}
+          />
         </CardContent>
       </Card>
     </div>
@@ -312,14 +325,11 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
 function DocumentSubmissionSection({
   group,
-  showSeparator,
 }: {
   group: DocumentSubmissionGroup
-  showSeparator: boolean
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {showSeparator ? <Separator /> : null}
       <div className="flex flex-col gap-0.5 py-2">
         <h3 className="text-sm font-semibold">{group.title}</h3>
         <p className="text-xs text-muted-foreground">{group.description}</p>
@@ -358,13 +368,8 @@ function DocumentRow({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {file.status ? (
-            <Badge
-              variant="secondary"
-              className={documentStatusBadgeClasses(file.status)}
-            >
-              {humanize(file.status)}
-            </Badge>
+          {file.statusLabel ? (
+            <Badge variant="secondary">{file.statusLabel}</Badge>
           ) : null}
           {file.googleDriveWebViewLink ? (
             <a
@@ -382,156 +387,99 @@ function DocumentRow({
   )
 }
 
-function getDocumentSubmissionGroups(
+function AgreementRow({
+  title,
+  emptyText,
+  file,
+}: {
+  title: string
+  emptyText: string
+  file: MerchantAgreementFile | null
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 py-1.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/40">
+          <FileText className="size-4 text-muted-foreground" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{title}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {file
+              ? `${file.originalName} - ${formatFileSize(file.sizeBytes)} - ${format(
+                  new Date(file.createdAt),
+                  'dd MMM yyyy',
+                )}`
+              : emptyText}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {file ? (
+          <Badge variant="outline">Uploaded</Badge>
+        ) : (
+          <Badge variant="secondary">Not uploaded</Badge>
+        )}
+        {file?.googleDriveWebViewLink ? (
+          <a
+            href={file.googleDriveWebViewLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            View <ExternalLink className="size-3" />
+          </a>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function getCurrentDocumentSubmissionGroup(
   documents: MerchantDocument[],
-  timeline: MerchantTimelineEvent[],
-): DocumentSubmissionGroup[] {
-  const resubmissionGroups = timeline
-    .filter((event) => event.action === 'client_resubmitted')
-    .map((event, index) => {
-      const files = getResubmittedFiles(event, index)
-
-      return {
-        id: `resubmission-${event.id}`,
-        title: `Merchant update ${index + 1}`,
-        description: `Submitted after document review on ${format(
-          new Date(event.createdAt),
-          'dd MMM yyyy, hh:mm a',
-        )}`,
-        files,
-      }
-    })
-    .filter((group) => group.files.length > 0)
-
-  const originalFiles = getOriginalSubmittedFiles(documents, timeline)
-
-  return [
-    {
-      id: 'merchant-submitted',
-      title: 'Merchant submitted',
-      description: 'Initial onboarding submission.',
-      files: originalFiles,
-    },
-    ...resubmissionGroups,
-  ].filter((group) => group.files.length > 0)
-}
-
-function getOriginalSubmittedFiles(
-  documents: MerchantDocument[],
-  timeline: MerchantTimelineEvent[],
-): DocumentFileView[] {
-  const earliestPreviousByLabel = new Map<string, DocumentFileView>()
-
-  for (const event of timeline.filter(
-    (entry) => entry.action === 'client_resubmitted',
-  )) {
-    getPreviousResubmittedFiles(event).forEach((file) => {
-      if (!earliestPreviousByLabel.has(file.label)) {
-        earliestPreviousByLabel.set(file.label, file)
-      }
-    })
+  documentReviewApproved: boolean,
+): DocumentSubmissionGroup {
+  return {
+    id: 'current-documents',
+    title: documentReviewApproved
+      ? 'Approved Documents'
+      : 'Latest Submitted Documents',
+    description: documentReviewApproved
+      ? 'Documents approved through Document Review.'
+      : 'Current submitted documents awaiting Document Review closure.',
+    files: documents.map((doc) => ({
+      id: doc.id,
+      documentType: doc.documentType,
+      label: documentTypeLabel(doc.documentType),
+      originalName: doc.originalName,
+      statusLabel: documentReviewApproved ? undefined : 'Unapproved',
+      googleDriveWebViewLink: doc.googleDriveWebViewLink,
+    })),
   }
-
-  const currentFiles = documents.map((doc) => ({
-    id: doc.id,
-    documentType: doc.documentType,
-    label: documentTypeLabel(doc.documentType),
-    originalName: doc.originalName,
-    status: doc.status,
-    googleDriveWebViewLink: doc.googleDriveWebViewLink,
-  }))
-
-  if (earliestPreviousByLabel.size === 0) return currentFiles
-
-  const originals = currentFiles.map(
-    (file) => earliestPreviousByLabel.get(file.label) ?? file,
-  )
-
-  for (const previousFile of earliestPreviousByLabel.values()) {
-    if (!originals.some((file) => file.label === previousFile.label)) {
-      originals.push(previousFile)
-    }
-  }
-
-  return originals
 }
 
-function getPreviousResubmittedFiles(
-  event: MerchantTimelineEvent,
-): DocumentFileView[] {
-  return getResubmissionFieldDetails(event.details).flatMap(
-    (detail, detailIndex) => {
-      const label = getString(detail.label) ?? 'Document'
-      const previousFileName = getString(detail.previousFileName)
-      const previousFileUrl = getString(detail.previousFileUrl)
-
-      if (!previousFileName && !previousFileUrl) return []
-
-      return [
-        {
-          id: `${event.id}-previous-${detailIndex}`,
-          label,
-          originalName: previousFileName ?? 'Previous file',
-          googleDriveWebViewLink: previousFileUrl,
-        },
-      ]
-    },
+function isDocumentReviewApproved(detail: MerchantDetailResponse) {
+  return detail.cases.some(
+    (caseItem) =>
+      normalizeCaseName(caseItem.queueName) === 'documents review' &&
+      normalizeCaseName(caseItem.status) === 'closed' &&
+      normalizeCaseName(caseItem.closeOutcome) === 'successful',
   )
 }
 
-function getResubmittedFiles(
-  event: MerchantTimelineEvent,
-  eventIndex: number,
-): DocumentFileView[] {
-  const details = getResubmissionFieldDetails(event.details)
-  const files: DocumentFileView[] = []
-
-  details.forEach((detail, detailIndex) => {
-    const label = getString(detail.label) ?? 'Document'
-    const previousFileName = getString(detail.previousFileName)
-    const previousFileUrl = getString(detail.previousFileUrl)
-    const nextFileName = getString(detail.nextFileName)
-    const nextFileUrl = getString(detail.nextFileUrl)
-
-    if (previousFileName || previousFileUrl) {
-      files.push({
-        id: `${event.id}-previous-${detailIndex}`,
-        label,
-        originalName: previousFileName ?? 'Previous file',
-        googleDriveWebViewLink: previousFileUrl,
-      })
-    }
-
-    if (nextFileName || nextFileUrl) {
-      files.push({
-        id: `${event.id}-next-${detailIndex}`,
-        label,
-        originalName: nextFileName ?? `Merchant update ${eventIndex + 1}`,
-        googleDriveWebViewLink: nextFileUrl,
-      })
-    }
-  })
-
-  return files.filter((file) => !file.id.includes('-previous-'))
+function normalizeCaseName(value: string | null) {
+  return (value ?? '').trim().toLowerCase().replace(/[-_]+/g, ' ')
 }
 
-function getResubmissionFieldDetails(
-  details: unknown,
-): ResubmissionFieldDetail[] {
-  if (!details || typeof details !== 'object') return []
+function formatFileSize(sizeBytes: number) {
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) return '0 B'
 
-  const fieldDetails = (details as { fieldsUpdatedDetails?: unknown })
-    .fieldsUpdatedDetails
-  if (!Array.isArray(fieldDetails)) return []
-
-  return fieldDetails.filter(
-    (detail): detail is ResubmissionFieldDetail =>
-      Boolean(detail) &&
-      typeof detail === 'object' &&
-      (detail as ResubmissionFieldDetail).type === 'document',
+  const units = ['B', 'KB', 'MB', 'GB'] as const
+  const unitIndex = Math.min(
+    Math.floor(Math.log(sizeBytes) / Math.log(1024)),
+    units.length - 1,
   )
-}
+  const value = sizeBytes / 1024 ** unitIndex
 
-function getString(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value : null
+  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
 }

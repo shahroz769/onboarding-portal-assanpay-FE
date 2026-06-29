@@ -105,11 +105,18 @@ export default function WordpressWebsiteRenderer({
   const savedScreenshots = wordpressWebsite?.screenshots ?? []
   const savedLogoScreenshots =
     wordpressWebsite?.subMerchantLogoScreenshots ?? []
+  const internalPortalMid = caseDetail.testing?.internalPortalMid ?? null
+  const internalLimitsAppliedAt =
+    caseDetail.testing?.internalLimitsAppliedAt ?? null
+  const internalLimitsAppliedBy =
+    caseDetail.testing?.internalLimitsAppliedBy?.name ?? null
   const documentReviewSubMerchantName =
     caseDetail.documentReview?.subMerchantName ?? null
-  const portalMuid = caseDetail.testing?.portalMuid ?? null
   const isComplete = Boolean(
-    savedLink && savedScreenshots.length > 0 && savedLogoScreenshots.length > 0,
+    savedLink &&
+      savedScreenshots.length > 0 &&
+      savedLogoScreenshots.length > 0 &&
+      internalLimitsAppliedAt,
   )
 
   const [clonedWebsiteLink, setClonedWebsiteLink] = useState(savedLink ?? '')
@@ -226,12 +233,36 @@ export default function WordpressWebsiteRenderer({
             </Field>
 
             <Field>
-              <FieldLabel>Portal MUID</FieldLabel>
-              <ReadonlyValue>{portalMuid ?? 'Not saved'}</ReadonlyValue>
+              <FieldLabel>Portal MID (Internal)</FieldLabel>
+              <ReadonlyValue>
+                {internalPortalMid ? (
+                  <span className="font-mono">{internalPortalMid}</span>
+                ) : (
+                  'Not saved in MID Creation'
+                )}
+              </ReadonlyValue>
               <FieldDescription>
-                Saved internally during MID creation.
+                Live limits for this internal MID must be applied from the
+                dashboard before this case can close.
               </FieldDescription>
             </Field>
+
+            <Field>
+              <FieldLabel>Internal MID live limits</FieldLabel>
+              <ReadonlyValue>
+                {internalLimitsAppliedAt ? (
+                  <span>
+                    Applied
+                    {internalLimitsAppliedBy
+                      ? ` by ${internalLimitsAppliedBy}`
+                      : ''}
+                  </span>
+                ) : (
+                  'Pending'
+                )}
+              </ReadonlyValue>
+            </Field>
+
 
             <Field data-invalid={Boolean(linkError)}>
               <FieldLabel htmlFor="wordpress-cloned-link">
@@ -390,6 +421,18 @@ export default function WordpressWebsiteRenderer({
           <AlertDescription>
             Only the current case owner can save the cloned website link and
             screenshots.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {canEdit && !internalLimitsAppliedAt ? (
+        <Alert>
+          <Info />
+          <AlertTitle>Internal MID limits required</AlertTitle>
+          <AlertDescription>
+            Apply live limits for Portal MID (Internal)
+            {internalPortalMid ? ` ${internalPortalMid}` : ''} from the
+            dashboard before closing this WordPress Website case.
           </AlertDescription>
         </Alert>
       ) : null}

@@ -65,6 +65,7 @@ function MidGoLiveContent({ token }: { token: string }) {
     activationData?.liveCaseNumber ?? data.liveCaseNumber ?? null
   const status = activationData ? 'started' : data.status
   const availableAt = formatDateTime(data.availableAt)
+  const availabilityLabel = formatAvailabilityHours(data.availableInHours)
 
   return (
     <Card>
@@ -76,7 +77,11 @@ function MidGoLiveContent({ token }: { token: string }) {
         {status === 'not_ready' ? (
           <Alert>
             <Clock3 />
-            <AlertTitle>Go-Live unlocks after 72 hours</AlertTitle>
+            <AlertTitle>
+              {availabilityLabel
+                ? `Go-Live unlocks after ${availabilityLabel}`
+                : 'Go-Live is not available yet'}
+            </AlertTitle>
             <AlertDescription>
               This link will work after {availableAt}. Until then, complete
               testing in the merchant portal.
@@ -170,4 +175,9 @@ function formatDateTime(value: string) {
     dateStyle: 'long',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function formatAvailabilityHours(hours: number) {
+  if (!Number.isFinite(hours) || hours <= 0) return null
+  return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
 }

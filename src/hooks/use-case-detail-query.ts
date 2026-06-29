@@ -138,12 +138,14 @@ export function useTakeOwnership(caseId: string) {
 
   return useMutation({
     mutationFn: () => takeOwnership(caseId),
-    onSuccess: async () => {
-      await invalidateCaseWorkflowQueries(queryClient, caseId)
+    onSuccess: () => {
       toast.success('Ownership taken successfully')
     },
     onError: () => {
       toast.error('Failed to take ownership')
+    },
+    onSettled: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }
@@ -153,12 +155,14 @@ export function useAdvanceStage(caseId: string) {
 
   return useMutation({
     mutationFn: () => advanceStage(caseId),
-    onSuccess: async () => {
-      await invalidateCaseWorkflowQueries(queryClient, caseId)
+    onSuccess: () => {
       toast.success('Stage advanced successfully')
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to advance stage'))
+    },
+    onSettled: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }
@@ -223,12 +227,12 @@ export function useCloseUnsuccessful(caseId: string) {
       closeUnsuccessful(caseId, input),
     onSuccess: () => {
       toast.success('Case closed')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to close case')
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to close case'))
+    },
+    onSettled: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }

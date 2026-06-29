@@ -77,6 +77,31 @@ const recentClosedCaseSchema = z.object({
 
 export type DashboardRecentClosedCase = z.infer<typeof recentClosedCaseSchema>
 
+const pendingPortalMidLimitSchema = z.object({
+  merchantId: z.string(),
+  merchantName: z.string(),
+  caseId: z.string(),
+  caseNumber: z.string(),
+  portalMid: z.number(),
+  midKind: z.enum(['portal', 'internal']),
+  savedAt: z.string(),
+})
+
+export type DashboardPendingPortalMidLimit = z.infer<
+  typeof pendingPortalMidLimitSchema
+>
+
+const appliedPortalMidLimitSchema = z.object({
+  portalMid: z.number(),
+  merchantId: z.string().nullable(),
+  appliedByName: z.string().nullable(),
+  appliedAt: z.string(),
+})
+
+export type DashboardAppliedPortalMidLimit = z.infer<
+  typeof appliedPortalMidLimitSchema
+>
+
 export const dashboardResponseSchema = z.object({
   range: z.object({
     key: z.enum(DASHBOARD_RANGES),
@@ -139,9 +164,7 @@ export const dashboardResponseSchema = z.object({
     }),
   ),
   trends: z.object({
-    submissions: z.array(
-      z.object({ date: z.string(), count: z.number() }),
-    ),
+    submissions: z.array(z.object({ date: z.string(), count: z.number() })),
     caseFlow: z.array(
       z.object({
         date: z.string(),
@@ -158,7 +181,31 @@ export const dashboardResponseSchema = z.object({
     recentMerchants: z.array(recentMerchantSchema),
     recentClosedCases: z.array(recentClosedCaseSchema),
   }),
+  portalMids: z.object({
+    pendingLimits: z.array(pendingPortalMidLimitSchema),
+    appliedLimits: z.array(appliedPortalMidLimitSchema),
+    csv: z.string(),
+    appliedCsv: z.string(),
+  }),
 })
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>
 export type DashboardQueueWorkload = DashboardResponse['queues'][number]
+
+export const applyPortalMidLimitsInputSchema = z.object({
+  portalMids: z.array(z.number().int().positive()).min(1),
+})
+
+export type ApplyPortalMidLimitsInput = z.infer<
+  typeof applyPortalMidLimitsInputSchema
+>
+
+export const applyPortalMidLimitsResponseSchema = z.object({
+  applied: z.array(z.number()),
+  alreadyApplied: z.array(z.number()),
+  notFound: z.array(z.number()),
+})
+
+export type ApplyPortalMidLimitsResponse = z.infer<
+  typeof applyPortalMidLimitsResponseSchema
+>

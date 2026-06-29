@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CheckCircle2,
@@ -96,6 +96,15 @@ function validateAgreement(file: File) {
   return null
 }
 
+function buildAgreementWhatsappBody(body: string) {
+  return body
+    .replace(
+      /Please review and sign the agreement for (.+?) using the secure link below:/,
+      'Please sign and upload the agreement for $1 using the secure link below:',
+    )
+    .replace(/\n\nIf you have any questions, please reply to this email\./, '')
+}
+
 export default function AgreementRenderer({
   caseDetail,
   caseId,
@@ -112,6 +121,16 @@ export default function AgreementRenderer({
   const [remarks, setRemarks] = useState('')
   const [remarksError, setRemarksError] = useState<string | null>(null)
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
+  const whatsappPreview = useMemo(
+    () =>
+      preview
+        ? {
+            ...preview,
+            body: buildAgreementWhatsappBody(preview.body),
+          }
+        : null,
+    [preview],
+  )
 
   const emailMode = config?.emailSendingMode ?? {
     autoEnabled: true,
@@ -432,7 +451,7 @@ export default function AgreementRenderer({
                 </Button>
               ) : (
                 <WhatsAppMessagePanel
-                  preview={preview}
+                  preview={whatsappPreview ?? preview}
                   phoneNumber={activeWhatsappNumber}
                   onConfirm={(file) => handleManualConfirm(file, 'whatsapp')}
                   isPending={confirmManual.isPending}

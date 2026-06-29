@@ -90,7 +90,7 @@ export function MerchantDetails({ merchantId }: MerchantDetailsProps) {
           </TabsTrigger>
           <TabsTrigger value="form">
             <FileText />
-            Form
+            Form and Agreement
           </TabsTrigger>
           <TabsTrigger value="limits">
             <Wallet />
@@ -146,7 +146,7 @@ export function MerchantDetailsSkeleton() {
           </TabsTrigger>
           <TabsTrigger value="form">
             <FileText />
-            Form
+            Form and Agreement
           </TabsTrigger>
           <TabsTrigger value="limits">
             <Wallet />

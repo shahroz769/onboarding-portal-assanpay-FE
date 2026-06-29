@@ -45,6 +45,11 @@ const DOCUMENT_REVIEW_RESUBMISSION_SENT_ACTIONS = new Set([
   'resubmission_email_sent_manual',
   'resubmission_whatsapp_sent_manual',
 ])
+const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
+  'mid_creation_email_sent',
+  'mid_creation_email_sent_manual',
+  'mid_creation_whatsapp_sent_manual',
+])
 
 interface CaseSidePanelProps {
   caseDetail: CaseDetail
@@ -64,6 +69,9 @@ function getPrimaryActionCopy(
     hasSubMerchantFinalForm: boolean
     isMidCreationCase: boolean
     hasMidCreationCredentials: boolean
+    isTestingCase: boolean
+    hasTestingCredentialsSent: boolean
+    isTestingHistoryPending: boolean
     isAgreementCase: boolean
     hasAgreementFinal: boolean
     hasAgreementClientSubmission: boolean
@@ -163,9 +171,39 @@ function getPrimaryActionCopy(
     return {
       title: 'Portal credentials required',
       description:
-        'Save the merchant portal MID, MUID, email, and password in the case workspace before closing this case successfully.',
+        'Save the merchant portal MID and email in the case workspace before closing this case successfully.',
       actionLabel: null,
       actionKind: 'mid-creation' as const,
+    }
+  }
+
+  if (options.isTestingCase && status === 'working') {
+    if (options.isTestingHistoryPending) {
+      return {
+        title: 'Checking credentials send',
+        description:
+          'Checking whether credentials were sent by auto Resend, manual Gmail, or WhatsApp before closure.',
+        actionLabel: null,
+        actionKind: 'testing' as const,
+      }
+    }
+
+    if (!options.hasTestingCredentialsSent) {
+      return {
+        title: 'Credentials send required',
+        description:
+          'Send merchant portal credentials by auto Resend, manual Gmail, or WhatsApp in the Testing workspace before closing this case successfully.',
+        actionLabel: null,
+        actionKind: 'testing' as const,
+      }
+    }
+
+    return {
+      title: 'Testing complete',
+      description:
+        'Merchant portal credentials were sent. You can now close this case successfully.',
+      actionLabel: 'Mark as successful',
+      actionKind: 'mark-successful' as const,
     }
   }
 
@@ -338,6 +376,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
   const isSubMerchantFormCase = caseDetail.queue.slug === 'sub-merchant-form'
   const isMidCreationCase = caseDetail.queue.slug === 'merchant-id'
+  const isTestingCase = caseDetail.queue.slug === 'testing'
   const isAgreementCase = caseDetail.queue.slug === 'agreement'
   const isPhysicalAgreementCase = caseDetail.queue.slug === 'physical-agreement'
   const reviewSummary = isDocumentReviewCase
@@ -359,6 +398,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       ) ?? false,
     [caseHistoryQuery.data],
   )
+  const hasTestingCredentialsSent = useMemo(
+    () =>
+      caseHistoryQuery.data?.some((entry) =>
+        TESTING_CREDENTIALS_SENT_ACTIONS.has(entry.action),
+      ) ?? false,
+    [caseHistoryQuery.data],
+  )
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {
     isDocumentReviewCase,
@@ -372,6 +418,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
     isMidCreationCase,
     hasMidCreationCredentials: Boolean(caseDetail.testing?.credentialsReady),
+    isTestingCase,
+    hasTestingCredentialsSent,
+    isTestingHistoryPending: isTestingCase && caseHistoryQuery.isPending,
     isAgreementCase,
     hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
     hasAgreementClientSubmission: Boolean(
@@ -393,18 +442,19 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'awaiting-client' &&
     primaryAction.actionKind !== 'sub-merchant-form' &&
     primaryAction.actionKind !== 'mid-creation' &&
+    primaryAction.actionKind !== 'testing' &&
     primaryAction.actionKind !== 'agreement' &&
     primaryAction.actionKind !== 'physical-agreement' &&
     primaryAction.actionKind !== 'document-review-communication'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
-  const unsuccessfulDisabled =
-    !closeReason.trim() || closeUnsuccessful.isPending
   const primaryActionPending =
     primaryActionInFlight ||
     takeOwnership.isPending ||
     advanceStage.isPending ||
+    closeUnsuccessful.isPending ||
     saveSubMerchant.isPending
+  const unsuccessfulDisabled = !closeReason.trim() || primaryActionPending
 
   async function saveChangedSubMerchantBeforeReview() {
     if (
@@ -452,7 +502,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         caseDetail.queue.slug === 'documents-review' &&
         !(
           documentsReviewDraft?.selectedSubMerchantId ||
-          caseDetail.documentReview?.subMerchantName?.trim()
+          caseDetail.documentReview.subMerchantName.trim()
         )
       ) {
         toast.error(
@@ -498,12 +548,19 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     setPrimaryActionInFlight(false)
   }
 
-  function handleCloseUnsuccessful() {
-    if (unsuccessfulDisabled) return
+  async function handleCloseUnsuccessful() {
+    if (unsuccessfulDisabled || primaryActionLockedRef.current) return
+    primaryActionLockedRef.current = true
+    setPrimaryActionInFlight(true)
 
-    closeUnsuccessful.mutate({
-      reason: closeReason.trim(),
-    })
+    try {
+      await closeUnsuccessful.mutateAsync({
+        reason: closeReason.trim(),
+      })
+    } finally {
+      primaryActionLockedRef.current = false
+      setPrimaryActionInFlight(false)
+    }
   }
 
   return (
@@ -576,7 +633,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                               : primaryAction.actionKind === 'sub-merchant-form'
                                 ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
                                 : primaryAction.actionKind === 'mid-creation'
-                                  ? 'Save the portal MID, MUID, email, and password in the case workspace before closing this case.'
+                                  ? 'Save the portal MID and email in the case workspace before closing this case.'
+                                  : primaryAction.actionKind === 'testing'
+                                    ? 'Complete testing limits and send credentials by auto Resend, manual Gmail, or WhatsApp in the case workspace.'
                                   : primaryAction.actionKind === 'agreement'
                                     ? 'Complete the Agreement upload and mail workflow in the case workspace.'
                                     : primaryAction.actionKind ===
@@ -697,12 +756,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         onClick={handleCloseUnsuccessful}
                         disabled={unsuccessfulDisabled}
                       >
-                        {closeUnsuccessful.isPending ? (
+                        {primaryActionPending ? (
                           <Spinner data-icon="inline-start" />
                         ) : (
                           <ShieldAlert data-icon="inline-start" />
                         )}
-                        {closeUnsuccessful.isPending
+                        {primaryActionPending
                           ? 'Closing unsuccessfully'
                           : 'Close as unsuccessful'}
                       </Button>

@@ -4,8 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CreditCard,
   CheckCircle2,
-  Eye,
-  EyeOff,
   Globe,
   Info,
   Landmark,
@@ -35,23 +33,22 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from '#/components/ui/input-group'
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
 import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
 import type { PaymentMethodSettings } from '#/schemas/configuration.schema'
+import { MERCHANT_PORTAL_ROLES } from '#/schemas/cases.schema'
+import type { MerchantPortalRole } from '#/schemas/cases.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
@@ -61,6 +58,18 @@ const DEFAULT_CARD_RATE = 3
 const E_WALLET_QR_RATE = 2.5
 const PAYOUT_RATE = 0
 const DEFAULT_METHODS: PaymentMethodSettings = []
+const DEFAULT_MERCHANT_PORTAL_ROLE: MerchantPortalRole = 'merchant_admin'
+const ROLE_PAYOUT_METHOD_LABELS: Record<MerchantPortalRole, string> = {
+  merchant_admin: 'Bank Settlement',
+  international_merchant_admin: 'All supported banks/e-wallets',
+}
+const ROLE_OPTIONS: Array<{ value: MerchantPortalRole; label: string }> = [
+  { value: 'merchant_admin', label: 'Merchant Admin' },
+  {
+    value: 'international_merchant_admin',
+    label: 'International Merchant Admin',
+  },
+]
 
 const midDetailsSchema = z.object({
   portalMid: z.coerce
@@ -69,31 +78,29 @@ const midDetailsSchema = z.object({
     })
     .int('Portal MID must be a whole number.')
     .positive('Portal MID must be greater than zero.'),
-  portalMuid: z
-    .string()
-    .trim()
-    .min(1, 'Portal MUID is required.')
-    .uuid('Portal MUID must be a valid UUID.'),
+  internalPortalMid: z.coerce
+    .number({
+      error: 'Portal MID (Internal) is required.',
+    })
+    .int('Portal MID (Internal) must be a whole number.')
+    .positive('Portal MID (Internal) must be greater than zero.'),
   email: z
     .string()
     .trim()
     .min(1, 'Email is required.')
     .email('Enter a valid email.'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters.')
-    .max(128, 'Password is too long.'),
+  merchantRole: z.enum(MERCHANT_PORTAL_ROLES, {
+    error: 'Role is required.',
+  }),
   paymentMethods: paymentMethodSettingsSchema.min(
     1,
     'Select at least one payment method.',
   ),
-  payoutMethods: paymentMethodSettingsSchema.min(
-    1,
-    'Select at least one payout method.',
-  ),
 })
 
-type MidDetailsForm = z.infer<typeof midDetailsSchema>
+type MidDetailsForm = z.infer<typeof midDetailsSchema> & {
+  payoutMethods: PaymentMethodSettings
+}
 
 type FieldErrors = Partial<Record<keyof MidDetailsForm, string>>
 
@@ -126,7 +133,9 @@ export default function MerchantIdRenderer({
   const isWorking = caseDetail.case.status === 'working'
   const canEdit = isCaseOwner && isWorking
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
-  const savedPortalMuid = caseDetail.testing?.portalMuid ?? null
+  const savedInternalPortalMid = caseDetail.testing?.internalPortalMid ?? null
+  const savedMerchantRole =
+    caseDetail.testing?.merchantRole ?? DEFAULT_MERCHANT_PORTAL_ROLE
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
   const savedPaymentMethods = savedCredentialsReady
     ? (caseDetail.testing?.paymentMethods ?? null)
@@ -167,22 +176,32 @@ export default function MerchantIdRenderer({
 
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
-    portalMuid: savedPortalMuid ?? '',
+    internalPortalMid: savedInternalPortalMid ?? Number.NaN,
     email: merchantEmail,
-    password: '',
+    merchantRole: savedMerchantRole,
     paymentMethods: savedPaymentMethods ?? DEFAULT_METHODS,
     payoutMethods: savedPayoutMethods ?? DEFAULT_METHODS,
   })
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [passwordVisible, setPasswordVisible] = useState(false)
 
   useEffect(() => {
     setForm((current) => ({
       ...current,
+      merchantRole: savedCredentialsReady
+        ? savedMerchantRole
+        : current.merchantRole,
       paymentMethods: savedPaymentMethods ?? current.paymentMethods,
-      payoutMethods: savedPayoutMethods ?? current.payoutMethods,
+      payoutMethods: resolveRolePayoutMethods(
+        savedCredentialsReady ? savedMerchantRole : current.merchantRole,
+        availablePayoutMethods,
+      ),
     }))
-  }, [savedPaymentMethods, savedPayoutMethods])
+  }, [
+    savedCredentialsReady,
+    savedMerchantRole,
+    savedPaymentMethods,
+    availablePayoutMethods,
+  ])
 
   function updateField<TKey extends keyof MidDetailsForm>(
     key: TKey,
@@ -195,7 +214,7 @@ export default function MerchantIdRenderer({
   }
 
   function toggleMethod(
-    field: 'paymentMethods' | 'payoutMethods',
+    field: 'paymentMethods',
     method: PaymentMethodSettings[number],
     checked: boolean,
   ) {
@@ -206,7 +225,34 @@ export default function MerchantIdRenderer({
     updateField(field, nextMethods)
   }
 
+  function updateMerchantRole(role: MerchantPortalRole) {
+    setForm((prev) => ({
+      ...prev,
+      merchantRole: role,
+      payoutMethods: resolveRolePayoutMethods(role, availablePayoutMethods),
+    }))
+    if (errors.merchantRole || errors.payoutMethods) {
+      setErrors((prev) => ({
+        ...prev,
+        merchantRole: undefined,
+        payoutMethods: undefined,
+      }))
+    }
+  }
+
   async function handleSave() {
+    const payoutMethods = resolveRolePayoutMethods(
+      form.merchantRole,
+      availablePayoutMethods,
+    )
+    if (payoutMethods.length === 0) {
+      setErrors((prev) => ({
+        ...prev,
+        payoutMethods: `Configure "${ROLE_PAYOUT_METHOD_LABELS[form.merchantRole]}" in payout methods before saving MID details.`,
+      }))
+      return
+    }
+
     const result = midDetailsSchema.safeParse(form)
     if (!result.success) {
       const nextErrors: FieldErrors = {}
@@ -336,9 +382,59 @@ export default function MerchantIdRenderer({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
+              <CardTitle>Role</CardTitle>
+              <CardDescription>
+                Select the merchant portal role. Payout method is assigned from
+                this role.
+              </CardDescription>
+            </div>
+            <Badge variant="secondary">
+              <ShieldCheck />
+              Portal
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <Field data-invalid={Boolean(errors.merchantRole)}>
+              <FieldLabel htmlFor="merchant-role">Role</FieldLabel>
+              <Select
+                value={form.merchantRole}
+                disabled={!canEdit || saveMidCreationDetails.isPending}
+                onValueChange={(value) =>
+                  updateMerchantRole(value as MerchantPortalRole)
+                }
+              >
+                <SelectTrigger
+                  id="merchant-role"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.merchantRole)}
+                >
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {ROLE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <FieldError>{errors.merchantRole}</FieldError>
+            </Field>
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Payment Methods</CardTitle>
               <CardDescription>
-                Collection methods configured by admin for this merchant.
+                Collection methods configured for this merchant.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -368,7 +464,8 @@ export default function MerchantIdRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Payout Methods</CardTitle>
               <CardDescription>
-                Payout methods configured by admin for this merchant.
+                Payout method is auto-selected from the merchant role. Manual
+                changes are disabled.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -382,12 +479,10 @@ export default function MerchantIdRenderer({
             idPrefix="mid-payout-method"
             availableMethods={availablePayoutMethods}
             selectedMethods={form.payoutMethods}
-            disabled={!canEdit || saveMidCreationDetails.isPending}
+            disabled
             empty="No payout methods configured."
             error={errors.payoutMethods}
-            onToggle={(method, checked) =>
-              toggleMethod('payoutMethods', method, checked)
-            }
+            onToggle={() => undefined}
           />
         </CardContent>
       </Card>
@@ -399,8 +494,8 @@ export default function MerchantIdRenderer({
               <CardTitle>Merchant Portal Credentials</CardTitle>
               <CardDescription>
                 Save the credentials created on the merchant platform before
-                closing this case successfully. Testing can send these values
-                without viewing them.
+                closing this case successfully. The temporary password is
+                generated only when credentials are sent.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -434,21 +529,34 @@ export default function MerchantIdRenderer({
               />
               <FieldError>{errors.portalMid}</FieldError>
             </Field>
-            <Field data-invalid={Boolean(errors.portalMuid)}>
-              <FieldLabel htmlFor="portal-muid">Portal MUID</FieldLabel>
+            <Field data-invalid={Boolean(errors.internalPortalMid)}>
+              <FieldLabel htmlFor="portal-mid-internal">
+                Portal MID (Internal)
+              </FieldLabel>
               <Input
-                id="portal-muid"
-                type="text"
-                inputMode="text"
-                placeholder="589365dc-e5fd-40ec-a7d6-75cb9a0c3bea"
-                value={form.portalMuid}
+                id="portal-mid-internal"
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                placeholder="Enter internal Portal MID"
+                value={
+                  Number.isFinite(form.internalPortalMid)
+                    ? form.internalPortalMid
+                    : ''
+                }
                 disabled={!canEdit || saveMidCreationDetails.isPending}
-                aria-invalid={Boolean(errors.portalMuid)}
+                aria-invalid={Boolean(errors.internalPortalMid)}
                 onChange={(event) =>
-                  updateField('portalMuid', event.target.value)
+                  updateField(
+                    'internalPortalMid',
+                    event.target.value === ''
+                      ? Number.NaN
+                      : Number(event.target.value),
+                  )
                 }
               />
-              <FieldError>{errors.portalMuid}</FieldError>
+              <FieldError>{errors.internalPortalMid}</FieldError>
             </Field>
             <Field data-invalid={Boolean(errors.email)}>
               <FieldLabel htmlFor="portal-email">Email</FieldLabel>
@@ -464,52 +572,6 @@ export default function MerchantIdRenderer({
               />
               <FieldError>{errors.email}</FieldError>
             </Field>
-            <Field data-invalid={Boolean(errors.password)}>
-              <FieldLabel htmlFor="portal-password">Password</FieldLabel>
-              <InputGroup
-                data-disabled={
-                  !canEdit || saveMidCreationDetails.isPending
-                    ? true
-                    : undefined
-                }
-              >
-                <InputGroupInput
-                  id="portal-password"
-                  type={passwordVisible ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="At least 8 characters"
-                  value={form.password}
-                  disabled={!canEdit || saveMidCreationDetails.isPending}
-                  aria-invalid={Boolean(errors.password)}
-                  onChange={(event) =>
-                    updateField('password', event.target.value)
-                  }
-                />
-                <InputGroupAddon align="inline-end">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <InputGroupButton
-                        aria-label={
-                          passwordVisible ? 'Hide password' : 'Show password'
-                        }
-                        disabled={!canEdit || saveMidCreationDetails.isPending}
-                        size="icon-xs"
-                        onClick={() =>
-                          setPasswordVisible((current) => !current)
-                        }
-                      >
-                        {passwordVisible ? <EyeOff /> : <Eye />}
-                      </InputGroupButton>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {passwordVisible ? 'Hide password' : 'Show password'}
-                    </TooltipContent>
-                  </Tooltip>
-                </InputGroupAddon>
-              </InputGroup>
-              <FieldError>{errors.password}</FieldError>
-            </Field>
-
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 onClick={handleSave}
@@ -541,7 +603,7 @@ export default function MerchantIdRenderer({
           <Info />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
-            Only the current case owner can save the Portal MID and MUID.
+            Only the current case owner can save the merchant portal credentials.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -667,6 +729,21 @@ function MethodList({
 
 function formSafeMethods(methods: PaymentMethodSettings | null) {
   return methods ?? DEFAULT_METHODS
+}
+
+function normalizeMethodLabel(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function resolveRolePayoutMethods(
+  role: MerchantPortalRole,
+  methods: PaymentMethodSettings,
+) {
+  const expectedLabel = ROLE_PAYOUT_METHOD_LABELS[role]
+  const normalizedExpectedLabel = normalizeMethodLabel(expectedLabel)
+  return methods.filter(
+    (method) => normalizeMethodLabel(method.label) === normalizedExpectedLabel,
+  )
 }
 
 function mergeMethods(

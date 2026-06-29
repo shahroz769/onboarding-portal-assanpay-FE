@@ -222,6 +222,7 @@ export type MidGoLiveContext = {
   caseNumber: string
   merchantName: string
   availableAt: string
+  availableInHours: number
   liveCaseNumber: string | null
 }
 

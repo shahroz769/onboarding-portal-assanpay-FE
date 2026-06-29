@@ -15,6 +15,13 @@ export const CASE_STATUSES = [
 
 export type CaseStatus = (typeof CASE_STATUSES)[number]
 
+export const MERCHANT_PORTAL_ROLES = [
+  'merchant_admin',
+  'international_merchant_admin',
+] as const
+
+export type MerchantPortalRole = (typeof MERCHANT_PORTAL_ROLES)[number]
+
 export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   new: 'New',
   working: 'Working',
@@ -319,7 +326,16 @@ export const caseDetailSchema = z.object({
         })
         .nullable(),
       portalMid: z.number().nullable().optional(),
-      portalMuid: z.string().nullable().optional(),
+      internalPortalMid: z.number().nullable().optional(),
+      internalLimitsAppliedAt: z.string().nullable().optional(),
+      internalLimitsAppliedBy: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable()
+        .optional(),
+      merchantRole: z.enum(MERCHANT_PORTAL_ROLES).nullable().optional(),
       credentialsReady: z.boolean().optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
       payoutMethods: paymentMethodSettingsSchema.nullable().optional(),
@@ -469,16 +485,12 @@ export type AgreementEmailResponse = {
 
 export const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
-  portalMuid: z.string().trim().uuid(),
+  internalPortalMid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
-  password: z.string().min(8).max(128),
+  merchantRole: z.enum(MERCHANT_PORTAL_ROLES),
   paymentMethods: paymentMethodSettingsSchema.min(
     1,
     'Select at least one payment method.',
-  ),
-  payoutMethods: paymentMethodSettingsSchema.min(
-    1,
-    'Select at least one payout method.',
   ),
 })
 
@@ -488,8 +500,9 @@ export type SaveMidCreationDetailsInput = z.infer<
 
 export type SaveMidCreationDetailsResponse = {
   portalMid: number
-  portalMuid: string
+  internalPortalMid: number
   email: string
+  merchantRole: MerchantPortalRole
   paymentMethods: z.infer<typeof paymentMethodSettingsSchema>
   payoutMethods: z.infer<typeof paymentMethodSettingsSchema>
   savedAt: string
@@ -497,9 +510,7 @@ export type SaveMidCreationDetailsResponse = {
 
 export const sendMidCreationEmailInputSchema = z.object({})
 
-export type SendMidCreationEmailInput = z.infer<
-  typeof sendMidCreationEmailInputSchema
->
+export type SendMidCreationEmailInput = object
 
 export const sendLiveEmailInputSchema = z.object({
   email: z.string().trim().email(),
