@@ -245,7 +245,17 @@ export function createCaseColumns({
     {
       id: 'queueName',
       header: 'Queue',
-      cell: (item) => <Badge variant="secondary">{item.queueName}</Badge>,
+      cell: (item) => (
+        <div className="flex min-w-0 max-w-full">
+          <Badge
+            variant="secondary"
+            className="max-w-full"
+            title={item.queueName}
+          >
+            <span className="truncate">{item.queueName}</span>
+          </Badge>
+        </div>
+      ),
       width: 130,
     },
 
