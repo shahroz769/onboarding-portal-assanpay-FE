@@ -99,6 +99,11 @@ export const localMobileNumberSchema = z
   .string()
   .trim()
   .regex(/^03\d{9}$/, 'Must be a valid mobile number.')
+export const digitsOnlyPhoneNumberSchema = z
+  .string()
+  .trim()
+  .min(1, 'Business phone number is required.')
+  .regex(/^\d+$/, 'Business phone number must contain numbers only.')
 
 // ── Form Schema ─────────────────────────────────────────────────────────────
 
@@ -116,7 +121,7 @@ export const merchantOnboardingSchema = z.object({
 
   // Section 3: Business Information
   businessName: z.string().min(1, 'Business name is required.'),
-  businessPhone: z.string().min(1, 'Business phone number is required.'),
+  businessPhone: digitsOnlyPhoneNumberSchema,
   businessEmail: z
     .string()
     .min(1, 'Business email is required.')

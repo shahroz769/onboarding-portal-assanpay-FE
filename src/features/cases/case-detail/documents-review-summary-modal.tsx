@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
@@ -24,7 +25,7 @@ import {
   useConfirmResubmissionEmailManual,
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
-import type { CaseDetail } from '#/schemas/cases.schema'
+import type { CaseDetail, EmailRecipientType } from '#/schemas/cases.schema'
 import type { EmailPreviewResult } from '#/apis/cases'
 
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
@@ -53,6 +54,8 @@ export function DocumentsReviewSummaryModal({
   const confirmManual = useConfirmResubmissionEmailManual(caseId)
   const isConfirmingRef = useRef(false)
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
+  const [recipientEmailType, setRecipientEmailType] =
+    useState<EmailRecipientType>('submitter')
 
   const emailMode = config?.emailSendingMode ?? {
     autoEnabled: true,
@@ -61,9 +64,13 @@ export function DocumentsReviewSummaryModal({
 
   const merchant = caseDetail.merchant as {
     submitterEmail?: string | null
+    businessEmail?: string | null
     activeWhatsappNumber?: string | null
   } | null
   const submitterEmail = merchant?.submitterEmail ?? null
+  const businessEmail = merchant?.businessEmail ?? null
+  const selectedEmail =
+    recipientEmailType === 'business' ? businessEmail : submitterEmail
   const activeWhatsappNumber = merchant?.activeWhatsappNumber ?? null
   const rejectedItems = reviewSummary?.rejectedItems ?? []
 
@@ -71,7 +78,7 @@ export function DocumentsReviewSummaryModal({
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
   const hasRejections = rejectedItems.length > 0
-  const hasRecipient = Boolean(submitterEmail)
+  const hasRecipient = Boolean(selectedEmail)
   const isDocumentsReviewCase = caseDetail.queue.slug === 'documents-review'
   const isWorkingStage =
     caseDetail.case.status === 'working' &&
@@ -94,7 +101,9 @@ export function DocumentsReviewSummaryModal({
     if (!canTrigger || isConfirmingRef.current) return
     isConfirmingRef.current = true
     try {
-      const data = await sendForResubmission.mutateAsync()
+      const data = await sendForResubmission.mutateAsync({
+        recipientEmailType,
+      })
       if (data.status === 'sent') setPreview(null)
     } catch {
       // already toasted
@@ -105,7 +114,7 @@ export function DocumentsReviewSummaryModal({
 
   async function handleLoadPreview() {
     if (!canLoadMessage) return
-    const data = await fetchPreview.mutateAsync()
+    const data = await fetchPreview.mutateAsync({ recipientEmailType })
     setPreview(data)
   }
 
@@ -120,6 +129,7 @@ export function DocumentsReviewSummaryModal({
         tokenId: preview.tokenId,
         file,
         channel,
+        recipientEmailType,
       })
       if (channel === 'whatsapp') onOpenChange(false)
     } finally {
@@ -129,12 +139,31 @@ export function DocumentsReviewSummaryModal({
 
   const autoContent = (
     <div className="flex flex-col gap-4">
-      <RecipientPreview email={submitterEmail} />
+      <EmailRecipientSelect
+        value={recipientEmailType}
+        onValueChange={(value) => {
+          setRecipientEmailType(value)
+          setPreview(null)
+        }}
+        submitterEmail={submitterEmail}
+        businessEmail={businessEmail}
+        disabled={sendForResubmission.isPending}
+      />
       {hasRejections ? (
         <RejectionsList items={rejectedItems} />
       ) : (
         <EmptyState />
       )}
+      <EmailRecipientSelect
+        value={recipientEmailType}
+        onValueChange={(value) => {
+          setRecipientEmailType(value)
+          setPreview(null)
+        }}
+        submitterEmail={submitterEmail}
+        businessEmail={businessEmail}
+        disabled={fetchPreview.isPending || confirmManual.isPending}
+      />
       <DialogFooter className="gap-2 sm:gap-2">
         <Button
           variant="outline"
@@ -165,6 +194,16 @@ export function DocumentsReviewSummaryModal({
       ) : (
         <EmptyState />
       )}
+      <EmailRecipientSelect
+        value={recipientEmailType}
+        onValueChange={(value) => {
+          setRecipientEmailType(value)
+          setPreview(null)
+        }}
+        submitterEmail={submitterEmail}
+        businessEmail={businessEmail}
+        disabled={fetchPreview.isPending || confirmManual.isPending}
+      />
       {!preview ? (
         <Button
           onClick={handleLoadPreview}
@@ -243,30 +282,6 @@ export function DocumentsReviewSummaryModal({
         />
       </DialogContent>
     </Dialog>
-  )
-}
-
-function RecipientPreview({ email }: { email: string | null }) {
-  if (!email) {
-    return (
-      <Alert variant="destructive">
-        <ShieldAlert />
-        <AlertTitle>No recipient on file</AlertTitle>
-        <AlertDescription>
-          We do not have a submitter email for this merchant. Add one before
-          sending for resubmission.
-        </AlertDescription>
-      </Alert>
-    )
-  }
-
-  return (
-    <div className="rounded-lg border bg-muted/40 px-3 py-2">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        Recipient
-      </p>
-      <p className="mt-1 text-sm font-medium">{email}</p>
-    </div>
   )
 }
 

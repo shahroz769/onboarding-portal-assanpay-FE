@@ -17,6 +17,8 @@ import type {
   SaveWordpressWebsiteInput,
   SendLiveEmailInput,
   SendMidCreationEmailInput,
+  EmailRecipientSelection,
+  EmailRecipientType,
   SelectSubMerchantFormInput,
   AgreementEmailResponse,
   MidCreationEmailResponse,
@@ -200,9 +202,11 @@ export interface SendForResubmissionResponse {
 
 export async function sendForResubmission(
   caseId: string,
+  input: EmailRecipientSelection,
 ): Promise<SendForResubmissionResponse> {
   const response = await apiClient.post<SendForResubmissionResponse>(
     `/api/cases/${caseId}/send-for-resubmission`,
+    input,
   )
   return response.data
 }
@@ -313,7 +317,7 @@ export async function uploadPhysicalAgreementCopy({
 
 export async function sendAgreementEmail(
   caseId: string,
-  input: { remarks?: string | null },
+  input: { remarks?: string | null } & EmailRecipientSelection,
 ): Promise<AgreementEmailResponse> {
   const response = await apiClient.post<AgreementEmailResponse>(
     `/api/cases/${caseId}/agreement/send-mail`,
@@ -364,9 +368,11 @@ export type ManualCommunicationChannel = 'email' | 'whatsapp'
 
 export async function fetchResubmissionEmailPreview(
   caseId: string,
+  input: EmailRecipientSelection,
 ): Promise<EmailPreviewResult> {
   const response = await apiClient.post<EmailPreviewResult>(
     `/api/cases/${caseId}/send-for-resubmission/preview`,
+    input,
   )
   return response.data
 }
@@ -376,16 +382,19 @@ export async function confirmResubmissionEmailManual({
   tokenId,
   file,
   channel,
+  recipientEmailType,
 }: {
   caseId: string
   tokenId: string
   file: File
   channel?: ManualCommunicationChannel
+  recipientEmailType: EmailRecipientType
 }): Promise<ManualEmailConfirmResult> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('tokenId', tokenId)
   if (channel) formData.append('channel', channel)
+  formData.append('recipientEmailType', recipientEmailType)
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/send-for-resubmission/manual`,
     formData,
@@ -396,7 +405,7 @@ export async function confirmResubmissionEmailManual({
 
 export async function fetchAgreementEmailPreview(
   caseId: string,
-  input: { remarks?: string | null },
+  input: { remarks?: string | null } & EmailRecipientSelection,
 ): Promise<EmailPreviewResult> {
   const response = await apiClient.post<EmailPreviewResult>(
     `/api/cases/${caseId}/agreement/send-mail/preview`,
@@ -411,18 +420,21 @@ export async function confirmAgreementEmailManual({
   remarks,
   file,
   channel,
+  recipientEmailType,
 }: {
   caseId: string
   tokenId: string
   remarks?: string | null
   file: File
   channel?: ManualCommunicationChannel
+  recipientEmailType: EmailRecipientType
 }): Promise<ManualEmailConfirmResult> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('tokenId', tokenId)
   if (remarks) formData.append('remarks', remarks)
   if (channel) formData.append('channel', channel)
+  formData.append('recipientEmailType', recipientEmailType)
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/agreement/send-mail/manual`,
     formData,
@@ -447,16 +459,19 @@ export async function confirmMidCreationEmailManual({
   tokenId,
   file,
   channel,
+  recipientEmailType,
 }: {
   caseId: string
   tokenId: string
   file: File
   channel?: ManualCommunicationChannel
+  recipientEmailType: EmailRecipientType
 } & SendMidCreationEmailInput): Promise<ManualEmailConfirmResult> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('tokenId', tokenId)
   if (channel) formData.append('channel', channel)
+  formData.append('recipientEmailType', recipientEmailType)
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/testing/send-credentials-mail/manual`,
     formData,
@@ -490,8 +505,8 @@ export async function confirmLiveEmailManual({
   const formData = new FormData()
   formData.append('file', file)
   formData.append('tokenId', tokenId)
-  formData.append('email', input.email)
   if (input.channel) formData.append('channel', input.channel)
+  formData.append('recipientEmailType', input.recipientEmailType)
   const response = await apiClient.post<ManualEmailConfirmResult>(
     `/api/cases/${caseId}/live/send-mail/manual`,
     formData,

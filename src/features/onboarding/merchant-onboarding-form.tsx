@@ -635,11 +635,19 @@ export function MerchantOnboardingForm({
                     <Input
                       id={field.name}
                       name={field.name}
+                      type="tel"
+                      inputMode="numeric"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(
+                          getNumericInputValue(event.target.value, false),
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
                       placeholder="Enter business phone"
+                      autoComplete="tel"
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />

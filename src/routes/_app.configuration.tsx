@@ -50,7 +50,7 @@ const configurationNavItems = [
   { to: '/configuration/email-sending', label: 'Email Sending', icon: Mail },
   {
     to: '/configuration/merchant-portal',
-    label: 'Merchant Portal',
+    label: 'Portal & Support',
     icon: Send,
   },
 ] as const

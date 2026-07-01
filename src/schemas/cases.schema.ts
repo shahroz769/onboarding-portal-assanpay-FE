@@ -508,13 +508,24 @@ export type SaveMidCreationDetailsResponse = {
   savedAt: string
 }
 
-export const sendMidCreationEmailInputSchema = z.object({})
+export const emailRecipientTypeValues = ['submitter', 'business'] as const
+export type EmailRecipientType = (typeof emailRecipientTypeValues)[number]
 
-export type SendMidCreationEmailInput = object
-
-export const sendLiveEmailInputSchema = z.object({
-  email: z.string().trim().email(),
+export const emailRecipientSelectionSchema = z.object({
+  recipientEmailType: z.enum(emailRecipientTypeValues).default('submitter'),
 })
+
+export type EmailRecipientSelection = z.infer<
+  typeof emailRecipientSelectionSchema
+>
+
+export const sendMidCreationEmailInputSchema = emailRecipientSelectionSchema
+
+export type SendMidCreationEmailInput = z.infer<
+  typeof sendMidCreationEmailInputSchema
+>
+
+export const sendLiveEmailInputSchema = emailRecipientSelectionSchema
 
 export type SendLiveEmailInput = z.infer<typeof sendLiveEmailInputSchema>
 

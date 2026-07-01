@@ -38,6 +38,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
@@ -50,6 +51,7 @@ import {
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
 import { cn } from '#/lib/utils'
+import type { EmailRecipientType } from '#/schemas/cases.schema'
 import { MERCHANT_TYPES } from '#/schemas/merchant-onboarding.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
@@ -121,6 +123,8 @@ export default function AgreementRenderer({
   const [remarks, setRemarks] = useState('')
   const [remarksError, setRemarksError] = useState<string | null>(null)
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
+  const [recipientEmailType, setRecipientEmailType] =
+    useState<EmailRecipientType>('submitter')
   const whatsappPreview = useMemo(
     () =>
       preview
@@ -139,6 +143,10 @@ export default function AgreementRenderer({
 
   const agreement = caseDetail.agreement ?? null
   const merchant = caseDetail.merchant
+  const submitterEmail =
+    typeof merchant.submitterEmail === 'string' ? merchant.submitterEmail : null
+  const businessEmail =
+    typeof merchant.businessEmail === 'string' ? merchant.businessEmail : null
   const activeWhatsappNumber =
     typeof merchant.activeWhatsappNumber === 'string'
       ? merchant.activeWhatsappNumber
@@ -179,7 +187,10 @@ export default function AgreementRenderer({
         return
       }
     }
-    await sendAgreement.mutateAsync({ remarks: trimmedRemarks || null })
+    await sendAgreement.mutateAsync({
+      remarks: trimmedRemarks || null,
+      recipientEmailType,
+    })
     setPreview(null)
   }
 
@@ -197,6 +208,7 @@ export default function AgreementRenderer({
     setRemarksError(null)
     const data = await fetchPreview.mutateAsync({
       remarks: trimmedRemarks || null,
+      recipientEmailType,
     })
     setPreview(data)
   }
@@ -212,6 +224,7 @@ export default function AgreementRenderer({
       remarks: trimmedRemarks || null,
       file,
       channel,
+      recipientEmailType,
     })
     if (channel === 'whatsapp') setReviewOpen(false)
   }
@@ -361,6 +374,21 @@ export default function AgreementRenderer({
           </DialogHeader>
 
           <FieldGroup>
+            <EmailRecipientSelect
+              value={recipientEmailType}
+              onValueChange={(value) => {
+                setRecipientEmailType(value)
+                setPreview(null)
+              }}
+              submitterEmail={submitterEmail}
+              businessEmail={businessEmail}
+              disabled={
+                sendAgreement.isPending ||
+                fetchPreview.isPending ||
+                confirmManual.isPending
+              }
+            />
+
             <Field data-invalid={Boolean(remarksError)}>
               <FieldLabel htmlFor="agreement-remarks">Remarks</FieldLabel>
               <Textarea

@@ -6,8 +6,8 @@ import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/merchant-portal')({
   staticData: {
-    title: 'Merchant Portal',
-    subtitle: 'Manage merchant portal links.',
+    title: 'Merchant Portal & Support',
+    subtitle: 'Manage merchant portal links and support contact details.',
   },
   loader: async ({ context }) => {
     void context.queryClient.prefetchQuery(configurationQueryOptions())

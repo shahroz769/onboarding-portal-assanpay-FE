@@ -71,6 +71,7 @@ import {
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
+import { Textarea } from '#/components/ui/textarea'
 import { ConfigurationPanelSkeleton } from './configuration-route-skeleton'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import { cn } from '#/lib/utils'
@@ -1218,8 +1219,8 @@ export function MerchantPortalPanel() {
     <ConfigurationSectionCard
       icon={Send}
       colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
-      title="Merchant Portal"
-      description="Configure the portal link used in Testing and Live case emails."
+      title="Merchant Portal & Support"
+      description="Configure the merchant portal link and support contact details."
     >
       <FieldGroup>
         <FieldSet>
@@ -1240,11 +1241,74 @@ export function MerchantPortalPanel() {
                 }))
               }}
             />
-            <FieldDescription>
-              This URL appears as the merchant portal link in customer emails.
-            </FieldDescription>
             <FieldError>{validationErrors.loginUrl}</FieldError>
           </Field>
+          <Field data-invalid={Boolean(validationErrors.officeAddress)}>
+            <FieldLabel htmlFor="merchant-portal-office-address">
+              Office Address
+            </FieldLabel>
+            <Textarea
+              id="merchant-portal-office-address"
+              value={value.officeAddress}
+              placeholder="Enter office address"
+              aria-invalid={Boolean(validationErrors.officeAddress)}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...(current ?? value),
+                  officeAddress: event.target.value,
+                }))
+              }}
+            />
+            <FieldError>{validationErrors.officeAddress}</FieldError>
+          </Field>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field
+              data-invalid={Boolean(validationErrors.whatsappSupportNumber)}
+            >
+              <FieldLabel htmlFor="merchant-portal-whatsapp-support-number">
+                WhatsApp Support Number
+              </FieldLabel>
+              <Input
+                id="merchant-portal-whatsapp-support-number"
+                type="tel"
+                inputMode="numeric"
+                value={value.whatsappSupportNumber}
+                placeholder="Enter WhatsApp support number"
+                aria-invalid={Boolean(
+                  validationErrors.whatsappSupportNumber,
+                )}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    whatsappSupportNumber: event.target.value.replace(
+                      /\D/g,
+                      '',
+                    ),
+                  }))
+                }}
+              />
+              <FieldError>{validationErrors.whatsappSupportNumber}</FieldError>
+            </Field>
+            <Field data-invalid={Boolean(validationErrors.supportEmail)}>
+              <FieldLabel htmlFor="merchant-portal-support-email">
+                Support Email
+              </FieldLabel>
+              <Input
+                id="merchant-portal-support-email"
+                type="email"
+                value={value.supportEmail}
+                placeholder="support@example.com"
+                aria-invalid={Boolean(validationErrors.supportEmail)}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    supportEmail: event.target.value,
+                  }))
+                }}
+              />
+              <FieldError>{validationErrors.supportEmail}</FieldError>
+            </Field>
+          </div>
         </FieldSet>
         <ConfigurationActionBar>
           <Button

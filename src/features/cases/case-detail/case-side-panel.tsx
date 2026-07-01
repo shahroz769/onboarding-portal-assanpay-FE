@@ -369,7 +369,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-  const [primaryActionInFlight, setPrimaryActionInFlight] = useState(false)
+  const [actionInFlight, setActionInFlight] = useState<
+    'primary' | 'unsuccessful' | null
+  >(null)
   const primaryActionLockedRef = useRef(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
@@ -448,13 +450,15 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'document-review-communication'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
-  const primaryActionPending =
-    primaryActionInFlight ||
+  const primaryButtonPending =
+    actionInFlight === 'primary' ||
     takeOwnership.isPending ||
     advanceStage.isPending ||
-    closeUnsuccessful.isPending ||
     saveSubMerchant.isPending
-  const unsuccessfulDisabled = !closeReason.trim() || primaryActionPending
+  const unsuccessfulButtonPending =
+    actionInFlight === 'unsuccessful' || closeUnsuccessful.isPending
+  const actionPending = primaryButtonPending || unsuccessfulButtonPending
+  const unsuccessfulDisabled = !closeReason.trim() || actionPending
 
   async function saveChangedSubMerchantBeforeReview() {
     if (
@@ -470,15 +474,15 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   }
 
   async function handlePrimaryAction() {
-    if (primaryActionPending || primaryActionLockedRef.current) return
+    if (actionPending || primaryActionLockedRef.current) return
     primaryActionLockedRef.current = true
-    setPrimaryActionInFlight(true)
+    setActionInFlight('primary')
 
     if (primaryAction.actionKind === 'take-ownership') {
       takeOwnership.mutate(undefined, {
         onSettled: () => {
           primaryActionLockedRef.current = false
-          setPrimaryActionInFlight(false)
+          setActionInFlight(null)
         },
       })
       return
@@ -492,7 +496,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         // Mutation hook already surfaces the backend error via toast.
       } finally {
         primaryActionLockedRef.current = false
-        setPrimaryActionInFlight(false)
+        setActionInFlight(null)
       }
       return
     }
@@ -509,7 +513,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
           'Select the sub-merchant name before marking this case as successful.',
         )
         primaryActionLockedRef.current = false
-        setPrimaryActionInFlight(false)
+        setActionInFlight(null)
         return
       }
 
@@ -521,7 +525,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
           'Complete auto email, manual Gmail, or WhatsApp before marking this case as successful.',
         )
         primaryActionLockedRef.current = false
-        setPrimaryActionInFlight(false)
+        setActionInFlight(null)
         return
       }
 
@@ -530,7 +534,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
           await saveChangedSubMerchantBeforeReview()
         } catch {
           primaryActionLockedRef.current = false
-          setPrimaryActionInFlight(false)
+          setActionInFlight(null)
           return
         }
       }
@@ -538,20 +542,20 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       advanceStage.mutate(undefined, {
         onSettled: () => {
           primaryActionLockedRef.current = false
-          setPrimaryActionInFlight(false)
+          setActionInFlight(null)
         },
       })
       return
     }
 
     primaryActionLockedRef.current = false
-    setPrimaryActionInFlight(false)
+    setActionInFlight(null)
   }
 
   async function handleCloseUnsuccessful() {
     if (unsuccessfulDisabled || primaryActionLockedRef.current) return
     primaryActionLockedRef.current = true
-    setPrimaryActionInFlight(true)
+    setActionInFlight('unsuccessful')
 
     try {
       await closeUnsuccessful.mutateAsync({
@@ -559,7 +563,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       })
     } finally {
       primaryActionLockedRef.current = false
-      setPrimaryActionInFlight(false)
+      setActionInFlight(null)
     }
   }
 
@@ -652,7 +656,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         <Button
                           onClick={handlePrimaryAction}
                           disabled={
-                            primaryActionPending ||
+                            actionPending ||
                             (primaryAction.actionKind !== 'take-ownership' &&
                               primaryAction.actionKind !== 'mark-successful' &&
                               primaryAction.actionKind !== 'review') ||
@@ -670,7 +674,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                               <UserRoundPlus data-icon="inline-start" />
                             )
                           ) : primaryAction.actionKind === 'review' ? (
-                            primaryActionPending ? (
+                            primaryButtonPending ? (
                               <Spinner data-icon="inline-start" />
                             ) : (
                               <Send data-icon="inline-start" />
@@ -685,11 +689,11 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                               ? 'Taking ownership'
                               : 'Take ownership'
                             : primaryAction.actionKind === 'review'
-                              ? primaryActionPending
+                              ? primaryButtonPending
                                 ? 'Opening review'
                                 : 'Review'
                               : primaryAction.actionKind === 'mark-successful'
-                                ? primaryActionPending
+                                ? primaryButtonPending
                                   ? 'Closing case'
                                   : 'Mark as successful'
                                 : 'No successful action available'}
@@ -756,12 +760,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         onClick={handleCloseUnsuccessful}
                         disabled={unsuccessfulDisabled}
                       >
-                        {primaryActionPending ? (
+                        {unsuccessfulButtonPending ? (
                           <Spinner data-icon="inline-start" />
                         ) : (
                           <ShieldAlert data-icon="inline-start" />
                         )}
-                        {primaryActionPending
+                        {unsuccessfulButtonPending
                           ? 'Closing unsuccessfully'
                           : 'Close as unsuccessful'}
                       </Button>

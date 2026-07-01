@@ -23,6 +23,7 @@ import {
 import { FieldGroup } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
@@ -34,6 +35,7 @@ import {
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
+import type { EmailRecipientType } from '#/schemas/cases.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -82,6 +84,16 @@ export default function TestingRenderer({
   const [manualPreview, setManualPreview] = useState<EmailPreviewResult | null>(
     null,
   )
+  const [recipientEmailType, setRecipientEmailType] =
+    useState<EmailRecipientType>('submitter')
+  const submitterEmail =
+    typeof caseDetail.merchant.submitterEmail === 'string'
+      ? caseDetail.merchant.submitterEmail
+      : null
+  const businessEmail =
+    typeof caseDetail.merchant.businessEmail === 'string'
+      ? caseDetail.merchant.businessEmail
+      : null
 
   function handleReview() {
     if (!canSendCredentials) return
@@ -91,13 +103,13 @@ export default function TestingRenderer({
 
   async function handleSendMail() {
     if (!canSendCredentials) return
-    await sendCredentialsEmail.mutateAsync({})
+    await sendCredentialsEmail.mutateAsync({ recipientEmailType })
     setManualPreview(null)
   }
 
   async function handleLoadManualPreview() {
     if (!canSendCredentials) return
-    const data = await fetchPreview.mutateAsync({})
+    const data = await fetchPreview.mutateAsync({ recipientEmailType })
     setManualPreview(data)
   }
 
@@ -110,6 +122,7 @@ export default function TestingRenderer({
       tokenId: manualPreview.tokenId,
       file,
       channel,
+      recipientEmailType,
     })
     if (channel === 'whatsapp') setReviewOpen(false)
   }
@@ -254,6 +267,21 @@ export default function TestingRenderer({
               require a sent-message screenshot.
             </AlertDescription>
           </Alert>
+
+          <EmailRecipientSelect
+            value={recipientEmailType}
+            onValueChange={(value) => {
+              setRecipientEmailType(value)
+              setManualPreview(null)
+            }}
+            submitterEmail={submitterEmail}
+            businessEmail={businessEmail}
+            disabled={
+              sendCredentialsEmail.isPending ||
+              fetchPreview.isPending ||
+              confirmManual.isPending
+            }
+          />
 
           <EmailModeChoice
             mode={emailMode}

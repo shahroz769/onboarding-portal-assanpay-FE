@@ -50,6 +50,8 @@ import type {
   SendLiveEmailInput,
   SaveMidCreationDetailsInput,
   SelectSubMerchantFormInput,
+  EmailRecipientSelection,
+  EmailRecipientType,
 } from '#/schemas/cases.schema'
 import { CASES_KEY, usersQueryOptions } from './use-cases-query'
 
@@ -257,7 +259,8 @@ export function useSendForResubmission(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: () => sendForResubmission(caseId),
+    mutationFn: (input: EmailRecipientSelection) =>
+      sendForResubmission(caseId, input),
     onSuccess: async (data) => {
       await invalidateCaseWorkflowQueries(queryClient, caseId)
 
@@ -358,7 +361,7 @@ export function useSendAgreementEmail(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { remarks?: string | null }) =>
+    mutationFn: (input: { remarks?: string | null } & EmailRecipientSelection) =>
       sendAgreementEmail(caseId, input),
     onSuccess: async (data) => {
       await invalidateCaseWorkflowQueries(queryClient, caseId)
@@ -430,7 +433,8 @@ export function useSendLiveEmail(caseId: string) {
 
 export function useFetchResubmissionEmailPreview(caseId: string) {
   return useMutation({
-    mutationFn: () => fetchResubmissionEmailPreview(caseId),
+    mutationFn: (input: EmailRecipientSelection) =>
+      fetchResubmissionEmailPreview(caseId, input),
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
     },
@@ -444,6 +448,7 @@ export function useConfirmResubmissionEmailManual(caseId: string) {
       tokenId: string
       file: File
       channel?: ManualCommunicationChannel
+      recipientEmailType: EmailRecipientType
     }) => confirmResubmissionEmailManual({ caseId, ...input }),
     onSuccess: async () => {
       await invalidateCaseWorkflowQueries(queryClient, caseId)
@@ -457,7 +462,7 @@ export function useConfirmResubmissionEmailManual(caseId: string) {
 
 export function useFetchAgreementEmailPreview(caseId: string) {
   return useMutation({
-    mutationFn: (input: { remarks?: string | null }) =>
+    mutationFn: (input: { remarks?: string | null } & EmailRecipientSelection) =>
       fetchAgreementEmailPreview(caseId, input),
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
@@ -473,6 +478,7 @@ export function useConfirmAgreementEmailManual(caseId: string) {
       remarks?: string | null
       file: File
       channel?: ManualCommunicationChannel
+      recipientEmailType: EmailRecipientType
     }) => confirmAgreementEmailManual({ caseId, ...input }),
     onSuccess: async () => {
       await invalidateCaseWorkflowQueries(queryClient, caseId)

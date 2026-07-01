@@ -30,7 +30,7 @@ function readStoredNavMenuState() {
     const rawValue = window.localStorage.getItem(NAV_MENU_STATE_STORAGE_KEY)
     if (!rawValue) return {}
 
-    const parsed = JSON.parse(rawValue) as Record<string, boolean>
+    const parsed: unknown = JSON.parse(rawValue)
     return typeof parsed === 'object' && parsed !== null ? parsed : {}
   } catch {
     return {}
@@ -55,10 +55,11 @@ function NavItem({
   item: SidebarNavItem
   pathname: string
 }) {
+  const activePrefix = item.activePrefix ?? item.url
   const isDirectActive =
-    item.url === '/'
+    activePrefix === '/'
       ? pathname === item.url
-      : pathname === item.url || pathname.startsWith(`${item.url}/`)
+      : pathname === item.url || pathname.startsWith(`${activePrefix}/`)
   const hasActiveChild = Boolean(
     item.items?.some((subItem) => pathname === subItem.url),
   )

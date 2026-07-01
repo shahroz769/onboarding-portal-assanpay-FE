@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, Info, Mail, MailCheck, Rocket } from 'lucide-react'
-import { z } from 'zod'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
@@ -27,13 +26,12 @@ import {
   Field,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
-import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
+import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
@@ -46,19 +44,9 @@ import {
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
+import type { EmailRecipientType } from '#/schemas/cases.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
-
-const liveEmailSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required.')
-    .email('Enter a valid email.'),
-})
-
-type LiveEmailForm = z.infer<typeof liveEmailSchema>
-type FieldErrors = Partial<Record<keyof LiveEmailForm, string>>
 
 function getMerchantString(
   merchant: Record<string, unknown>,
@@ -106,10 +94,8 @@ export default function LiveRenderer({
   )
   const canSendLiveEmail =
     isCaseOwner && isWorking && !liveEmailSent && !historyQuery.isPending
-  const merchantEmail =
-    getMerchantString(caseDetail.merchant, 'email') ??
-    getMerchantString(caseDetail.merchant, 'businessEmail') ??
-    ''
+  const submitterEmail = getMerchantString(caseDetail.merchant, 'submitterEmail')
+  const businessEmail = getMerchantString(caseDetail.merchant, 'businessEmail')
   const activeWhatsappNumber = getMerchantString(
     caseDetail.merchant,
     'activeWhatsappNumber',
@@ -117,8 +103,8 @@ export default function LiveRenderer({
   const merchantName =
     getMerchantString(caseDetail.merchant, 'businessName') ?? 'Merchant'
 
-  const [form, setForm] = useState<LiveEmailForm>({ email: merchantEmail })
-  const [errors, setErrors] = useState<FieldErrors>({})
+  const [recipientEmailType, setRecipientEmailType] =
+    useState<EmailRecipientType>('submitter')
   const [reviewOpen, setReviewOpen] = useState(false)
   const [manualPreview, setManualPreview] = useState<EmailPreviewResult | null>(
     null,
@@ -134,30 +120,11 @@ export default function LiveRenderer({
     [merchantName, merchantPortalUrl, limits],
   )
 
-  function updateField<TKey extends keyof LiveEmailForm>(
-    key: TKey,
-    value: LiveEmailForm[TKey],
-  ) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key]) {
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
-    }
-  }
+  const selectedEmail =
+    recipientEmailType === 'business' ? businessEmail : submitterEmail
 
   function handleReview() {
-    const result = liveEmailSchema.safeParse(form)
-    if (!result.success) {
-      const nextErrors: FieldErrors = {}
-      for (const issue of result.error.issues) {
-        const path = issue.path[0] as keyof LiveEmailForm | undefined
-        if (path && !nextErrors[path]) {
-          nextErrors[path] = issue.message
-        }
-      }
-      setErrors(nextErrors)
-      return
-    }
-    setErrors({})
+    if (!selectedEmail) return
     setReviewOpen(true)
   }
 
@@ -167,12 +134,12 @@ export default function LiveRenderer({
   }
 
   async function handleSendMail() {
-    await sendLiveEmail.mutateAsync(form)
+    await sendLiveEmail.mutateAsync({ recipientEmailType })
     setManualPreview(null)
   }
 
   async function handleLoadManualPreview() {
-    const data = await fetchPreview.mutateAsync(form)
+    const data = await fetchPreview.mutateAsync({ recipientEmailType })
     setManualPreview(data)
   }
 
@@ -185,7 +152,7 @@ export default function LiveRenderer({
       tokenId: manualPreview.tokenId,
       file,
       channel,
-      ...form,
+      recipientEmailType,
     })
     if (channel === 'whatsapp') setReviewOpen(false)
   }
@@ -289,25 +256,23 @@ export default function LiveRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Field data-invalid={Boolean(errors.email)}>
-              <FieldLabel htmlFor="live-email">Email</FieldLabel>
-              <Input
-                id="live-email"
-                type="email"
-                autoComplete="off"
-                placeholder="merchant@example.com"
-                value={form.email}
-                disabled={!canSendLiveEmail || sendLiveEmail.isPending}
-                aria-invalid={Boolean(errors.email)}
-                onChange={(event) => updateField('email', event.target.value)}
-              />
-              <FieldError>{errors.email}</FieldError>
-            </Field>
+            <EmailRecipientSelect
+              value={recipientEmailType}
+              onValueChange={(value) => {
+                setRecipientEmailType(value)
+                setManualPreview(null)
+              }}
+              submitterEmail={submitterEmail}
+              businessEmail={businessEmail}
+              disabled={!canSendLiveEmail || sendLiveEmail.isPending}
+            />
 
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 onClick={openReview}
-                disabled={!canSendLiveEmail || sendLiveEmail.isPending}
+                disabled={
+                  !canSendLiveEmail || !selectedEmail || sendLiveEmail.isPending
+                }
               >
                 <Mail data-icon="inline-start" />
                 Review &amp; Send mail
@@ -338,7 +303,7 @@ export default function LiveRenderer({
 
           <div className="flex flex-col gap-4">
             <div className="grid gap-2 rounded-lg border bg-muted/30 px-3 py-3 text-sm">
-              <PreviewRow label="To" value={form.email || '-'} />
+              <PreviewRow label="To" value={selectedEmail ?? '-'} />
               <PreviewRow label="Subject" value={emailPreview.subject} />
             </div>
             <div className="rounded-lg border bg-background">

@@ -35,6 +35,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/features/auth/auth-client'
@@ -119,31 +120,33 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             <div className="rounded-md border bg-muted/20 px-3 py-3">
               <p className="wrap-break-word font-mono text-sm">{csv}</p>
             </div>
-            <div className="flex flex-col gap-2">
-              {pending.map((item) => (
-                <div
-                  key={`${item.caseId}-${item.midKind}-${item.portalMid}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium">{item.merchantName}</p>
-                    <p className="text-muted-foreground">
-                      {item.caseNumber}
-                    </p>
+            <ScrollArea className="max-h-72">
+              <div className="flex flex-col gap-2 pr-3">
+                {pending.map((item) => (
+                  <div
+                    key={`${item.caseId}-${item.midKind}-${item.portalMid}`}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">{item.merchantName}</p>
+                      <p className="text-muted-foreground">
+                        {item.caseNumber}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {item.midKind === 'internal'
+                          ? 'Portal MID (Internal)'
+                          : 'Portal MID'}
+                      </Badge>
+                      <span className="font-mono font-semibold">
+                        {item.portalMid}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">
-                      {item.midKind === 'internal'
-                        ? 'Portal MID (Internal)'
-                        : 'Portal MID'}
-                    </Badge>
-                    <span className="font-mono font-semibold">
-                      {item.portalMid}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
             <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" onClick={handleCopy}>
                 <ClipboardCopy data-icon="inline-start" />
@@ -302,29 +305,35 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   )
 }
 
+const portalMidRangePattern = /(\d+)\s*-\s*(\d+)/g
+
 function parsePortalMids(value: string): {
   portalMids: number[]
   error: string | null
 } {
   const mids: number[] = []
-  let rangeError: string | null = null
   let remaining = value.replace(/\bup\s*to\b/gi, '-')
   remaining = remaining.replace(/\bupto\b/gi, '-')
   remaining = remaining.replace(/\bto\b/gi, '-')
 
+  const hasDescendingRange = Array.from(
+    remaining.matchAll(portalMidRangePattern),
+  ).some(([, startValue, endValue]) => Number(startValue) > Number(endValue))
+
+  if (hasDescendingRange) {
+    return {
+      portalMids: [],
+      error: 'MID ranges must go from the smaller number to the larger number.',
+    }
+  }
+
   remaining = remaining.replace(
-    /(\d+)\s*-\s*(\d+)/g,
+    portalMidRangePattern,
     (match, startValue: string, endValue: string) => {
       const start = Number(startValue)
       const end = Number(endValue)
 
       if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end)) {
-        return match
-      }
-
-      if (start > end) {
-        rangeError =
-          'MID ranges must go from the smaller number to the larger number.'
         return match
       }
 
@@ -335,10 +344,6 @@ function parsePortalMids(value: string): {
       return ' '
     },
   )
-
-  if (rangeError) {
-    return { portalMids: [], error: rangeError }
-  }
 
   const standaloneMids = remaining
     .split(/[\s,]+/)

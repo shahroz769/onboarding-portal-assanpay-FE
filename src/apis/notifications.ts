@@ -1,10 +1,9 @@
 import { apiClient } from '#/lib/api-client'
-import {
-  NOTIFICATIONS_PAGE_SIZE
-  
-  
+import { NOTIFICATIONS_PAGE_SIZE } from '#/schemas/notifications.schema'
+import type {
+  NotificationFilter,
+  NotificationsListResponse,
 } from '#/schemas/notifications.schema'
-import type {NotificationFilter, NotificationsListResponse} from '#/schemas/notifications.schema';
 
 interface FetchNotificationsParams {
   cursor?: string | null

@@ -7,6 +7,8 @@ const limitRangeSchema = z.object({
   disbursementMax: z.coerce.number().min(0),
 })
 
+const emailAddressSchema = z.string().email()
+
 export const limitsAndMdrSettingsSchema = z.object({
   testing: limitRangeSchema,
   live: limitRangeSchema,
@@ -142,6 +144,21 @@ export const emailSendingModeSchema = z
 
 export const merchantPortalSettingsSchema = z.object({
   loginUrl: z.string().trim().url(),
+  officeAddress: z.string().trim().max(1000).default(''),
+  whatsappSupportNumber: z
+    .string()
+    .trim()
+    .max(32)
+    .regex(/^\d*$/, 'WhatsApp support number must contain numbers only.')
+    .default(''),
+  supportEmail: z
+    .string()
+    .trim()
+    .max(320)
+    .refine((value) => value === '' || emailAddressSchema.safeParse(value).success, {
+      message: 'Enter a valid support email.',
+    })
+    .default(''),
 })
 
 export const paymentMethodSettingsSchema = z

@@ -391,6 +391,10 @@ function validateTextField(rejection: ResubmissionRejection, value: string) {
     return 'Must be a valid mobile number.'
   }
 
+  if (rejection.fieldName === 'businessPhone' && !/^\d+$/.test(trimmed)) {
+    return 'Business phone number must contain numbers only.'
+  }
+
   if (rejection.fieldName === 'businessWebsite') {
     try {
       const url = new URL(trimmed)
@@ -891,16 +895,30 @@ function FieldControl({
     <Input
       id={rejection.fieldName}
       type={
-        config.kind === 'email'
-          ? 'email'
-          : config.kind === 'url'
-            ? 'url'
-            : 'text'
+        rejection.fieldName === 'businessPhone'
+          ? 'tel'
+          : config.kind === 'email'
+            ? 'email'
+            : config.kind === 'url'
+              ? 'url'
+              : 'text'
+      }
+      inputMode={
+        rejection.fieldName === 'businessPhone' ? 'numeric' : undefined
       }
       value={value}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) =>
+        onChange(
+          rejection.fieldName === 'businessPhone'
+            ? event.target.value.replace(/\D/g, '')
+            : event.target.value,
+        )
+      }
       placeholder={config.placeholder}
       aria-invalid={isInvalid}
+      autoComplete={
+        rejection.fieldName === 'businessPhone' ? 'tel' : undefined
+      }
     />
   )
 }

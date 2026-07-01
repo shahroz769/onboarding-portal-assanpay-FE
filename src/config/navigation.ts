@@ -18,6 +18,7 @@ export type NavSubItem = {
 export type NavItem = {
   title: string
   url: string
+  activePrefix?: string
   icon?: LucideIcon
   roles?: RoleType[]
   items?: NavSubItem[]
@@ -71,7 +72,8 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Configuration',
-    url: '/configuration',
+    url: '/configuration/limits-and-mdr',
+    activePrefix: '/configuration',
     icon: Settings2,
     roles: ['admin'],
   },

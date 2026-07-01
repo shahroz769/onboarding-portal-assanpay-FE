@@ -55,7 +55,9 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const closeUnsuccessful = useCloseUnsuccessful(caseId)
 
   const [closeReason, setCloseReason] = useState('')
-  const [actionInFlight, setActionInFlight] = useState(false)
+  const [actionInFlight, setActionInFlight] = useState<
+    'primary' | 'unsuccessful' | null
+  >(null)
   const actionLockedRef = useRef(false)
 
   const isClosed = category === 'closed' || category === 'error'
@@ -72,11 +74,13 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
       caseDetail.wordpressWebsite.subMerchantLogoScreenshots.length > 0 &&
       caseDetail.testing?.internalLimitsAppliedAt,
   )
-  const actionPending =
-    actionInFlight ||
+  const successfulActionPending =
+    actionInFlight === 'primary' ||
     takeOwnership.isPending ||
-    advanceStage.isPending ||
-    closeUnsuccessful.isPending
+    advanceStage.isPending
+  const unsuccessfulActionPending =
+    actionInFlight === 'unsuccessful' || closeUnsuccessful.isPending
+  const actionPending = successfulActionPending || unsuccessfulActionPending
   const successfulActionDisabled =
     actionPending ||
     (isTestingCase && !testingLimitsApplied) ||
@@ -140,16 +144,19 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
     isNew,
   ])
 
-  async function runWorkflowAction(action: () => Promise<unknown>) {
+  async function runWorkflowAction(
+    kind: 'primary' | 'unsuccessful',
+    action: () => Promise<unknown>,
+  ) {
     if (actionPending || actionLockedRef.current) return
     actionLockedRef.current = true
-    setActionInFlight(true)
+    setActionInFlight(kind)
 
     try {
       await action()
     } finally {
       actionLockedRef.current = false
-      setActionInFlight(false)
+      setActionInFlight(null)
     }
   }
 
@@ -191,29 +198,33 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
 
         {isNew && !hasOwner ? (
           <Button
-            onClick={() => runWorkflowAction(() => takeOwnership.mutateAsync())}
+            onClick={() =>
+              runWorkflowAction('primary', () => takeOwnership.mutateAsync())
+            }
             disabled={actionPending}
           >
-            {actionPending ? (
+            {successfulActionPending ? (
               <Spinner data-icon="inline-start" />
             ) : (
               <UserRoundPlus data-icon="inline-start" />
             )}
-            {actionPending ? 'Taking ownership' : 'Take ownership'}
+            {successfulActionPending ? 'Taking ownership' : 'Take ownership'}
           </Button>
         ) : null}
 
         {isInProgress ? (
           <Button
-            onClick={() => runWorkflowAction(() => advanceStage.mutateAsync())}
+            onClick={() =>
+              runWorkflowAction('primary', () => advanceStage.mutateAsync())
+            }
             disabled={successfulActionDisabled}
           >
-            {actionPending ? (
+            {successfulActionPending ? (
               <Spinner data-icon="inline-start" />
             ) : (
               <CheckCircle2 data-icon="inline-start" />
             )}
-            {actionPending
+            {successfulActionPending
               ? pendingSuccessfulActionLabel
               : successfulActionLabel}
           </Button>
@@ -223,12 +234,12 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" disabled={actionPending}>
-                {actionPending ? (
+                {unsuccessfulActionPending ? (
                   <Spinner data-icon="inline-start" />
                 ) : (
                   <ShieldAlert data-icon="inline-start" />
                 )}
-                {actionPending ? 'Closing case' : 'Reject case'}
+                {unsuccessfulActionPending ? 'Closing case' : 'Reject case'}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -264,17 +275,17 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
                 <AlertDialogAction
                   disabled={!closeReason.trim() || actionPending}
                   onClick={() =>
-                    runWorkflowAction(() =>
+                    runWorkflowAction('unsuccessful', () =>
                       closeUnsuccessful.mutateAsync({
                         reason: closeReason.trim(),
                       }),
                     )
                   }
                 >
-                  {actionPending ? (
+                  {unsuccessfulActionPending ? (
                     <Spinner data-icon="inline-start" />
                   ) : null}
-                  {actionPending ? 'Closing case' : 'Close case'}
+                  {unsuccessfulActionPending ? 'Closing case' : 'Close case'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

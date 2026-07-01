@@ -4,11 +4,9 @@ import {
   useInfiniteQuery,
   useMutation,
   useQuery,
-  useQueryClient
-  
-  
+  useQueryClient,
 } from '@tanstack/react-query'
-import type {InfiniteData, QueryClient} from '@tanstack/react-query';
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -129,10 +127,11 @@ export function applyIncomingNotificationToCache(
   qc: QueryClient,
   notification: Notification,
 ) {
-  const prepend = (cache: ListCache | undefined): ListCache | undefined => {
+  const prepend =
+    (incrementUnreadCount: boolean) =>
+    (cache: ListCache | undefined): ListCache | undefined => {
     if (!cache) return cache
     const [first, ...rest] = cache.pages
-    if (!first) return cache
     // Avoid duplicates if id already present (e.g. event arrives during refetch)
     if (first.items.some((n) => n.id === notification.id)) return cache
     return {
@@ -141,16 +140,22 @@ export function applyIncomingNotificationToCache(
         {
           ...first,
           items: [notification, ...first.items],
-          unreadCount: first.unreadCount + (notification.isRead ? 0 : 1),
+          unreadCount: first.unreadCount + (incrementUnreadCount ? 1 : 0),
         },
         ...rest,
       ],
     }
-  }
+    }
 
-  qc.setQueryData<ListCache>(notificationsInfiniteKey('all'), prepend)
+  qc.setQueryData<ListCache>(
+    notificationsInfiniteKey('all'),
+    prepend(!notification.isRead),
+  )
   if (!notification.isRead) {
-    qc.setQueryData<ListCache>(notificationsInfiniteKey('unread'), prepend)
+    qc.setQueryData<ListCache>(
+      notificationsInfiniteKey('unread'),
+      prepend(true),
+    )
     qc.setQueryData<number>(
       NOTIFICATIONS_UNREAD_KEY,
       (current) => (current ?? 0) + 1,

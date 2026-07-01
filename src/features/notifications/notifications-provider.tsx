@@ -12,6 +12,7 @@ import {
 } from '#/hooks/use-case-detail-query'
 import { CASES_KEY } from '#/hooks/use-cases-query'
 import {
+  NOTIFICATIONS_KEY,
   NOTIFICATIONS_UNREAD_KEY,
   applyIncomingNotificationToCache,
 } from '#/hooks/use-notifications-query'
@@ -40,6 +41,17 @@ export function NotificationsProvider() {
   qcRef.current = queryClient
 
   const userId = auth.user?.id ?? null
+
+  function syncNotificationsFromServer() {
+    void Promise.all([
+      qcRef.current.invalidateQueries({
+        queryKey: NOTIFICATIONS_KEY,
+      }),
+      qcRef.current.invalidateQueries({
+        queryKey: NOTIFICATIONS_UNREAD_KEY,
+      }),
+    ])
+  }
 
   useEffect(() => {
     if (!userId) return
@@ -73,6 +85,7 @@ export function NotificationsProvider() {
         }
         showNotificationToast(notification, navigateRef.current)
       },
+      onOpen: syncNotificationsFromServer,
       onError: (err) => {
         console.warn('[notifications] SSE error', err)
       },
@@ -89,6 +102,9 @@ export function NotificationsProvider() {
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         void Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: NOTIFICATIONS_KEY,
+          }),
           queryClient.invalidateQueries({
             queryKey: NOTIFICATIONS_UNREAD_KEY,
           }),
