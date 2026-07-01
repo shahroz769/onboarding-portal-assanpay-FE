@@ -82,13 +82,7 @@ interface ResubmissionFormProps {
 }
 
 type FieldKind =
-  | 'text'
-  | 'textarea'
-  | 'email'
-  | 'url'
-  | 'date'
-  | 'select'
-  | 'combobox'
+  'text' | 'textarea' | 'email' | 'url' | 'date' | 'select' | 'combobox'
 
 type SectionKey =
   | 'submitter'
@@ -137,8 +131,8 @@ const SECTION_CONFIGS: Record<SectionKey, SectionConfig> = {
   },
   owner: {
     key: 'owner',
-    title: 'Owner Information',
-    description: 'Details of the business owner',
+    title: 'Director/CEO/Owner Information',
+    description: 'Details of the Director, CEO, or owner',
     icon: User,
     colorClass: 'bg-amber-500/10 text-amber-500',
   },
@@ -197,7 +191,7 @@ const FIELD_CONFIGS: Partial<Record<string, FieldConfig>> = {
   },
   activeWhatsappNumber: {
     kind: 'text',
-    section: 'owner',
+    section: 'submitter',
     placeholder: '03XXXXXXXXX',
   },
   businessName: {
@@ -916,9 +910,7 @@ function FieldControl({
       }
       placeholder={config.placeholder}
       aria-invalid={isInvalid}
-      autoComplete={
-        rejection.fieldName === 'businessPhone' ? 'tel' : undefined
-      }
+      autoComplete={rejection.fieldName === 'businessPhone' ? 'tel' : undefined}
     />
   )
 }

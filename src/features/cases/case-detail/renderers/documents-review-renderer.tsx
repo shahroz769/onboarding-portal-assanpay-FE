@@ -134,19 +134,21 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     description: 'Email address of the person submitting this form',
     icon: Mail,
     toneClass: 'bg-blue-500/10 text-blue-500',
-    layout: 'single',
-    fields: [{ key: 'submitterEmail', label: 'Submitter Email' }],
+    layout: 'two-column',
+    fields: [
+      { key: 'submitterEmail', label: 'Submitter Email' },
+      { key: 'activeWhatsappNumber', label: 'Active WhatsApp Number' },
+    ],
   },
   {
-    title: 'Owner Information',
-    description: 'Details of the business owner',
+    title: 'Director/CEO/Owner Information',
+    description: 'Details of the Director, CEO, or owner',
     icon: User,
     toneClass: 'bg-amber-500/10 text-amber-500',
     layout: 'two-column',
     fields: [
-      { key: 'ownerFullName', label: 'Owner Full Name' },
-      { key: 'ownerPhone', label: 'Owner Phone Number' },
-      { key: 'activeWhatsappNumber', label: 'Active WhatsApp Number' },
+      { key: 'ownerFullName', label: 'Full Name' },
+      { key: 'ownerPhone', label: 'Phone Number' },
     ],
   },
   {

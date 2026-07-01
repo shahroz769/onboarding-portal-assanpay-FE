@@ -39,9 +39,9 @@ export type DocumentsReviewSummary = {
 
 const REVIEW_FIELDS: ReviewFieldDefinition[] = [
   { key: 'submitterEmail', label: 'Submitter Email' },
-  { key: 'ownerFullName', label: 'Owner Full Name' },
-  { key: 'ownerPhone', label: 'Owner Phone Number' },
   { key: 'activeWhatsappNumber', label: 'Active WhatsApp Number' },
+  { key: 'ownerFullName', label: 'Full Name' },
+  { key: 'ownerPhone', label: 'Phone Number' },
   { key: 'businessName', label: 'Business Name' },
   { key: 'businessPhone', label: 'Business Phone Number' },
   { key: 'businessEmail', label: 'Business Email' },

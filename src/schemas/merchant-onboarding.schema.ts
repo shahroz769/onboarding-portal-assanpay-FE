@@ -113,11 +113,11 @@ export const merchantOnboardingSchema = z.object({
     .string()
     .min(1, 'Submitter email is required.')
     .email('Must be a valid email address.'),
+  activeWhatsappNumber: localMobileNumberSchema,
 
   // Section 2: Owner
   ownerFullName: z.string().min(1, 'Owner full name is required.'),
   ownerPhone: localMobileNumberSchema,
-  activeWhatsappNumber: localMobileNumberSchema,
 
   // Section 3: Business Information
   businessName: z.string().min(1, 'Business name is required.'),
@@ -181,6 +181,7 @@ export type DocumentFieldName =
   | 'owner_cnic_back'
   | 'next_of_kin_cnic_front'
   | 'next_of_kin_cnic_back'
+  | 'utility_bill'
   | 'company_ntn'
   | 'authority_letter'
   | 'taxpayer_registration_certificate'
@@ -204,6 +205,7 @@ export const DOCUMENT_LABELS: Record<DocumentFieldName, string> = {
   owner_cnic_back: 'Owner CNIC Back',
   next_of_kin_cnic_front: 'Next Of Kin CNIC Front',
   next_of_kin_cnic_back: 'Next Of Kin CNIC Back',
+  utility_bill: 'Utility Bill',
   company_ntn: 'Company NTN',
   authority_letter: 'Authority Letter',
   taxpayer_registration_certificate: 'Taxpayer Registration Certificate',
@@ -228,6 +230,7 @@ export const BASE_DOCUMENTS: DocumentFieldName[] = [
   'owner_cnic_back',
   'next_of_kin_cnic_front',
   'next_of_kin_cnic_back',
+  'utility_bill',
 ]
 
 type MerchantTypeKey = (typeof MERCHANT_TYPES)[number]['value']

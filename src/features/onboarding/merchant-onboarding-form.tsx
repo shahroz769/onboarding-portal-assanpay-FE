@@ -428,7 +428,7 @@ export function MerchantOnboardingForm({
           </div>
         </CardHeader>
         <CardContent>
-          <FieldGroup>
+          <FieldGroup className="grid gap-6 sm:grid-cols-2">
             <form.Field
               name="email"
               children={(field) => {
@@ -448,88 +448,6 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="email@example.com"
                       autoComplete="email"
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                )
-              }}
-            />
-          </FieldGroup>
-        </CardContent>
-      </Card>
-
-      {/* Section 2: Owner Information */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={User}
-              colorClass="bg-amber-500/10 text-amber-500"
-            />
-            <div>
-              <CardTitle>Owner Information</CardTitle>
-              <CardDescription>Details of the business owner</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="ownerFullName"
-              children={(field) => {
-                const isInvalid = getIsInvalid(field)
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Owner Full Name *
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="Enter owner's full name"
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                )
-              }}
-            />
-
-            <form.Field
-              name="ownerPhone"
-              children={(field) => {
-                const isInvalid = getIsInvalid(field)
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Owner Phone Number *
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="tel"
-                      inputMode="numeric"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(
-                          getNumericInputValue(event.target.value, false).slice(
-                            0,
-                            11,
-                          ),
-                        )
-                      }
-                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
-                      aria-invalid={isInvalid}
-                      placeholder="03XXXXXXXXX"
-                      autoComplete="tel"
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
@@ -575,11 +493,11 @@ export function MerchantOnboardingForm({
                 )
               }}
             />
-          </div>
+          </FieldGroup>
         </CardContent>
       </Card>
 
-      {/* Section 3: Business Information */}
+      {/* Section 2: Business Information */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -881,7 +799,7 @@ export function MerchantOnboardingForm({
         </CardContent>
       </Card>
 
-      {/* Section 4: Business Classification */}
+      {/* Section 3: Business Classification */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -1010,7 +928,7 @@ export function MerchantOnboardingForm({
         </CardContent>
       </Card>
 
-      {/* Section 5: Financial Information */}
+      {/* Section 4: Financial Information */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -1161,6 +1079,86 @@ export function MerchantOnboardingForm({
                     <FieldDescription>
                       Required only for international transfers.
                     </FieldDescription>
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                )
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 5: Director/CEO/Owner Information */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <SectionIcon
+              icon={User}
+              colorClass="bg-amber-500/10 text-amber-500"
+            />
+            <div>
+              <CardTitle>Director/CEO/Owner Information</CardTitle>
+              <CardDescription>
+                Details of the Director, CEO, or owner
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <form.Field
+              name="ownerFullName"
+              children={(field) => {
+                const isInvalid = getIsInvalid(field)
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Full Name *</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="Enter full name"
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                )
+              }}
+            />
+
+            <form.Field
+              name="ownerPhone"
+              children={(field) => {
+                const isInvalid = getIsInvalid(field)
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Phone Number *</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="tel"
+                      inputMode="numeric"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(
+                          getNumericInputValue(event.target.value, false).slice(
+                            0,
+                            11,
+                          ),
+                        )
+                      }
+                      onKeyDown={(event) => handleNumericKeyDown(event, false)}
+                      aria-invalid={isInvalid}
+                      placeholder="03XXXXXXXXX"
+                      autoComplete="tel"
+                    />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
@@ -1357,11 +1355,7 @@ export function MerchantOnboardingForm({
         </Alert>
       ) : null}
       <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={resetFormState}
-        >
+        <Button type="button" variant="outline" onClick={resetFormState}>
           Reset
         </Button>
         <form.Subscribe

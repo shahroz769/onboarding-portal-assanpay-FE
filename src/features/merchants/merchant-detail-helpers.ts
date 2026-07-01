@@ -1,15 +1,12 @@
 import {
+  DOCUMENT_LABELS,
   KIN_RELATIONS,
   MERCHANT_TYPES,
   WEBSITE_CMS_OPTIONS,
-  DOCUMENT_LABELS,
 } from '#/schemas/merchant-onboarding.schema'
-import type { DocumentFieldName } from '#/schemas/merchant-onboarding.schema'
-import {
-  MERCHANT_STATUS_DISPLAY,
-  type MerchantStatus,
-} from '#/schemas/merchants.schema'
-import { CASE_STATUS_LABELS, type CaseStatus } from '#/schemas/cases.schema'
+import type { MerchantStatus } from '#/schemas/merchants.schema'
+import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
+import { MERCHANT_STATUS_DISPLAY } from '#/schemas/merchants.schema'
 
 // ─── Label Maps ─────────────────────────────────────────────────────────────
 
@@ -24,6 +21,8 @@ const websiteCmsLabels = Object.fromEntries(
 const kinRelationLabels = Object.fromEntries(
   KIN_RELATIONS.map((option) => [option.value, option.label]),
 ) as Record<string, string>
+const documentLabels = DOCUMENT_LABELS as Record<string, string>
+const caseStatusLabels = CASE_STATUS_LABELS as Record<string, string>
 
 export function merchantTypeLabel(value: string) {
   return merchantTypeLabels[value] ?? humanize(value)
@@ -38,15 +37,15 @@ export function kinRelationLabel(value: string) {
 }
 
 export function documentTypeLabel(value: string) {
-  return DOCUMENT_LABELS[value as DocumentFieldName] ?? humanize(value)
+  return documentLabels[value] ?? humanize(value)
 }
 
 export function merchantStatusLabel(value: MerchantStatus) {
-  return MERCHANT_STATUS_DISPLAY[value] ?? humanize(value)
+  return MERCHANT_STATUS_DISPLAY[value]
 }
 
 export function caseStatusLabel(value: string) {
-  return CASE_STATUS_LABELS[value as CaseStatus] ?? humanize(value)
+  return caseStatusLabels[value] ?? humanize(value)
 }
 
 // ─── Generic Humanizer ──────────────────────────────────────────────────────
