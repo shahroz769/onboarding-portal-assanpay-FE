@@ -36,7 +36,6 @@ let failedQueue: {
   resolve: (token: string) => void
   reject: (error: unknown) => void
 }[] = []
-const isBrowser = typeof window !== 'undefined'
 
 function processQueue(error: unknown, token: string | null) {
   for (const pending of failedQueue) {
@@ -95,10 +94,6 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null)
       authClient?.clear()
-
-      if (!isBrowser) {
-        return Promise.reject(refreshError)
-      }
 
       const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
 

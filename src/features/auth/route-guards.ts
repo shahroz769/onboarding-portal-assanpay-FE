@@ -16,7 +16,10 @@ export async function requireAuthSession(params: {
   }
 
   if (import.meta.env.SSR) {
-    return
+    throw redirect({
+      to: '/login',
+      search: { redirect: sanitizeRedirect(params.redirectTo) },
+    })
   }
 
   try {

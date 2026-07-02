@@ -28,7 +28,6 @@ import {
 } from '#/components/ui/sidebar'
 
 export const Route = createFileRoute('/_app')({
-  ssr: false,
   beforeLoad: async ({ location, context }) => {
     await requireAuthSession({
       auth: context.auth,
