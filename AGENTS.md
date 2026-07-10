@@ -1,11 +1,10 @@
 work on both frontend and backend
-do not install node modules in hono
-hono folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
+do not run builds on frontend and backend unless specified
+C:\Users\shahr\Desktop\Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 use tanstack docs latest
 tanstack query
-use react composiiton patterns, best practices skills
+use vercel react composiiton patterns, react best practices skills
 use shadcn skills, shadcn components everytime
-use zustand only when needed
 use zod
 always use latest docs for libraries
 
