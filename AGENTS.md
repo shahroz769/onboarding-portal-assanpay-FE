@@ -4,6 +4,10 @@ C:\Users\shahr\Desktop\Onboarding Portal\onboarding-portal-assanpay-BE folder co
 tanstack query
 use vercel react composiiton patterns, react best practices skills on frontend
 use shadcn skills, shadcn components everytime UI is needed to be built
+Use Bun and Hono docs. Best practices from docs
+Use postgres best practices
+Use Hono docs https://hono.dev/docs
+Use Drizzle docs https://orm.drizzle.team/docs/overview
 
 <!-- intent-skills:start -->
 
