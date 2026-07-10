@@ -30,11 +30,11 @@ function RouteComponent() {
   const { user: currentUser } = useAuth()
   const { data: user } = useSuspenseQuery(userQueryOptions(userId))
   const updateUserMutation = useUpdateUserMutation(userId)
-  const supervisorViewingAdmin =
-    currentUser?.roleType === 'supervisor' && user.roleType === 'admin'
+  const adminViewingSuperAdmin =
+    currentUser?.roleType === 'admin' && user.roleType === 'super_admin'
 
   const handleSubmit = async (value: UserFormValues) => {
-    if (supervisorViewingAdmin) return
+    if (adminViewingSuperAdmin) return
 
     const { email, username, ...input } = value
     void email
@@ -48,10 +48,10 @@ function RouteComponent() {
       mode="edit"
       user={user}
       onSubmit={handleSubmit}
-      disabled={supervisorViewingAdmin}
+      disabled={adminViewingSuperAdmin}
       disabledReason={
-        supervisorViewingAdmin
-          ? 'Supervisors cannot edit admin users.'
+        adminViewingSuperAdmin
+          ? 'Admins cannot edit Super Admin users.'
           : undefined
       }
     />

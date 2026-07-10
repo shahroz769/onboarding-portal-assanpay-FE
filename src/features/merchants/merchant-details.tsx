@@ -38,7 +38,8 @@ export function MerchantDetails({ merchantId }: MerchantDetailsProps) {
     merchantDetailQueryOptions(merchantId),
   )
   const { user } = useAuth()
-  const canEdit = user?.roleType === 'admin' || user?.roleType === 'supervisor'
+  const canEdit =
+    user?.roleType === 'super_admin' || user?.roleType === 'admin'
 
   if (isPending || !detail) {
     return <MerchantDetailsSkeleton />

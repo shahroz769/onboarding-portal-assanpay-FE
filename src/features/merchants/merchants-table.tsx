@@ -94,8 +94,8 @@ function BulkActions() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
   const canEditPriority =
-    state.userRole === 'admin' || state.userRole === 'supervisor'
-  const canTerminate = state.userRole === 'admin'
+    state.userRole === 'super_admin' || state.userRole === 'admin'
+  const canTerminate = state.userRole === 'super_admin'
 
   return (
     <DataTableSelectionInfo

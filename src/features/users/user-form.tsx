@@ -260,22 +260,22 @@ export function UserForm({
   const queuesQuery = useQuery(queuesQueryOptions())
   const resetPasswordMutation = useSendUserResetPasswordMutation()
   const queues = queuesQuery.data ?? []
-  const isAdminUser = user?.roleType === 'admin'
-  const isRoleLocked = mode === 'edit' && isAdminUser
+  const isSuperAdminUser = user?.roleType === 'super_admin'
+  const isRoleLocked = mode === 'edit' && isSuperAdminUser
 
   const roleOptions = useMemo(() => {
     const editableRoles = new Set<UserFormValues['roleType']>(
-      currentUser?.roleType === 'admin'
-        ? (['supervisor', 'agent'] as const)
+      currentUser?.roleType === 'super_admin'
+        ? (['admin', 'agent'] as const)
         : (['agent'] as const),
     )
 
-    if (isAdminUser) {
-      return roleTypes.filter((role) => role === 'admin')
+    if (isSuperAdminUser) {
+      return roleTypes.filter((role) => role === 'super_admin')
     }
 
     return roleTypes.filter((role) => editableRoles.has(role))
-  }, [currentUser?.roleType, isAdminUser])
+  }, [currentUser?.roleType, isSuperAdminUser])
 
   const form = useForm({
     defaultValues: getDefaultValues(user),

@@ -1,13 +1,6 @@
 work on both frontend and backend
 do not run builds on frontend and backend unless specified
 C:\Users\shahr\Desktop\Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
-tanstack query
-use vercel react composiiton patterns, react best practices skills on frontend
-use shadcn skills, shadcn components everytime UI is needed to be built
-Use Bun and Hono docs. Best practices from docs
-Use postgres best practices
-Use Hono docs https://hono.dev/docs
-Use Drizzle docs https://orm.drizzle.team/docs/overview
 
 <!-- intent-skills:start -->
 

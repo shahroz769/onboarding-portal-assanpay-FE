@@ -53,7 +53,8 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   const csv = data.portalMids.csv
   const appliedCsv = data.portalMids.appliedCsv
   const appliedCount = data.portalMids.appliedLimits.length
-  const canApply = user?.roleType === 'admin' || user?.roleType === 'supervisor'
+  const canApply =
+    user?.roleType === 'super_admin' || user?.roleType === 'admin'
   const [open, setOpen] = useState(false)
   const [appliedOpen, setAppliedOpen] = useState(false)
   const [value, setValue] = useState('')
@@ -167,9 +168,9 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             {!canApply ? (
               <Alert>
                 <ShieldCheck />
-                <AlertTitle>Admin or supervisor required</AlertTitle>
+                <AlertTitle>Super Admin or Admin required</AlertTitle>
                 <AlertDescription>
-                  Only admins and supervisors can mark portal MID limits as
+                  Only Super Admins and Admins can mark portal MID limits as
                   applied.
                 </AlertDescription>
               </Alert>
@@ -202,9 +203,9 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             {!canApply ? (
               <Alert>
                 <ShieldCheck />
-                <AlertTitle>Admin or supervisor required</AlertTitle>
+                <AlertTitle>Super Admin or Admin required</AlertTitle>
                 <AlertDescription>
-                  Only admins and supervisors can mark portal MID limits as
+                  Only Super Admins and Admins can mark portal MID limits as
                   applied or pre-applied.
                 </AlertDescription>
               </Alert>

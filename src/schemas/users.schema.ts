@@ -5,8 +5,8 @@ import { roleTypes } from '#/types/auth'
 export { roleTypes }
 
 export const USER_ROLE_LABELS = {
+  super_admin: 'Super Admin',
   admin: 'Admin',
-  supervisor: 'Supervisor',
   agent: 'Agent',
 } as const
 

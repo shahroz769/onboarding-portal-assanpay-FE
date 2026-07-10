@@ -58,7 +58,7 @@ const navItems: NavItem[] = [
     title: 'User Management',
     url: '/user-management',
     icon: Users,
-    roles: ['admin', 'supervisor'],
+    roles: ['super_admin', 'admin'],
     items: [
       {
         title: 'All Users',
@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
     url: '/configuration/limits-and-mdr',
     activePrefix: '/configuration',
     icon: Settings2,
-    roles: ['admin'],
+    roles: ['super_admin'],
   },
 ]
 

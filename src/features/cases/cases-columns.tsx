@@ -176,7 +176,7 @@ export function createCaseColumns({
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
   const isSomeSelected =
     !isAllSelected && allIds.some((id) => selectedIds.has(id))
-  const canEdit = userRole === 'admin' || userRole === 'supervisor'
+  const canEdit = userRole === 'super_admin' || userRole === 'admin'
 
   return [
     // Select

@@ -176,7 +176,7 @@ function CasesTableProvider({
   const loadedCount = flatData.length
   const assignableIds = useMemo(
     () =>
-      userRole === 'admin' || userRole === 'supervisor'
+      userRole === 'super_admin' || userRole === 'admin'
         ? flatData
             .filter(
               (item) =>

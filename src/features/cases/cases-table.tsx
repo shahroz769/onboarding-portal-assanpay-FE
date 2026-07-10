@@ -137,7 +137,7 @@ function BulkActions() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const canAssign =
-    state.userRole === 'admin' || state.userRole === 'supervisor'
+    state.userRole === 'super_admin' || state.userRole === 'admin'
 
   return (
     <DataTableSelectionInfo

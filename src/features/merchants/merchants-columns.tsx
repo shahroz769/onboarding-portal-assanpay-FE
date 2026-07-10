@@ -76,8 +76,8 @@ export function createMerchantColumns({
   onPriorityClick,
   onTerminateClick,
 }: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
-  const canEdit = userRole === 'admin' || userRole === 'supervisor'
-  const canTerminate = userRole === 'admin'
+  const canEdit = userRole === 'super_admin' || userRole === 'admin'
+  const canTerminate = userRole === 'super_admin'
 
   const isAllSelected =
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
