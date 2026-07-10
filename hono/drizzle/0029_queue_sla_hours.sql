@@ -1,1 +1,0 @@
-ALTER TABLE "queues" ADD COLUMN IF NOT EXISTS "sla_hours" integer DEFAULT 24 NOT NULL;
