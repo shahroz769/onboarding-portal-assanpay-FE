@@ -7,8 +7,8 @@ import { useAuth } from '#/features/auth/auth-client'
 import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
-  usersQueryOptions,
 } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 export const CLOSED_CASES_STATUS_FILTER = ['closed', 'error'].join(',')

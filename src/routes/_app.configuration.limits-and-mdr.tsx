@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { LimitsAndMdrPanel } from '#/features/configuration/configuration-panels'
+import { LimitsAndMdrPanel } from '#/features/configuration/panels/limits-and-mdr-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/limits-and-mdr')({

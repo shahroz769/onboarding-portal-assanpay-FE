@@ -1,4 +1,6 @@
 import { API_BASE_URL } from '#/lib/api-client'
+import { isTerminalSessionRefreshError } from '#/features/auth/session-refresh'
+import { notificationSchema } from '#/schemas/notifications.schema'
 import type { Notification } from '#/schemas/notifications.schema'
 
 type Listener = (notification: Notification) => void
@@ -7,10 +9,11 @@ const INITIAL_CONNECT_DELAY_MS = import.meta.env.DEV ? 250 : 0
 
 interface SubscribeOptions {
   getAccessToken: () => string | null
-  refreshAccessToken: () => Promise<string | null>
+  refreshAccessToken: () => Promise<string>
   onEvent: Listener
   onOpen?: () => void
   onError?: (err: unknown) => void
+  onInvalidEvent?: () => void
 }
 
 /**
@@ -27,6 +30,13 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let initialConnectTimer: ReturnType<typeof setTimeout> | null = null
   let attempts = 0
+  let invalidEventReported = false
+
+  function reportInvalidEvent() {
+    if (invalidEventReported) return
+    invalidEventReported = true
+    options.onInvalidEvent?.()
+  }
 
   function scheduleReconnect() {
     if (stopped || paused) return
@@ -82,10 +92,15 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
       })
 
       if (response.status === 401) {
-        token = await options.refreshAccessToken()
-        if (!token) {
-          stopped = true
-          return
+        try {
+          token = await options.refreshAccessToken()
+        } catch (error) {
+          if (isTerminalSessionRefreshError(error)) {
+            stopped = true
+            options.onError?.(error)
+            return
+          }
+          throw error
         }
         attempts = 0
         return connect()
@@ -96,6 +111,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
       }
 
       attempts = 0
+      invalidEventReported = false
       options.onOpen?.()
 
       const reader = response.body
@@ -152,10 +168,14 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
     const data = dataLines.join('\n')
     if (!data) return
     try {
-      const parsed = JSON.parse(data) as Notification
-      options.onEvent(parsed)
-    } catch (err) {
-      console.error('[notifications-sse] failed to parse event', err)
+      const parsed = notificationSchema.safeParse(JSON.parse(data))
+      if (!parsed.success) {
+        reportInvalidEvent()
+        return
+      }
+      options.onEvent(parsed.data)
+    } catch {
+      reportInvalidEvent()
     }
   }
 

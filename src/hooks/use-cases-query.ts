@@ -15,7 +15,6 @@ import {
   fetchQueues,
   updateCasePriority,
 } from '#/apis/cases'
-import { fetchUsers } from '#/apis/users'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { CaseFilters } from '#/schemas/cases.schema'
 
@@ -23,7 +22,6 @@ export const CASES_KEY = ['cases'] as const
 export const CASES_PAGE_SIZE = 30
 
 export const QUEUES_KEY = ['queues'] as const
-export const USERS_KEY = ['users'] as const
 
 /** Build a stable infinite-query key from filters. */
 export function casesInfiniteKey(filters: CaseFilters) {
@@ -53,14 +51,6 @@ export function queuesQueryOptions(
     queryKey: [...QUEUES_KEY, options],
     queryFn: () => fetchQueues(options),
     staleTime: 5 * 60_000, // 5 minutes — queues rarely change
-  })
-}
-
-export function usersQueryOptions() {
-  return queryOptions({
-    queryKey: [...USERS_KEY],
-    queryFn: () => fetchUsers(),
-    staleTime: 5 * 60_000,
   })
 }
 

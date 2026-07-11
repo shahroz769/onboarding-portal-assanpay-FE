@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { QueuesPanel } from '#/features/configuration/configuration-panels'
+import { QueuesPanel } from '#/features/configuration/panels/queues-panel'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 

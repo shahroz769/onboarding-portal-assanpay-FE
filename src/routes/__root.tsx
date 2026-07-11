@@ -1,17 +1,14 @@
+import { lazy, Suspense } from 'react'
 import {
   HeadContent,
   Scripts,
   Link,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import { ThemeProvider } from '#/components/theme-provider'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
@@ -21,6 +18,10 @@ interface MyRouterContext {
   queryClient: QueryClient
   auth: AuthClient
 }
+
+const AppTanStackDevtools = import.meta.env.DEV
+  ? lazy(() => import('../integrations/tanstack-devtools'))
+  : null
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
@@ -62,18 +63,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           {children}
           <Toaster richColors position="bottom-right" />
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
+          {AppTanStackDevtools ? (
+            <Suspense fallback={null}>
+              <AppTanStackDevtools />
+            </Suspense>
+          ) : null}
         </ThemeProvider>
         <Scripts />
       </body>

@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { refreshSessionRequest } from '#/apis/auth'
 import { useAuth } from '#/features/auth/auth-client'
+import { refreshSession } from '#/features/auth/session-refresh'
 import {
   CASE_COMMENTS_KEY,
   CASE_DETAIL_KEY,
@@ -60,13 +60,8 @@ export function NotificationsProvider() {
       getAccessToken: () =>
         router.options.context.auth.getSnapshot().accessToken,
       refreshAccessToken: async () => {
-        try {
-          const data = await refreshSessionRequest()
-          router.options.context.auth.setSession(data)
-          return data.accessToken
-        } catch {
-          return null
-        }
+        const data = await refreshSession(router.options.context.auth)
+        return data.accessToken
       },
       onEvent: (notification: Notification) => {
         applyIncomingNotificationToCache(qcRef.current, notification)
@@ -86,6 +81,7 @@ export function NotificationsProvider() {
         showNotificationToast(notification, navigateRef.current)
       },
       onOpen: syncNotificationsFromServer,
+      onInvalidEvent: syncNotificationsFromServer,
       onError: (err) => {
         console.warn('[notifications] SSE error', err)
       },

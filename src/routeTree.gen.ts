@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingFormRouteImport } from './routes/onboarding-form'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as OnboardingFormIndexRouteImport } from './routes/onboarding-form.index'
@@ -50,11 +49,6 @@ import { Route as AppUserManagementUsersUserIdRouteImport } from './routes/_app.
 const OnboardingFormRoute = OnboardingFormRouteImport.update({
   id: '/onboarding-form',
   path: '/onboarding-form',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -251,7 +245,6 @@ const AppUserManagementUsersUserIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/cases': typeof AppCasesRouteWithChildren
   '/configuration': typeof AppConfigurationRouteWithChildren
@@ -288,7 +281,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/set-password/$token': typeof SetPasswordTokenRoute
   '/': typeof AppIndexRoute
   '/onboarding-form': typeof OnboardingFormIndexRoute
@@ -323,7 +315,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/onboarding-form': typeof OnboardingFormRouteWithChildren
   '/_app/cases': typeof AppCasesRouteWithChildren
   '/_app/configuration': typeof AppConfigurationRouteWithChildren
@@ -364,7 +355,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/mcp'
     | '/onboarding-form'
     | '/cases'
     | '/configuration'
@@ -401,7 +391,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
-    | '/mcp'
     | '/set-password/$token'
     | '/'
     | '/onboarding-form'
@@ -435,7 +424,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/login'
-    | '/mcp'
     | '/onboarding-form'
     | '/_app/cases'
     | '/_app/configuration'
@@ -475,7 +463,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
-  McpRoute: typeof McpRoute
   OnboardingFormRoute: typeof OnboardingFormRouteWithChildren
   SetPasswordTokenRoute: typeof SetPasswordTokenRoute
 }
@@ -487,13 +474,6 @@ declare module '@tanstack/react-router' {
       path: '/onboarding-form'
       fullPath: '/onboarding-form'
       preLoaderRoute: typeof OnboardingFormRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -867,7 +847,6 @@ const OnboardingFormRouteWithChildren = OnboardingFormRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
-  McpRoute: McpRoute,
   OnboardingFormRoute: OnboardingFormRouteWithChildren,
   SetPasswordTokenRoute: SetPasswordTokenRoute,
 }

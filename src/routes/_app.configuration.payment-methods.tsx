@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { PaymentMethodsPanel } from '#/features/configuration/configuration-panels'
+import { PaymentMethodsPanel } from '#/features/configuration/panels/payment-methods-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/payment-methods')({

@@ -502,12 +502,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     }
 
     if (primaryAction.actionKind === 'mark-successful') {
+      const selectedSubMerchant =
+        documentsReviewDraft?.selectedSubMerchantId ||
+        caseDetail.documentReview?.subMerchantName.trim()
+
       if (
         caseDetail.queue.slug === 'documents-review' &&
-        !(
-          documentsReviewDraft?.selectedSubMerchantId ||
-          caseDetail.documentReview.subMerchantName.trim()
-        )
+        !selectedSubMerchant
       ) {
         toast.error(
           'Select the sub-merchant name before marking this case as successful.',

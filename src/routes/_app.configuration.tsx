@@ -12,8 +12,12 @@ import {
 } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
+import { requireAllowedRoles } from '#/features/auth/route-guards'
 
 export const Route = createFileRoute('/_app/configuration')({
+  beforeLoad: ({ context }) => {
+    requireAllowedRoles(context.auth, ['super_admin'])
+  },
   staticData: {
     title: 'Configuration',
     subtitle: 'Manage portal-wide workflow and onboarding settings.',

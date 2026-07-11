@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { AgreementsPanel } from '#/features/configuration/configuration-panels'
+import { AgreementsPanel } from '#/features/configuration/panels/agreements-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/agreements')({

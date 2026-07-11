@@ -53,14 +53,14 @@ export async function redirectAuthenticatedUser(params: {
   throw redirect({ href: sanitizeRedirect(params.redirectTo) })
 }
 
-export function requireRoleAccess(
+export function requireAllowedRoles(
   auth: AuthClient,
-  blockedRoles: RoleType[],
+  allowedRoles: readonly RoleType[],
   fallbackTo = '/',
 ) {
   const roleType = auth.getSnapshot().user?.roleType
 
-  if (roleType && blockedRoles.includes(roleType)) {
+  if (!roleType || !allowedRoles.includes(roleType)) {
     throw redirect({ to: fallbackTo })
   }
 }

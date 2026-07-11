@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { SubMerchantsPanel } from '#/features/configuration/configuration-panels'
+import { SubMerchantsPanel } from '#/features/configuration/panels/sub-merchants-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/sub-merchants')({

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { LinkDeadlinesPanel } from '#/features/configuration/configuration-panels'
+import { LinkDeadlinesPanel } from '#/features/configuration/panels/link-deadlines-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/link-deadlines')({

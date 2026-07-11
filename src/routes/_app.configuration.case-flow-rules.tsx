@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { CaseFlowRulesPanel } from '#/features/configuration/configuration-panels'
+import { CaseFlowRulesPanel } from '#/features/configuration/panels/case-flow-rules-panel'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { caseFlowConfigurationQueryOptions } from '#/hooks/use-configuration-query'
 

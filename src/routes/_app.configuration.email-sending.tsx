@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { EmailSendingModePanel } from '#/features/configuration/configuration-panels'
+import { EmailSendingModePanel } from '#/features/configuration/panels/email-sending-mode-panel'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/email-sending')({

@@ -29,10 +29,8 @@ import {
   PopoverTrigger,
 } from '#/components/ui/popover'
 import { Spinner } from '#/components/ui/spinner'
-import {
-  useAssignCaseMutation,
-  usersQueryOptions,
-} from '#/hooks/use-cases-query'
+import { useAssignCaseMutation } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 
 interface CaseAssignOwnerDialogProps {
   open: boolean

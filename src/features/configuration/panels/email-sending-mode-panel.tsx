@@ -1,0 +1,146 @@
+import { useState } from 'react'
+
+import { useQuery } from '@tanstack/react-query'
+
+import { Mail, Save } from 'lucide-react'
+
+import { Button } from '#/components/ui/button'
+
+import { Checkbox } from '#/components/ui/checkbox'
+
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '#/components/ui/field'
+
+import { Spinner } from '#/components/ui/spinner'
+
+import {
+  configurationQueryOptions,
+  useUpdateEmailSendingModeMutation,
+} from '#/hooks/use-configuration-query'
+
+import type { EmailSendingMode } from '#/schemas/configuration.schema'
+
+import { emailSendingModeSchema } from '#/schemas/configuration.schema'
+
+import {
+  ConfigurationActionBar,
+  ConfigurationSectionCard,
+  PanelLoading,
+} from './configuration-panel-shared'
+
+// ─── Email Sending Mode ───────────────────────────────────────────────────────
+export function EmailSendingModePanel() {
+  const { data, isPending } = useQuery(configurationQueryOptions())
+  const mutation = useUpdateEmailSendingModeMutation()
+  const [form, setForm] = useState<EmailSendingMode | null>(null)
+  const value = form ?? data?.emailSendingMode ?? null
+  const validationResult = value
+    ? emailSendingModeSchema.safeParse(value)
+    : null
+  const hasError = validationResult ? !validationResult.success : false
+  const bothDisabledError =
+    value && !value.autoEnabled && !value.manualEnabled
+      ? 'At least one mode must be enabled.'
+      : null
+  function setMode(field: keyof EmailSendingMode, checked: boolean) {
+    setForm((prev) => {
+      const current = prev ??
+        data?.emailSendingMode ?? {
+          autoEnabled: true,
+          manualEnabled: true,
+        }
+      const next = { ...current, [field]: checked }
+      if (!next.autoEnabled && !next.manualEnabled) {
+        return {
+          ...next,
+          [field === 'autoEnabled' ? 'manualEnabled' : 'autoEnabled']: true,
+        }
+      }
+      return next
+    })
+  }
+  function handleSave() {
+    if (!value || hasError) return
+    mutation.mutate(value)
+  }
+  if (isPending || !value) {
+    return <PanelLoading />
+  }
+  return (
+    <ConfigurationSectionCard
+      icon={Mail}
+      colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      title="Email Sending"
+      description="Choose how case emails are sent from the portal."
+    >
+      <FieldGroup>
+        <FieldSet>
+          <FieldLegend>Email Sending Mode</FieldLegend>
+
+          <Field orientation="horizontal">
+            <Checkbox
+              id="email-mode-auto"
+              checked={value.autoEnabled}
+              onCheckedChange={(checked) => {
+                if (typeof checked === 'boolean') {
+                  setMode('autoEnabled', checked)
+                }
+              }}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="email-mode-auto">Auto (Resend)</FieldLabel>
+              <FieldDescription>
+                Emails are sent automatically through Resend when triggered.
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+
+          <Field orientation="horizontal">
+            <Checkbox
+              id="email-mode-manual"
+              checked={value.manualEnabled}
+              onCheckedChange={(checked) => {
+                if (typeof checked === 'boolean') {
+                  setMode('manualEnabled', checked)
+                }
+              }}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="email-mode-manual">
+                Manual (Gmail)
+              </FieldLabel>
+              <FieldDescription>
+                Agent receives subject and body to copy-paste and send from
+                Gmail manually.
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+
+          <FieldError>{bothDisabledError}</FieldError>
+        </FieldSet>
+
+        <ConfigurationActionBar>
+          <Button
+            disabled={mutation.isPending || hasError || !form}
+            onClick={handleSave}
+          >
+            {mutation.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Save data-icon="inline-start" />
+            )}
+            Save email mode
+          </Button>
+        </ConfigurationActionBar>
+      </FieldGroup>
+    </ConfigurationSectionCard>
+  )
+}

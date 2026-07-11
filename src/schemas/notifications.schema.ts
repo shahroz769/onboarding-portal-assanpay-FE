@@ -43,6 +43,16 @@ export const unreadCountResponseSchema = z.object({
   count: z.number().int().nonnegative(),
 })
 
+export const markNotificationReadResponseSchema = z.object({
+  id: z.string().uuid(),
+  isRead: z.boolean(),
+  readAt: z.string().nullable(),
+})
+
+export const markAllNotificationsReadResponseSchema = z.object({
+  updated: z.number().int().nonnegative(),
+})
+
 export type NotificationFilter = 'all' | 'unread'
 
 export const NOTIFICATIONS_PAGE_SIZE = 20

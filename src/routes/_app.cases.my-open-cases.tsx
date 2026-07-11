@@ -7,8 +7,8 @@ import { useAuth } from '#/features/auth/auth-client'
 import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
-  usersQueryOptions,
 } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter(

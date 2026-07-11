@@ -19,8 +19,8 @@ import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
   useBulkAssignCasesMutation,
-  usersQueryOptions,
 } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {

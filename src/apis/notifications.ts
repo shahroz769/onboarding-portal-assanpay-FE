@@ -1,5 +1,11 @@
 import { apiClient } from '#/lib/api-client'
-import { NOTIFICATIONS_PAGE_SIZE } from '#/schemas/notifications.schema'
+import {
+  markAllNotificationsReadResponseSchema,
+  markNotificationReadResponseSchema,
+  notificationsListResponseSchema,
+  NOTIFICATIONS_PAGE_SIZE,
+  unreadCountResponseSchema,
+} from '#/schemas/notifications.schema'
 import type {
   NotificationFilter,
   NotificationsListResponse,
@@ -22,32 +28,21 @@ export async function fetchNotifications(
     query.cursor = params.cursor
   }
 
-  const response = await apiClient.get<NotificationsListResponse>(
-    '/api/notifications',
-    { params: query },
-  )
-  return response.data
+  const response = await apiClient.get('/api/notifications', { params: query })
+  return notificationsListResponseSchema.parse(response.data)
 }
 
 export async function fetchUnreadCount(): Promise<number> {
-  const response = await apiClient.get<{ count: number }>(
-    '/api/notifications/unread-count',
-  )
-  return response.data.count
+  const response = await apiClient.get('/api/notifications/unread-count')
+  return unreadCountResponseSchema.parse(response.data).count
 }
 
 export async function markNotificationRead(id: string) {
-  const response = await apiClient.patch<{
-    id: string
-    isRead: boolean
-    readAt: string
-  }>(`/api/notifications/${id}/read`)
-  return response.data
+  const response = await apiClient.patch(`/api/notifications/${id}/read`)
+  return markNotificationReadResponseSchema.parse(response.data)
 }
 
 export async function markAllNotificationsRead() {
-  const response = await apiClient.patch<{ updated: number }>(
-    '/api/notifications/read-all',
-  )
-  return response.data
+  const response = await apiClient.patch('/api/notifications/read-all')
+  return markAllNotificationsReadResponseSchema.parse(response.data)
 }

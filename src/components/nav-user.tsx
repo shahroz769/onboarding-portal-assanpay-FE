@@ -35,13 +35,12 @@ export function NavUser({
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
+      await navigate({ to: '/login' })
     } catch {
       toast.error(
-        "We couldn't log you out cleanly, but your local session was cleared.",
+        'Logout failed. Your session is still active; please try again.',
       )
     }
-
-    navigate({ to: '/login' })
   }
 
   const initials = user.name

@@ -6,8 +6,8 @@ import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
-  usersQueryOptions,
 } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 export const Route = createFileRoute('/_app/cases/all-cases')({

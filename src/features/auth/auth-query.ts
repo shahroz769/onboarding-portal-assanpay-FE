@@ -2,15 +2,16 @@ import { queryOptions, useMutation } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 
-import { loginRequest, logoutRequest, refreshSessionRequest } from '#/apis/auth'
+import { loginRequest, logoutRequest } from '#/apis/auth'
 import type { AuthClient } from '#/features/auth/auth-client'
+import { refreshSession } from '#/features/auth/session-refresh'
 
 const authRefreshQueryKey = ['auth', 'refresh'] as const
 
-export function authSessionQueryOptions() {
+export function authSessionQueryOptions(auth: AuthClient) {
   return queryOptions({
     queryKey: authRefreshQueryKey,
-    queryFn: refreshSessionRequest,
+    queryFn: () => refreshSession(auth),
     retry: false,
     staleTime: 0,
     gcTime: 0,
@@ -19,7 +20,7 @@ export function authSessionQueryOptions() {
 
 export function syncAuthSession(
   auth: AuthClient,
-  session: Awaited<ReturnType<typeof refreshSessionRequest>>,
+  session: Awaited<ReturnType<typeof refreshSession>>,
 ) {
   auth.setSession(session)
 }
@@ -32,8 +33,7 @@ export async function ensureAuthSession(
   queryClient: QueryClient,
   auth: AuthClient,
 ) {
-  const session = await queryClient.fetchQuery(authSessionQueryOptions())
-  syncAuthSession(auth, session)
+  const session = await queryClient.fetchQuery(authSessionQueryOptions(auth))
   return session
 }
 
@@ -55,7 +55,7 @@ export function useLogoutMutation() {
 
   return useMutation({
     mutationFn: logoutRequest,
-    onSettled: () => {
+    onSuccess: () => {
       clearAuthSession(auth)
     },
   })

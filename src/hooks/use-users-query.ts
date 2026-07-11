@@ -19,10 +19,13 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export const USERS_KEY = ['users'] as const
 export const USER_KEY = ['user'] as const
+const EMPTY_USER_FILTERS: Partial<UserRouteSearch> = {}
 
-export function usersQueryOptions(filters: Partial<UserRouteSearch> = {}) {
+export function usersQueryOptions(
+  filters: Partial<UserRouteSearch> = EMPTY_USER_FILTERS,
+) {
   return queryOptions({
-    queryKey: [...USERS_KEY, filters],
+    queryKey: [...USERS_KEY, 'list', filters],
     queryFn: () => fetchUsers(filters),
     placeholderData: keepPreviousData,
     staleTime: 30_000,

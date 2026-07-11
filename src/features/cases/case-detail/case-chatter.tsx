@@ -42,7 +42,7 @@ import {
   caseCommentsQueryOptions,
   useCreateComment,
 } from '#/hooks/use-case-detail-query'
-import { usersQueryOptions } from '#/hooks/use-cases-query'
+import { usersQueryOptions } from '#/hooks/use-users-query'
 import type { CaseComment } from '#/schemas/cases.schema'
 
 interface CaseChatterProps {

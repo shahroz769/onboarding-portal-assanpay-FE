@@ -3,7 +3,10 @@ import axios from 'axios'
 import { API_BASE_URL } from '#/config/client-env'
 import type { AuthClient } from '#/features/auth/auth-client'
 import { sanitizeRedirect } from '#/features/auth/redirect'
-import type { RefreshResponse } from '#/types/auth'
+import {
+  isTerminalSessionRefreshError,
+  refreshSession,
+} from '#/features/auth/session-refresh'
 
 export { API_BASE_URL } from '#/config/client-env'
 
@@ -31,25 +34,6 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-let isRefreshing = false
-let failedQueue: {
-  resolve: (token: string) => void
-  reject: (error: unknown) => void
-}[] = []
-const isBrowser = typeof window !== 'undefined'
-
-function processQueue(error: unknown, token: string | null) {
-  for (const pending of failedQueue) {
-    if (token) {
-      pending.resolve(token)
-    } else {
-      pending.reject(error)
-    }
-  }
-
-  failedQueue = []
-}
-
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -68,49 +52,30 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject })
-      }).then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`
-        return apiClient(originalRequest)
-      })
-    }
-
-    isRefreshing = true
     originalRequest._retry = true
 
     try {
-      const { data } = await axios.post<RefreshResponse>(
-        `${API_BASE_URL}/api/auth/refresh`,
-        {},
-        { withCredentials: true },
-      )
-
-      authClient?.setSession(data)
-      processQueue(null, data.accessToken)
+      if (!authClient) return Promise.reject(error)
+      const data = await refreshSession(authClient)
 
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
       return apiClient(originalRequest)
     } catch (refreshError) {
-      processQueue(refreshError, null)
-      authClient?.clear()
-
-      if (!isBrowser) {
+      if (!isTerminalSessionRefreshError(refreshError)) {
         return Promise.reject(refreshError)
       }
 
-      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      if (typeof window !== 'undefined') {
+        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
 
-      if (window.location.pathname !== '/login') {
-        window.location.href = `/login?redirect=${encodeURIComponent(
-          sanitizeRedirect(currentPath),
-        )}`
+        if (window.location.pathname !== '/login') {
+          window.location.href = `/login?redirect=${encodeURIComponent(
+            sanitizeRedirect(currentPath),
+          )}`
+        }
       }
 
       return Promise.reject(refreshError)
-    } finally {
-      isRefreshing = false
     }
   },
 )
