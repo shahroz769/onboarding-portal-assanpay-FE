@@ -277,7 +277,7 @@ export function createMerchantColumns({
             </TooltipTrigger>
             <TooltipContent>View</TooltipContent>
           </Tooltip>
-          {canTerminate && (
+          {canTerminate && merchant.status !== 'terminated' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

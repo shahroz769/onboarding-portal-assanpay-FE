@@ -96,6 +96,10 @@ function BulkActions() {
   const canEditPriority =
     state.userRole === 'super_admin' || state.userRole === 'admin'
   const canTerminate = state.userRole === 'super_admin'
+  const terminatableIds = state.selectedIds.filter((id) => {
+    const merchant = state.flatData.find((item) => item.id === id)
+    return merchant?.status !== 'terminated'
+  })
 
   return (
     <DataTableSelectionInfo
@@ -113,20 +117,20 @@ function BulkActions() {
           Set Priority
         </Button>
       )}
-      {canTerminate && (
+      {canTerminate && terminatableIds.length > 0 && (
         <Button
           variant="destructive"
           size="sm"
           onClick={() =>
             actions.openTerminateDialog({
               type: 'bulk',
-              ids: state.selectedIds,
+              ids: terminatableIds,
             })
           }
           disabled={state.isTerminatePending}
         >
           <BanIcon data-icon="inline-start" />
-          Terminate ({state.selectedIds.length})
+          Terminate ({terminatableIds.length})
         </Button>
       )}
     </DataTableSelectionInfo>

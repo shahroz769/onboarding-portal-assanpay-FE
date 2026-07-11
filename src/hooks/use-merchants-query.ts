@@ -122,12 +122,12 @@ function updateMerchantInMerchantLists(
   queryClient.setQueriesData<InfiniteData<MerchantListResponse>>(
     { queryKey: MERCHANTS_KEY },
     (old) => {
-      if (!old) return old
+      if (!old || !Array.isArray(old.pages)) return old
       return {
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          merchants: page.merchants.map((merchant) =>
+          merchants: (page.merchants ?? []).map((merchant) =>
             merchant.id === merchantId ? updater(merchant) : merchant,
           ),
         })),
