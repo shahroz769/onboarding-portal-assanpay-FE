@@ -8,6 +8,8 @@ import {
 import type { InfiniteData } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
+
 import {
   bulkUpdatePriority,
   fetchMerchantDetail,
@@ -220,13 +222,13 @@ export function useTerminateMerchantMutation() {
 
       return { previous }
     },
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous) {
         for (const [queryKey, data] of context.previous) {
           queryClient.setQueryData(queryKey, data)
         }
       }
-      toast.error('Failed to terminate merchant.')
+      toast.error(getApiErrorMessage(error, 'Failed to terminate merchant.'))
     },
     onSuccess: () => {
       toast.success('Merchant terminated.')
@@ -247,8 +249,8 @@ export function useBulkTerminateMutation() {
       toast.success('Selected merchants terminated.')
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
-    onError: () => {
-      toast.error('Failed to terminate merchants.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to terminate merchants.'))
     },
   })
 }
