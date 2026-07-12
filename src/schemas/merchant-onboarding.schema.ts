@@ -199,6 +199,12 @@ export type DocumentFieldName =
   | 'secp_section_42_license'
   | 'risk_assessment_documents'
   | 'by_laws_rules_regulations'
+  | 'trust_deed'
+  | 'trust_registration_certificate'
+  | 'trustees_authorized_signatories_cnic'
+  | 'proof_of_address'
+  | 'tax_exemption_certificate'
+  | 'other_supporting_documents'
 
 export const DOCUMENT_LABELS: Record<DocumentFieldName, string> = {
   owner_cnic_front: 'Owner CNIC Front',
@@ -206,23 +212,30 @@ export const DOCUMENT_LABELS: Record<DocumentFieldName, string> = {
   next_of_kin_cnic_front: 'Next Of Kin CNIC Front',
   next_of_kin_cnic_back: 'Next Of Kin CNIC Back',
   utility_bill: 'Utility Bill',
-  company_ntn: 'Company NTN',
+  company_ntn: 'NTN Certificate',
   authority_letter: 'Authority Letter',
   taxpayer_registration_certificate: 'Taxpayer Registration Certificate',
   company_incorporation_certificate: 'Company Incorporation Certificate',
   memorandum_articles: 'Memorandum & Articles',
   form_ii: 'Form II',
   form_a: 'Form A',
-  board_resolution: 'Board Resolution',
+  board_resolution: 'Board Resolution / Authorization Letter',
   certificate_of_commencement: 'Certificate Of Commencement',
   partnership_deed: 'Partnership Deed',
   form_c: 'Form C',
   llp_form_iii: 'LLP Form III',
-  annual_audited_accounts: 'Annual Audited Accounts',
+  annual_audited_accounts: 'Annual Audited Accounts Report',
   other_entity_certification: 'Other Entity Certification',
   secp_section_42_license: 'SECP Section 42 License',
   risk_assessment_documents: 'Risk Assessment Documents',
   by_laws_rules_regulations: 'By Laws / Rules / Regulations',
+  trust_deed: 'Trust Deed',
+  trust_registration_certificate: 'Trust Registration Certificate',
+  trustees_authorized_signatories_cnic:
+    'CNIC of Trustees / Authorized Signatories',
+  proof_of_address: 'Proof of Address',
+  tax_exemption_certificate: 'Tax Exemption Certificate',
+  other_supporting_documents: 'Other Supporting Documents',
 }
 
 export const BASE_DOCUMENTS: DocumentFieldName[] = [
@@ -286,11 +299,18 @@ export const MERCHANT_SPECIFIC_DOCUMENTS: Record<
     ],
   },
   trust_society_association: {
-    required: ['company_ntn'],
-    optional: [
+    required: [
+      'company_ntn',
       'board_resolution',
       'annual_audited_accounts',
-      'other_entity_certification',
+      'trust_deed',
+      'trust_registration_certificate',
+      'trustees_authorized_signatories_cnic',
+      'proof_of_address',
+    ],
+    optional: [
+      'tax_exemption_certificate',
+      'other_supporting_documents',
     ],
   },
 }
