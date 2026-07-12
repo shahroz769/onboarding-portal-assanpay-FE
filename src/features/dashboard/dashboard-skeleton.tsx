@@ -67,17 +67,12 @@ function QueueTableSkeleton() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Queue</TableHead>
-              {[
-                'New',
-                'Working',
-                'Pending',
-                'Breached',
-                'Closed',
-                'Breach rate',
-              ].map((header) => (
-                <TableHead key={header} className="text-right">
-                  {header}
+              <TableHead>
+                <Skeleton className="h-4 w-12" />
+              </TableHead>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <TableHead key={index} className="text-right">
+                  <Skeleton className="ml-auto h-4 w-14" />
                 </TableHead>
               ))}
             </TableRow>
@@ -137,10 +132,18 @@ function AttentionRequiredSkeleton() {
         <Table className="mt-4">
           <TableHeader>
             <TableRow>
-              <TableHead>Case</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead className="text-right">Age</TableHead>
+              <TableHead>
+                <Skeleton className="h-4 w-10" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-4 w-14" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-4 w-12" />
+              </TableHead>
+              <TableHead className="text-right">
+                <Skeleton className="ml-auto h-4 w-8" />
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
