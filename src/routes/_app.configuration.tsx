@@ -16,7 +16,7 @@ import { requireAllowedRoles } from '#/features/auth/route-guards'
 
 export const Route = createFileRoute('/_app/configuration')({
   beforeLoad: ({ context }) => {
-    requireAllowedRoles(context.auth, ['super_admin'])
+    requireAllowedRoles(context.auth, ['super_admin', 'admin'])
   },
   staticData: {
     title: 'Configuration',

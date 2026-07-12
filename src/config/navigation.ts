@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
     url: '/configuration/limits-and-mdr',
     activePrefix: '/configuration',
     icon: Settings2,
-    roles: ['super_admin'],
+    roles: ['super_admin', 'admin'],
   },
 ]
 
