@@ -12,7 +12,7 @@ import type { CaseDetail, CloseOutcome, QueueStage } from '#/schemas/cases.schem
 
 import { CaseSidePanel } from './case-side-panel'
 import { CaseQueueWorkspaceSkeleton } from './case-detail-skeletons'
-import { getQueueRenderer } from './queue-registry'
+import { getQueueRenderer, resolveQueueWorkflowType } from './queue-registry'
 import { DocumentsReviewDraftProvider } from './renderers/documents-review-draft-context'
 
 interface CaseDetailShellProps {
@@ -21,7 +21,8 @@ interface CaseDetailShellProps {
 
 export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
   const { data } = useSuspenseQuery(caseDetailQueryOptions(caseId))
-  const QueueRenderer = getQueueRenderer(data.queue.slug)
+  const workflowType = resolveQueueWorkflowType(data.queue)
+  const QueueRenderer = getQueueRenderer(workflowType)
   const merchantName =
     typeof data.merchant.businessName === 'string' &&
     data.merchant.businessName.trim().length > 0
@@ -71,7 +72,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
     </div>
   )
 
-  if (data.queue.slug === 'documents-review') {
+  if (workflowType === 'document_review') {
     return (
       <DocumentsReviewDraftProvider caseDetail={data}>
         {pageContent}

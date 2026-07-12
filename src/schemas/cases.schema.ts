@@ -1,5 +1,16 @@
 import { z } from 'zod'
 import { paymentMethodSettingsSchema } from './configuration.schema'
+import {
+  QUEUE_LIFECYCLES,
+  QUEUE_WORKFLOW_TYPES,
+} from './queue-workflow.schema'
+
+export {
+  QUEUE_LIFECYCLES,
+  QUEUE_WORKFLOW_TYPES,
+  type QueueLifecycle,
+  type QueueWorkflowType,
+} from './queue-workflow.schema'
 
 // ─── Case Status Enum ───────────────────────────────────────────────────────
 
@@ -57,6 +68,9 @@ export const queueSchema = z.object({
   name: z.string(),
   slug: z.string(),
   prefix: z.string(),
+  workflowType: z.enum(QUEUE_WORKFLOW_TYPES).optional().default('generic'),
+  lifecycle: z.enum(QUEUE_LIFECYCLES).optional(),
+  revision: z.number().optional(),
   qcEnabled: z.boolean().optional(),
   slaHours: z.number().optional(),
   isActive: z.boolean().optional(),
@@ -212,6 +226,8 @@ export const caseDetailSchema = z.object({
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    workflowType: z.enum(QUEUE_WORKFLOW_TYPES).optional().default('generic'),
+    lifecycle: z.enum(QUEUE_LIFECYCLES).optional(),
     qcEnabled: z.boolean(),
     slaHours: z.number().nullable().optional(),
   }),

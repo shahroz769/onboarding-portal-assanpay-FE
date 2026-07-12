@@ -64,10 +64,14 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
   const hasOwner = Boolean(owner)
-  const isTestingCase = caseDetail.queue.slug === 'testing'
+  const isTestingCase = caseDetail.queue.workflowType === 'testing' || caseDetail.queue.slug === 'testing'
   const testingLimitsApplied = Boolean(caseDetail.testing?.limitsAppliedAt)
-  const isWordpressWebsiteCase = caseDetail.queue.slug === 'wordpress-website'
-  const isDialogPayCardCase = caseDetail.queue.slug === 'dialogpay-card'
+  const isWordpressWebsiteCase =
+    caseDetail.queue.workflowType === 'wordpress' ||
+    caseDetail.queue.slug === 'wordpress-website'
+  const isDialogPayCardCase =
+    caseDetail.queue.workflowType === 'card' ||
+    caseDetail.queue.slug === 'dialogpay-card'
   const wordpressWebsiteReady = Boolean(
     caseDetail.wordpressWebsite?.clonedWebsiteLink &&
       caseDetail.wordpressWebsite.screenshots.length > 0 &&

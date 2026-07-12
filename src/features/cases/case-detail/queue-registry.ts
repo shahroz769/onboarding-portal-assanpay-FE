@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import { lazy } from 'react'
 
-import type { CaseDetail } from '#/schemas/cases.schema'
+import type { CaseDetail, QueueWorkflowType } from '#/schemas/cases.schema'
 
 export interface QueueRendererProps {
   caseDetail: CaseDetail
@@ -11,43 +11,84 @@ export interface QueueRendererProps {
 type LazyQueueRenderer = ComponentType<QueueRendererProps>
 type QueueRendererLoader = () => Promise<{ default: LazyQueueRenderer }>
 
-const registry: Partial<Record<string, QueueRendererLoader>> = {
-  'documents-review': () => import('./renderers/documents-review-renderer'),
-  'sub-merchant-form': () => import('./renderers/sub-merchant-form-renderer'),
+const registry: Record<QueueWorkflowType, QueueRendererLoader> = {
+  document_review: () => import('./renderers/documents-review-renderer'),
+  sub_merchant_form: () => import('./renderers/sub-merchant-form-renderer'),
   agreement: () => import('./renderers/agreement-renderer'),
-  'merchant-id': () => import('./renderers/merchant-id-renderer'),
+  mid: () => import('./renderers/merchant-id-renderer'),
   testing: () => import('./renderers/testing-renderer'),
-  'wordpress-website': () => import('./renderers/wordpress-website-renderer'),
-  'dialogpay-card': () => import('./renderers/dialogpay-card-renderer'),
-  'physical-agreement': () => import('./renderers/physical-agreement-renderer'),
+  wordpress: () => import('./renderers/wordpress-website-renderer'),
+  card: () => import('./renderers/dialogpay-card-renderer'),
+  physical_agreement: () => import('./renderers/physical-agreement-renderer'),
   live: () => import('./renderers/live-renderer'),
+  generic: () => import('./renderers/generic-renderer'),
 }
+
+/** Temporary slug → workflowType bridge while older payloads lack workflowType. */
+const legacySlugWorkflowMap: Record<string, QueueWorkflowType> = {
+  'documents-review': 'document_review',
+  'sub-merchant-form': 'sub_merchant_form',
+  agreement: 'agreement',
+  'merchant-id': 'mid',
+  testing: 'testing',
+  'wordpress-website': 'wordpress',
+  'dialogpay-card': 'card',
+  'physical-agreement': 'physical_agreement',
+  live: 'live',
+}
+
+const QUEUE_WORKFLOW_TYPE_SET = new Set<string>([
+  'generic',
+  'document_review',
+  'agreement',
+  'mid',
+  'testing',
+  'wordpress',
+  'card',
+  'physical_agreement',
+  'live',
+  'sub_merchant_form',
+])
 
 const loadedComponents = new Map<string, LazyQueueRenderer>()
 
-export async function preloadQueueRenderer(queueSlug: string) {
-  const loader = registry[queueSlug]
-  if (!loader) {
-    await import('./renderers/fallback-renderer')
-    return
+export function resolveQueueWorkflowType(queue: {
+  workflowType?: QueueWorkflowType | null
+  slug?: string | null
+}): QueueWorkflowType {
+  if (queue.workflowType && QUEUE_WORKFLOW_TYPE_SET.has(queue.workflowType)) {
+    return queue.workflowType
   }
-
-  await loader()
+  if (queue.slug && Object.hasOwn(legacySlugWorkflowMap, queue.slug)) {
+    return legacySlugWorkflowMap[queue.slug]
+  }
+  return 'generic'
 }
 
-export function getQueueRenderer(queueSlug: string): LazyQueueRenderer {
-  if (loadedComponents.has(queueSlug)) {
-    return loadedComponents.get(queueSlug)!
-  }
+export async function preloadQueueRenderer(workflowTypeOrSlug: string) {
+  const workflowType = resolveQueueWorkflowType({
+    workflowType: QUEUE_WORKFLOW_TYPE_SET.has(workflowTypeOrSlug)
+      ? (workflowTypeOrSlug as QueueWorkflowType)
+      : undefined,
+    slug: workflowTypeOrSlug,
+  })
+  await registry[workflowType]()
+}
 
-  const loader = registry[queueSlug]
-  if (!loader) {
-    const FallbackRenderer = lazy(() => import('./renderers/fallback-renderer'))
-    loadedComponents.set(queueSlug, FallbackRenderer)
-    return FallbackRenderer
-  }
+export function getQueueRenderer(
+  workflowTypeOrSlug: string,
+): LazyQueueRenderer {
+  const workflowType = resolveQueueWorkflowType({
+    workflowType: QUEUE_WORKFLOW_TYPE_SET.has(workflowTypeOrSlug)
+      ? (workflowTypeOrSlug as QueueWorkflowType)
+      : undefined,
+    slug: workflowTypeOrSlug,
+  })
 
-  const LazyComponent = lazy(loader)
-  loadedComponents.set(queueSlug, LazyComponent)
+  const cached = loadedComponents.get(workflowType)
+  if (cached) return cached
+
+  const LazyComponent = lazy(registry[workflowType])
+  loadedComponents.set(workflowType, LazyComponent)
   return LazyComponent
 }

@@ -52,6 +52,7 @@ export type QueueOption = Pick<
   'id' | 'name'
 > & {
   isActive?: boolean
+  lifecycle?: 'draft' | 'active' | 'inactive'
 }
 
 export const MAX_DRAFT_BYTES = 5 * 1024 * 1024
@@ -70,6 +71,10 @@ export function QueueSelect({
   onValueChange: (value: string) => void
 }) {
   const selectedQueue = queues.find((queue) => queue.id === value) ?? null
+  function isSelectable(queue: QueueOption) {
+    if (queue.lifecycle) return queue.lifecycle === 'active'
+    return queue.isActive !== false
+  }
   return (
     <Combobox
       items={queues}
@@ -88,11 +93,13 @@ export function QueueSelect({
             <ComboboxItem
               key={queue.id}
               value={queue}
-              disabled={queue.isActive === false}
+              disabled={!isSelectable(queue)}
             >
               <span className="min-w-0 flex-1 truncate">{queue.name}</span>
-              {queue.isActive === false ? (
-                <Badge variant="outline">Inactive</Badge>
+              {!isSelectable(queue) ? (
+                <Badge variant="outline">
+                  {queue.lifecycle ?? 'Inactive'}
+                </Badge>
               ) : null}
             </ComboboxItem>
           )}

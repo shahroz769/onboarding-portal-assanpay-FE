@@ -34,6 +34,7 @@ import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
 import { RejectionRoundsCard } from './rejection-rounds-card'
+import { resolveQueueWorkflowType } from './queue-registry'
 import {
   getDocumentsReviewSummary,
   isUpdatedInLatestResubmissionRound,
@@ -375,12 +376,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const primaryActionLockedRef = useRef(false)
   const documentsReviewDraft = useOptionalDocumentsReviewDraft()
 
-  const isDocumentReviewCase = caseDetail.queue.slug === 'documents-review'
-  const isSubMerchantFormCase = caseDetail.queue.slug === 'sub-merchant-form'
-  const isMidCreationCase = caseDetail.queue.slug === 'merchant-id'
-  const isTestingCase = caseDetail.queue.slug === 'testing'
-  const isAgreementCase = caseDetail.queue.slug === 'agreement'
-  const isPhysicalAgreementCase = caseDetail.queue.slug === 'physical-agreement'
+  const workflowType = resolveQueueWorkflowType(caseDetail.queue)
+  const isDocumentReviewCase = workflowType === 'document_review'
+  const isSubMerchantFormCase = workflowType === 'sub_merchant_form'
+  const isMidCreationCase = workflowType === 'mid'
+  const isTestingCase = workflowType === 'testing'
+  const isAgreementCase = workflowType === 'agreement'
+  const isPhysicalAgreementCase = workflowType === 'physical_agreement'
   const reviewSummary = isDocumentReviewCase
     ? (documentsReviewDraft?.reviewSummary ??
       getDocumentsReviewSummary(caseDetail))
@@ -506,10 +508,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         documentsReviewDraft?.selectedSubMerchantId ||
         caseDetail.documentReview?.subMerchantName.trim()
 
-      if (
-        caseDetail.queue.slug === 'documents-review' &&
-        !selectedSubMerchant
-      ) {
+      if (isDocumentReviewCase && !selectedSubMerchant) {
         toast.error(
           'Select the sub-merchant name before marking this case as successful.',
         )
@@ -518,10 +517,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         return
       }
 
-      if (
-        caseDetail.queue.slug === 'documents-review' &&
-        !hasDocumentReviewResubmissionSent
-      ) {
+      if (isDocumentReviewCase && !hasDocumentReviewResubmissionSent) {
         toast.error(
           'Complete auto email, manual Gmail, or WhatsApp before marking this case as successful.',
         )
@@ -530,7 +526,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         return
       }
 
-      if (caseDetail.queue.slug === 'documents-review') {
+      if (isDocumentReviewCase) {
         try {
           await saveChangedSubMerchantBeforeReview()
         } catch {

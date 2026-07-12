@@ -27,6 +27,7 @@ import {
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { CaseDetail, EmailRecipientType } from '#/schemas/cases.schema'
 import type { EmailPreviewResult } from '#/apis/cases'
+import { resolveQueueWorkflowType } from './queue-registry'
 
 import type { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 
@@ -79,7 +80,8 @@ export function DocumentsReviewSummaryModal({
   )
   const hasRejections = rejectedItems.length > 0
   const hasRecipient = Boolean(selectedEmail)
-  const isDocumentsReviewCase = caseDetail.queue.slug === 'documents-review'
+  const isDocumentsReviewCase =
+    resolveQueueWorkflowType(caseDetail.queue) === 'document_review'
   const isWorkingStage =
     caseDetail.case.status === 'working' &&
     caseDetail.currentStage?.category === 'in_progress'

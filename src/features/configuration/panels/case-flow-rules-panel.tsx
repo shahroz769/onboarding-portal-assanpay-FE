@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { useEffect, useState } from 'react'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   ArrowRight,
@@ -17,12 +17,26 @@ import {
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '#/components/ui/alert-dialog'
+
 import { Button } from '#/components/ui/button'
 
 import { Spinner } from '#/components/ui/spinner'
 
+import { Switch } from '#/components/ui/switch'
+
 import {
+  CASE_FLOW_CONFIGURATION_KEY,
   caseFlowConfigurationQueryOptions,
+  isCaseFlowRevisionConflict,
   useUpdateCaseFlowConfigurationMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -44,9 +58,12 @@ import type { QueueOption } from './configuration-panel-shared'
 
 // ─── Case Flow Rules ───────────────────────────────────────────────────────
 export function CaseFlowRulesPanel() {
+  const queryClient = useQueryClient()
   const { data, isPending } = useQuery(caseFlowConfigurationQueryOptions())
   const mutation = useUpdateCaseFlowConfigurationMutation()
   const [form, setForm] = useState<CaseFlowConfiguration | null>(null)
+  const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
+  const [reloadingStale, setReloadingStale] = useState(false)
   const value = form ?? data ?? null
   const queues = value?.queues ?? []
   const formError = value ? getCaseFlowFormError(value) : null
@@ -58,6 +75,26 @@ export function CaseFlowRulesPanel() {
   }
   function update(next: CaseFlowConfiguration) {
     setForm(next)
+  }
+  async function handleSave() {
+    try {
+      await mutation.mutateAsync(value)
+    } catch (error) {
+      if (isCaseFlowRevisionConflict(error)) {
+        setStaleRevisionOpen(true)
+      }
+    }
+  }
+  async function handleReloadStaleConfig() {
+    setReloadingStale(true)
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: CASE_FLOW_CONFIGURATION_KEY,
+      })
+      setStaleRevisionOpen(false)
+    } finally {
+      setReloadingStale(false)
+    }
   }
   return (
     <div className="flex flex-col gap-6">
@@ -96,7 +133,7 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.startRules.map((rule, index) => (
               <StartRuleRow
-                key={`start-${index}`}
+                key={rule.id ?? `start-${index}`}
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -152,7 +189,7 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.closeTriggers.map((rule, index) => (
               <CloseTriggerRuleRow
-                key={`trigger-${index}`}
+                key={rule.id ?? `trigger-${index}`}
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -209,7 +246,7 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.closeBlockers.map((rule, index) => (
               <CloseBlockerRuleRow
-                key={`blocker-${index}`}
+                key={rule.id ?? `blocker-${index}`}
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -266,7 +303,7 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.creationRequirements.map((rule, index) => (
               <CreationRequirementRow
-                key={`creation-${index}`}
+                key={rule.id ?? `creation-${index}`}
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -298,7 +335,7 @@ export function CaseFlowRulesPanel() {
       <ConfigurationActionBar>
         <Button
           disabled={mutation.isPending || Boolean(formError)}
-          onClick={() => mutation.mutate(getActiveCaseFlowConfiguration(value))}
+          onClick={() => void handleSave()}
         >
           {mutation.isPending ? (
             <Spinner data-icon="inline-start" />
@@ -308,6 +345,31 @@ export function CaseFlowRulesPanel() {
           Save flow rules
         </Button>
       </ConfigurationActionBar>
+
+      <AlertDialog open={staleRevisionOpen} onOpenChange={setStaleRevisionOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configuration was updated</AlertDialogTitle>
+            <AlertDialogDescription>
+              Someone else saved case flow rules while you were editing. Reload
+              the latest configuration before making changes. Your unsaved edits
+              will be discarded.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              disabled={reloadingStale}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleReloadStaleConfig()
+              }}
+            >
+              {reloadingStale ? <Spinner data-icon="inline-start" /> : null}
+              {reloadingStale ? 'Reloading' : 'Reload configuration'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -326,6 +388,8 @@ function StartRuleRow({
 }) {
   return (
     <FlowRuleRow
+      isActive={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <div className="min-w-0 flex-1">
@@ -356,6 +420,8 @@ function CloseTriggerRuleRow({
 }) {
   return (
     <FlowRuleRow
+      isActive={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <FlowRuleRelation
@@ -398,6 +464,8 @@ function CloseBlockerRuleRow({
 }) {
   return (
     <FlowRuleRow
+      isActive={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <FlowRuleRelation
@@ -440,6 +508,8 @@ function CreationRequirementRow({
 }) {
   return (
     <FlowRuleRow
+      isActive={rule.isActive}
+      onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
       fields={
         <FlowRuleRelation
@@ -490,15 +560,27 @@ function FlowRuleRelation({
 
 function FlowRuleRow({
   fields,
+  isActive,
+  onActiveChange,
   onRemove,
 }: {
   fields: ReactNode
+  isActive: boolean
+  onActiveChange: (isActive: boolean) => void
   onRemove: () => void
 }) {
   return (
     <div className="group flex flex-col gap-3 rounded-md bg-muted/30 p-3 transition-colors sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center">{fields}</div>
-      <div className="flex items-center justify-end gap-1 sm:gap-2">
+      <div className="flex items-center justify-end gap-2 sm:gap-3">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Switch
+            checked={isActive}
+            onCheckedChange={onActiveChange}
+            aria-label={isActive ? 'Deactivate rule' : 'Activate rule'}
+          />
+          {isActive ? 'Active' : 'Inactive'}
+        </label>
         <Button
           type="button"
           variant="ghost"
@@ -556,23 +638,29 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
   ) {
     return 'A queue cannot require itself before closing.'
   }
-  if (hasDuplicates(value.startRules.map((rule) => rule.targetQueueId))) {
+  if (
+    hasDuplicates(
+      value.startRules
+        .filter((rule) => rule.isActive)
+        .map((rule) => rule.targetQueueId),
+    )
+  ) {
     return 'Each first-case queue can only be selected once.'
   }
   if (
     hasDuplicates(
-      value.closeTriggers.map(
-        (rule) => `${rule.sourceQueueId}:${rule.targetQueueId}`,
-      ),
+      value.closeTriggers
+        .filter((rule) => rule.isActive)
+        .map((rule) => `${rule.sourceQueueId}:${rule.targetQueueId}`),
     )
   ) {
     return 'Each close trigger relation can only be configured once.'
   }
   if (
     hasDuplicates(
-      value.closeBlockers.map(
-        (rule) => `${rule.blockedQueueId}:${rule.prerequisiteQueueId}`,
-      ),
+      value.closeBlockers
+        .filter((rule) => rule.isActive)
+        .map((rule) => `${rule.blockedQueueId}:${rule.prerequisiteQueueId}`),
     )
   ) {
     return 'Each close requirement relation can only be configured once.'
@@ -586,35 +674,14 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
   }
   if (
     hasDuplicates(
-      value.creationRequirements.map(
-        (rule) => `${rule.targetQueueId}:${rule.prerequisiteQueueId}`,
-      ),
+      value.creationRequirements
+        .filter((rule) => rule.isActive)
+        .map((rule) => `${rule.targetQueueId}:${rule.prerequisiteQueueId}`),
     )
   ) {
     return 'Each case creation requirement relation can only be configured once.'
   }
   return null
-}
-
-function getActiveCaseFlowConfiguration(
-  value: CaseFlowConfiguration,
-): CaseFlowConfiguration {
-  return {
-    ...value,
-    startRules: value.startRules.map((rule) => ({ ...rule, isActive: true })),
-    closeTriggers: value.closeTriggers.map((rule) => ({
-      ...rule,
-      isActive: true,
-    })),
-    closeBlockers: value.closeBlockers.map((rule) => ({
-      ...rule,
-      isActive: true,
-    })),
-    creationRequirements: value.creationRequirements.map((rule) => ({
-      ...rule,
-      isActive: true,
-    })),
-  }
 }
 
 function hasDuplicates(values: string[]) {

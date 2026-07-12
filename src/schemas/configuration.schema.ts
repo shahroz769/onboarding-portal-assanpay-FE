@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
 const limitRangeSchema = z.object({
   collectionMin: z.coerce.number().min(0),
@@ -92,18 +93,20 @@ export const caseFlowQueueSchema = z.object({
   name: z.string(),
   slug: z.string(),
   prefix: z.string(),
+  workflowType: z.enum(QUEUE_WORKFLOW_TYPES).optional(),
+  lifecycle: z.enum(QUEUE_LIFECYCLES).optional(),
   isActive: z.boolean(),
 })
 
 export const caseFlowStartRuleSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().uuid().optional(),
   targetQueueId: z.string(),
   order: z.number(),
   isActive: z.boolean(),
 })
 
 export const caseFlowCloseTriggerSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().uuid().optional(),
   sourceQueueId: z.string(),
   targetQueueId: z.string(),
   order: z.number(),
@@ -111,20 +114,21 @@ export const caseFlowCloseTriggerSchema = z.object({
 })
 
 export const caseFlowCloseBlockerSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().uuid().optional(),
   blockedQueueId: z.string(),
   prerequisiteQueueId: z.string(),
   isActive: z.boolean(),
 })
 
 export const caseFlowCreationRequirementSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().uuid().optional(),
   targetQueueId: z.string(),
   prerequisiteQueueId: z.string(),
   isActive: z.boolean(),
 })
 
 export const caseFlowConfigurationSchema = z.object({
+  revision: z.number().int().min(1),
   queues: z.array(caseFlowQueueSchema),
   startRules: z.array(caseFlowStartRuleSchema),
   closeTriggers: z.array(caseFlowCloseTriggerSchema),

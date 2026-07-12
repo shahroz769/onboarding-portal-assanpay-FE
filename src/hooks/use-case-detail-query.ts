@@ -103,7 +103,7 @@ export async function preloadCaseDetailPageQueries(
 
   const detail = await detailPromise
   const { preloadQueueRenderer } = await queueRegistryPromise
-  await preloadQueueRenderer(detail.queue.slug)
+  await preloadQueueRenderer(detail.queue.workflowType)
 
   return detail
 }
