@@ -62,15 +62,16 @@ function CasesRoutePending() {
       actionWidth={124}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 160, kind: 'link', headerWidth: 112, cellWidth: 118 },
-        { width: 200, kind: 'text', headerWidth: 128 },
-        { width: 130, kind: 'badge', headerWidth: 52, cellWidth: 92 },
-        { width: 120, kind: 'badge', headerWidth: 96, cellWidth: 78 },
-        { width: 100, kind: 'badge', headerWidth: 56, cellWidth: 64 },
-        { width: 150, kind: 'link', headerWidth: 84, cellWidth: 104 },
-        { width: 180, kind: 'date', headerWidth: 104 },
-        { width: 180, kind: 'date', headerWidth: 92 },
-        { width: 180, kind: 'date', headerWidth: 124 },
+        { width: 160, kind: 'link', header: 'Case Number', cellWidth: 118 },
+        { width: 200, kind: 'text', header: 'Merchant Name' },
+        { width: 130, kind: 'badge', header: 'Queue', cellWidth: 92 },
+        { width: 160, kind: 'badge', header: 'Case Status', cellWidth: 78 },
+        { width: 110, kind: 'badge', header: 'SLA', cellWidth: 64 },
+        { width: 100, kind: 'badge', header: 'Priority', cellWidth: 64 },
+        { width: 150, kind: 'link', header: 'Case Owner', cellWidth: 104 },
+        { width: 180, kind: 'date', header: 'Creation Date' },
+        { width: 180, kind: 'date', header: 'Closed Date' },
+        { width: 180, kind: 'date', header: 'Last Updated At' },
       ]}
     />
   )

@@ -45,14 +45,14 @@ function MerchantsRoutePending() {
       actionWidth={148}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 120, kind: 'mono', headerWidth: 88, cellWidth: 78 },
-        { width: 200, kind: 'text', headerWidth: 128 },
-        { width: 130, kind: 'text', headerWidth: 108, cellWidth: 92 },
-        { width: 80, kind: 'text', headerWidth: 64, cellWidth: 36 },
-        { width: 120, kind: 'badge', headerWidth: 56, cellWidth: 88 },
-        { width: 100, kind: 'badge', headerWidth: 68, cellWidth: 64 },
-        { width: 180, kind: 'date', headerWidth: 84 },
-        { width: 100, kind: 'actions', headerWidth: 56 },
+        { width: 120, kind: 'mono', header: 'Merchant ID', cellWidth: 78 },
+        { width: 200, kind: 'text', header: 'Merchant Name' },
+        { width: 130, kind: 'text', header: 'Business Scope', cellWidth: 92 },
+        { width: 80, kind: 'text', header: 'Currency', cellWidth: 36 },
+        { width: 120, kind: 'badge', header: 'Status', cellWidth: 88 },
+        { width: 100, kind: 'badge', header: 'Priority', cellWidth: 64 },
+        { width: 180, kind: 'date', header: 'Created At' },
+        { width: 100, kind: 'actions', header: 'Actions' },
       ]}
     />
   )

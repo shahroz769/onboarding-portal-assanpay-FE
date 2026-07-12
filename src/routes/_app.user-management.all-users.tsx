@@ -40,15 +40,15 @@ function UsersRoutePending() {
       actionWidth={112}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 260, kind: 'text', headerWidth: 72 },
-        { width: 130, kind: 'mono', headerWidth: 72 },
-        { width: 120, kind: 'badge', headerWidth: 48 },
-        { width: 110, kind: 'badge', headerWidth: 56 },
-        { width: 150, kind: 'badge', headerWidth: 88 },
-        { width: 150, kind: 'badge', headerWidth: 88 },
-        { width: 130, kind: 'link', headerWidth: 48 },
-        { width: 180, kind: 'date', headerWidth: 76 },
-        { width: 180, kind: 'date', headerWidth: 64 },
+        { width: 260, kind: 'text', header: 'Employee' },
+        { width: 130, kind: 'mono', header: 'Username' },
+        { width: 120, kind: 'badge', header: 'Role' },
+        { width: 110, kind: 'badge', header: 'Status' },
+        { width: 150, kind: 'badge', header: 'View Access' },
+        { width: 150, kind: 'badge', header: 'Work Access' },
+        { width: 130, kind: 'link', header: 'Cases' },
+        { width: 180, kind: 'date', header: 'Last Login' },
+        { width: 180, kind: 'date', header: 'Created' },
       ]}
     />
   )
