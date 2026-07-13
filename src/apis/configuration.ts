@@ -128,6 +128,11 @@ export async function uploadAgreementDraft({
   const response = await apiClient.post(
     `/api/configuration/agreements/${businessType}/draft`,
     formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
   )
   return response.data
 }
@@ -148,6 +153,11 @@ export async function createSubMerchantDraft({
   const response = await apiClient.post(
     '/api/configuration/sub-merchants',
     formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
   )
   return response.data
 }
