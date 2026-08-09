@@ -216,9 +216,13 @@ function toAttachmentLink(label: string, file: CaseFileLink): AttachmentLink {
 function getEmailAttachments(caseDetail: CaseDetail): AttachmentLink[] {
   const details = caseDetail.subMerchantForm ?? null
   const logoScreenshots =
-    caseDetail.wordpressWebsite?.subMerchantLogoScreenshots.map((file) =>
-      toAttachmentLink('LOGO SCREENSHOT', file),
-    ) ?? []
+    caseDetail.wordpressWebsite?.subMerchantLogoScreenshots
+      .filter(
+        (file) =>
+          file.subMerchantId == null ||
+          file.subMerchantId === details?.subMerchantKey,
+      )
+      .map((file) => toAttachmentLink('LOGO SCREENSHOT', file)) ?? []
   const requiredDocuments = [
     ['OWNER CNIC FRONT', 'owner_cnic_front'],
     ['OWNER CNIC BACK', 'owner_cnic_back'],

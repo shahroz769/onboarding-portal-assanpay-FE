@@ -650,10 +650,21 @@ function formatDetails(
   }
 
   if (
-    action === 'sub_merchant_selected' &&
+    (action === 'sub_merchant_selected' ||
+      action === 'document_review_sub_merchant_selected') &&
     typeof details.subMerchantName === 'string'
   ) {
     parts.push(`Selected ${details.subMerchantName}`)
+  }
+
+  if (
+    action === 'document_review_sub_merchant_selected' &&
+    Array.isArray(details.subMerchantNames)
+  ) {
+    const names = details.subMerchantNames.filter(
+      (name): name is string => typeof name === 'string',
+    )
+    if (names.length > 0) parts.push(`Selected ${names.join(', ')}`)
   }
 
   if (
@@ -838,6 +849,11 @@ function formatDetails(
     if (typeof details.screenshots === 'number') {
       parts.push(
         `${details.screenshots} screenshot${details.screenshots === 1 ? '' : 's'}`,
+      )
+    }
+    if (typeof details.assanpayCheckoutScreenshots === 'number') {
+      parts.push(
+        `${details.assanpayCheckoutScreenshots} AssanPay checkout screenshot${details.assanpayCheckoutScreenshots === 1 ? '' : 's'}`,
       )
     }
   }

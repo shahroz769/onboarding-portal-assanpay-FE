@@ -64,7 +64,9 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
   const hasOwner = Boolean(owner)
-  const isTestingCase = caseDetail.queue.workflowType === 'testing' || caseDetail.queue.slug === 'testing'
+  const isTestingCase =
+    caseDetail.queue.workflowType === 'testing' ||
+    caseDetail.queue.slug === 'testing'
   const testingLimitsApplied = Boolean(caseDetail.testing?.limitsAppliedAt)
   const isWordpressWebsiteCase =
     caseDetail.queue.workflowType === 'wordpress' ||
@@ -74,9 +76,14 @@ export function CaseActions({ caseDetail, caseId }: CaseActionsProps) {
     caseDetail.queue.slug === 'dialogpay-card'
   const wordpressWebsiteReady = Boolean(
     caseDetail.wordpressWebsite?.clonedWebsiteLink &&
-      caseDetail.wordpressWebsite.screenshots.length > 0 &&
-      caseDetail.wordpressWebsite.subMerchantLogoScreenshots.length > 0 &&
-      caseDetail.testing?.internalLimitsAppliedAt,
+    caseDetail.wordpressWebsite.screenshots.length > 0 &&
+    caseDetail.documentReview?.subMerchants.length &&
+    caseDetail.documentReview.subMerchants.every((subMerchant) =>
+      caseDetail.wordpressWebsite?.subMerchantLogoScreenshots.some(
+        (screenshot) => screenshot.subMerchantId === subMerchant.id,
+      ),
+    ) &&
+    caseDetail.wordpressWebsite.assanpayCheckoutScreenshots.length > 0,
   )
   const successfulActionPending =
     actionInFlight === 'primary' ||

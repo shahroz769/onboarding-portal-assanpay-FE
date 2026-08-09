@@ -234,9 +234,14 @@ export function createCaseColumns({
         />
       ),
       cell: (item) => (
-        <span className="max-w-50 truncate font-medium">
-          {item.merchantName}
-        </span>
+        <div className="flex max-w-50 flex-col gap-0.5">
+          <span className="truncate font-medium">{item.merchantName}</span>
+          {item.subMerchantName ? (
+            <span className="truncate text-xs text-muted-foreground">
+              {item.subMerchantName}
+            </span>
+          ) : null}
+        </div>
       ),
       width: 200,
     },

@@ -71,24 +71,52 @@ const ROLE_OPTIONS: Array<{ value: MerchantPortalRole; label: string }> = [
   },
 ]
 
+function buildInternalEmail(email: string) {
+  const normalizedEmail = email.trim()
+  const atIndex = normalizedEmail.lastIndexOf('@')
+  if (atIndex <= 0) return normalizedEmail
+  return `${normalizedEmail.slice(0, atIndex)}internal${normalizedEmail.slice(atIndex)}`
+}
+
+function toUppercaseDisplay(value: string | null) {
+  return (value ?? 'Not provided').toUpperCase()
+}
+
 const midDetailsSchema = z.object({
   portalMid: z.coerce
     .number({
-      error: 'Portal MID is required.',
+      error: 'Merchant ID MID is required.',
     })
-    .int('Portal MID must be a whole number.')
-    .positive('Portal MID must be greater than zero.'),
+    .int('Merchant ID MID must be a whole number.')
+    .positive('Merchant ID MID must be greater than zero.'),
   internalPortalMid: z.coerce
     .number({
-      error: 'Portal MID (Internal) is required.',
+      error: 'Merchant ID (Internal) MID is required.',
     })
-    .int('Portal MID (Internal) must be a whole number.')
-    .positive('Portal MID (Internal) must be greater than zero.'),
+    .int('Merchant ID (Internal) MID must be a whole number.')
+    .positive('Merchant ID (Internal) MID must be greater than zero.'),
   email: z
     .string()
     .trim()
     .min(1, 'Email is required.')
+    .max(255, 'Email is too long.')
     .email('Enter a valid email.'),
+  branchCode: z
+    .string()
+    .trim()
+    .min(1, 'Branch Code is required.')
+    .max(100, 'Branch Code is too long.'),
+  internalEmail: z
+    .string()
+    .trim()
+    .min(1, 'Internal email is required.')
+    .max(255, 'Internal email is too long.')
+    .email('Enter a valid internal email.'),
+  internalBranchCode: z
+    .string()
+    .trim()
+    .min(1, 'Internal Branch Code is required.')
+    .max(100, 'Internal Branch Code is too long.'),
   merchantRole: z.enum(MERCHANT_PORTAL_ROLES, {
     error: 'Role is required.',
   }),
@@ -134,6 +162,9 @@ export default function MerchantIdRenderer({
   const canEdit = isCaseOwner && isWorking
   const savedPortalMid = caseDetail.testing?.portalMid ?? null
   const savedInternalPortalMid = caseDetail.testing?.internalPortalMid ?? null
+  const savedEmail = caseDetail.testing?.email ?? null
+  const savedBranchCode = caseDetail.testing?.branchCode ?? null
+  const savedInternalBranchCode = caseDetail.testing?.internalBranchCode ?? null
   const savedMerchantRole =
     caseDetail.testing?.merchantRole ?? DEFAULT_MERCHANT_PORTAL_ROLE
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
@@ -155,6 +186,14 @@ export default function MerchantIdRenderer({
     getMerchantString(merchant, 'businessEmail') ??
     getMerchantString(merchant, 'email') ??
     ''
+  const businessName = toUppercaseDisplay(
+    getMerchantString(merchant, 'businessName'),
+  )
+  const ownerName = toUppercaseDisplay(
+    getMerchantString(merchant, 'ownerFullName'),
+  )
+  const internalBusinessName = `(INTERNAL) ${businessName}`
+  const initialEmail = savedEmail ?? merchantEmail
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
   const limitsAndMdr = configurationQuery.data?.limitsAndMdr
@@ -177,7 +216,10 @@ export default function MerchantIdRenderer({
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
     internalPortalMid: savedInternalPortalMid ?? Number.NaN,
-    email: merchantEmail,
+    email: initialEmail,
+    branchCode: savedBranchCode ?? '',
+    internalEmail: buildInternalEmail(initialEmail),
+    internalBranchCode: savedInternalBranchCode ?? '',
     merchantRole: savedMerchantRole,
     paymentMethods: savedPaymentMethods ?? DEFAULT_METHODS,
     payoutMethods: savedPayoutMethods ?? DEFAULT_METHODS,
@@ -210,6 +252,21 @@ export default function MerchantIdRenderer({
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) {
       setErrors((prev) => ({ ...prev, [key]: undefined }))
+    }
+  }
+
+  function updateEmail(value: string) {
+    setForm((current) => ({
+      ...current,
+      email: value,
+      internalEmail: buildInternalEmail(value),
+    }))
+    if (errors.email || errors.internalEmail) {
+      setErrors((current) => ({
+        ...current,
+        email: undefined,
+        internalEmail: undefined,
+      }))
     }
   }
 
@@ -491,11 +548,11 @@ export default function MerchantIdRenderer({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Merchant Portal Credentials</CardTitle>
+              <CardTitle>Merchant IDs</CardTitle>
               <CardDescription>
-                Save the credentials created on the merchant platform before
-                closing this case successfully. The temporary password is
-                generated only when credentials are sent.
+                Save both IDs created on the merchant platform before closing
+                this case successfully. The temporary password is generated only
+                when credentials are sent.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -506,72 +563,189 @@ export default function MerchantIdRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Field data-invalid={Boolean(errors.portalMid)}>
-              <FieldLabel htmlFor="portal-mid">Portal MID</FieldLabel>
-              <Input
-                id="portal-mid"
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                placeholder="Enter Portal MID"
-                value={Number.isFinite(form.portalMid) ? form.portalMid : ''}
-                disabled={!canEdit || saveMidCreationDetails.isPending}
-                aria-invalid={Boolean(errors.portalMid)}
-                onChange={(event) =>
-                  updateField(
-                    'portalMid',
-                    event.target.value === ''
-                      ? Number.NaN
-                      : Number(event.target.value),
-                  )
-                }
-              />
-              <FieldError>{errors.portalMid}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(errors.internalPortalMid)}>
-              <FieldLabel htmlFor="portal-mid-internal">
-                Portal MID (Internal)
-              </FieldLabel>
-              <Input
-                id="portal-mid-internal"
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                placeholder="Enter internal Portal MID"
-                value={
-                  Number.isFinite(form.internalPortalMid)
-                    ? form.internalPortalMid
-                    : ''
-                }
-                disabled={!canEdit || saveMidCreationDetails.isPending}
-                aria-invalid={Boolean(errors.internalPortalMid)}
-                onChange={(event) =>
-                  updateField(
-                    'internalPortalMid',
-                    event.target.value === ''
-                      ? Number.NaN
-                      : Number(event.target.value),
-                  )
-                }
-              />
-              <FieldError>{errors.internalPortalMid}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(errors.email)}>
-              <FieldLabel htmlFor="portal-email">Email</FieldLabel>
-              <Input
-                id="portal-email"
-                type="email"
-                autoComplete="off"
-                placeholder="merchant@example.com"
-                value={form.email}
-                disabled={!canEdit || saveMidCreationDetails.isPending}
-                aria-invalid={Boolean(errors.email)}
-                onChange={(event) => updateField('email', event.target.value)}
-              />
-              <FieldError>{errors.email}</FieldError>
-            </Field>
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <div className="mb-4">
+                <p className="font-semibold">Merchant ID</p>
+                <p className="text-sm text-muted-foreground">
+                  Merchant-facing account created on the merchant platform.
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="merchant-id-business-name">
+                    Business Name
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-business-name"
+                    value={businessName}
+                    readOnly
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="merchant-id-owner-name">
+                    Owner Name
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-owner-name"
+                    value={ownerName}
+                    readOnly
+                  />
+                </Field>
+                <Field data-invalid={Boolean(errors.email)}>
+                  <FieldLabel htmlFor="merchant-id-email">Email</FieldLabel>
+                  <Input
+                    id="merchant-id-email"
+                    type="email"
+                    autoComplete="off"
+                    placeholder="merchant@example.com"
+                    value={form.email}
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    aria-invalid={Boolean(errors.email)}
+                    onChange={(event) => updateEmail(event.target.value)}
+                  />
+                  <FieldError>{errors.email}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors.portalMid)}>
+                  <FieldLabel htmlFor="merchant-id-mid">MID</FieldLabel>
+                  <Input
+                    id="merchant-id-mid"
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="Enter MID"
+                    value={
+                      Number.isFinite(form.portalMid) ? form.portalMid : ''
+                    }
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    aria-invalid={Boolean(errors.portalMid)}
+                    onChange={(event) =>
+                      updateField(
+                        'portalMid',
+                        event.target.value === ''
+                          ? Number.NaN
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                  <FieldError>{errors.portalMid}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors.branchCode)}>
+                  <FieldLabel htmlFor="merchant-id-branch-code">
+                    Branch Code
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-branch-code"
+                    autoComplete="off"
+                    placeholder="Enter Branch Code"
+                    value={form.branchCode}
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    aria-invalid={Boolean(errors.branchCode)}
+                    onChange={(event) =>
+                      updateField('branchCode', event.target.value)
+                    }
+                  />
+                  <FieldError>{errors.branchCode}</FieldError>
+                </Field>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <div className="mb-4">
+                <p className="font-semibold">Merchant ID (Internal)</p>
+                <p className="text-sm text-muted-foreground">
+                  Internal account created on the merchant platform.
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="merchant-id-internal-business-name">
+                    Business Name
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-internal-business-name"
+                    value={internalBusinessName}
+                    readOnly
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="merchant-id-internal-owner-name">
+                    Owner Name
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-internal-owner-name"
+                    value="INTERNAL"
+                    readOnly
+                  />
+                </Field>
+                <Field data-invalid={Boolean(errors.internalEmail)}>
+                  <FieldLabel htmlFor="merchant-id-internal-email">
+                    Email
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-internal-email"
+                    type="email"
+                    autoComplete="off"
+                    placeholder="internal@example.com"
+                    value={form.internalEmail}
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    readOnly
+                    aria-invalid={Boolean(errors.internalEmail)}
+                  />
+                  <FieldDescription>
+                    Generated from the normal MID email by adding
+                    &quot;internal&quot; immediately before @.
+                  </FieldDescription>
+                  <FieldError>{errors.internalEmail}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors.internalPortalMid)}>
+                  <FieldLabel htmlFor="merchant-id-internal-mid">
+                    MID
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-internal-mid"
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="Enter internal MID"
+                    value={
+                      Number.isFinite(form.internalPortalMid)
+                        ? form.internalPortalMid
+                        : ''
+                    }
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    aria-invalid={Boolean(errors.internalPortalMid)}
+                    onChange={(event) =>
+                      updateField(
+                        'internalPortalMid',
+                        event.target.value === ''
+                          ? Number.NaN
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                  <FieldError>{errors.internalPortalMid}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors.internalBranchCode)}>
+                  <FieldLabel htmlFor="merchant-id-internal-branch-code">
+                    Branch Code
+                  </FieldLabel>
+                  <Input
+                    id="merchant-id-internal-branch-code"
+                    autoComplete="off"
+                    placeholder="Enter internal Branch Code"
+                    value={form.internalBranchCode}
+                    disabled={!canEdit || saveMidCreationDetails.isPending}
+                    aria-invalid={Boolean(errors.internalBranchCode)}
+                    onChange={(event) =>
+                      updateField('internalBranchCode', event.target.value)
+                    }
+                  />
+                  <FieldError>{errors.internalBranchCode}</FieldError>
+                </Field>
+              </div>
+            </div>
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 onClick={handleSave}
@@ -592,9 +766,9 @@ export default function MerchantIdRenderer({
       {savedCredentialsReady ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Portal credentials saved</AlertTitle>
+          <AlertTitle>Merchant IDs saved</AlertTitle>
           <AlertDescription>
-            Merchant portal credentials are saved. You can now mark this case as
+            Both merchant IDs are saved. You can now mark this case as
             successful.
           </AlertDescription>
         </Alert>
@@ -603,7 +777,7 @@ export default function MerchantIdRenderer({
           <Info />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
-            Only the current case owner can save the merchant portal credentials.
+            Only the current case owner can save the merchant IDs.
           </AlertDescription>
         </Alert>
       ) : null}

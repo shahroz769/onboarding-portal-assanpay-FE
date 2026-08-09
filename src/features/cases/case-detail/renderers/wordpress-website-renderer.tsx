@@ -105,28 +105,40 @@ export default function WordpressWebsiteRenderer({
   const savedScreenshots = wordpressWebsite?.screenshots ?? []
   const savedLogoScreenshots =
     wordpressWebsite?.subMerchantLogoScreenshots ?? []
-  const internalPortalMid = caseDetail.testing?.internalPortalMid ?? null
-  const internalLimitsAppliedAt =
-    caseDetail.testing?.internalLimitsAppliedAt ?? null
-  const internalLimitsAppliedBy =
-    caseDetail.testing?.internalLimitsAppliedBy?.name ?? null
-  const documentReviewSubMerchantName =
-    caseDetail.documentReview?.subMerchantName ?? null
+  const savedCheckoutScreenshots =
+    wordpressWebsite?.assanpayCheckoutScreenshots ?? []
+  const documentReviewSubMerchants =
+    caseDetail.documentReview?.subMerchants ?? []
+  const internalMidEmail = caseDetail.testing?.internalEmail ?? null
+  const hasAllSavedLogoScreenshots = documentReviewSubMerchants.every(
+    (subMerchant) =>
+      savedLogoScreenshots.some(
+        (screenshot) => screenshot.subMerchantId === subMerchant.id,
+      ),
+  )
   const isComplete = Boolean(
     savedLink &&
-      savedScreenshots.length > 0 &&
-      savedLogoScreenshots.length > 0 &&
-      internalLimitsAppliedAt,
+    savedScreenshots.length > 0 &&
+    documentReviewSubMerchants.length > 0 &&
+    hasAllSavedLogoScreenshots &&
+    savedCheckoutScreenshots.length > 0,
   )
 
   const [clonedWebsiteLink, setClonedWebsiteLink] = useState(savedLink ?? '')
   const [screenshots, setScreenshots] = useState<File[]>([])
   const [subMerchantLogoScreenshots, setSubMerchantLogoScreenshots] = useState<
-    File[]
-  >([])
+    Record<string, File | undefined>
+  >({})
+  const [assanpayCheckoutScreenshots, setAssanpayCheckoutScreenshots] =
+    useState<File[]>([])
   const [linkError, setLinkError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
-  const [logoFileError, setLogoFileError] = useState<string | null>(null)
+  const [logoFileErrors, setLogoFileErrors] = useState<
+    Record<string, string | undefined>
+  >({})
+  const [checkoutFileError, setCheckoutFileError] = useState<string | null>(
+    null,
+  )
 
   function handleFilesSelected(files: File[]) {
     const result = getValidScreenshots(files)
@@ -139,17 +151,36 @@ export default function WordpressWebsiteRenderer({
     setFileError(null)
   }
 
-  function handleLogoFilesSelected(files: File[]) {
+  function handleLogoFilesSelected(subMerchantId: string, files: File[]) {
     const result = getValidScreenshots(files)
     if (result.error) {
-      setLogoFileError(result.error)
+      setLogoFileErrors((current) => ({
+        ...current,
+        [subMerchantId]: result.error,
+      }))
       return
     }
 
-    setSubMerchantLogoScreenshots((current) =>
-      [...current, ...result.files].slice(0, 30),
-    )
-    setLogoFileError(null)
+    const file = result.files[0]
+    setSubMerchantLogoScreenshots((current) => ({
+      ...current,
+      [subMerchantId]: file,
+    }))
+    setLogoFileErrors((current) => ({
+      ...current,
+      [subMerchantId]: undefined,
+    }))
+  }
+
+  function handleCheckoutFilesSelected(files: File[]) {
+    const result = getValidScreenshots(files)
+    if (result.error) {
+      setCheckoutFileError(result.error)
+      return
+    }
+
+    setAssanpayCheckoutScreenshots(result.files.slice(0, 1))
+    setCheckoutFileError(null)
   }
 
   async function handleSave() {
@@ -164,23 +195,44 @@ export default function WordpressWebsiteRenderer({
       return
     }
 
-    if (subMerchantLogoScreenshots.length === 0) {
-      setLogoFileError(
-        'Upload a screenshot of the sub-merchant website with the merchant logo before saving.',
+    const missingSubMerchants = documentReviewSubMerchants.filter(
+      (item) => !subMerchantLogoScreenshots[item.id],
+    )
+    if (missingSubMerchants.length > 0) {
+      setLogoFileErrors(
+        Object.fromEntries(
+          missingSubMerchants.map((item) => [
+            item.id,
+            `Upload the logo screenshot for ${item.name}.`,
+          ]),
+        ),
+      )
+      return
+    }
+
+    if (assanpayCheckoutScreenshots.length === 0) {
+      setCheckoutFileError(
+        'Upload a screenshot of the AssanPay checkout page before saving.',
       )
       return
     }
 
     setLinkError(null)
     setFileError(null)
-    setLogoFileError(null)
+    setLogoFileErrors({})
+    setCheckoutFileError(null)
     await saveWebsite.mutateAsync({
       clonedWebsiteLink: result.data.clonedWebsiteLink,
       screenshots,
-      subMerchantLogoScreenshots,
+      subMerchantLogoScreenshots: documentReviewSubMerchants.map((item) => ({
+        subMerchantId: item.id,
+        file: subMerchantLogoScreenshots[item.id] as File,
+      })),
+      assanpayCheckoutScreenshots,
     })
     setScreenshots([])
-    setSubMerchantLogoScreenshots([])
+    setSubMerchantLogoScreenshots({})
+    setAssanpayCheckoutScreenshots([])
   }
 
   return (
@@ -223,46 +275,27 @@ export default function WordpressWebsiteRenderer({
             </Field>
 
             <Field>
-              <FieldLabel>Sub-merchant name</FieldLabel>
+              <FieldLabel>Sub-merchants</FieldLabel>
               <ReadonlyValue>
-                {documentReviewSubMerchantName ?? 'Not selected'}
+                {documentReviewSubMerchants.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {documentReviewSubMerchants.map((subMerchant) => (
+                      <div key={subMerchant.id} className="flex flex-col gap-1">
+                        <p className="font-medium">{subMerchant.name}</p>
+                        <p className="text-muted-foreground">
+                          Internal MID email: {internalMidEmail ?? 'Not saved'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  'Not selected'
+                )}
               </ReadonlyValue>
               <FieldDescription>
                 Selected internally during document review.
               </FieldDescription>
             </Field>
-
-            <Field>
-              <FieldLabel>Portal MID (Internal)</FieldLabel>
-              <ReadonlyValue>
-                {internalPortalMid ? (
-                  <span className="font-mono">{internalPortalMid}</span>
-                ) : (
-                  'Not saved in MID Creation'
-                )}
-              </ReadonlyValue>
-              <FieldDescription>
-                Live limits for this internal MID must be applied from the
-                dashboard before this case can close.
-              </FieldDescription>
-            </Field>
-
-            <Field>
-              <FieldLabel>Internal MID live limits</FieldLabel>
-              <ReadonlyValue>
-                {internalLimitsAppliedAt ? (
-                  <span>
-                    Applied
-                    {internalLimitsAppliedBy
-                      ? ` by ${internalLimitsAppliedBy}`
-                      : ''}
-                  </span>
-                ) : (
-                  'Pending'
-                )}
-              </ReadonlyValue>
-            </Field>
-
 
             <Field data-invalid={Boolean(linkError)}>
               <FieldLabel htmlFor="wordpress-cloned-link">
@@ -307,24 +340,59 @@ export default function WordpressWebsiteRenderer({
               </FieldDescription>
             </Field>
 
-            <Field data-invalid={Boolean(logoFileError)}>
-              <FieldLabel>Sub-merchant website logo screenshot</FieldLabel>
+            {documentReviewSubMerchants.map((subMerchant) => (
+              <Field
+                key={subMerchant.id}
+                data-invalid={Boolean(logoFileErrors[subMerchant.id])}
+              >
+                <FieldLabel>
+                  {subMerchant.name} website logo screenshot
+                </FieldLabel>
+                <ScreenshotUpload
+                  disabled={!canEdit}
+                  isUploading={saveWebsite.isPending}
+                  files={
+                    subMerchantLogoScreenshots[subMerchant.id]
+                      ? [subMerchantLogoScreenshots[subMerchant.id] as File]
+                      : []
+                  }
+                  error={logoFileErrors[subMerchant.id] ?? null}
+                  onError={(error) =>
+                    setLogoFileErrors((current) => ({
+                      ...current,
+                      [subMerchant.id]: error ?? undefined,
+                    }))
+                  }
+                  onFilesSelected={(files) =>
+                    handleLogoFilesSelected(subMerchant.id, files)
+                  }
+                  onRemove={() =>
+                    setSubMerchantLogoScreenshots((current) => ({
+                      ...current,
+                      [subMerchant.id]: undefined,
+                    }))
+                  }
+                />
+                <FieldDescription>
+                  Upload one screenshot showing {subMerchant.name}&apos;s
+                  website with the merchant logo added.
+                </FieldDescription>
+              </Field>
+            ))}
+
+            <Field data-invalid={Boolean(checkoutFileError)}>
+              <FieldLabel>AssanPay checkout page screenshot</FieldLabel>
               <ScreenshotUpload
                 disabled={!canEdit}
                 isUploading={saveWebsite.isPending}
-                files={subMerchantLogoScreenshots}
-                error={logoFileError}
-                onError={setLogoFileError}
-                onFilesSelected={handleLogoFilesSelected}
-                onRemove={(index) =>
-                  setSubMerchantLogoScreenshots((current) =>
-                    current.filter((_, itemIndex) => itemIndex !== index),
-                  )
-                }
+                files={assanpayCheckoutScreenshots}
+                error={checkoutFileError}
+                onError={setCheckoutFileError}
+                onFilesSelected={handleCheckoutFilesSelected}
+                onRemove={() => setAssanpayCheckoutScreenshots([])}
               />
               <FieldDescription>
-                Upload the screenshot showing the sub-merchant website with the
-                merchant logo added.
+                Upload one screenshot showing the AssanPay checkout page.
               </FieldDescription>
             </Field>
 
@@ -347,7 +415,8 @@ export default function WordpressWebsiteRenderer({
 
       {savedLink ||
       savedScreenshots.length > 0 ||
-      savedLogoScreenshots.length > 0 ? (
+      savedLogoScreenshots.length > 0 ||
+      savedCheckoutScreenshots.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Saved Evidence</CardTitle>
@@ -390,9 +459,39 @@ export default function WordpressWebsiteRenderer({
 
             {savedLogoScreenshots.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <FieldLabel>Sub-merchant website logo screenshot</FieldLabel>
+                <FieldLabel>Sub-merchant website logo screenshots</FieldLabel>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {savedLogoScreenshots.map((screenshot) => (
+                  {savedLogoScreenshots.map((screenshot) => {
+                    const subMerchantName = documentReviewSubMerchants.find(
+                      (item) => item.id === screenshot.subMerchantId,
+                    )?.name
+                    return (
+                      <a
+                        key={screenshot.id}
+                        href={screenshot.googleDriveWebViewLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 hover:bg-muted/40"
+                      >
+                        <FileImage className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {subMerchantName
+                            ? `${subMerchantName}: ${screenshot.originalName}`
+                            : screenshot.originalName}
+                        </span>
+                        <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {savedCheckoutScreenshots.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <FieldLabel>AssanPay checkout page screenshot</FieldLabel>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {savedCheckoutScreenshots.map((screenshot) => (
                     <a
                       key={screenshot.id}
                       href={screenshot.googleDriveWebViewLink}
@@ -421,18 +520,6 @@ export default function WordpressWebsiteRenderer({
           <AlertDescription>
             Only the current case owner can save the cloned website link and
             screenshots.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      {canEdit && !internalLimitsAppliedAt ? (
-        <Alert>
-          <Info />
-          <AlertTitle>Internal MID limits required</AlertTitle>
-          <AlertDescription>
-            Apply live limits for Portal MID (Internal)
-            {internalPortalMid ? ` ${internalPortalMid}` : ''} from the
-            dashboard before closing this WordPress Website case.
           </AlertDescription>
         </Alert>
       ) : null}

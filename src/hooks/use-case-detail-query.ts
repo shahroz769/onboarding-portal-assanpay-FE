@@ -210,12 +210,12 @@ export function useSaveDocumentReviewSubMerchant(caseId: string) {
     mutationFn: (input: SaveDocumentReviewSubMerchantInput) =>
       saveDocumentReviewSubMerchant(caseId, input),
     onSuccess: () => {
-      toast.success('Sub-merchant saved')
+      toast.success('Sub-merchants saved')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
     },
     onError: (error: unknown) => {
-      toast.error(getApiErrorMessage(error, 'Failed to save sub-merchant'))
+      toast.error(getApiErrorMessage(error, 'Failed to save sub-merchants'))
     },
   })
 }
@@ -360,8 +360,9 @@ export function useSendAgreementEmail(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { remarks?: string | null } & EmailRecipientSelection) =>
-      sendAgreementEmail(caseId, input),
+    mutationFn: (
+      input: { remarks?: string | null } & EmailRecipientSelection,
+    ) => sendAgreementEmail(caseId, input),
     onSuccess: async (data) => {
       await invalidateCaseWorkflowQueries(queryClient, caseId)
 
@@ -461,8 +462,9 @@ export function useConfirmResubmissionEmailManual(caseId: string) {
 
 export function useFetchAgreementEmailPreview(caseId: string) {
   return useMutation({
-    mutationFn: (input: { remarks?: string | null } & EmailRecipientSelection) =>
-      fetchAgreementEmailPreview(caseId, input),
+    mutationFn: (
+      input: { remarks?: string | null } & EmailRecipientSelection,
+    ) => fetchAgreementEmailPreview(caseId, input),
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to load email preview'))
     },
@@ -617,13 +619,18 @@ export function useSaveWordpressWebsiteCase(caseId: string) {
     mutationFn: (input: {
       clonedWebsiteLink: string
       screenshots: File[]
-      subMerchantLogoScreenshots: File[]
+      subMerchantLogoScreenshots: Array<{
+        subMerchantId: string
+        file: File
+      }>
+      assanpayCheckoutScreenshots: File[]
     }) =>
       saveWordpressWebsiteCase({
         caseId,
         clonedWebsiteLink: input.clonedWebsiteLink,
         screenshots: input.screenshots,
         subMerchantLogoScreenshots: input.subMerchantLogoScreenshots,
+        assanpayCheckoutScreenshots: input.assanpayCheckoutScreenshots,
       }),
     onSuccess: () => {
       toast.success('WordPress website details saved')

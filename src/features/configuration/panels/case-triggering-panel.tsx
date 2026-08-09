@@ -34,8 +34,10 @@ import {
 } from '#/hooks/use-cases-query'
 
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
+import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 
 import type { MerchantListItem } from '#/schemas/merchants.schema'
+import type { SubMerchantOption } from '#/schemas/configuration.schema'
 
 import {
   ConfigurationActionBar,
@@ -50,29 +52,47 @@ export function CaseTriggeringPanel() {
   const [selectedMerchant, setSelectedMerchant] =
     useState<MerchantListItem | null>(null)
   const [queueId, setQueueId] = useState('')
+  const [selectedSubMerchant, setSelectedSubMerchant] =
+    useState<SubMerchantOption | null>(null)
   const merchantsQuery = useQuery(merchantOptionsQueryOptions(merchantSearch))
   const queuesQuery = useQuery(queuesQueryOptions({ includeInactive: true }))
+  const subMerchantsQuery = useQuery(subMerchantOptionsQueryOptions())
   const createCase = useCreateCaseMutation()
   const merchants = merchantsQuery.data?.merchants ?? []
   const queues = queuesQuery.data ?? []
   const selectedQueue = queues.find((queue) => queue.id === queueId)
+  const isSubMerchantFormQueue =
+    selectedQueue?.workflowType === 'sub_merchant_form' ||
+    selectedQueue?.slug === 'sub-merchant-form'
   const canSubmit = Boolean(
-    selectedMerchant?.id && queueId && selectedQueue?.isActive,
+    selectedMerchant?.id &&
+    queueId &&
+    selectedQueue?.isActive &&
+    (!isSubMerchantFormQueue || selectedSubMerchant),
   )
   function handleSubmit() {
     if (!canSubmit || !selectedMerchant) return
     createCase.mutate(
-      { merchantId: selectedMerchant.id, queueId },
+      {
+        merchantId: selectedMerchant.id,
+        queueId,
+        subMerchantId: selectedSubMerchant?.id,
+      },
       {
         onSuccess: () => {
           setSelectedMerchant(null)
           setMerchantSearch('')
           setQueueId('')
+          setSelectedSubMerchant(null)
         },
       },
     )
   }
-  if (merchantsQuery.isPending || queuesQuery.isPending) {
+  if (
+    merchantsQuery.isPending ||
+    queuesQuery.isPending ||
+    subMerchantsQuery.isPending
+  ) {
     return <PanelLoading />
   }
   return (
@@ -107,12 +127,28 @@ export function CaseTriggeringPanel() {
                 value={queueId}
                 queues={queues}
                 placeholder="Select queue"
-                onValueChange={setQueueId}
+                onValueChange={(value) => {
+                  setQueueId(value)
+                  setSelectedSubMerchant(null)
+                }}
               />
               {selectedQueue && !selectedQueue.isActive ? (
                 <FieldError>This queue is inactive.</FieldError>
               ) : null}
             </Field>
+            {isSubMerchantFormQueue ? (
+              <Field>
+                <FieldLabel>Sub-merchant</FieldLabel>
+                <SubMerchantCombobox
+                  subMerchants={subMerchantsQuery.data ?? []}
+                  value={selectedSubMerchant}
+                  onValueChange={setSelectedSubMerchant}
+                />
+                <FieldDescription>
+                  This EP case and its form will be linked to this sub-merchant.
+                </FieldDescription>
+              </Field>
+            ) : null}
           </div>
         </FieldSet>
         <ConfigurationActionBar>
@@ -130,6 +166,44 @@ export function CaseTriggeringPanel() {
         </ConfigurationActionBar>
       </FieldGroup>
     </ConfigurationSectionCard>
+  )
+}
+
+function SubMerchantCombobox({
+  subMerchants,
+  value,
+  onValueChange,
+}: {
+  subMerchants: SubMerchantOption[]
+  value: SubMerchantOption | null
+  onValueChange: (subMerchant: SubMerchantOption | null) => void
+}) {
+  return (
+    <Combobox
+      items={subMerchants}
+      value={value}
+      autoHighlight
+      itemToStringLabel={(item) => item.name}
+      itemToStringValue={(item) => item.id}
+      isItemEqualToValue={(item, selected) => item.id === selected.id}
+      onValueChange={onValueChange}
+    >
+      <ComboboxInput
+        className="w-full"
+        placeholder="Search and select sub-merchant"
+        showClear
+      />
+      <ComboboxContent>
+        <ComboboxEmpty>No sub-merchants found.</ComboboxEmpty>
+        <ComboboxList>
+          {(subMerchant: SubMerchantOption) => (
+            <ComboboxItem key={subMerchant.id} value={subMerchant}>
+              {subMerchant.name}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   )
 }
 

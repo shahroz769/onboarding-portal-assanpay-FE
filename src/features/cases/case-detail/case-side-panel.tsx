@@ -35,17 +35,9 @@ import { CaseHistoryTimeline } from './case-history-timeline'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
 import { RejectionRoundsCard } from './rejection-rounds-card'
 import { resolveQueueWorkflowType } from './queue-registry'
-import {
-  getDocumentsReviewSummary,
-  isUpdatedInLatestResubmissionRound,
-} from './renderers/documents-review-shared'
+import { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
 
-const DOCUMENT_REVIEW_RESUBMISSION_SENT_ACTIONS = new Set([
-  'resubmission_email_sent',
-  'resubmission_email_sent_manual',
-  'resubmission_whatsapp_sent_manual',
-])
 const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
   'mid_creation_email_sent',
   'mid_creation_email_sent_manual',
@@ -63,9 +55,6 @@ function getPrimaryActionCopy(
     isDocumentReviewCase: boolean
     isReviewApproved: boolean
     hasActiveRejections: boolean
-    hasResubmittedUpdates: boolean
-    hasDocumentReviewResubmissionSent: boolean
-    isDocumentReviewHistoryPending: boolean
     isSubMerchantFormCase: boolean
     hasSubMerchantFinalForm: boolean
     isMidCreationCase: boolean
@@ -161,18 +150,18 @@ function getPrimaryActionCopy(
   if (options.isMidCreationCase && status === 'working') {
     if (options.hasMidCreationCredentials) {
       return {
-        title: 'Portal credentials saved',
+        title: 'Merchant IDs saved',
         description:
-          'The merchant portal credentials are saved. You can now close this case successfully.',
+          'Both merchant IDs are saved. You can now close this case successfully.',
         actionLabel: 'Mark as successful',
         actionKind: 'mark-successful' as const,
       }
     }
 
     return {
-      title: 'Portal credentials required',
+      title: 'Merchant IDs required',
       description:
-        'Save the merchant portal MID and email in the case workspace before closing this case successfully.',
+        'Save the email, MID, and Branch Code for both merchant IDs before closing this case successfully.',
       actionLabel: null,
       actionKind: 'mid-creation' as const,
     }
@@ -231,62 +220,15 @@ function getPrimaryActionCopy(
   if (
     options.isDocumentReviewCase &&
     status === 'working' &&
-    !options.hasActiveRejections &&
-    options.isDocumentReviewHistoryPending
-  ) {
-    return {
-      title: 'Checking client contact',
-      description:
-        'Checking whether an auto email, manual Gmail resend, or WhatsApp message has been completed before closure.',
-      actionLabel: null,
-      actionKind: 'document-review-communication' as const,
-    }
-  }
-
-  if (
-    options.isDocumentReviewCase &&
-    status === 'working' &&
-    !options.hasActiveRejections &&
-    !options.hasDocumentReviewResubmissionSent
-  ) {
-    return {
-      title: 'Client contact required',
-      description:
-        'Complete at least one resubmission request by auto email, manual Gmail, or WhatsApp before closing this case successfully.',
-      actionLabel: null,
-      actionKind: 'document-review-communication' as const,
-    }
-  }
-
-  if (
-    options.isDocumentReviewCase &&
-    status === 'working' &&
-    !options.hasActiveRejections &&
-    options.hasDocumentReviewResubmissionSent &&
-    options.hasResubmittedUpdates
-  ) {
-    return {
-      title: 'Updated items ready',
-      description:
-        'The client resubmitted the requested updates and there are no active rejections. You can now close this case successfully if everything looks good.',
-      actionLabel: 'Mark as successful',
-      actionKind: 'mark-successful' as const,
-    }
-  }
-
-  if (
-    options.isDocumentReviewCase &&
-    status === 'working' &&
-    !options.hasActiveRejections &&
-    options.hasDocumentReviewResubmissionSent
+    !options.hasActiveRejections
   ) {
     return {
       title: options.isReviewApproved
         ? 'Review approved'
-        : 'No active rejections',
+        : 'No document issues',
       description: options.isReviewApproved
         ? 'The document-review approval is saved. You can now mark this case as successful.'
-        : 'There are no active rejections on this case. You can now mark it as successful.',
+        : 'There are no rejected fields or documents. You can close this case successfully.',
       actionLabel: 'Mark as successful',
       actionKind: 'mark-successful' as const,
     }
@@ -389,19 +331,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
   const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
-  const hasResubmittedUpdates = caseDetail.fieldReviews.some((review) =>
-    isUpdatedInLatestResubmissionRound(
-      review,
-      caseDetail.latestResubmissionRequestedAt,
-    ),
-  )
-  const hasDocumentReviewResubmissionSent = useMemo(
-    () =>
-      caseHistoryQuery.data?.some((entry) =>
-        DOCUMENT_REVIEW_RESUBMISSION_SENT_ACTIONS.has(entry.action),
-      ) ?? false,
-    [caseHistoryQuery.data],
-  )
   const hasTestingCredentialsSent = useMemo(
     () =>
       caseHistoryQuery.data?.some((entry) =>
@@ -414,10 +343,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     isDocumentReviewCase,
     isReviewApproved,
     hasActiveRejections,
-    hasResubmittedUpdates,
-    hasDocumentReviewResubmissionSent,
-    isDocumentReviewHistoryPending:
-      isDocumentReviewCase && caseHistoryQuery.isPending,
     isSubMerchantFormCase,
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
     isMidCreationCase,
@@ -448,8 +373,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'testing' &&
     primaryAction.actionKind !== 'agreement' &&
-    primaryAction.actionKind !== 'physical-agreement' &&
-    primaryAction.actionKind !== 'document-review-communication'
+    primaryAction.actionKind !== 'physical-agreement'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const primaryButtonPending =
@@ -465,13 +389,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   async function saveChangedSubMerchantBeforeReview() {
     if (
       !documentsReviewDraft?.isSubMerchantChanged ||
-      !documentsReviewDraft.selectedSubMerchantId
+      documentsReviewDraft.selectedSubMerchantIds.length === 0
     ) {
       return
     }
 
     await saveSubMerchant.mutateAsync({
-      subMerchantId: documentsReviewDraft.selectedSubMerchantId,
+      subMerchantIds: documentsReviewDraft.selectedSubMerchantIds,
     })
   }
 
@@ -505,21 +429,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
     if (primaryAction.actionKind === 'mark-successful') {
       const selectedSubMerchant =
-        documentsReviewDraft?.selectedSubMerchantId ||
-        caseDetail.documentReview?.subMerchantName.trim()
+        documentsReviewDraft?.selectedSubMerchantIds.length ||
+        caseDetail.documentReview?.subMerchants.length
 
       if (isDocumentReviewCase && !selectedSubMerchant) {
         toast.error(
-          'Select the sub-merchant name before marking this case as successful.',
-        )
-        primaryActionLockedRef.current = false
-        setActionInFlight(null)
-        return
-      }
-
-      if (isDocumentReviewCase && !hasDocumentReviewResubmissionSent) {
-        toast.error(
-          'Complete auto email, manual Gmail, or WhatsApp before marking this case as successful.',
+          'Select at least one sub-merchant before marking this case as successful.',
         )
         primaryActionLockedRef.current = false
         setActionInFlight(null)
@@ -634,17 +549,14 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                               : primaryAction.actionKind === 'sub-merchant-form'
                                 ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
                                 : primaryAction.actionKind === 'mid-creation'
-                                  ? 'Save the portal MID and email in the case workspace before closing this case.'
+                                  ? 'Save the email, MID, and Branch Code for both merchant IDs before closing this case.'
                                   : primaryAction.actionKind === 'testing'
                                     ? 'Complete testing limits and send credentials by auto Resend, manual Gmail, or WhatsApp in the case workspace.'
-                                  : primaryAction.actionKind === 'agreement'
-                                    ? 'Complete the Agreement upload and mail workflow in the case workspace.'
-                                    : primaryAction.actionKind ===
-                                        'physical-agreement'
-                                      ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
+                                    : primaryAction.actionKind === 'agreement'
+                                      ? 'Complete the Agreement upload and mail workflow in the case workspace.'
                                       : primaryAction.actionKind ===
-                                          'document-review-communication'
-                                        ? 'Complete auto email, manual Gmail, or WhatsApp before closing this case successfully.'
+                                          'physical-agreement'
+                                        ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
                                         : isCaseOwner
                                           ? 'When everything checks out, close this case successfully.'
                                           : 'Only the current case owner can complete this case.'}
@@ -839,9 +751,7 @@ function AwaitingClientAlert({
     if (!items) return null
     const latest = items.find((h) => h.action === action)
     const details = latest?.details as
-      | { expiresAt?: string | null }
-      | null
-      | undefined
+      { expiresAt?: string | null } | null | undefined
     return details?.expiresAt ?? null
   }, [action, historyQuery.data])
 

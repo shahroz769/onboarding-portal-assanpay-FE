@@ -52,6 +52,7 @@ export async function fetchCases(
 interface CreateCaseParams {
   merchantId: string
   queueId: string
+  subMerchantId?: string
 }
 
 export async function createCase(params: CreateCaseParams) {
@@ -549,11 +550,16 @@ export async function saveWordpressWebsiteCase({
   clonedWebsiteLink,
   screenshots,
   subMerchantLogoScreenshots,
+  assanpayCheckoutScreenshots,
 }: {
   caseId: string
   clonedWebsiteLink: SaveWordpressWebsiteInput['clonedWebsiteLink']
   screenshots: File[]
-  subMerchantLogoScreenshots: File[]
+  subMerchantLogoScreenshots: Array<{
+    subMerchantId: string
+    file: File
+  }>
+  assanpayCheckoutScreenshots: File[]
 }) {
   const formData = new FormData()
   formData.append('clonedWebsiteLink', clonedWebsiteLink)
@@ -561,7 +567,14 @@ export async function saveWordpressWebsiteCase({
     formData.append('screenshots', screenshot)
   }
   for (const screenshot of subMerchantLogoScreenshots) {
-    formData.append('subMerchantLogoScreenshots', screenshot)
+    formData.append(
+      'subMerchantLogoScreenshotSubMerchantIds',
+      screenshot.subMerchantId,
+    )
+    formData.append('subMerchantLogoScreenshots', screenshot.file)
+  }
+  for (const screenshot of assanpayCheckoutScreenshots) {
+    formData.append('assanpayCheckoutScreenshots', screenshot)
   }
 
   const response = await apiClient.post(

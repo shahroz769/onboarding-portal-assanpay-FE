@@ -79,13 +79,6 @@ export const caseFlowChartConfig = {
   closed: { label: 'Closed', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
-export const queueStatusChartConfig = {
-  new: { label: 'New', color: 'var(--chart-1)' },
-  working: { label: 'Working', color: 'var(--chart-2)' },
-  pending: { label: 'Pending', color: 'var(--chart-3)' },
-  closed: { label: 'Closed', color: 'var(--muted-foreground)' },
-} satisfies ChartConfig
-
 export const submissionsChartConfig = {
   count: { label: 'Submissions', color: 'var(--chart-1)' },
 } satisfies ChartConfig

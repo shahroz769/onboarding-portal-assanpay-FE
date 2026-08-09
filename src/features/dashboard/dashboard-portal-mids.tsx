@@ -36,11 +36,21 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { ScrollArea } from '#/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/features/auth/auth-client'
 import { useApplyPortalMidLimits } from '#/hooks/use-dashboard-query'
-import type { DashboardResponse } from '#/schemas/dashboard.schema'
+import type {
+  ApplyPortalMidLimitsInput,
+  DashboardResponse,
+} from '#/schemas/dashboard.schema'
 
 const pastedMidsSchema = z
   .array(z.number().int().positive())
@@ -50,22 +60,28 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   const { user } = useAuth()
   const applyLimits = useApplyPortalMidLimits()
   const pending = data.portalMids.pendingLimits
-  const csv = data.portalMids.csv
   const appliedCsv = data.portalMids.appliedCsv
+  const appliedLimits = data.portalMids.appliedLimits
   const appliedCount = data.portalMids.appliedLimits.length
+  const appliedGroups = useMemo(
+    () => ({
+      customWordpress: appliedLimits.filter(
+        (item) => item.category === 'custom_wordpress',
+      ),
+      shopify: appliedLimits.filter((item) => item.category === 'shopify'),
+      internal: appliedLimits.filter((item) => item.category === 'internal'),
+    }),
+    [appliedLimits],
+  )
   const canApply =
     user?.roleType === 'super_admin' || user?.roleType === 'admin'
   const [open, setOpen] = useState(false)
   const [appliedOpen, setAppliedOpen] = useState(false)
   const [value, setValue] = useState('')
+  const [category, setCategory] =
+    useState<ApplyPortalMidLimitsInput['category']>('custom_wordpress')
   const [error, setError] = useState<string | null>(null)
   const parsedPortalMids = useMemo(() => parsePortalMids(value), [value])
-
-  async function handleCopy() {
-    if (!csv) return
-    await navigator.clipboard.writeText(csv)
-    toast.success('Portal MIDs copied')
-  }
 
   async function handleCopyApplied() {
     if (!appliedCsv) return
@@ -77,6 +93,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
     setOpen(nextOpen)
     if (nextOpen) {
       setValue('')
+      setCategory('custom_wordpress')
       setError(null)
     }
   }
@@ -94,7 +111,10 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
     }
 
     setError(null)
-    await applyLimits.mutateAsync({ portalMids: result.data })
+    await applyLimits.mutateAsync({
+      portalMids: result.data,
+      category,
+    })
     setOpen(false)
   }
 
@@ -118,9 +138,6 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
       <CardContent className="flex flex-col gap-4">
         {pending.length > 0 ? (
           <>
-            <div className="rounded-md border bg-muted/20 px-3 py-3">
-              <p className="wrap-break-word font-mono text-sm">{csv}</p>
-            </div>
             <ScrollArea className="max-h-72">
               <div className="flex flex-col gap-2 pr-3">
                 {pending.map((item) => (
@@ -131,7 +148,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                     <div className="min-w-0">
                       <p className="font-medium">{item.merchantName}</p>
                       <p className="text-muted-foreground">
-                        {item.caseNumber}
+                        {item.subMerchantName ?? 'Sub-merchant not selected'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -149,10 +166,6 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
               </div>
             </ScrollArea>
             <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={handleCopy}>
-                <ClipboardCopy data-icon="inline-start" />
-                Copy
-              </Button>
               <Button variant="outline" onClick={() => setAppliedOpen(true)}>
                 <Eye data-icon="inline-start" />
                 Applied Previously
@@ -224,9 +237,24 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           </DialogHeader>
 
           {appliedCount > 0 ? (
-            <div className="rounded-md border bg-muted/20 px-3 py-3">
-              <p className="wrap-break-word font-mono text-sm">{appliedCsv}</p>
-            </div>
+            <ScrollArea className="max-h-[60vh]">
+              <div className="flex flex-col gap-4 pr-3">
+                <AppliedMidSection
+                  title="Custom/WordPress"
+                  mids={appliedGroups.customWordpress.map(
+                    (item) => item.portalMid,
+                  )}
+                />
+                <AppliedMidSection
+                  title="Shopify"
+                  mids={appliedGroups.shopify.map((item) => item.portalMid)}
+                />
+                <AppliedMidSection
+                  title="Internal"
+                  mids={appliedGroups.internal.map((item) => item.portalMid)}
+                />
+              </div>
+            </ScrollArea>
           ) : (
             <Alert>
               <CheckCircle2 />
@@ -254,13 +282,38 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           <DialogHeader>
             <DialogTitle>Apply limits</DialogTitle>
             <DialogDescription>
-              Paste portal MIDs after applying testing limits in the portal, or
-              paste internal MIDs after applying live limits. You can also add
-              MIDs in advance before onboarding.
+              Select the MID category, then paste the MIDs whose limits have
+              been applied. You can also add MIDs in advance before onboarding.
             </DialogDescription>
           </DialogHeader>
 
           <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="portal-mid-category">Category</FieldLabel>
+              <Select
+                value={category}
+                disabled={applyLimits.isPending}
+                onValueChange={(nextCategory) =>
+                  setCategory(
+                    nextCategory as ApplyPortalMidLimitsInput['category'],
+                  )
+                }
+              >
+                <SelectTrigger id="portal-mid-category" className="w-full">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom_wordpress">
+                    Custom/WordPress
+                  </SelectItem>
+                  <SelectItem value="shopify">Shopify</SelectItem>
+                  <SelectItem value="internal">Internal</SelectItem>
+                </SelectContent>
+              </Select>
+              <FieldDescription>
+                Saved MIDs appear under this section in Applied Previously.
+              </FieldDescription>
+            </Field>
             <Field data-invalid={Boolean(error)}>
               <FieldLabel htmlFor="portal-mids">Portal MIDs</FieldLabel>
               <Textarea
@@ -303,6 +356,22 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
         </DialogContent>
       </Dialog>
     </Card>
+  )
+}
+
+function AppliedMidSection({ title, mids }: { title: string; mids: number[] }) {
+  return (
+    <section className="rounded-lg border bg-muted/20 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="font-medium">{title}</h3>
+        <Badge variant="outline">{mids.length}</Badge>
+      </div>
+      {mids.length > 0 ? (
+        <p className="wrap-break-word font-mono text-sm">{mids.join(',')}</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">No applied MIDs.</p>
+      )}
+    </section>
   )
 }
 

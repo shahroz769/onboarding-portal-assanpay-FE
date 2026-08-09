@@ -19,9 +19,9 @@ import type { DocumentsReviewDraftMap } from './documents-review-shared'
 type DocumentsReviewDraftContextValue = {
   draftReviews: DocumentsReviewDraftMap
   reviewSummary: ReturnType<typeof getDocumentsReviewSummaryFromDraft>
-  selectedSubMerchantId: string
+  selectedSubMerchantIds: string[]
   isSubMerchantChanged: boolean
-  setSelectedSubMerchantId: (subMerchantId: string) => void
+  setSelectedSubMerchantIds: (subMerchantIds: string[]) => void
   saveRejectedReview: (fieldName: string, remarks: string) => void
   clearRejectedReview: (fieldName: string) => void
 }
@@ -39,9 +39,13 @@ export function DocumentsReviewDraftProvider({
   const [draftReviews, setDraftReviews] = useState(() =>
     createDocumentsReviewDraft(caseDetail.fieldReviews),
   )
-  const initialSubMerchantId = caseDetail.documentReview?.subMerchantId ?? ''
-  const [selectedSubMerchantId, setSelectedSubMerchantId] =
-    useState(initialSubMerchantId)
+  const initialSubMerchantIds = useMemo(
+    () => caseDetail.documentReview?.subMerchants.map((item) => item.id) ?? [],
+    [caseDetail.documentReview?.subMerchants],
+  )
+  const [selectedSubMerchantIds, setSelectedSubMerchantIds] = useState(
+    initialSubMerchantIds,
+  )
 
   useEffect(() => {
     startTransition(() => {
@@ -51,9 +55,9 @@ export function DocumentsReviewDraftProvider({
 
   useEffect(() => {
     startTransition(() => {
-      setSelectedSubMerchantId(initialSubMerchantId)
+      setSelectedSubMerchantIds(initialSubMerchantIds)
     })
-  }, [initialSubMerchantId])
+  }, [initialSubMerchantIds])
 
   const value = useMemo<DocumentsReviewDraftContextValue>(
     () => ({
@@ -62,9 +66,11 @@ export function DocumentsReviewDraftProvider({
         caseDetail,
         draftReviews,
       ),
-      selectedSubMerchantId,
-      isSubMerchantChanged: selectedSubMerchantId !== initialSubMerchantId,
-      setSelectedSubMerchantId,
+      selectedSubMerchantIds,
+      isSubMerchantChanged:
+        [...selectedSubMerchantIds].sort().join(',') !==
+        [...initialSubMerchantIds].sort().join(','),
+      setSelectedSubMerchantIds,
       saveRejectedReview: (fieldName, remarks) => {
         setDraftReviews((currentDraft) => ({
           ...currentDraft,
@@ -84,7 +90,7 @@ export function DocumentsReviewDraftProvider({
         }))
       },
     }),
-    [caseDetail, draftReviews, initialSubMerchantId, selectedSubMerchantId],
+    [caseDetail, draftReviews, initialSubMerchantIds, selectedSubMerchantIds],
   )
 
   return (

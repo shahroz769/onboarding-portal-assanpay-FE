@@ -61,10 +61,12 @@ export function useCreateCaseMutation() {
     mutationFn: ({
       merchantId,
       queueId,
+      subMerchantId,
     }: {
       merchantId: string
       queueId: string
-    }) => createCase({ merchantId, queueId }),
+      subMerchantId?: string
+    }) => createCase({ merchantId, queueId, subMerchantId }),
     onSuccess: async (createdCase) => {
       toast.success(`Case ${createdCase.caseNumber} created.`)
       await queryClient.invalidateQueries({ queryKey: CASES_KEY })

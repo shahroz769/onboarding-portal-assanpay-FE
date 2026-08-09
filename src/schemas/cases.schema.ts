@@ -1,9 +1,6 @@
 import { z } from 'zod'
 import { paymentMethodSettingsSchema } from './configuration.schema'
-import {
-  QUEUE_LIFECYCLES,
-  QUEUE_WORKFLOW_TYPES,
-} from './queue-workflow.schema'
+import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
 export {
   QUEUE_LIFECYCLES,
@@ -93,6 +90,7 @@ export const caseListItemSchema = z.object({
   slaBreached: z.boolean().nullable().optional(),
   merchantId: z.string(),
   merchantName: z.string(),
+  subMerchantName: z.string().nullable(),
   ownerId: z.string().nullable(),
   ownerName: z.string().nullable(),
   status: z.enum(CASE_STATUSES),
@@ -271,8 +269,12 @@ export const caseDetailSchema = z.object({
     .optional(),
   documentReview: z
     .object({
-      subMerchantId: z.string(),
-      subMerchantName: z.string(),
+      subMerchants: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        }),
+      ),
       selectedAt: z.string(),
       selectedBy: z
         .object({
@@ -343,6 +345,10 @@ export const caseDetailSchema = z.object({
         .nullable(),
       portalMid: z.number().nullable().optional(),
       internalPortalMid: z.number().nullable().optional(),
+      email: z.string().nullable().optional(),
+      branchCode: z.string().nullable().optional(),
+      internalEmail: z.string().nullable().optional(),
+      internalBranchCode: z.string().nullable().optional(),
       internalLimitsAppliedAt: z.string().nullable().optional(),
       internalLimitsAppliedBy: z
         .object({
@@ -392,6 +398,18 @@ export const caseDetailSchema = z.object({
         }),
       ),
       subMerchantLogoScreenshots: z.array(
+        z.object({
+          id: z.string(),
+          subMerchantId: z.string().nullable(),
+          originalName: z.string(),
+          mimeType: z.string(),
+          sizeBytes: z.number(),
+          googleDriveWebViewLink: z.string(),
+          googleDriveDownloadLink: z.string().nullable(),
+          createdAt: z.string(),
+        }),
+      ),
+      assanpayCheckoutScreenshots: z.array(
         z.object({
           id: z.string(),
           originalName: z.string(),
@@ -461,7 +479,7 @@ export const saveFieldReviewsInputSchema = z.object({
 export type SaveFieldReviewsInput = z.infer<typeof saveFieldReviewsInputSchema>
 
 export const saveDocumentReviewSubMerchantInputSchema = z.object({
-  subMerchantId: z.string().uuid(),
+  subMerchantIds: z.array(z.string().uuid()).min(1).max(30),
 })
 
 export type SaveDocumentReviewSubMerchantInput = z.infer<
@@ -503,6 +521,9 @@ export const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
   internalPortalMid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
+  branchCode: z.string().trim().min(1).max(100),
+  internalEmail: z.string().trim().email(),
+  internalBranchCode: z.string().trim().min(1).max(100),
   merchantRole: z.enum(MERCHANT_PORTAL_ROLES),
   paymentMethods: paymentMethodSettingsSchema.min(
     1,
@@ -518,6 +539,9 @@ export type SaveMidCreationDetailsResponse = {
   portalMid: number
   internalPortalMid: number
   email: string
+  branchCode: string
+  internalEmail: string
+  internalBranchCode: string
   merchantRole: MerchantPortalRole
   paymentMethods: z.infer<typeof paymentMethodSettingsSchema>
   payoutMethods: z.infer<typeof paymentMethodSettingsSchema>

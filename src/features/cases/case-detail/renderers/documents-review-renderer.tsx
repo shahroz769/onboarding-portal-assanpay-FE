@@ -17,6 +17,17 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+} from '#/components/ui/combobox'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
 import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
@@ -37,18 +48,11 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
@@ -62,6 +66,7 @@ import {
   WEBSITE_CMS_OPTIONS,
 } from '#/schemas/merchant-onboarding.schema'
 import type { FieldReview, FieldReviewStatus } from '#/schemas/cases.schema'
+import type { SubMerchantOption } from '#/schemas/configuration.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 import { useDocumentsReviewDraft } from './documents-review-draft-context'
@@ -292,8 +297,8 @@ export default function DocumentsReviewRenderer({
   const { merchant, fieldReviews, currentStage } = caseDetail
   const {
     draftReviews,
-    selectedSubMerchantId,
-    setSelectedSubMerchantId,
+    selectedSubMerchantIds,
+    setSelectedSubMerchantIds,
     saveRejectedReview,
     clearRejectedReview,
   } = useDocumentsReviewDraft()
@@ -333,6 +338,9 @@ export default function DocumentsReviewRenderer({
   >(null)
   const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
   const subMerchants = subMerchantOptionsQuery.data ?? []
+  const selectedSubMerchants = subMerchants.filter((item) =>
+    selectedSubMerchantIds.includes(item.id),
+  )
 
   const sections = useMemo(() => {
     return REVIEW_SECTIONS.map((section) => {
@@ -521,20 +529,24 @@ export default function DocumentsReviewRenderer({
                     htmlFor="document-review-sub-merchant"
                     className="w-full max-w-full flex-wrap items-center justify-between"
                   >
-                    Sub-merchant name
-                    {caseDetail.documentReview?.subMerchantName ? (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto max-w-64 truncate font-normal"
-                      >
-                        {caseDetail.documentReview.subMerchantName}
+                    Sub-merchants
+                    {caseDetail.documentReview?.subMerchants.length ? (
+                      <Badge variant="outline" className="ml-auto font-normal">
+                        {caseDetail.documentReview.subMerchants.length} selected
                       </Badge>
                     ) : null}
                   </FieldLabel>
-                  <Select
-                    value={selectedSubMerchantId}
+                  <Combobox
+                    items={subMerchants}
+                    value={selectedSubMerchants}
+                    multiple
+                    itemToStringLabel={(item) => item.name}
+                    itemToStringValue={(item) => item.id}
+                    isItemEqualToValue={(item, selected) =>
+                      item.id === selected.id
+                    }
                     onValueChange={(value) => {
-                      setSelectedSubMerchantId(value)
+                      setSelectedSubMerchantIds(value.map((item) => item.id))
                       setSubMerchantError(null)
                     }}
                     disabled={
@@ -543,34 +555,51 @@ export default function DocumentsReviewRenderer({
                       subMerchants.length === 0
                     }
                   >
-                    <SelectTrigger
-                      id="document-review-sub-merchant"
-                      className="w-full"
-                      aria-invalid={Boolean(subMerchantError)}
-                    >
-                      <SelectValue placeholder="Select sub-merchant" />
-                    </SelectTrigger>
-                    <SelectContent
-                      position="popper"
+                    <ComboboxChips className="w-full">
+                      <ComboboxValue>
+                        {(value: SubMerchantOption[]) => (
+                          <>
+                            {value.map((item) => (
+                              <ComboboxChip
+                                key={item.id}
+                                aria-label={item.name}
+                              >
+                                {item.name}
+                              </ComboboxChip>
+                            ))}
+                            <ComboboxChipsInput
+                              id="document-review-sub-merchant"
+                              placeholder={
+                                value.length > 0
+                                  ? ''
+                                  : 'Search and select sub-merchants'
+                              }
+                              disabled={!isEditable}
+                              aria-invalid={Boolean(subMerchantError)}
+                            />
+                          </>
+                        )}
+                      </ComboboxValue>
+                    </ComboboxChips>
+                    <ComboboxContent
                       align="start"
-                      className="w-[var(--radix-select-trigger-width)]"
+                      className="w-[var(--anchor-width)]"
                     >
-                      <SelectGroup>
-                        {subMerchants.map((subMerchant) => (
-                          <SelectItem
+                      <ComboboxEmpty>No sub-merchants found.</ComboboxEmpty>
+                      <ComboboxList>
+                        {(subMerchant: SubMerchantOption) => (
+                          <ComboboxItem
                             key={subMerchant.id}
-                            value={subMerchant.id}
+                            value={subMerchant}
                           >
                             {subMerchant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
                   {subMerchantError ? (
-                    <p className="text-sm text-destructive">
-                      {subMerchantError}
-                    </p>
+                    <FieldError>{subMerchantError}</FieldError>
                   ) : null}
                   {subMerchantOptionsQuery.isError ? (
                     <p className="text-sm text-destructive">

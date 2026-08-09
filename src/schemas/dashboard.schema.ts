@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { CASE_STATUSES } from './cases.schema'
-import { MERCHANT_STATUSES, PRIORITIES } from './merchants.schema'
+import { MERCHANT_STATUSES } from './merchants.schema'
 
 // ─── Route Search ───────────────────────────────────────────────────────────
 
@@ -40,46 +40,10 @@ export type DashboardRouteSearch = z.infer<typeof dashboardRouteSearchSchema>
 
 // ─── Response ───────────────────────────────────────────────────────────────
 
-const riskCaseSchema = z.object({
-  id: z.string(),
-  caseNumber: z.string(),
-  merchantName: z.string(),
-  queueName: z.string(),
-  status: z.enum(CASE_STATUSES),
-  priority: z.enum(PRIORITIES),
-  ownerName: z.string().nullable(),
-  createdAt: z.string(),
-})
-
-export type DashboardRiskCase = z.infer<typeof riskCaseSchema>
-
-const recentMerchantSchema = z.object({
-  id: z.string(),
-  merchantNumber: z.number(),
-  businessName: z.string(),
-  status: z.enum(MERCHANT_STATUSES),
-  priority: z.enum(PRIORITIES),
-  submittedAt: z.string(),
-})
-
-export type DashboardRecentMerchant = z.infer<typeof recentMerchantSchema>
-
-const recentClosedCaseSchema = z.object({
-  id: z.string(),
-  caseNumber: z.string(),
-  merchantName: z.string(),
-  queueName: z.string(),
-  closeOutcome: z.enum(['successful', 'unsuccessful']).nullable(),
-  slaBreached: z.boolean().nullable(),
-  ownerName: z.string().nullable(),
-  closedAt: z.string().nullable(),
-})
-
-export type DashboardRecentClosedCase = z.infer<typeof recentClosedCaseSchema>
-
 const pendingPortalMidLimitSchema = z.object({
   merchantId: z.string(),
   merchantName: z.string(),
+  subMerchantName: z.string().nullable(),
   caseId: z.string(),
   caseNumber: z.string(),
   portalMid: z.number(),
@@ -96,6 +60,7 @@ const appliedPortalMidLimitSchema = z.object({
   merchantId: z.string().nullable(),
   appliedByName: z.string().nullable(),
   appliedAt: z.string(),
+  category: z.enum(['custom_wordpress', 'shopify', 'internal']),
 })
 
 export type DashboardAppliedPortalMidLimit = z.infer<
@@ -137,32 +102,10 @@ export const dashboardResponseSchema = z.object({
     terminated: z.number(),
     submittedInRange: z.number(),
     liveInRange: z.number(),
-    submissions: z.object({
-      today: z.number(),
-      thisWeek: z.number(),
-      thisMonth: z.number(),
-    }),
     funnel: z.array(
       z.object({ status: z.enum(MERCHANT_STATUSES), count: z.number() }),
     ),
   }),
-  queues: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      slaHours: z.number(),
-      total: z.number(),
-      open: z.number(),
-      new: z.number(),
-      working: z.number(),
-      pending: z.number(),
-      closed: z.number(),
-      breached: z.number(),
-      atRisk: z.number(),
-      breachRate: z.number(),
-    }),
-  ),
   trends: z.object({
     submissions: z.array(z.object({ date: z.string(), count: z.number() })),
     caseFlow: z.array(
@@ -173,14 +116,6 @@ export const dashboardResponseSchema = z.object({
       }),
     ),
   }),
-  risk: z.object({
-    slaBreachedCases: z.array(riskCaseSchema),
-    awaitingClientCases: z.array(riskCaseSchema),
-    oldestOpenCases: z.array(riskCaseSchema),
-    highPriorityOpenCases: z.array(riskCaseSchema),
-    recentMerchants: z.array(recentMerchantSchema),
-    recentClosedCases: z.array(recentClosedCaseSchema),
-  }),
   portalMids: z.object({
     pendingLimits: z.array(pendingPortalMidLimitSchema),
     appliedLimits: z.array(appliedPortalMidLimitSchema),
@@ -190,10 +125,10 @@ export const dashboardResponseSchema = z.object({
 })
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>
-export type DashboardQueueWorkload = DashboardResponse['queues'][number]
 
 export const applyPortalMidLimitsInputSchema = z.object({
   portalMids: z.array(z.number().int().positive()).min(1),
+  category: z.enum(['custom_wordpress', 'shopify', 'internal']),
 })
 
 export type ApplyPortalMidLimitsInput = z.infer<
