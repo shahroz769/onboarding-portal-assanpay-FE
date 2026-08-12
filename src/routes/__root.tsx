@@ -19,7 +19,7 @@ interface MyRouterContext {
   auth: AuthClient
 }
 
-const AppTanStackDevtools = import.meta.env.DEV
+const AppTanStackDevtools = import.meta.env.DEV && !import.meta.env.SSR
   ? lazy(() => import('../integrations/tanstack-devtools'))
   : null
 
