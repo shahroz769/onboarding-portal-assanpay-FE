@@ -31,7 +31,23 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { setPasswordSchema } from '#/schemas/users.schema'
 
 export const Route = createFileRoute('/set-password/$token')({
-  loader: async ({ params }) => fetchPasswordToken(params.token),
+  loader: async ({ params }) => {
+    try {
+      return await fetchPasswordToken(params.token)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 410) {
+          throw new Error('PASSWORD_TOKEN_EXPIRED')
+        }
+
+        if (error.response?.status === 404) {
+          throw new Error('PASSWORD_TOKEN_NOT_FOUND')
+        }
+      }
+
+      throw error
+    }
+  },
   component: RouteComponent,
   errorComponent: PasswordTokenError,
 })
@@ -168,8 +184,9 @@ function RouteComponent() {
 function PasswordTokenError({ error }: { error: Error }) {
   const router = useRouter()
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  const isExpired = status === 410
-  const isMissing = status === 404
+  const isExpired = status === 410 || error.message === 'PASSWORD_TOKEN_EXPIRED'
+  const isMissing =
+    status === 404 || error.message === 'PASSWORD_TOKEN_NOT_FOUND'
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
