@@ -3,7 +3,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { MerchantsTableComposed } from '#/features/merchants/merchants-table'
 import { merchantsInfiniteQueryOptions } from '#/hooks/use-merchants-query'
-import { merchantRouteSearchSchema } from '#/schemas/merchants.schema'
+import {
+  DEFAULT_MERCHANT_STATUS_FILTER,
+  merchantRouteSearchSchema,
+} from '#/schemas/merchants.schema'
 
 export const Route = createFileRoute('/_app/merchants/')({
   staticData: {
@@ -13,6 +16,7 @@ export const Route = createFileRoute('/_app/merchants/')({
   validateSearch: merchantRouteSearchSchema,
   loaderDeps: ({ search }) => ({
     search: search.search,
+    status: search.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
     priority: search.priority,
     businessScope: search.businessScope,
     currency: search.currency,
@@ -40,12 +44,11 @@ function RouteComponent() {
 function MerchantsRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={2}
-      filterWidths={[104, 96]}
+      filterCount={3}
+      filterWidths={[104, 96, 104]}
       actionWidth={148}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 120, kind: 'mono', header: 'Merchant ID', cellWidth: 78 },
         { width: 200, kind: 'text', header: 'Merchant Name' },
         { width: 130, kind: 'text', header: 'Business Scope', cellWidth: 92 },
         { width: 80, kind: 'text', header: 'Currency', cellWidth: 36 },

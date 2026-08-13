@@ -15,6 +15,9 @@ import {
   PRIORITY_LABELS,
   BUSINESS_SCOPES,
   BUSINESS_SCOPE_LABELS,
+  DEFAULT_MERCHANT_STATUS_FILTER,
+  MERCHANT_STATUSES,
+  MERCHANT_STATUS_DISPLAY,
 } from '#/schemas/merchants.schema'
 import {
   MerchantsTableProvider,
@@ -35,6 +38,11 @@ const priorityFilterOptions = PRIORITIES.map((p) => ({
 const scopeFilterOptions = BUSINESS_SCOPES.map((s) => ({
   label: BUSINESS_SCOPE_LABELS[s],
   value: s,
+}))
+
+const statusFilterOptions = MERCHANT_STATUSES.map((status) => ({
+  label: MERCHANT_STATUS_DISPLAY[status],
+  value: status,
 }))
 
 // ─── Toolbar ────────────────────────────────────────────────────────────────
@@ -67,6 +75,16 @@ function Toolbar() {
           selectedValues={meta.commaToSet(filters.businessScope)}
           onChange={(set) =>
             actions.setFilter('businessScope', meta.setToCommaString(set))
+          }
+        />
+        <DataTableFilter
+          title="Status"
+          options={statusFilterOptions}
+          selectedValues={meta.commaToSet(
+            filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
+          )}
+          onChange={(set) =>
+            actions.setFilter('status', meta.setToCommaString(set))
           }
         />
       </DataTableToolbar.Filters>

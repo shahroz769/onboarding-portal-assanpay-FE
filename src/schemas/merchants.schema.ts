@@ -34,6 +34,10 @@ export const MERCHANT_STATUS_DISPLAY: Record<MerchantStatus, string> = {
   terminated: 'Terminated',
 }
 
+export const DEFAULT_MERCHANT_STATUS_FILTER = MERCHANT_STATUSES.filter(
+  (status) => status !== 'terminated',
+).join(',')
+
 export type MerchantStatusDisplay =
   (typeof MERCHANT_STATUS_DISPLAY)[MerchantStatus]
 
@@ -100,6 +104,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
 
 export const merchantRouteSearchSchema = z.object({
   search: z.string().optional().transform(normalizeOptionalString),
+  status: createCsvEnumFilterSchema(MERCHANT_STATUSES),
   priority: createCsvEnumFilterSchema(PRIORITIES),
   businessScope: createCsvEnumFilterSchema(BUSINESS_SCOPES),
   currency: z.string().optional().transform(normalizeOptionalString),

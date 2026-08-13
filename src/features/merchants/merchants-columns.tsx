@@ -105,24 +105,6 @@ export function createMerchantColumns({
       width: 40,
     },
 
-    // Merchant ID
-    {
-      id: 'merchantNumber',
-      header: (
-        <DataTableColumnHeader
-          title="Merchant ID"
-          sortDirection={getSortDirection('merchantNumber', sortBy, sortOrder)}
-          onSort={() => onSort('merchantNumber')}
-        />
-      ),
-      cell: (merchant) => (
-        <span className="font-mono text-sm tabular-nums">
-          {merchant.merchantNumber}
-        </span>
-      ),
-      width: 120,
-    },
-
     // Merchant Name
     {
       id: 'businessName',

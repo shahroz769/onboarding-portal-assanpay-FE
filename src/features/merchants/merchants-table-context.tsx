@@ -19,6 +19,7 @@ import type {
   MerchantSortableColumn,
   Priority,
 } from '#/schemas/merchants.schema'
+import { DEFAULT_MERCHANT_STATUS_FILTER } from '#/schemas/merchants.schema'
 import type { RoleType } from '#/types/auth'
 import { createMerchantColumns } from './merchants-columns'
 import type { MerchantPriorityTarget } from './merchants-priority-dialog'
@@ -176,6 +177,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const queryFilters = useMemo<MerchantFilters>(
     () => ({
       ...filters,
+      status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
       createdAtFrom: undefined,
       createdAtTo: undefined,
     }),
