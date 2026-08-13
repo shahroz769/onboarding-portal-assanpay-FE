@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -71,10 +70,7 @@ function formatDate(value: string | null) {
     const date = new Date(value)
     if (date.getUTCFullYear() >= 9999) return 'No Expiry'
 
-    return new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date)
+    return REJECTION_ROUND_DATE_FORMATTER.format(date)
   } catch {
     return null
   }
@@ -219,10 +215,7 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
 export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
 
-  const rounds = useMemo(
-    () => (historyQuery.data ? buildRounds(historyQuery.data) : []),
-    [historyQuery.data],
-  )
+  const rounds = historyQuery.data ? buildRounds(historyQuery.data) : []
 
   if (rounds.length === 0) return null
 
@@ -260,6 +253,7 @@ export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
             label="Latest round"
             value={`Round ${latestRound.index}`}
           />
+
           <SummaryMetric label="Open items" value={String(openItems)} />
         </div>
 
@@ -518,7 +512,10 @@ function FieldAuditList({
             ) : null}
           </div>
           {field.rejectionReason ? (
-            <ValueBlock label="Rejection reason" value={field.rejectionReason} />
+            <ValueBlock
+              label="Rejection reason"
+              value={field.rejectionReason}
+            />
           ) : mode === 'rejected' ? (
             <p className="mt-2 text-xs text-muted-foreground">
               Rejection reason was not recorded.
@@ -527,7 +524,10 @@ function FieldAuditList({
           {field.type === 'text' ? (
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {field.previousValue != null ? (
-                <ValueBlock label="Previous value" value={field.previousValue} />
+                <ValueBlock
+                  label="Previous value"
+                  value={field.previousValue}
+                />
               ) : null}
               {field.submittedValue != null ? (
                 <ValueBlock
@@ -580,3 +580,8 @@ function FileLink({ href, label }: { href: string; label: string }) {
     </Button>
   )
 }
+const REJECTION_ROUND_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CheckCircle2,
@@ -69,6 +69,15 @@ const clientAgreementReviewSchema = z.object({
 
 type AgreementReviewContext = 'final' | 'client'
 
+type AgreementReviewState = {
+  open: boolean
+  context: AgreementReviewContext
+  remarks: string
+  remarksError: string | null
+  preview: EmailPreviewResult | null
+  recipientEmailType: EmailRecipientType
+}
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -117,24 +126,28 @@ export default function AgreementRenderer({
   const sendAgreement = useSendAgreementEmail(caseId)
   const fetchPreview = useFetchAgreementEmailPreview(caseId)
   const confirmManual = useConfirmAgreementEmailManual(caseId)
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [reviewContext, setReviewContext] =
-    useState<AgreementReviewContext>('final')
-  const [remarks, setRemarks] = useState('')
-  const [remarksError, setRemarksError] = useState<string | null>(null)
-  const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
-  const [recipientEmailType, setRecipientEmailType] =
-    useState<EmailRecipientType>('submitter')
-  const whatsappPreview = useMemo(
-    () =>
-      preview
-        ? {
-            ...preview,
-            body: buildAgreementWhatsappBody(preview.body),
-          }
-        : null,
-    [preview],
-  )
+  const [review, setReview] = useState<AgreementReviewState>({
+    open: false,
+    context: 'final',
+    remarks: '',
+    remarksError: null,
+    preview: null,
+    recipientEmailType: 'submitter',
+  })
+  const {
+    open: reviewOpen,
+    context: reviewContext,
+    remarks,
+    remarksError,
+    preview,
+    recipientEmailType,
+  } = review
+  const whatsappPreview = preview
+    ? {
+        ...preview,
+        body: buildAgreementWhatsappBody(preview.body),
+      }
+    : null
 
   const emailMode = config?.emailSendingMode ?? {
     autoEnabled: true,
@@ -169,11 +182,14 @@ export default function AgreementRenderer({
   const canReviewClient = canEdit && hasClientAgreement
 
   function openReview(context: AgreementReviewContext) {
-    setReviewContext(context)
-    setRemarks('')
-    setRemarksError(null)
-    setPreview(null)
-    setReviewOpen(true)
+    setReview((current) => ({
+      ...current,
+      open: true,
+      context,
+      remarks: '',
+      remarksError: null,
+      preview: null,
+    }))
   }
 
   async function handleAutoSend() {
@@ -183,7 +199,10 @@ export default function AgreementRenderer({
         remarks: trimmedRemarks,
       })
       if (!result.success) {
-        setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
+        setReview((current) => ({
+          ...current,
+          remarksError: result.error.issues[0]?.message ?? 'Remarks required.',
+        }))
         return
       }
     }
@@ -191,7 +210,7 @@ export default function AgreementRenderer({
       remarks: trimmedRemarks || null,
       recipientEmailType,
     })
-    setPreview(null)
+    setReview((current) => ({ ...current, preview: null }))
   }
 
   async function handleLoadPreview() {
@@ -201,16 +220,19 @@ export default function AgreementRenderer({
         remarks: trimmedRemarks,
       })
       if (!result.success) {
-        setRemarksError(result.error.issues[0]?.message ?? 'Remarks required.')
+        setReview((current) => ({
+          ...current,
+          remarksError: result.error.issues[0]?.message ?? 'Remarks required.',
+        }))
         return
       }
     }
-    setRemarksError(null)
+    setReview((current) => ({ ...current, remarksError: null }))
     const data = await fetchPreview.mutateAsync({
       remarks: trimmedRemarks || null,
       recipientEmailType,
     })
-    setPreview(data)
+    setReview((current) => ({ ...current, preview: data }))
   }
 
   async function handleManualConfirm(
@@ -226,7 +248,9 @@ export default function AgreementRenderer({
       channel,
       recipientEmailType,
     })
-    if (channel === 'whatsapp') setReviewOpen(false)
+    if (channel === 'whatsapp') {
+      setReview((current) => ({ ...current, open: false }))
+    }
   }
 
   return (
@@ -306,6 +330,7 @@ export default function AgreementRenderer({
                 isUploading={uploadFinalAgreement.isPending}
                 onUpload={(file) => uploadFinalAgreement.mutate({ file })}
               />
+
               <FieldDescription>
                 Upload one completed PDF, DOC, or DOCX file. Maximum size is 1
                 MB.
@@ -358,7 +383,10 @@ export default function AgreementRenderer({
         </Alert>
       ) : null}
 
-      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+      <Dialog
+        open={reviewOpen}
+        onOpenChange={(open) => setReview((current) => ({ ...current, open }))}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -377,8 +405,11 @@ export default function AgreementRenderer({
             <EmailRecipientSelect
               value={recipientEmailType}
               onValueChange={(value) => {
-                setRecipientEmailType(value)
-                setPreview(null)
+                setReview((current) => ({
+                  ...current,
+                  recipientEmailType: value,
+                  preview: null,
+                }))
               }}
               submitterEmail={submitterEmail}
               businessEmail={businessEmail}
@@ -396,9 +427,12 @@ export default function AgreementRenderer({
                 value={remarks}
                 aria-invalid={Boolean(remarksError)}
                 onChange={(event) => {
-                  setRemarks(event.target.value)
-                  setRemarksError(null)
-                  setPreview(null)
+                  setReview((current) => ({
+                    ...current,
+                    remarks: event.target.value,
+                    remarksError: null,
+                    preview: null,
+                  }))
                 }}
                 placeholder={
                   reviewContext === 'client'
@@ -407,6 +441,7 @@ export default function AgreementRenderer({
                 }
                 className="min-h-28"
               />
+
               <FieldError>{remarksError}</FieldError>
             </Field>
           </FieldGroup>
@@ -417,7 +452,9 @@ export default function AgreementRenderer({
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => setReviewOpen(false)}
+                  onClick={() =>
+                    setReview((current) => ({ ...current, open: false }))
+                  }
                   disabled={sendAgreement.isPending}
                 >
                   Cancel
@@ -661,6 +698,7 @@ function AgreementUpload({
         disabled={disabled || isUploading}
         onChange={(event) => handleFile(event.target.files?.[0])}
       />
+
       <div id={labelId} className="sr-only">
         File upload
       </div>

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import {
+  ClientOnly,
   HeadContent,
   Scripts,
   Link,
@@ -19,7 +20,7 @@ interface MyRouterContext {
   auth: AuthClient
 }
 
-const AppTanStackDevtools = import.meta.env.DEV && !import.meta.env.SSR
+const AppTanStackDevtools = import.meta.env.DEV
   ? lazy(() => import('../integrations/tanstack-devtools'))
   : null
 
@@ -59,14 +60,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
+      <body
+        suppressHydrationWarning
+        className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]"
+      >
         <ThemeProvider>
           {children}
           <Toaster richColors position="bottom-right" />
           {AppTanStackDevtools ? (
-            <Suspense fallback={null}>
-              <AppTanStackDevtools />
-            </Suspense>
+            <ClientOnly>
+              <Suspense fallback={null}>
+                <AppTanStackDevtools />
+              </Suspense>
+            </ClientOnly>
           ) : null}
         </ThemeProvider>
         <Scripts />

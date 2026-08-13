@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CreditCard,
   CheckCircle2,
@@ -27,6 +27,7 @@ import {
 import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -53,10 +54,6 @@ import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 
-const SHOPIFY_CARD_RATE = 3.5
-const DEFAULT_CARD_RATE = 3
-const E_WALLET_QR_RATE = 2.5
-const PAYOUT_RATE = 0
 const DEFAULT_METHODS: PaymentMethodSettings = []
 const DEFAULT_MERCHANT_PORTAL_ROLE: MerchantPortalRole = 'merchant_admin'
 const ROLE_PAYOUT_METHOD_LABELS: Record<MerchantPortalRole, string> = {
@@ -154,7 +151,7 @@ export default function MerchantIdRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const configurationQuery = useQuery(configurationQueryOptions())
+  const { data: configuration } = useSuspenseQuery(configurationQueryOptions())
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
@@ -196,22 +193,22 @@ export default function MerchantIdRenderer({
   const initialEmail = savedEmail ?? merchantEmail
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
-  const limitsAndMdr = configurationQuery.data?.limitsAndMdr
-  const configuredPaymentMethods = configurationQuery.data?.paymentMethods
-  const configuredPayoutMethods = configurationQuery.data?.payoutMethods
+  const limitsAndMdr = configuration.limitsAndMdr
+  const configuredPaymentMethods = configuration.paymentMethods
+  const configuredPayoutMethods = configuration.payoutMethods
   const availablePaymentMethods = mergeMethods(
-    configuredPaymentMethods ?? DEFAULT_METHODS,
+    configuredPaymentMethods,
     formSafeMethods(savedPaymentMethods),
   )
   const availablePayoutMethods = mergeMethods(
-    configuredPayoutMethods ?? DEFAULT_METHODS,
+    configuredPayoutMethods,
     formSafeMethods(savedPayoutMethods),
   )
   const cardRate = isShopify
-    ? `${limitsAndMdr?.rates.cardShopify ?? SHOPIFY_CARD_RATE}%`
-    : `${limitsAndMdr?.rates.cardDefault ?? DEFAULT_CARD_RATE}%`
-  const eWalletRate = `${limitsAndMdr?.rates.eWallets ?? E_WALLET_QR_RATE}%`
-  const payoutRate = `${limitsAndMdr?.rates.payout ?? PAYOUT_RATE}%`
+    ? `${limitsAndMdr.rates.cardShopify}%`
+    : `${limitsAndMdr.rates.cardDefault}%`
+  const eWalletRate = `${limitsAndMdr.rates.eWallets}%`
+  const payoutRate = `${limitsAndMdr.rates.payout}%`
 
   const [form, setForm] = useState<MidDetailsForm>({
     portalMid: savedPortalMid ?? Number.NaN,
@@ -222,28 +219,12 @@ export default function MerchantIdRenderer({
     internalBranchCode: savedInternalBranchCode ?? '',
     merchantRole: savedMerchantRole,
     paymentMethods: savedPaymentMethods ?? DEFAULT_METHODS,
-    payoutMethods: savedPayoutMethods ?? DEFAULT_METHODS,
+    payoutMethods: resolveRolePayoutMethods(
+      savedMerchantRole,
+      availablePayoutMethods,
+    ),
   })
   const [errors, setErrors] = useState<FieldErrors>({})
-
-  useEffect(() => {
-    setForm((current) => ({
-      ...current,
-      merchantRole: savedCredentialsReady
-        ? savedMerchantRole
-        : current.merchantRole,
-      paymentMethods: savedPaymentMethods ?? current.paymentMethods,
-      payoutMethods: resolveRolePayoutMethods(
-        savedCredentialsReady ? savedMerchantRole : current.merchantRole,
-        availablePayoutMethods,
-      ),
-    }))
-  }, [
-    savedCredentialsReady,
-    savedMerchantRole,
-    savedPaymentMethods,
-    availablePayoutMethods,
-  ])
 
   function updateField<TKey extends keyof MidDetailsForm>(
     key: TKey,

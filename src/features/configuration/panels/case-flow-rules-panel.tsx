@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -67,9 +67,6 @@ export function CaseFlowRulesPanel() {
   const value = form ?? data ?? null
   const queues = value?.queues ?? []
   const formError = value ? getCaseFlowFormError(value) : null
-  useEffect(() => {
-    if (data) setForm(data)
-  }, [data])
   if (isPending || !value) {
     return <PanelLoading />
   }
@@ -77,8 +74,10 @@ export function CaseFlowRulesPanel() {
     setForm(next)
   }
   async function handleSave() {
+    if (!value) return
     try {
-      await mutation.mutateAsync(value)
+      const savedConfiguration = await mutation.mutateAsync(value)
+      setForm(savedConfiguration)
     } catch (error) {
       if (isCaseFlowRevisionConflict(error)) {
         setStaleRevisionOpen(true)
@@ -87,14 +86,12 @@ export function CaseFlowRulesPanel() {
   }
   async function handleReloadStaleConfig() {
     setReloadingStale(true)
-    try {
-      await queryClient.invalidateQueries({
+    await queryClient
+      .invalidateQueries({
         queryKey: CASE_FLOW_CONFIGURATION_KEY,
       })
-      setStaleRevisionOpen(false)
-    } finally {
-      setReloadingStale(false)
-    }
+      .then(() => setStaleRevisionOpen(false))
+      .finally(() => setReloadingStale(false))
   }
   return (
     <div className="flex flex-col gap-6">
@@ -133,7 +130,7 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.startRules.map((rule, index) => (
               <StartRuleRow
-                key={rule.id ?? `start-${index}`}
+                key={rule.id ?? `${rule.targetQueueId}-${rule.order}`}
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -189,7 +186,10 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.closeTriggers.map((rule, index) => (
               <CloseTriggerRuleRow
-                key={rule.id ?? `trigger-${index}`}
+                key={
+                  rule.id ??
+                  `${rule.sourceQueueId}-${rule.targetQueueId}-${rule.order}`
+                }
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -246,7 +246,10 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.closeBlockers.map((rule, index) => (
               <CloseBlockerRuleRow
-                key={rule.id ?? `blocker-${index}`}
+                key={
+                  rule.id ??
+                  `${rule.blockedQueueId}-${rule.prerequisiteQueueId}`
+                }
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -303,7 +306,9 @@ export function CaseFlowRulesPanel() {
           <div className="flex flex-col gap-2">
             {value.creationRequirements.map((rule, index) => (
               <CreationRequirementRow
-                key={rule.id ?? `creation-${index}`}
+                key={
+                  rule.id ?? `${rule.targetQueueId}-${rule.prerequisiteQueueId}`
+                }
                 rule={rule}
                 queues={queues}
                 onChange={(nextRule) => {
@@ -638,29 +643,21 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
   ) {
     return 'A queue cannot require itself before closing.'
   }
-  if (
-    hasDuplicates(
-      value.startRules
-        .filter((rule) => rule.isActive)
-        .map((rule) => rule.targetQueueId),
-    )
-  ) {
+  if (hasDuplicateActiveRule(value.startRules, (rule) => rule.targetQueueId)) {
     return 'Each first-case queue can only be selected once.'
   }
   if (
-    hasDuplicates(
-      value.closeTriggers
-        .filter((rule) => rule.isActive)
-        .map((rule) => `${rule.sourceQueueId}:${rule.targetQueueId}`),
+    hasDuplicateActiveRule(
+      value.closeTriggers,
+      (rule) => `${rule.sourceQueueId}:${rule.targetQueueId}`,
     )
   ) {
     return 'Each close trigger relation can only be configured once.'
   }
   if (
-    hasDuplicates(
-      value.closeBlockers
-        .filter((rule) => rule.isActive)
-        .map((rule) => `${rule.blockedQueueId}:${rule.prerequisiteQueueId}`),
+    hasDuplicateActiveRule(
+      value.closeBlockers,
+      (rule) => `${rule.blockedQueueId}:${rule.prerequisiteQueueId}`,
     )
   ) {
     return 'Each close requirement relation can only be configured once.'
@@ -673,10 +670,9 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
     return 'A queue cannot require itself before creation.'
   }
   if (
-    hasDuplicates(
-      value.creationRequirements
-        .filter((rule) => rule.isActive)
-        .map((rule) => `${rule.targetQueueId}:${rule.prerequisiteQueueId}`),
+    hasDuplicateActiveRule(
+      value.creationRequirements,
+      (rule) => `${rule.targetQueueId}:${rule.prerequisiteQueueId}`,
     )
   ) {
     return 'Each case creation requirement relation can only be configured once.'
@@ -684,6 +680,16 @@ function getCaseFlowFormError(value: CaseFlowConfiguration) {
   return null
 }
 
-function hasDuplicates(values: string[]) {
-  return new Set(values).size !== values.length
+function hasDuplicateActiveRule<T extends { isActive: boolean }>(
+  rules: T[],
+  getKey: (rule: T) => string,
+) {
+  const keys = new Set<string>()
+  for (const rule of rules) {
+    if (!rule.isActive) continue
+    const key = getKey(rule)
+    if (keys.has(key)) return true
+    keys.add(key)
+  }
+  return false
 }

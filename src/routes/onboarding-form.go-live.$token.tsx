@@ -171,13 +171,15 @@ function ActivationError({ error }: { error: unknown }) {
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  return GO_LIVE_DATE_TIME_FORMATTER.format(new Date(value))
 }
 
 function formatAvailabilityHours(hours: number) {
   if (!Number.isFinite(hours) || hours <= 0) return null
   return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
 }
+const GO_LIVE_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'long',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

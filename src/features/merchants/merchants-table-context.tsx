@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useMemo, useState } from 'react'
+import { createContext, use, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
@@ -91,14 +91,6 @@ export function useMerchantsTableMeta() {
   return useRequiredContext(MerchantsTableMetaContext)
 }
 
-export function useMerchantsTable() {
-  return {
-    state: useMerchantsTableState(),
-    actions: useMerchantsTableActions(),
-    meta: useMerchantsTableMeta(),
-  }
-}
-
 function cleanEmptyParams(search: Record<string, unknown>) {
   const cleaned = { ...search }
 
@@ -123,27 +115,24 @@ function useMerchantFilters() {
   const navigate = useNavigate()
   const filters = routeApi.useSearch()
 
-  const setFilters = useCallback(
-    (partialFilters: Partial<MerchantRouteSearch>) => {
-      void navigate({
-        to: '/merchants',
-        search: (prev) =>
-          cleanEmptyParams({
-            ...prev,
-            ...partialFilters,
-          }) as MerchantRouteSearch,
-        replace: true,
-      })
-    },
-    [navigate],
-  )
+  const setFilters = (partialFilters: Partial<MerchantRouteSearch>) => {
+    void navigate({
+      to: '/merchants',
+      search: (prev) =>
+        cleanEmptyParams({
+          ...prev,
+          ...partialFilters,
+        }) as MerchantRouteSearch,
+      replace: true,
+    })
+  }
 
-  const setFilter = useCallback(
-    (key: keyof MerchantRouteSearch, value: string | undefined) => {
-      setFilters({ [key]: value || undefined })
-    },
-    [setFilters],
-  )
+  const setFilter = (
+    key: keyof MerchantRouteSearch,
+    value: string | undefined,
+  ) => {
+    setFilters({ [key]: value || undefined })
+  }
 
   return { filters, setFilters, setFilter }
 }
@@ -154,35 +143,29 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const userRole = user?.roleType ?? 'agent'
   const { filters, setFilter, setFilters } = useMerchantFilters()
 
-  const handleSort = useCallback(
-    (columnId: MerchantSortableColumn) => {
-      const isSameColumn = filters.sortBy === columnId
-      const nextOrder =
-        isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
+  const handleSort = (columnId: MerchantSortableColumn) => {
+    const isSameColumn = filters.sortBy === columnId
+    const nextOrder =
+      isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
 
-      if (!isSameColumn) {
-        queryClient.removeQueries({ queryKey: MERCHANTS_KEY })
-      }
+    if (!isSameColumn) {
+      queryClient.removeQueries({ queryKey: MERCHANTS_KEY })
+    }
 
-      setFilters({ sortBy: columnId, sortOrder: nextOrder })
-    },
-    [filters.sortBy, filters.sortOrder, queryClient, setFilters],
-  )
+    setFilters({ sortBy: columnId, sortOrder: nextOrder })
+  }
 
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [priorityTarget, setPriorityTarget] =
     useState<MerchantPriorityTarget | null>(null)
   const [terminateTarget, setTerminateTarget] =
     useState<TerminateTarget | null>(null)
-  const queryFilters = useMemo<MerchantFilters>(
-    () => ({
-      ...filters,
-      status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
-      createdAtFrom: undefined,
-      createdAtTo: undefined,
-    }),
-    [filters],
-  )
+  const queryFilters: MerchantFilters = {
+    ...filters,
+    status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
+    createdAtFrom: undefined,
+    createdAtTo: undefined,
+  }
 
   const {
     data,
@@ -200,17 +183,12 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const bulkTerminate = useBulkTerminateMutation()
   const bulkPriority = useBulkPriorityMutation()
 
-  const flatData = useMemo(
-    () => data?.pages.flatMap((page) => page.merchants) ?? [],
-    [data],
-  )
-  const loadedCount = flatData.length
-  const allIds = useMemo(
-    () => flatData.map((merchant) => merchant.id),
-    [flatData],
-  )
+  const flatData = data?.pages.flatMap((page) => page.merchants) ?? []
 
-  const handleSelectRow = useCallback((id: string, selected: boolean) => {
+  const loadedCount = flatData.length
+  const allIds = flatData.map((merchant) => merchant.id)
+
+  const handleSelectRow = (id: string, selected: boolean) => {
     setSelectedIdSet((prev) => {
       const next = new Set(prev)
 
@@ -222,107 +200,68 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
       return next
     })
-  }, [])
+  }
 
-  const handleSelectAll = useCallback(
-    (selected: boolean) => {
-      setSelectedIdSet(selected ? new Set(allIds) : new Set())
-    },
-    [allIds],
-  )
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedIdSet(selected ? new Set(allIds) : new Set())
+  }
 
-  const selectedIds = useMemo(() => Array.from(selectedIdSet), [selectedIdSet])
+  const selectedIds = Array.from(selectedIdSet)
 
-  const columns = useMemo(
-    () =>
-      createMerchantColumns({
-        userRole,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-        onSort: handleSort,
-        selectedIds: selectedIdSet,
-        allIds,
-        onSelectRow: handleSelectRow,
-        onSelectAll: handleSelectAll,
-        onPriorityClick: (merchant) =>
-          setPriorityTarget({ type: 'single', merchant }),
-        onTerminateClick: (merchant) =>
-          setTerminateTarget({ type: 'single', merchant }),
-      }),
-    [
-      allIds,
-      filters.sortBy,
-      filters.sortOrder,
-      handleSelectAll,
-      handleSelectRow,
-      handleSort,
-      selectedIdSet,
-      userRole,
-    ],
-  )
+  const columns = createMerchantColumns({
+    userRole,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
+    onSort: handleSort,
+    selectedIds: selectedIdSet,
+    allIds,
+    onSelectRow: handleSelectRow,
+    onSelectAll: handleSelectAll,
+    onPriorityClick: (merchant) =>
+      setPriorityTarget({ type: 'single', merchant }),
+    onTerminateClick: (merchant) =>
+      setTerminateTarget({ type: 'single', merchant }),
+  })
 
-  const commaToSet = useCallback(
-    (value: string | undefined) =>
-      new Set(value?.split(',').filter(Boolean) ?? []),
-    [],
-  )
+  const commaToSet = (value: string | undefined) =>
+    new Set(value?.split(',').filter(Boolean) ?? [])
 
-  const setToCommaString = useCallback(
-    (set: Set<string>) =>
-      set.size > 0 ? Array.from(set).join(',') : undefined,
-    [],
-  )
+  const setToCommaString = (set: Set<string>) =>
+    set.size > 0 ? Array.from(set).join(',') : undefined
 
-  const submitPriority = useCallback(
-    (priority: Priority, note?: string) => {
-      if (!priorityTarget) {
-        return
-      }
+  const submitPriority = (priority: Priority, note?: string) => {
+    if (!priorityTarget) {
+      return
+    }
 
-      if (priorityTarget.type === 'bulk') {
-        bulkPriority.mutate(
-          { ids: priorityTarget.ids, priority, note },
-          {
-            onSuccess: () => {
-              setPriorityTarget(null)
-              setSelectedIdSet(new Set())
-            },
+    if (priorityTarget.type === 'bulk') {
+      bulkPriority.mutate(
+        { ids: priorityTarget.ids, priority, note },
+        {
+          onSuccess: () => {
+            setPriorityTarget(null)
+            setSelectedIdSet(new Set())
           },
-        )
-
-        return
-      }
-
-      updatePriority.mutate(
-        { merchantId: priorityTarget.merchant.id, priority, note },
-        { onSuccess: () => setPriorityTarget(null) },
+        },
       )
-    },
-    [bulkPriority, priorityTarget, updatePriority],
-  )
 
-  const confirmTerminate = useCallback(
-    (reason: string) => {
-      if (!terminateTarget) {
-        return
-      }
+      return
+    }
 
-      if (terminateTarget.type === 'single') {
-        terminateMerchant.mutate(
-          { merchantId: terminateTarget.merchant.id, reason },
-          {
-            onSuccess: () => {
-              setTerminateTarget(null)
-              setSelectedIdSet(new Set())
-            },
-          },
-        )
+    updatePriority.mutate(
+      { merchantId: priorityTarget.merchant.id, priority, note },
+      { onSuccess: () => setPriorityTarget(null) },
+    )
+  }
 
-        return
-      }
+  const confirmTerminate = (reason: string) => {
+    if (!terminateTarget) {
+      return
+    }
 
-      bulkTerminate.mutate(
-        { ids: terminateTarget.ids, reason },
+    if (terminateTarget.type === 'single') {
+      terminateMerchant.mutate(
+        { merchantId: terminateTarget.merchant.id, reason },
         {
           onSuccess: () => {
             setTerminateTarget(null)
@@ -330,87 +269,67 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
           },
         },
       )
-    },
-    [bulkTerminate, terminateMerchant, terminateTarget],
-  )
 
-  const handleFetchNextPage = useCallback(() => {
+      return
+    }
+
+    bulkTerminate.mutate(
+      { ids: terminateTarget.ids, reason },
+      {
+        onSuccess: () => {
+          setTerminateTarget(null)
+          setSelectedIdSet(new Set())
+        },
+      },
+    )
+  }
+
+  const handleFetchNextPage = () => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+  }
 
-  const stateValue = useMemo<MerchantsTableState>(
-    () => ({
-      flatData,
-      selectedIds,
-      filters,
-      userRole,
-      isLoading: isTableLoading,
-      loadedCount,
-      hasNextPage,
-      isFetchingNextPage,
-      priorityTarget,
-      terminateTarget,
-      isPriorityPending: updatePriority.isPending,
-      isTerminatePending:
-        terminateMerchant.isPending || bulkTerminate.isPending,
-      isBulkPriorityPending: bulkPriority.isPending,
-    }),
-    [
-      bulkPriority.isPending,
-      bulkTerminate.isPending,
-      filters,
-      flatData,
-      hasNextPage,
-      isFetchingNextPage,
-      isTableLoading,
-      priorityTarget,
-      selectedIds,
-      terminateMerchant.isPending,
-      terminateTarget,
-      loadedCount,
-      updatePriority.isPending,
-      userRole,
-    ],
-  )
+  const stateValue: MerchantsTableState = {
+    flatData,
+    selectedIds,
+    filters,
+    userRole,
+    isLoading: isTableLoading,
+    loadedCount,
+    hasNextPage,
+    isFetchingNextPage,
+    priorityTarget,
+    terminateTarget,
+    isPriorityPending: updatePriority.isPending,
+    isTerminatePending: terminateMerchant.isPending || bulkTerminate.isPending,
+    isBulkPriorityPending: bulkPriority.isPending,
+  }
 
-  const actionsValue = useMemo<MerchantsTableActions>(
-    () => ({
-      setFilter,
-      fetchNextPage: handleFetchNextPage,
-      openPriorityDialog: (merchant) =>
-        setPriorityTarget({ type: 'single', merchant }),
-      closePriorityDialog: () => setPriorityTarget(null),
-      openBulkPriorityDialog: () =>
-        setPriorityTarget({
-          type: 'bulk',
-          ids: selectedIds,
-          initialPriority: 'normal',
-        }),
-      openTerminateDialog: setTerminateTarget,
-      closeTerminateDialog: () => setTerminateTarget(null),
-      submitPriority,
-      confirmTerminate,
-    }),
-    [
-      confirmTerminate,
-      handleFetchNextPage,
-      setFilter,
-      selectedIds,
-      submitPriority,
-    ],
-  )
+  const actionsValue: MerchantsTableActions = {
+    setFilter,
+    fetchNextPage: handleFetchNextPage,
+    openPriorityDialog: (merchant) =>
+      setPriorityTarget({ type: 'single', merchant }),
+    closePriorityDialog: () => setPriorityTarget(null),
+    openBulkPriorityDialog: () =>
+      setPriorityTarget({
+        type: 'bulk',
+        ids: selectedIds,
+        initialPriority: 'normal',
+      }),
+    openTerminateDialog: setTerminateTarget,
+    closeTerminateDialog: () => setTerminateTarget(null),
+    submitPriority,
+    confirmTerminate,
+  }
 
-  const metaValue = useMemo<MerchantsTableMeta>(
-    () => ({
-      columns,
-      selectedIdSet,
-      commaToSet,
-      setToCommaString,
-    }),
-    [columns, commaToSet, selectedIdSet, setToCommaString],
-  )
+  const metaValue: MerchantsTableMeta = {
+    columns,
+    selectedIdSet,
+    commaToSet,
+    setToCommaString,
+  }
 
   return (
     <MerchantsTableStateContext value={stateValue}>

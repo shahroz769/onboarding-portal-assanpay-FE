@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Check, Copy, ExternalLink, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -21,10 +21,7 @@ export function WhatsAppMessagePanel({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [copied, setCopied] = useState(false)
-  const whatsappUrl = useMemo(
-    () => buildWhatsappUrl(phoneNumber, preview.body),
-    [phoneNumber, preview.body],
-  )
+  const whatsappUrl = buildWhatsappUrl(phoneNumber, preview.body)
 
   function copyMessage() {
     navigator.clipboard.writeText(preview.body).then(() => {
@@ -109,6 +106,7 @@ export function WhatsAppMessagePanel({
             className="hidden"
             onChange={handleFileChange}
           />
+
           <Button
             type="button"
             size="sm"

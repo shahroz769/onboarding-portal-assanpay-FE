@@ -6,13 +6,12 @@ import {
 } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
-import { buttonVariants  } from '#/components/ui/button'
-import type {Button} from '#/components/ui/button';
+import { buttonVariants } from '#/components/ui/button-variants'
+import type { Button } from '#/components/ui/button'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
-      role="navigation"
       aria-label="pagination"
       data-slot="pagination"
       className={cn('mx-auto flex w-full justify-center', className)}

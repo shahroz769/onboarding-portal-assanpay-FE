@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import {
   CheckCircle2,
@@ -63,16 +63,14 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   const appliedCsv = data.portalMids.appliedCsv
   const appliedLimits = data.portalMids.appliedLimits
   const appliedCount = data.portalMids.appliedLimits.length
-  const appliedGroups = useMemo(
-    () => ({
-      customWordpress: appliedLimits.filter(
-        (item) => item.category === 'custom_wordpress',
-      ),
-      shopify: appliedLimits.filter((item) => item.category === 'shopify'),
-      internal: appliedLimits.filter((item) => item.category === 'internal'),
-    }),
-    [appliedLimits],
-  )
+  const appliedGroups = {
+    customWordpress: appliedLimits.filter(
+      (item) => item.category === 'custom_wordpress',
+    ),
+    shopify: appliedLimits.filter((item) => item.category === 'shopify'),
+    internal: appliedLimits.filter((item) => item.category === 'internal'),
+  }
+
   const canApply =
     user?.roleType === 'super_admin' || user?.roleType === 'admin'
   const [open, setOpen] = useState(false)
@@ -81,7 +79,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   const [category, setCategory] =
     useState<ApplyPortalMidLimitsInput['category']>('custom_wordpress')
   const [error, setError] = useState<string | null>(null)
-  const parsedPortalMids = useMemo(() => parsePortalMids(value), [value])
+  const parsedPortalMids = parsePortalMids(value)
 
   async function handleCopyApplied() {
     if (!appliedCsv) return
@@ -245,10 +243,12 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                     (item) => item.portalMid,
                   )}
                 />
+
                 <AppliedMidSection
                   title="Shopify"
                   mids={appliedGroups.shopify.map((item) => item.portalMid)}
                 />
+
                 <AppliedMidSection
                   title="Internal"
                   mids={appliedGroups.internal.map((item) => item.portalMid)}
@@ -328,6 +328,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                   if (error) setError(null)
                 }}
               />
+
               <FieldDescription>
                 Enter comma-separated MIDs. Saved dashboard lists are shown
                 without spaces.

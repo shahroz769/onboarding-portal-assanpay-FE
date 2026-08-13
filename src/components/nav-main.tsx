@@ -21,7 +21,7 @@ import {
 
 const NAV_MENU_STATE_STORAGE_KEY = 'app-sidebar-collapsible-state'
 
-function readStoredNavMenuState() {
+function readStoredNavMenuState(): Record<string, boolean> {
   if (typeof window === 'undefined') {
     return {}
   }
@@ -31,7 +31,12 @@ function readStoredNavMenuState() {
     if (!rawValue) return {}
 
     const parsed: unknown = JSON.parse(rawValue)
-    return typeof parsed === 'object' && parsed !== null ? parsed : {}
+    if (typeof parsed !== 'object' || parsed === null) return {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, boolean] => typeof entry[1] === 'boolean',
+      ),
+    )
   } catch {
     return {}
   }
@@ -66,16 +71,10 @@ function NavItem({
   const shouldBeOpen = isDirectActive || hasActiveChild
   const [open, setOpen] = useState(() => {
     const storedState = readStoredNavMenuState()
-    return storedState[item.url] ?? shouldBeOpen
+    return shouldBeOpen || storedState[item.url] === true
   })
   const labelClassName =
     'min-w-0 flex-1 truncate transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0'
-
-  useEffect(() => {
-    if (shouldBeOpen) {
-      setOpen(true)
-    }
-  }, [shouldBeOpen])
 
   useEffect(() => {
     const storedState = readStoredNavMenuState()
@@ -156,7 +155,11 @@ export function NavMain({ items }: { items: SidebarNavItem[] }) {
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <NavItem key={item.title} item={item} pathname={pathname} />
+          <NavItem
+            key={`${item.url}-${pathname}`}
+            item={item}
+            pathname={pathname}
+          />
         ))}
       </SidebarMenu>
     </SidebarGroup>

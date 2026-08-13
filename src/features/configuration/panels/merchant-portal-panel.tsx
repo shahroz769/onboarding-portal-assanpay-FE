@@ -33,9 +33,11 @@ import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
   PanelLoading,
+} from './configuration-panel-shared'
+import {
   getValidationErrors,
   hasValidationErrors,
-} from './configuration-panel-shared'
+} from './configuration-panel-utils'
 
 // ─── Merchant Portal ───────────────────────────────────────────────────────
 export function MerchantPortalPanel() {

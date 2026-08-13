@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertCircleIcon, UserIcon } from 'lucide-react'
 
@@ -23,6 +22,7 @@ import {
 } from '#/components/data-table'
 import type { CaseRouteSearch, CaseStatus } from '#/schemas/cases.schema'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
+import { useHydrated } from '#/hooks/use-hydrated'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { CasePriorityDialog } from './case-priority-dialog'
 import {
@@ -49,11 +49,10 @@ function QueueSelector() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const { filters } = state
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
-
-  useEffect(() => {
-    setPortalTarget(document.getElementById('page-header-actions'))
-  }, [])
+  const hydrated = useHydrated()
+  const portalTarget = hydrated
+    ? document.getElementById('page-header-actions')
+    : null
 
   const content = (
     <Select
@@ -250,6 +249,7 @@ function Dialogs() {
       ) : null}
       {state.priorityCase ? (
         <CasePriorityDialog
+          key={state.priorityCase.id}
           open
           onOpenChange={(open) => {
             if (!open) {
@@ -263,7 +263,7 @@ function Dialogs() {
   )
 }
 
-export const CasesTable = {
+const CasesTable = {
   Provider: CasesTableProvider,
   QueueSelector,
   Toolbar,

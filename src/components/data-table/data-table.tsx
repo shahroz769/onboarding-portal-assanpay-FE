@@ -149,7 +149,7 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform">
+      <div className="view-transition-none h-full overflow-auto rounded-md border bg-background">
         <Table className="table-fixed">
           <TableHeader className={stickyHeaderClassName}>
             {headerRow}
@@ -200,7 +200,7 @@ export function DataTable<TData>({
   return (
     <div
       ref={scrollContainerRef}
-      className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform"
+      className="view-transition-none h-full overflow-auto rounded-md border bg-background"
     >
       <Table className="table-fixed">
         <TableHeader className={stickyHeaderClassName}>{headerRow}</TableHeader>

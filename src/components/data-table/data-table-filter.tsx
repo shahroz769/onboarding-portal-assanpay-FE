@@ -65,17 +65,19 @@ export function DataTableFilter({
                     {selectedValues.size} selected
                   </Badge>
                 ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        key={option.value}
-                        variant="secondary"
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        {option.label}
-                      </Badge>
-                    ))
+                  options.flatMap((option) =>
+                    selectedValues.has(option.value)
+                      ? [
+                          <Badge
+                            key={option.value}
+                            variant="secondary"
+                            className="rounded-sm px-1 font-normal"
+                          >
+                            {option.label}
+                          </Badge>,
+                        ]
+                      : [],
+                  )
                 )}
               </div>
             </>

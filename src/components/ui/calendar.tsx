@@ -6,15 +6,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import {
-  DayPicker,
-  getDefaultClassNames
-  
-} from 'react-day-picker'
-import type {DayButton} from 'react-day-picker';
+import { DayPicker, getDefaultClassNames } from 'react-day-picker'
+import type { DayButton } from 'react-day-picker'
 
 import { cn } from '#/lib/utils'
-import { Button, buttonVariants } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button-variants'
 
 function Calendar({
   className,
@@ -35,8 +32,8 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn(
         'group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
-        String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
-        String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
+        'rtl:**:[.rdp-button\\_next>svg]:rotate-180',
+        'rtl:**:[.rdp-button\\_previous>svg]:rotate-180',
         className,
       )}
       captionLayout={captionLayout}
@@ -198,7 +195,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={`${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}`}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

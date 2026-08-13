@@ -7,7 +7,6 @@ import type {
   CaseDetail,
   FieldReview,
   FieldReviewStatus,
-  SaveFieldReviewsInput,
 } from '#/schemas/cases.schema'
 
 type ReviewFieldDefinition = {
@@ -233,38 +232,5 @@ export function getDocumentsReviewSummaryFromDraft(
       reviewables.length > 0 &&
       approvedItems.length === reviewables.length &&
       rejectedItems.length === 0,
-  }
-}
-
-export function createApproveAllReviewsInput(
-  caseDetail: CaseDetail,
-): SaveFieldReviewsInput {
-  return {
-    reviews: getDocumentsReviewables(caseDetail).map((item) => ({
-      fieldName: item.key,
-      status: 'approved' as const,
-    })),
-  }
-}
-
-export function createSaveFieldReviewsInputFromDraft(
-  draftReviews: DocumentsReviewDraftMap,
-): SaveFieldReviewsInput {
-  return {
-    reviews: Object.entries(draftReviews).flatMap(([fieldName, review]) => {
-      if (!review) {
-        return []
-      }
-
-      const remarks = review.remarks.trim()
-
-      return [
-        {
-          fieldName,
-          status: review.status,
-          ...(remarks ? { remarks } : {}),
-        },
-      ]
-    }),
   }
 }

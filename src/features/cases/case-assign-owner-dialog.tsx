@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AlertCircleIcon, CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
@@ -51,7 +51,6 @@ export function CaseAssignOwnerDialog({
 }: CaseAssignOwnerDialogProps) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  const [initialized, setInitialized] = useState(false)
 
   const { data: users = [] } = useQuery(usersQueryOptions())
   const assignMutation = useAssignCaseMutation()
@@ -62,21 +61,12 @@ export function CaseAssignOwnerDialog({
     ...users.map((u) => ({ label: u.name, value: u.id })),
   ]
   const selectedValue = selectedUserId ?? 'ap-system'
-  const hasChanged = initialized && selectedUserId !== currentOwnerId
+  const hasChanged = selectedUserId !== currentOwnerId
   const selectedLabel =
     options.find((o) => o.value === selectedValue)?.label ?? 'Select owner...'
 
-  useEffect(() => {
-    if (open) {
-      setSelectedUserId(currentOwnerId)
-      setInitialized(false)
-      resetAssignMutation()
-    }
-  }, [open, currentOwnerId, resetAssignMutation])
-
   function handleSelect(value: string) {
     setSelectedUserId(value === 'ap-system' ? null : value)
-    setInitialized(true)
     setPopoverOpen(false)
     resetAssignMutation()
   }

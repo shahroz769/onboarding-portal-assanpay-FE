@@ -14,14 +14,12 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   markLiveLimitsApplied,
-  markTestingLimitsApplied,
   saveMidCreationDetails,
   saveFieldReviews,
   saveDocumentReviewSubMerchant,
   saveWordpressWebsiteCase,
   sendAgreementEmail,
   sendMidCreationEmail,
-  selectSubMerchantForm,
   sendForResubmission,
   takeOwnership,
   uploadAgreementFinalAgreement,
@@ -49,7 +47,6 @@ import type {
   SendMidCreationEmailInput,
   SendLiveEmailInput,
   SaveMidCreationDetailsInput,
-  SelectSubMerchantFormInput,
   EmailRecipientSelection,
   EmailRecipientType,
 } from '#/schemas/cases.schema'
@@ -277,23 +274,6 @@ export function useSendForResubmission(caseId: string) {
       toast.error(
         getApiErrorMessage(error, 'Failed to send resubmission email'),
       )
-    },
-  })
-}
-
-export function useSelectSubMerchantForm(caseId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (input: SelectSubMerchantFormInput) =>
-      selectSubMerchantForm(caseId, input),
-    onSuccess: () => {
-      toast.success('Sub-merchant selected')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-    },
-    onError: (error: unknown) => {
-      toast.error(getApiErrorMessage(error, 'Failed to select sub-merchant'))
     },
   })
 }
@@ -570,25 +550,6 @@ export function useSaveMidCreationDetails(caseId: string, merchantId?: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to save MID details'))
-    },
-  })
-}
-
-export function useMarkTestingLimitsApplied(caseId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: () => markTestingLimitsApplied(caseId),
-    onSuccess: () => {
-      toast.success('Testing limits marked as applied')
-      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
-      queryClient.invalidateQueries({ queryKey: CASES_KEY })
-    },
-    onError: (error: unknown) => {
-      toast.error(
-        getApiErrorMessage(error, 'Failed to mark testing limits as applied'),
-      )
     },
   })
 }

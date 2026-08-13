@@ -126,7 +126,7 @@ export const dashboardResponseSchema = z.object({
 
 export type DashboardResponse = z.infer<typeof dashboardResponseSchema>
 
-export const applyPortalMidLimitsInputSchema = z.object({
+const applyPortalMidLimitsInputSchema = z.object({
   portalMids: z.array(z.number().int().positive()).min(1),
   category: z.enum(['custom_wordpress', 'shopify', 'internal']),
 })

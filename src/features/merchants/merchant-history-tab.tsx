@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import {
@@ -8,11 +7,9 @@ import {
   FileSignature,
   Flag,
   History,
-  Inbox,
   XCircle,
 } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
-
 import { Badge } from '#/components/ui/badge'
 import {
   Card,
@@ -27,7 +24,6 @@ import type {
   MerchantDetailResponse,
   MerchantTimelineEvent,
 } from '#/schemas/merchants.schema'
-
 import {
   caseStatusBadgeClasses,
   humanize,
@@ -37,9 +33,7 @@ import {
 type MerchantHistoryTabProps = {
   detail: MerchantDetailResponse
 }
-
 type HistoryTone = 'amber' | 'sky' | 'emerald' | 'violet' | 'red' | 'muted'
-
 type HistoryItem = {
   id: string
   at: number
@@ -49,14 +43,15 @@ type HistoryItem = {
   actorName?: string | null
   icon: ComponentType<SVGProps<SVGSVGElement>>
   tone: HistoryTone
-  badge?: { label: string; className?: string }
+  badge?: {
+    label: string
+    className?: string
+  }
 }
-
 type CaseHistoryGroup = {
   caseRow: MerchantCase
   items: HistoryItem[]
 }
-
 const ACTION_LABELS: Record<string, string> = {
   case_created_manually: 'Case created manually',
   case_created_from_flow_start: 'First case created automatically',
@@ -99,11 +94,9 @@ const ACTION_LABELS: Record<string, string> = {
   closed_unsuccessful: 'Closed — unsuccessful',
   closed_successful: 'Closed — successful',
 }
-
 function actionLabel(action: string) {
   return ACTION_LABELS[action] ?? humanize(action)
 }
-
 function actionTone(action: string): HistoryTone {
   if (action.includes('failed') || action.includes('unsuccessful')) return 'red'
   if (action.includes('live')) return 'emerald'
@@ -113,7 +106,6 @@ function actionTone(action: string): HistoryTone {
   if (action.includes('resubmission')) return 'amber'
   return 'violet'
 }
-
 const toneClasses: Record<HistoryTone, string> = {
   amber: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
   sky: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
@@ -124,7 +116,6 @@ const toneClasses: Record<HistoryTone, string> = {
   red: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
   muted: 'bg-muted text-muted-foreground',
 }
-
 function SectionIcon({
   icon: Icon,
   colorClass,
@@ -143,7 +134,6 @@ function SectionIcon({
     </div>
   )
 }
-
 export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
   const { merchant, cases, timeline, milestones } = detail
   const openCases = cases.filter((caseRow) =>
@@ -153,10 +143,8 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
   const closedCases = cases.filter(
     (caseRow) => !isCaseOpen(caseRow.status, caseRow.stageCategory),
   )
-
-  const milestoneItems = useMemo<HistoryItem[]>(() => {
+  const milestoneItems = (() => {
     const collected: HistoryItem[] = []
-
     if (milestones.formFilledAt) {
       collected.push({
         id: 'form-submitted',
@@ -168,7 +156,6 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
         tone: 'amber',
       })
     }
-
     if (milestones.liveAt) {
       collected.push({
         id: 'went-live',
@@ -179,19 +166,15 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
         tone: 'emerald',
       })
     }
-
     return collected.sort((a, b) => a.at - b.at)
-  }, [milestones, merchant.submitterEmail])
-
-  const caseGroups = useMemo<CaseHistoryGroup[]>(() => {
+  })()
+  const caseGroups = (() => {
     const eventsByCase = new Map<string, MerchantTimelineEvent[]>()
-
     for (const event of timeline) {
       const current = eventsByCase.get(event.caseId) ?? []
       current.push(event)
       eventsByCase.set(event.caseId, current)
     }
-
     return cases
       .map((caseRow) => {
         const items: HistoryItem[] = [
@@ -205,10 +188,8 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
             tone: 'sky',
           },
         ]
-
         for (const event of eventsByCase.get(caseRow.id) ?? []) {
           if (isDuplicateCaseBoundaryAction(event.action)) continue
-
           items.push({
             id: `event-${event.id}`,
             at: new Date(event.createdAt).getTime(),
@@ -220,7 +201,6 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
             badge: statusBadgeForAction(event.action),
           })
         }
-
         if (caseRow.closedAt) {
           const unsuccessful = caseRow.closeOutcome === 'unsuccessful'
           items.push({
@@ -232,11 +212,12 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
             icon: unsuccessful ? XCircle : CheckCircle2,
             tone: unsuccessful ? 'red' : 'emerald',
             badge: caseRow.closeOutcome
-              ? { label: humanize(caseRow.closeOutcome) }
+              ? {
+                  label: humanize(caseRow.closeOutcome),
+                }
               : undefined,
           })
         }
-
         return {
           caseRow,
           items: items.sort((a, b) => a.at - b.at),
@@ -245,11 +226,9 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
       .sort((a, b) => {
         const firstItemA = a.items[0]
         const firstItemB = b.items[0]
-
         return firstItemA.at - firstItemB.at
       })
-  }, [cases, timeline])
-
+  })()
   if (milestoneItems.length === 0 && caseGroups.length === 0) {
     return (
       <Card>
@@ -262,7 +241,6 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
       </Card>
     )
   }
-
   return (
     <div className="flex flex-col gap-6">
       {milestoneItems.length > 0 ? (
@@ -310,7 +288,6 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
     </div>
   )
 }
-
 function CaseStatusSummary({
   label,
   value,
@@ -330,7 +307,6 @@ function CaseStatusSummary({
     </div>
   )
 }
-
 function HistorySection({
   icon,
   colorClass,
@@ -359,10 +335,8 @@ function HistorySection({
     </Card>
   )
 }
-
 function CaseHistoryPanel({ group }: { group: CaseHistoryGroup }) {
   const { caseRow, items } = group
-
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -373,7 +347,9 @@ function CaseHistoryPanel({ group }: { group: CaseHistoryGroup }) {
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Link
               to="/cases/$caseId"
-              params={{ caseId: caseRow.id }}
+              params={{
+                caseId: caseRow.id,
+              }}
               className="font-mono text-sm font-medium tabular-nums text-primary no-underline hover:underline hover:decoration-dashed hover:underline-offset-4"
             >
               {caseRow.caseNumber}
@@ -402,7 +378,6 @@ function CaseHistoryPanel({ group }: { group: CaseHistoryGroup }) {
     </div>
   )
 }
-
 function HistoryRows({
   items,
   compact = false,
@@ -450,7 +425,6 @@ function HistoryRows({
     </ol>
   )
 }
-
 const toneDotClasses: Record<HistoryTone, string> = {
   amber: 'bg-amber-500',
   sky: 'bg-sky-500',
@@ -459,7 +433,6 @@ const toneDotClasses: Record<HistoryTone, string> = {
   red: 'bg-red-500',
   muted: 'bg-muted-foreground',
 }
-
 function isDuplicateCaseBoundaryAction(action: string) {
   return (
     action.startsWith('case_created') ||
@@ -467,7 +440,6 @@ function isDuplicateCaseBoundaryAction(action: string) {
     action === 'closed_unsuccessful'
   )
 }
-
 function statusBadgeForAction(action: string) {
   if (action === 'client_resubmitted') {
     return {
@@ -475,7 +447,6 @@ function statusBadgeForAction(action: string) {
       className: caseStatusBadgeClasses('working'),
     }
   }
-
   if (
     action === 'resubmission_email_sent' ||
     action === 'resubmission_email_sent_manual'
@@ -485,13 +456,11 @@ function statusBadgeForAction(action: string) {
       className: caseStatusBadgeClasses('awaiting_client'),
     }
   }
-
   if (action === 'rejections_prepared') {
     return {
       label: 'Pending review',
       className: caseStatusBadgeClasses('pending'),
     }
   }
-
   return undefined
 }

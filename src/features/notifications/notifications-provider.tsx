@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -34,24 +34,32 @@ export function NotificationsProvider() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  // Stable refs so the SSE callbacks don't churn the connection
-  const navigateRef = useRef(navigate)
-  navigateRef.current = navigate
-  const qcRef = useRef(queryClient)
-  qcRef.current = queryClient
-
   const userId = auth.user?.id ?? null
 
-  function syncNotificationsFromServer() {
+  const syncNotificationsFromServer = useEffectEvent(() => {
     void Promise.all([
-      qcRef.current.invalidateQueries({
-        queryKey: NOTIFICATIONS_KEY,
-      }),
-      qcRef.current.invalidateQueries({
-        queryKey: NOTIFICATIONS_UNREAD_KEY,
-      }),
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_KEY }),
     ])
-  }
+  })
+
+  const handleNotification = useEffectEvent((notification: Notification) => {
+    applyIncomingNotificationToCache(queryClient, notification)
+    if (notification.caseId && notification.type === 'case_resubmitted') {
+      void invalidateCaseWorkflowQueries(queryClient, notification.caseId)
+    }
+    if (
+      notification.caseId &&
+      (notification.type === 'comment_mention' ||
+        notification.type === 'comment_reply' ||
+        notification.type === 'comment_thread')
+    ) {
+      void queryClient.invalidateQueries({
+        queryKey: [...CASE_COMMENTS_KEY, notification.caseId],
+      })
+    }
+    showNotificationToast(notification, navigate)
+  })
 
   useEffect(() => {
     if (!userId) return
@@ -63,23 +71,7 @@ export function NotificationsProvider() {
         const data = await refreshSession(router.options.context.auth)
         return data.accessToken
       },
-      onEvent: (notification: Notification) => {
-        applyIncomingNotificationToCache(qcRef.current, notification)
-        if (notification.caseId && notification.type === 'case_resubmitted') {
-          void invalidateCaseWorkflowQueries(qcRef.current, notification.caseId)
-        }
-        if (
-          notification.caseId &&
-          (notification.type === 'comment_mention' ||
-            notification.type === 'comment_reply' ||
-            notification.type === 'comment_thread')
-        ) {
-          void qcRef.current.invalidateQueries({
-            queryKey: [...CASE_COMMENTS_KEY, notification.caseId],
-          })
-        }
-        showNotificationToast(notification, navigateRef.current)
-      },
+      onEvent: handleNotification,
       onOpen: syncNotificationsFromServer,
       onInvalidEvent: syncNotificationsFromServer,
       onError: (err) => {
@@ -90,7 +82,7 @@ export function NotificationsProvider() {
     return () => {
       stop()
     }
-  }, [userId, router])
+  }, [router, userId])
 
   // Refresh unread count when tab becomes visible (covers SSE downtime)
   useEffect(() => {

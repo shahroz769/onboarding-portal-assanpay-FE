@@ -4,9 +4,6 @@ import {
   MERCHANT_TYPES,
   WEBSITE_CMS_OPTIONS,
 } from '#/schemas/merchant-onboarding.schema'
-import type { MerchantStatus } from '#/schemas/merchants.schema'
-import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
-import { MERCHANT_STATUS_DISPLAY } from '#/schemas/merchants.schema'
 
 // ─── Label Maps ─────────────────────────────────────────────────────────────
 
@@ -22,7 +19,6 @@ const kinRelationLabels = Object.fromEntries(
   KIN_RELATIONS.map((option) => [option.value, option.label]),
 ) as Record<string, string>
 const documentLabels = DOCUMENT_LABELS as Record<string, string>
-const caseStatusLabels = CASE_STATUS_LABELS as Record<string, string>
 
 export function merchantTypeLabel(value: string) {
   return merchantTypeLabels[value] ?? humanize(value)
@@ -40,14 +36,6 @@ export function documentTypeLabel(value: string) {
   return documentLabels[value] ?? humanize(value)
 }
 
-export function merchantStatusLabel(value: MerchantStatus) {
-  return MERCHANT_STATUS_DISPLAY[value]
-}
-
-export function caseStatusLabel(value: string) {
-  return caseStatusLabels[value] ?? humanize(value)
-}
-
 // ─── Generic Humanizer ──────────────────────────────────────────────────────
 
 export function humanize(value: string) {
@@ -59,21 +47,6 @@ export function humanize(value: string) {
 }
 
 // ─── Badge Class Helpers ────────────────────────────────────────────────────
-
-export function merchantStatusBadgeClasses(status: MerchantStatus): string {
-  switch (status) {
-    case 'pending':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
-    case 'testing':
-      return 'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300'
-    case 'live':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-    case 'terminated':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300'
-    default:
-      return 'bg-muted text-muted-foreground'
-  }
-}
 
 export function caseStatusBadgeClasses(status: string): string {
   switch (status) {
@@ -92,17 +65,6 @@ export function caseStatusBadgeClasses(status: string): string {
       return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
     default:
       return 'bg-muted text-muted-foreground'
-  }
-}
-
-export function documentStatusBadgeClasses(status: string): string {
-  switch (status) {
-    case 'approved':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-    case 'rejected':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300'
-    default:
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
   }
 }
 

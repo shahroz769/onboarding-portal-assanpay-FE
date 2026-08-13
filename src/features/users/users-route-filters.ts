@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 
 import type { UserRouteSearch } from '#/schemas/users.schema'
@@ -20,27 +19,21 @@ export function cleanEmptyUserSearch(search: Record<string, unknown>) {
 export function useUsersSearchActions(to: string) {
   const navigate = useNavigate()
 
-  const setFilters = useCallback(
-    (partialFilters: Partial<UserRouteSearch>) => {
-      void navigate({
-        to,
-        search: (prev) =>
-          cleanEmptyUserSearch({
-            ...prev,
-            ...partialFilters,
-          }) as UserRouteSearch,
-        replace: true,
-      })
-    },
-    [navigate, to],
-  )
+  const setFilters = (partialFilters: Partial<UserRouteSearch>) => {
+    void navigate({
+      to,
+      search: (prev) =>
+        cleanEmptyUserSearch({
+          ...prev,
+          ...partialFilters,
+        }) as UserRouteSearch,
+      replace: true,
+    })
+  }
 
-  const setFilter = useCallback(
-    (key: keyof UserRouteSearch, value: string | undefined) => {
-      setFilters({ [key]: value || undefined })
-    },
-    [setFilters],
-  )
+  const setFilter = (key: keyof UserRouteSearch, value: string | undefined) => {
+    setFilters({ [key]: value || undefined })
+  }
 
   return { setFilter, setFilters }
 }

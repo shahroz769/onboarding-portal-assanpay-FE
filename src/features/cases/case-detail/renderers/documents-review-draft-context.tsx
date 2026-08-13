@@ -3,7 +3,6 @@ import {
   startTransition,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
@@ -39,10 +38,10 @@ export function DocumentsReviewDraftProvider({
   const [draftReviews, setDraftReviews] = useState(() =>
     createDocumentsReviewDraft(caseDetail.fieldReviews),
   )
-  const initialSubMerchantIds = useMemo(
-    () => caseDetail.documentReview?.subMerchants.map((item) => item.id) ?? [],
-    [caseDetail.documentReview?.subMerchants],
-  )
+  const initialSubMerchants = caseDetail.documentReview?.subMerchants
+  const initialSubMerchantIds =
+    initialSubMerchants?.map((item) => item.id) ?? []
+
   const [selectedSubMerchantIds, setSelectedSubMerchantIds] = useState(
     initialSubMerchantIds,
   )
@@ -55,43 +54,39 @@ export function DocumentsReviewDraftProvider({
 
   useEffect(() => {
     startTransition(() => {
-      setSelectedSubMerchantIds(initialSubMerchantIds)
+      setSelectedSubMerchantIds(
+        initialSubMerchants?.map((item) => item.id) ?? [],
+      )
     })
-  }, [initialSubMerchantIds])
+  }, [initialSubMerchants])
 
-  const value = useMemo<DocumentsReviewDraftContextValue>(
-    () => ({
-      draftReviews,
-      reviewSummary: getDocumentsReviewSummaryFromDraft(
-        caseDetail,
-        draftReviews,
-      ),
-      selectedSubMerchantIds,
-      isSubMerchantChanged:
-        [...selectedSubMerchantIds].sort().join(',') !==
-        [...initialSubMerchantIds].sort().join(','),
-      setSelectedSubMerchantIds,
-      saveRejectedReview: (fieldName, remarks) => {
-        setDraftReviews((currentDraft) => ({
-          ...currentDraft,
-          [fieldName]: {
-            status: 'rejected',
-            remarks,
-          },
-        }))
-      },
-      clearRejectedReview: (fieldName) => {
-        setDraftReviews((currentDraft) => ({
-          ...currentDraft,
-          [fieldName]: {
-            status: 'pending',
-            remarks: '',
-          },
-        }))
-      },
-    }),
-    [caseDetail, draftReviews, initialSubMerchantIds, selectedSubMerchantIds],
-  )
+  const value: DocumentsReviewDraftContextValue = {
+    draftReviews,
+    reviewSummary: getDocumentsReviewSummaryFromDraft(caseDetail, draftReviews),
+    selectedSubMerchantIds,
+    isSubMerchantChanged:
+      [...selectedSubMerchantIds].sort().join(',') !==
+      [...initialSubMerchantIds].sort().join(','),
+    setSelectedSubMerchantIds,
+    saveRejectedReview: (fieldName, remarks) => {
+      setDraftReviews((currentDraft) => ({
+        ...currentDraft,
+        [fieldName]: {
+          status: 'rejected',
+          remarks,
+        },
+      }))
+    },
+    clearRejectedReview: (fieldName) => {
+      setDraftReviews((currentDraft) => ({
+        ...currentDraft,
+        [fieldName]: {
+          status: 'pending',
+          remarks: '',
+        },
+      }))
+    },
+  }
 
   return (
     <DocumentsReviewDraftContext.Provider value={value}>

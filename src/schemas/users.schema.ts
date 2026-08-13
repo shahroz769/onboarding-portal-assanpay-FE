@@ -71,7 +71,7 @@ export const userQueueSchema = z.object({
   name: z.string(),
 })
 
-export const userListItemSchema = z.object({
+const userListItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
@@ -93,10 +93,6 @@ export const userListItemSchema = z.object({
 })
 
 export type UserListItem = z.infer<typeof userListItemSchema>
-
-export const userListResponseSchema = z.object({
-  users: z.array(userListItemSchema),
-})
 
 const queueAccessSchema = z
   .object({

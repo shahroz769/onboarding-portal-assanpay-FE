@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -7,6 +6,7 @@ import {
   dashboardQueryOptions,
 } from '#/hooks/use-dashboard-query'
 import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
+import { useHydrated } from '#/hooks/use-hydrated'
 import { DashboardCharts } from './dashboard-charts'
 import { DashboardFilterBar } from './dashboard-filter-bar'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
@@ -51,11 +51,10 @@ export function Dashboard({ search, onChange }: DashboardProps) {
 }
 
 function FilterBarPortal({ children }: { children: React.ReactNode }) {
-  const [target, setTarget] = useState<HTMLElement | null>(null)
-
-  useEffect(() => {
-    setTarget(document.getElementById('page-header-actions'))
-  }, [])
+  const hydrated = useHydrated()
+  const target = hydrated
+    ? document.getElementById('page-header-actions')
+    : null
 
   if (!target) return null
   return createPortal(children, target)

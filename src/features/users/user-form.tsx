@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { ComponentType, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import {
@@ -108,10 +107,8 @@ function QueueAccessSelect({
   onSelectAll?: () => void
   disabled?: boolean
 }) {
-  const selectedQueues = queues.filter((queue) =>
-    selectedIds.includes(queue.id),
-  )
   const selectedIdsSet = new Set(selectedIds)
+  const selectedQueues = queues.filter((queue) => selectedIdsSet.has(queue.id))
 
   const toggleQueue = (queueId: string) => {
     if (isAllSelected) {
@@ -163,6 +160,7 @@ function QueueAccessSelect({
                           isAllSelected && 'opacity-100',
                         )}
                       />
+
                       <span className="min-w-0 flex-1 truncate">
                         All Queues
                       </span>
@@ -184,6 +182,7 @@ function QueueAccessSelect({
                       <CheckIcon
                         className={cn('opacity-0', selected && 'opacity-100')}
                       />
+
                       <span className="min-w-0 flex-1 truncate">
                         {queue.name}
                       </span>
@@ -263,7 +262,7 @@ export function UserForm({
   const isSuperAdminUser = user?.roleType === 'super_admin'
   const isRoleLocked = mode === 'edit' && isSuperAdminUser
 
-  const roleOptions = useMemo(() => {
+  const roleOptions = (() => {
     const editableRoles = new Set<UserFormValues['roleType']>(
       currentUser?.roleType === 'super_admin'
         ? (['admin', 'agent'] as const)
@@ -275,7 +274,7 @@ export function UserForm({
     }
 
     return roleTypes.filter((role) => editableRoles.has(role))
-  }, [currentUser?.roleType, isSuperAdminUser])
+  })()
 
   const form = useForm({
     defaultValues: getDefaultValues(user),
@@ -300,14 +299,16 @@ export function UserForm({
     form.store,
     (state) => state.values.workQueueIds,
   )
+  const viewQueueIdSet = new Set(viewQueueIds)
   const visibleWorkQueues =
     queueViewScope === 'all'
       ? queues
-      : queues.filter((queue) => viewQueueIds.includes(queue.id))
+      : queues.filter((queue) => viewQueueIdSet.has(queue.id))
   const allVisibleWorkQueueIds = visibleWorkQueues.map((queue) => queue.id)
+  const workQueueIdSet = new Set(workQueueIds)
   const isAllWorkQueuesSelected =
     allVisibleWorkQueueIds.length > 0 &&
-    allVisibleWorkQueueIds.every((queueId) => workQueueIds.includes(queueId))
+    allVisibleWorkQueueIds.every((queueId) => workQueueIdSet.has(queueId))
 
   if (queuesQuery.isPending) {
     return <UserFormSkeleton />
@@ -336,6 +337,7 @@ export function UserForm({
               icon={UserRoundIcon}
               colorClass="bg-blue-500/10 text-blue-500"
             />
+
             <div className="min-w-0">
               <CardTitle>Employee Details</CardTitle>
               <CardDescription>
@@ -346,9 +348,8 @@ export function UserForm({
         </CardHeader>
         <CardContent>
           <FieldGroup className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="name"
-              children={(field) => {
+            <form.Field name="name">
+              {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
                 return (
@@ -364,16 +365,17 @@ export function UserForm({
                       aria-invalid={isInvalid}
                       disabled={disabled}
                     />
+
                     {isInvalid ? (
                       <FieldError errors={field.state.meta.errors} />
                     ) : null}
                   </Field>
                 )
               }}
-            />
-            <form.Field
-              name="email"
-              children={(field) => {
+            </form.Field>
+
+            <form.Field name="email">
+              {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
                 return (
@@ -391,16 +393,17 @@ export function UserForm({
                       aria-invalid={isInvalid}
                       disabled={disabled || mode === 'edit'}
                     />
+
                     {isInvalid ? (
                       <FieldError errors={field.state.meta.errors} />
                     ) : null}
                   </Field>
                 )
               }}
-            />
-            <form.Field
-              name="username"
-              children={(field) => {
+            </form.Field>
+
+            <form.Field name="username">
+              {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
                 return (
@@ -416,16 +419,17 @@ export function UserForm({
                       aria-invalid={isInvalid}
                       disabled={disabled || mode === 'edit'}
                     />
+
                     {isInvalid ? (
                       <FieldError errors={field.state.meta.errors} />
                     ) : null}
                   </Field>
                 )
               }}
-            />
-            <form.Field
-              name="gender"
-              children={(field) => {
+            </form.Field>
+
+            <form.Field name="gender">
+              {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
                 return (
@@ -461,10 +465,10 @@ export function UserForm({
                   </Field>
                 )
               }}
-            />
-            <form.Field
-              name="roleType"
-              children={(field) => {
+            </form.Field>
+
+            <form.Field name="roleType">
+              {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
                 return (
@@ -505,11 +509,11 @@ export function UserForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
+
             {mode === 'edit' ? (
-              <form.Field
-                name="status"
-                children={(field) => {
+              <form.Field name="status">
+                {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
@@ -545,7 +549,7 @@ export function UserForm({
                     </Field>
                   )
                 }}
-              />
+              </form.Field>
             ) : null}
           </FieldGroup>
         </CardContent>
@@ -559,6 +563,7 @@ export function UserForm({
                 icon={ListChecksIcon}
                 colorClass="bg-teal-500/10 text-teal-500"
               />
+
               <div className="min-w-0">
                 <CardTitle>Queue Access</CardTitle>
                 <CardDescription>
@@ -571,9 +576,8 @@ export function UserForm({
           <CardContent>
             <FieldGroup className="grid gap-6 lg:grid-cols-2">
               <div className="min-w-0">
-                <form.Field
-                  name="viewQueueIds"
-                  children={(field) => {
+                <form.Field name="viewQueueIds">
+                  {(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid
                     return (
@@ -589,18 +593,20 @@ export function UserForm({
                             field.handleChange([])
                           }}
                           onChangeSelectedIds={(value) => {
+                            const selectedQueueIdSet = new Set(value)
                             form.setFieldValue('queueViewScope', 'selected')
                             field.handleChange(value)
                             form.setFieldValue(
                               'workQueueIds',
                               form.state.values.workQueueIds.filter((queueId) =>
-                                value.includes(queueId),
+                                selectedQueueIdSet.has(queueId),
                               ),
                             )
                           }}
                           placeholder="Select view queues"
                           disabled={disabled || queuesQuery.isLoading}
                         />
+
                         <FieldDescription>
                           Agents can only see cases in queues they can view.
                         </FieldDescription>
@@ -610,13 +616,12 @@ export function UserForm({
                       </Field>
                     )
                   }}
-                />
+                </form.Field>
               </div>
 
               <div className="min-w-0">
-                <form.Field
-                  name="workQueueIds"
-                  children={(field) => {
+                <form.Field name="workQueueIds">
+                  {(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid
                     return (
@@ -637,11 +642,11 @@ export function UserForm({
                           }
                           disabled={
                             disabled ||
-                            queuesQuery.isLoading ||
                             (queueViewScope === 'selected' &&
                               viewQueueIds.length === 0)
                           }
                         />
+
                         <FieldDescription>
                           Only these queues can be taken into ownership by this
                           agent.
@@ -652,7 +657,7 @@ export function UserForm({
                       </Field>
                     )
                   }}
-                />
+                </form.Field>
               </div>
             </FieldGroup>
           </CardContent>
@@ -683,9 +688,8 @@ export function UserForm({
         >
           Reset
         </Button>
-        <form.Subscribe
-          selector={(state) => state.isSubmitting}
-          children={(isSubmitting) => (
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
             <Button type="submit" disabled={disabled || isSubmitting}>
               {isSubmitting ? <Spinner data-icon="inline-start" /> : null}
               {mode === 'create'
@@ -697,7 +701,7 @@ export function UserForm({
                   : 'Save Changes'}
             </Button>
           )}
-        />
+        </form.Subscribe>
       </div>
     </form>
   )

@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -331,13 +331,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
   const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
-  const hasTestingCredentialsSent = useMemo(
-    () =>
-      caseHistoryQuery.data?.some((entry) =>
-        TESTING_CREDENTIALS_SENT_ACTIONS.has(entry.action),
-      ) ?? false,
-    [caseHistoryQuery.data],
-  )
+  const hasTestingCredentialsSent =
+    caseHistoryQuery.data?.some((entry) =>
+      TESTING_CREDENTIALS_SENT_ACTIONS.has(entry.action),
+    ) ?? false
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {
     isDocumentReviewCase,
@@ -415,15 +412,15 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     }
 
     if (primaryAction.actionKind === 'review') {
-      try {
-        await saveChangedSubMerchantBeforeReview()
-        setReviewModalOpen(true)
-      } catch {
-        // Mutation hook already surfaces the backend error via toast.
-      } finally {
-        primaryActionLockedRef.current = false
-        setActionInFlight(null)
-      }
+      await saveChangedSubMerchantBeforeReview()
+        .then(() => setReviewModalOpen(true))
+        .catch(() => {
+          // Mutation hook already surfaces the backend error via toast.
+        })
+        .finally(() => {
+          primaryActionLockedRef.current = false
+          setActionInFlight(null)
+        })
       return
     }
 
@@ -469,14 +466,14 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryActionLockedRef.current = true
     setActionInFlight('unsuccessful')
 
-    try {
-      await closeUnsuccessful.mutateAsync({
+    await closeUnsuccessful
+      .mutateAsync({
         reason: closeReason.trim(),
       })
-    } finally {
-      primaryActionLockedRef.current = false
-      setActionInFlight(null)
-    }
+      .finally(() => {
+        primaryActionLockedRef.current = false
+        setActionInFlight(null)
+      })
   }
 
   return (
@@ -746,26 +743,23 @@ function AwaitingClientAlert({
 }) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
 
-  const expiresAt = useMemo(() => {
+  const expiresAt = (() => {
     const items = historyQuery.data
     if (!items) return null
     const latest = items.find((h) => h.action === action)
     const details = latest?.details as
       { expiresAt?: string | null } | null | undefined
     return details?.expiresAt ?? null
-  }, [action, historyQuery.data])
+  })()
 
-  const expiresLabel = useMemo(() => {
+  const expiresLabel = (() => {
     if (!expiresAt) return null
     try {
-      return new Intl.DateTimeFormat('en-US', {
-        dateStyle: 'long',
-        timeStyle: 'short',
-      }).format(new Date(expiresAt))
+      return EXPIRY_DATE_TIME_FORMATTER.format(new Date(expiresAt))
     } catch {
       return null
     }
-  }, [expiresAt])
+  })()
 
   return (
     <Alert>
@@ -931,3 +925,8 @@ function HistoryTabSkeleton() {
     </div>
   )
 }
+const EXPIRY_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'long',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

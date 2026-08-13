@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { cn } from '#/lib/utils'
+import { useHydrated } from '#/hooks/use-hydrated'
 import {
   DASHBOARD_RANGE_LABELS,
   DASHBOARD_RANGES,
@@ -45,13 +46,14 @@ export function DashboardFilterBar({
   onRefresh,
   isFetching,
 }: DashboardFilterBarProps) {
+  const hydrated = useHydrated()
+  const today = hydrated ? new Date() : undefined
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select
         value={search.range}
-        onValueChange={(value) =>
-          onChange({ range: value as DashboardRange })
-        }
+        onValueChange={(value) => onChange({ range: value as DashboardRange })}
       >
         <SelectTrigger className="w-40">
           <SelectValue />
@@ -70,14 +72,14 @@ export function DashboardFilterBar({
           <DateField
             label="From"
             value={search.from}
-            max={parseDate(search.to) ?? new Date()}
+            max={parseDate(search.to) ?? today}
             onChange={(value) => onChange({ from: value })}
           />
           <DateField
             label="To"
             value={search.to}
             min={parseDate(search.from)}
-            max={new Date()}
+            max={today}
             onChange={(value) => onChange({ to: value })}
           />
         </>

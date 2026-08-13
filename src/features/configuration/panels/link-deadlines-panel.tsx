@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
@@ -31,9 +31,11 @@ import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
   PanelLoading,
+} from './configuration-panel-shared'
+import {
   getValidationErrors,
   hasValidationErrors,
-} from './configuration-panel-shared'
+} from './configuration-panel-utils'
 
 // ─── Link Deadlines ─────────────────────────────────────────────────────────
 export function LinkDeadlinesPanel() {
@@ -44,17 +46,14 @@ export function LinkDeadlinesPanel() {
   const validationErrors = value
     ? getValidationErrors(linkDeadlineSettingsSchema.safeParse(value))
     : {}
-  const fields = useMemo(
-    () =>
-      [
-        ['passwordResetHours', 'Password reset'],
-        ['newPasswordSetHours', 'New password set'],
-        ['agreementLinkHours', 'Agreement link'],
-        ['documentsReviewResubmissionHours', 'Documents review resubmission'],
-        ['goLiveAvailabilityHours', 'Go Live availability'],
-      ] as const,
-    [],
-  )
+  const fields = [
+    ['passwordResetHours', 'Password reset'],
+    ['newPasswordSetHours', 'New password set'],
+    ['agreementLinkHours', 'Agreement link'],
+    ['documentsReviewResubmissionHours', 'Documents review resubmission'],
+    ['goLiveAvailabilityHours', 'Go Live availability'],
+  ] as const
+
   if (isPending || !value) {
     return <PanelLoading />
   }
@@ -87,6 +86,7 @@ export function LinkDeadlinesPanel() {
                   }))
                 }}
               />
+
               <FieldDescription>
                 Hours. Leave blank for no expiry.
               </FieldDescription>

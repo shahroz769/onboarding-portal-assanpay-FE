@@ -40,7 +40,7 @@ export function DataTableRouteSkeleton({
   void searchWidth
   void filterWidths
 
-  const resolvedColumns =
+  const resolvedColumns: SkeletonColumn[] =
     columns ??
     (columnWidths ?? Array.from({ length: 10 }, () => 140)).map((width) => ({
       width,
@@ -58,7 +58,7 @@ export function DataTableRouteSkeleton({
       <div className="shrink-0" />
 
       <div className="min-h-0 flex-1">
-        <div className="view-transition-none h-full overflow-auto rounded-md border bg-background will-change-transform">
+        <div className="view-transition-none h-full overflow-auto rounded-md border bg-background">
           <Table className="table-fixed">
             <TableHeader className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]">
               <TableRow>

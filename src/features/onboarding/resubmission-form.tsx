@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ComponentType, SVGProps } from 'react'
 import { format } from 'date-fns'
 import {
@@ -319,12 +319,12 @@ function groupRejections(rejections: Array<ResubmissionRejection>) {
     grouped.set(section, items)
   }
 
-  return Object.values(SECTION_CONFIGS)
-    .map((section) => ({
-      section,
-      rejections: grouped.get(section.key) ?? [],
-    }))
-    .filter((entry) => entry.rejections.length > 0)
+  return Object.values(SECTION_CONFIGS).flatMap((section) => {
+    const sectionRejections = grouped.get(section.key) ?? []
+    return sectionRejections.length > 0
+      ? [{ section, rejections: sectionRejections }]
+      : []
+  })
 }
 
 function createInitialTextValues(rejections: Array<ResubmissionRejection>) {
@@ -503,18 +503,15 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const mutation = useSubmitResubmissionMutation(token)
 
-  const expiresLabel = useMemo(() => {
+  const expiresLabel = (() => {
     try {
       return format(new Date(context.expiresAt), 'PPP')
     } catch {
       return null
     }
-  }, [context.expiresAt])
+  })()
 
-  const groupedSections = useMemo(
-    () => groupRejections(context.rejections),
-    [context.rejections],
-  )
+  const groupedSections = groupRejections(context.rejections)
 
   function handleTextChange(fieldName: string, value: string) {
     setTextValues((current) => ({
@@ -673,6 +670,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
                 icon={section.icon}
                 colorClass={section.colorClass}
               />
+
               <div>
                 <CardTitle>{section.title}</CardTitle>
                 <CardDescription>{section.description}</CardDescription>
@@ -871,6 +869,7 @@ function FieldControl({
           showClear
           aria-invalid={isInvalid}
         />
+
         <ComboboxContent>
           <ComboboxEmpty>No bank found.</ComboboxEmpty>
           <ComboboxList>

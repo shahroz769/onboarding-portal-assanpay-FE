@@ -1,88 +1,72 @@
-import { useId, useMemo, useRef, useState } from 'react'
-
+import { useId, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-
 import { FileCheck2, FileText, FileUp } from 'lucide-react'
-
 import { DataTable } from '#/components/data-table'
-
 import type { DataTableColumnDef } from '#/components/data-table'
-
 import { Button } from '#/components/ui/button'
-
 import { Field, FieldError } from '#/components/ui/field'
-
 import { Input } from '#/components/ui/input'
-
 import { Spinner } from '#/components/ui/spinner'
-
 import {
   configurationQueryOptions,
   useUploadAgreementDraftMutation,
 } from '#/hooks/use-configuration-query'
-
 import type { ConfigurationOverview } from '#/schemas/configuration.schema'
-
-import {
-  ConfigurationSectionCard,
-  getDraftFileError,
-} from './configuration-panel-shared'
+import { ConfigurationSectionCard } from './configuration-panel-shared'
+import { getDraftFileError } from './configuration-panel-utils'
 
 type AgreementDraft = ConfigurationOverview['agreementDrafts'][number]
 
 // ─── Agreements ─────────────────────────────────────────────────────────────
 export function AgreementsPanel() {
   const { data, isPending } = useQuery(configurationQueryOptions())
-  const columns = useMemo<DataTableColumnDef<AgreementDraft>[]>(
-    () => [
-      {
-        id: 'businessType',
-        header: 'Business Type',
-        width: 240,
-        cell: (draft) => (
-          <span className="truncate font-medium">{draft.label}</span>
+  const columns: DataTableColumnDef<AgreementDraft>[] = [
+    {
+      id: 'businessType',
+      header: 'Business Type',
+      width: 240,
+      cell: (draft) => (
+        <span className="truncate font-medium">{draft.label}</span>
+      ),
+    },
+    {
+      id: 'currentDraft',
+      header: 'Current Draft',
+      width: 280,
+      cell: (draft) =>
+        draft.googleDriveWebViewLink ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <FileCheck2 className="shrink-0 text-muted-foreground" />
+            <a
+              href={draft.googleDriveWebViewLink}
+              target="_blank"
+              rel="noreferrer"
+              className="min-w-0 truncate text-primary underline-offset-2 hover:underline"
+            >
+              {draft.originalName}
+            </a>
+          </div>
+        ) : (
+          <span className="text-muted-foreground">No draft</span>
         ),
-      },
-      {
-        id: 'currentDraft',
-        header: 'Current Draft',
-        width: 280,
-        cell: (draft) =>
-          draft.googleDriveWebViewLink ? (
-            <div className="flex min-w-0 items-center gap-2">
-              <FileCheck2 className="shrink-0 text-muted-foreground" />
-              <a
-                href={draft.googleDriveWebViewLink}
-                target="_blank"
-                rel="noreferrer"
-                className="min-w-0 truncate text-primary underline-offset-2 hover:underline"
-              >
-                {draft.originalName}
-              </a>
-            </div>
-          ) : (
-            <span className="text-muted-foreground">No draft</span>
-          ),
-      },
-      {
-        id: 'folder',
-        header: 'Folder',
-        width: 240,
-        cell: (draft) => (
-          <span className="truncate font-mono text-xs text-muted-foreground">
-            Agreements / {draft.label}
-          </span>
-        ),
-      },
-      {
-        id: 'upload',
-        header: <span className="block text-right">Upload</span>,
-        width: 380,
-        cell: (draft) => <AgreementDraftUploadCell draft={draft} />,
-      },
-    ],
-    [],
-  )
+    },
+    {
+      id: 'folder',
+      header: 'Folder',
+      width: 240,
+      cell: (draft) => (
+        <span className="truncate font-mono text-xs text-muted-foreground">
+          Agreements / {draft.label}
+        </span>
+      ),
+    },
+    {
+      id: 'upload',
+      header: <span className="block text-right">Upload</span>,
+      width: 380,
+      cell: (draft) => <AgreementDraftUploadCell draft={draft} />,
+    },
+  ]
   return (
     <ConfigurationSectionCard
       icon={FileText}
@@ -104,7 +88,6 @@ export function AgreementsPanel() {
     </ConfigurationSectionCard>
   )
 }
-
 function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
   const inputId = useId()
   const fileInputRef = useRef<HTMLInputElement>(null)

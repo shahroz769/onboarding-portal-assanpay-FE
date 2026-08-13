@@ -93,10 +93,16 @@ export function useBulkUpdateUserStatusMutation() {
 }
 
 export function useSendUserResetPasswordMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: sendUserResetPassword,
-    onSuccess: () => {
+    onSuccess: async (_, userId) => {
       toast.success('Password reset email sent.')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: USERS_KEY }),
+        queryClient.invalidateQueries({ queryKey: [...USER_KEY, userId] }),
+      ])
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to send reset email.'))

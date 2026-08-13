@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -22,6 +22,7 @@ import {
 } from '#/components/ui/select'
 import { Skeleton } from '#/components/ui/skeleton'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { useHydrated } from '#/hooks/use-hydrated'
 import {
   usersQueryOptions,
   useBulkUpdateUserStatusMutation,
@@ -46,11 +47,10 @@ const statusFilterOptions = userStatuses.map((status) => ({
 }))
 
 function CreateUserHeaderAction() {
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
-
-  useEffect(() => {
-    setPortalTarget(document.getElementById('page-header-actions'))
-  }, [])
+  const hydrated = useHydrated()
+  const portalTarget = hydrated
+    ? document.getElementById('page-header-actions')
+    : null
 
   if (!portalTarget) return null
 
@@ -73,6 +73,8 @@ function setToCommaString(set: Set<string>) {
   return set.size > 0 ? Array.from(set).join(',') : undefined
 }
 
+const EMPTY_USERS: never[] = []
+
 type UsersTableComposedProps = {
   filters: UserRouteSearch
   setFilter: (key: keyof UserRouteSearch, value: string | undefined) => void
@@ -88,36 +90,29 @@ export function UsersTableComposed({
   const bulkStatusMutation = useBulkUpdateUserStatusMutation()
   const isTableLoading = usersQuery.isLoading || usersQuery.isFetching
 
-  const users = usersQuery.data ?? []
-  const allIds = useMemo(() => users.map((user) => user.id), [users])
-  const selectedIds = useMemo(() => Array.from(selectedIdSet), [selectedIdSet])
+  const users = usersQuery.data ?? EMPTY_USERS
+  const allIds = users.map((user) => user.id)
+  const selectedIds = Array.from(selectedIdSet)
 
-  const handleSelectRow = useCallback((id: string, selected: boolean) => {
+  const handleSelectRow = (id: string, selected: boolean) => {
     setSelectedIdSet((prev) => {
       const next = new Set(prev)
       if (selected) next.add(id)
       else next.delete(id)
       return next
     })
-  }, [])
+  }
 
-  const handleSelectAll = useCallback(
-    (selected: boolean) => {
-      setSelectedIdSet(selected ? new Set(allIds) : new Set())
-    },
-    [allIds],
-  )
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedIdSet(selected ? new Set(allIds) : new Set())
+  }
 
-  const columns = useMemo(
-    () =>
-      createUserColumns({
-        selectedIds: selectedIdSet,
-        allIds,
-        onSelectRow: handleSelectRow,
-        onSelectAll: handleSelectAll,
-      }),
-    [allIds, handleSelectAll, handleSelectRow, selectedIdSet],
-  )
+  const columns = createUserColumns({
+    selectedIds: selectedIdSet,
+    allIds,
+    onSelectRow: handleSelectRow,
+    onSelectAll: handleSelectAll,
+  })
 
   const handleSubmitBulkStatus = () => {
     if (selectedIds.length === 0) return
@@ -144,6 +139,7 @@ export function UsersTableComposed({
                   onChange={(value) => setFilter('search', value || undefined)}
                   placeholder="Search by name, email, or username..."
                 />
+
                 <DataTableFilter
                   title="Role"
                   options={roleFilterOptions}
@@ -152,6 +148,7 @@ export function UsersTableComposed({
                     setFilter('roleType', setToCommaString(set))
                   }
                 />
+
                 <DataTableFilter
                   title="Status"
                   options={statusFilterOptions}

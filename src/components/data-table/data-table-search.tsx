@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SearchIcon, XIcon } from 'lucide-react'
 
 import {
@@ -15,7 +15,11 @@ interface DataTableSearchProps {
   debounceMs?: number
 }
 
-export function DataTableSearch({
+export function DataTableSearch({ value, ...props }: DataTableSearchProps) {
+  return <DataTableSearchInput key={value} value={value} {...props} />
+}
+
+function DataTableSearchInput({
   value,
   onChange,
   placeholder = 'Search...',
@@ -24,27 +28,19 @@ export function DataTableSearch({
   const [localValue, setLocalValue] = useState(value)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  // Sync external value changes
-  useEffect(() => {
-    setLocalValue(value)
-  }, [value])
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value
+    setLocalValue(next)
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = e.target.value
-      setLocalValue(next)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => onChange(next), debounceMs)
+  }
 
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => onChange(next), debounceMs)
-    },
-    [onChange, debounceMs],
-  )
-
-  const handleClear = useCallback(() => {
+  const handleClear = () => {
     setLocalValue('')
     onChange('')
     if (timerRef.current) clearTimeout(timerRef.current)
-  }, [onChange])
+  }
 
   useEffect(() => {
     return () => {
@@ -62,6 +58,7 @@ export function DataTableSearch({
         value={localValue}
         onChange={handleChange}
       />
+
       {localValue && (
         <InputGroupAddon align="inline-end">
           <Button

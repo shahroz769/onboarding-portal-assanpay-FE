@@ -44,7 +44,7 @@ function getErrorMessage(error: unknown) {
       const errors =
         'errors' in data && Array.isArray(data.errors)
           ? data.errors.filter(
-              (value): value is string => typeof value === 'string',
+              (value: unknown): value is string => typeof value === 'string',
             )
           : []
 
@@ -112,9 +112,8 @@ export function LoginForm({
             }}
           >
             <FieldGroup>
-              <form.Field
-                name="identifier"
-                children={(field) => {
+              <form.Field name="identifier">
+                {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
@@ -132,16 +131,17 @@ export function LoginForm({
                         aria-invalid={isInvalid || undefined}
                         autoComplete="username"
                       />
+
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />
                       )}
                     </Field>
                   )
                 }}
-              />
-              <form.Field
-                name="password"
-                children={(field) => {
+              </form.Field>
+
+              <form.Field name="password">
+                {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
@@ -159,6 +159,7 @@ export function LoginForm({
                           autoComplete="current-password"
                           className="pr-10"
                         />
+
                         <Button
                           type="button"
                           variant="ghost"
@@ -183,12 +184,14 @@ export function LoginForm({
                     </Field>
                   )
                 }}
-              />
+              </form.Field>
+
               <form.Subscribe
                 selector={(state) => ({
                   isSubmitting: state.isSubmitting,
                 })}
-                children={({ isSubmitting }) => (
+              >
+                {({ isSubmitting }) => (
                   <Field>
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting && <Spinner data-icon="inline-start" />}
@@ -196,7 +199,7 @@ export function LoginForm({
                     </Button>
                   </Field>
                 )}
-              />
+              </form.Subscribe>
             </FieldGroup>
           </form>
         </CardContent>

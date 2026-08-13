@@ -59,8 +59,14 @@ export function merchantOptionsQueryOptions(search = '') {
     queryFn: () =>
       fetchMerchants({
         search,
+        status: undefined,
+        priority: undefined,
+        businessScope: undefined,
+        currency: undefined,
         sortBy: 'merchantNumber',
         sortOrder: 'desc',
+        createdAtFrom: undefined,
+        createdAtTo: undefined,
         limit: 50,
       }),
     staleTime: 30_000,
@@ -127,7 +133,7 @@ function updateMerchantInMerchantLists(
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          merchants: (page.merchants ?? []).map((merchant) =>
+          merchants: page.merchants.map((merchant) =>
             merchant.id === merchantId ? updater(merchant) : merchant,
           ),
         })),

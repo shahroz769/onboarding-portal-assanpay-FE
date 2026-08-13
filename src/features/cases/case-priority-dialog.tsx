@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -43,12 +43,6 @@ export function CasePriorityDialog({
 }: CasePriorityDialogProps) {
   const [priority, setPriority] = useState<Priority>(caseItem.priority)
   const mutation = useUpdateCasePriorityMutation()
-
-  useEffect(() => {
-    if (open) {
-      setPriority(caseItem.priority)
-    }
-  }, [open, caseItem.priority])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

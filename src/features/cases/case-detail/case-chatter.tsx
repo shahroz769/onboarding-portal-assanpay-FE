@@ -1,11 +1,4 @@
-import {
-  useDeferredValue,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useDeferredValue, useLayoutEffect, useRef, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CornerDownRight,
@@ -69,10 +62,7 @@ function compareCommentsByNewest(first: CaseComment, second: CaseComment) {
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('en-PK', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  return CHATTER_DATE_TIME_FORMATTER.format(new Date(value))
 }
 
 function getInitials(name: string | null) {
@@ -222,7 +212,7 @@ function buildCommentThreads(comments: CaseComment[]) {
   roots.sort(compareCommentsByNewest)
 
   for (const [parentId, siblings] of childrenByParent.entries()) {
-    childrenByParent.set(parentId, siblings.toSorted(compareCommentsByNewest))
+    childrenByParent.set(parentId, [...siblings].sort(compareCommentsByNewest))
   }
 
   return {
@@ -265,8 +255,10 @@ export function CaseChatter({
   const [content, setContent] = useState('')
   const [cursorPosition, setCursorPosition] = useState(0)
   const [replyTarget, setReplyTarget] = useState<CaseComment | null>(null)
-  const [mentionMap, setMentionMap] = useState<Record<string, string>>({})
-  const [mentionSearch, setMentionSearch] = useState('')
+  const mentionMapRef = useRef<Record<string, string>>({})
+  const [mentionSearchOverride, setMentionSearchOverride] = useState<
+    string | null
+  >(null)
   const [mentionAnchorPosition, setMentionAnchorPosition] =
     useState<AnchorPosition>({ left: 0, top: 0 })
   const [composerScrollTop, setComposerScrollTop] = useState(0)
@@ -277,14 +269,9 @@ export function CaseChatter({
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
   const threads = buildCommentThreads(comments)
-  const validUsernames = useMemo(
-    () => new Set(users.map((user) => user.username.toLowerCase())),
-    [users],
+  const validUsernames = new Set(
+    users.map((user) => user.username.toLowerCase()),
   )
-
-  useEffect(() => {
-    setMentionSearch(activeMention?.query ?? '')
-  }, [activeMention?.query])
 
   useLayoutEffect(() => {
     if (!activeMention || !textareaRef.current || !formRef.current) return
@@ -315,6 +302,7 @@ export function CaseChatter({
     )
   }, [content])
 
+  const mentionSearch = mentionSearchOverride ?? activeMention?.query ?? ''
   const mentionQuery = mentionSearch.trim().toLowerCase()
   const hasMentionQuery = mentionQuery.length > 0
   const mentionCandidates = users.filter((candidate) => {
@@ -342,11 +330,11 @@ export function CaseChatter({
     pendingCursorRef.current = nextCursorPosition
     setContent(nextContent)
     setCursorPosition(nextCursorPosition)
-    setMentionMap((currentMap) => ({
-      ...currentMap,
+    mentionMapRef.current = {
+      ...mentionMapRef.current,
       [token]: userId,
-    }))
-    setMentionSearch('')
+    }
+    setMentionSearchOverride(null)
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -356,9 +344,9 @@ export function CaseChatter({
 
     const mentions = Array.from(
       new Set(
-        Object.entries(mentionMap)
-          .filter(([token]) => trimmedContent.includes(token))
-          .map(([, id]) => id),
+        Object.entries(mentionMapRef.current).flatMap(([token, id]) =>
+          trimmedContent.includes(token) ? [id] : [],
+        ),
       ),
     )
 
@@ -373,7 +361,7 @@ export function CaseChatter({
           setContent('')
           setCursorPosition(0)
           setReplyTarget(null)
-          setMentionMap({})
+          mentionMapRef.current = {}
         },
       },
     )
@@ -450,6 +438,7 @@ export function CaseChatter({
                   onChange={(event) => {
                     setContent(event.target.value)
                     setCursorPosition(event.target.selectionStart)
+                    setMentionSearchOverride(null)
                   }}
                   onSelect={(event) =>
                     setCursorPosition(event.currentTarget.selectionStart)
@@ -494,9 +483,10 @@ export function CaseChatter({
             <Command shouldFilter={false}>
               <CommandInput
                 value={mentionSearch}
-                onValueChange={setMentionSearch}
+                onValueChange={setMentionSearchOverride}
                 placeholder="Search employees"
               />
+
               {hasMentionQuery ? (
                 <CommandList className="max-h-none overflow-hidden">
                   {mentionCandidates.length === 0 ? (
@@ -672,3 +662,8 @@ function CommentCard({
     </div>
   )
 }
+const CHATTER_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

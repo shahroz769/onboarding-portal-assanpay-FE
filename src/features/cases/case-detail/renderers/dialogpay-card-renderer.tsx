@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { ComponentType, SVGProps } from 'react'
 import {
   Building2,
@@ -227,9 +226,7 @@ function formatDateValue(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
-  return new Intl.DateTimeFormat('en-PK', {
-    dateStyle: 'medium',
-  }).format(date)
+  return CARD_DATE_FORMATTER.format(date)
 }
 
 function formatFileSize(bytes: number): string {
@@ -318,7 +315,7 @@ export default function DialogPayCardRenderer({
   const merchantData = caseDetail.merchant
   const stepCopy = getStepCopy(caseDetail.currentStage?.slug)
 
-  const sections = useMemo(() => {
+  const sections = (() => {
     return REVIEW_SECTIONS.map((section) => {
       const items = section.fields
         .map<ReviewItem | null>((field) => {
@@ -344,9 +341,9 @@ export default function DialogPayCardRenderer({
 
       return { ...section, items }
     }).filter((section) => section.items.length > 0)
-  }, [merchantData])
+  })()
 
-  const documents = useMemo<DialogPayDocument[]>(() => {
+  const documents = (() => {
     const merchantType = formatDisplayValue(merchantData.merchantType)
     const merchantSpecificDocs = merchantType
       ? MERCHANT_SPECIFIC_DOCUMENTS[
@@ -384,7 +381,7 @@ export default function DialogPayCardRenderer({
         }
       })
       .filter((item): item is DialogPayDocument => item !== null)
-  }, [caseDetail.documents, merchantData.merchantType])
+  })()
 
   return (
     <div className="flex flex-col gap-4">
@@ -416,6 +413,7 @@ export default function DialogPayCardRenderer({
                     icon={section.icon}
                     toneClass={section.toneClass}
                   />
+
                   <div>
                     <CardTitle>{section.title}</CardTitle>
                     <CardDescription>{section.description}</CardDescription>
@@ -442,6 +440,7 @@ export default function DialogPayCardRenderer({
                   icon={FileText}
                   toneClass="bg-orange-500/10 text-orange-500"
                 />
+
                 <div>
                   <CardTitle>Documents</CardTitle>
                   <CardDescription>
@@ -557,3 +556,7 @@ function DialogPayDocumentField({ document }: { document: DialogPayDocument }) {
     </div>
   )
 }
+const CARD_DATE_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  dateStyle: 'medium',
+  timeZone: 'Asia/Karachi',
+})

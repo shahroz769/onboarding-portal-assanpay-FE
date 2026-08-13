@@ -185,24 +185,28 @@ function Dialogs() {
 
   return (
     <>
-      <MerchantPriorityDialog
-        target={priorityTarget}
-        open={priorityTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) actions.closePriorityDialog()
-        }}
-        onSubmit={actions.submitPriority}
-        isPending={state.isPriorityPending || state.isBulkPriorityPending}
-      />
-      <MerchantTerminateDialog
-        target={terminateTarget}
-        open={terminateTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) actions.closeTerminateDialog()
-        }}
-        onConfirm={actions.confirmTerminate}
-        isPending={state.isTerminatePending}
-      />
+      {priorityTarget ? (
+        <MerchantPriorityDialog
+          target={priorityTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) actions.closePriorityDialog()
+          }}
+          onSubmit={actions.submitPriority}
+          isPending={state.isPriorityPending || state.isBulkPriorityPending}
+        />
+      ) : null}
+      {terminateTarget ? (
+        <MerchantTerminateDialog
+          target={terminateTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) actions.closeTerminateDialog()
+          }}
+          onConfirm={actions.confirmTerminate}
+          isPending={state.isTerminatePending}
+        />
+      ) : null}
     </>
   )
 }
@@ -218,7 +222,7 @@ function Dialogs() {
  * </MerchantsTable.Provider>
  * ```
  */
-export const MerchantsTable = {
+const MerchantsTable = {
   Provider: MerchantsTableProvider,
   Toolbar,
   BulkActions,

@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { createElement, Suspense } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react'
 
@@ -8,7 +8,11 @@ import { Card, CardContent } from '#/components/ui/card'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
-import type { CaseDetail, CloseOutcome, QueueStage } from '#/schemas/cases.schema'
+import type {
+  CaseDetail,
+  CloseOutcome,
+  QueueStage,
+} from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
 import { CaseQueueWorkspaceSkeleton } from './case-detail-skeletons'
@@ -22,7 +26,7 @@ interface CaseDetailShellProps {
 export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
   const { data } = useSuspenseQuery(caseDetailQueryOptions(caseId))
   const workflowType = resolveQueueWorkflowType(data.queue)
-  const QueueRenderer = getQueueRenderer(workflowType)
+  const queueRenderer = getQueueRenderer(workflowType)
   const merchantName =
     typeof data.merchant.businessName === 'string' &&
     data.merchant.businessName.trim().length > 0
@@ -61,7 +65,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
           <CaseSlaBox caseDetail={data} />
 
           <Suspense fallback={<CaseQueueWorkspaceSkeleton />}>
-            <QueueRenderer caseDetail={data} caseId={caseId} />
+            {createElement(queueRenderer, { caseDetail: data, caseId })}
           </Suspense>
         </div>
 

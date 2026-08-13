@@ -69,7 +69,7 @@ export const merchantListItemSchema = z.object({
 
 export type MerchantListItem = z.infer<typeof merchantListItemSchema>
 
-export const merchantListResponseSchema = z.object({
+const merchantListResponseSchema = z.object({
   merchants: z.array(merchantListItemSchema),
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
@@ -117,7 +117,7 @@ export const merchantRouteSearchSchema = z.object({
 
 export type MerchantRouteSearch = z.infer<typeof merchantRouteSearchSchema>
 
-export const merchantFiltersSchema = merchantRouteSearchSchema.extend({
+const merchantFiltersSchema = merchantRouteSearchSchema.extend({
   createdAtFrom: z.string().optional().transform(normalizeOptionalString),
   createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })
@@ -248,7 +248,7 @@ export const merchantLimitsMdrSchema = z.object({
 
 export type MerchantLimitsMdr = z.infer<typeof merchantLimitsMdrSchema>
 
-export const merchantDetailResponseSchema = z.object({
+const merchantDetailResponseSchema = z.object({
   merchant: merchantDetailRecordSchema.extend({
     limitsMdrOverride: merchantLimitsMdrSchema.nullable(),
   }),

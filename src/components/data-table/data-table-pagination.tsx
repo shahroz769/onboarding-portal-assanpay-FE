@@ -1,5 +1,3 @@
-import { memo } from 'react'
-
 import {
   Pagination,
   PaginationContent,
@@ -17,7 +15,7 @@ interface DataTablePaginationProps {
   onPageChange: (page: number) => void
 }
 
-export const DataTablePagination = memo(function DataTablePagination({
+export const DataTablePagination = function DataTablePagination({
   page,
   totalCount,
   totalPages,
@@ -45,9 +43,9 @@ export const DataTablePagination = memo(function DataTablePagination({
                   }
                 />
               </PaginationItem>
-              {pages.map((p, i) =>
-                p === 'ellipsis' ? (
-                  <PaginationItem key={`ellipsis-${i}`}>
+              {pages.map((p) =>
+                typeof p === 'string' ? (
+                  <PaginationItem key={p}>
                     <PaginationEllipsis />
                   </PaginationItem>
                 ) : (
@@ -79,20 +77,20 @@ export const DataTablePagination = memo(function DataTablePagination({
       </div>
     </div>
   )
-})
+}
 
 function generatePageNumbers(
   current: number,
   total: number,
-): (number | 'ellipsis')[] {
+): (number | 'ellipsis-start' | 'ellipsis-end')[] {
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1)
   }
 
-  const pages: (number | 'ellipsis')[] = [1]
+  const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = [1]
 
   if (current > 3) {
-    pages.push('ellipsis')
+    pages.push('ellipsis-start')
   }
 
   const start = Math.max(2, current - 1)
@@ -103,7 +101,7 @@ function generatePageNumbers(
   }
 
   if (current < total - 2) {
-    pages.push('ellipsis')
+    pages.push('ellipsis-end')
   }
 
   pages.push(total)

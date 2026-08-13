@@ -387,10 +387,7 @@ const ACTION_META: Record<
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('en-PK', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  return HISTORY_DATE_TIME_FORMATTER.format(new Date(value))
 }
 
 const HISTORY_SYSTEM_LABEL = 'FP System'
@@ -947,3 +944,8 @@ function formatHistoryParty(value: unknown) {
 
   return normalizedValue
 }
+const HISTORY_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

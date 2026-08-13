@@ -1,11 +1,10 @@
-import { useId, useMemo, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
 import { ExternalLink, FileText, Plus, Store, Upload, X } from 'lucide-react'
 
 import { DataTable } from '#/components/data-table'
-
 import type { DataTableColumnDef } from '#/components/data-table'
 
 import { Button } from '#/components/ui/button'
@@ -39,99 +38,88 @@ import {
   useCreateSubMerchantDraftMutation,
 } from '#/hooks/use-configuration-query'
 
-import {
-  ConfigurationSectionCard,
-  getDraftFileError,
-} from './configuration-panel-shared'
+import { ConfigurationSectionCard } from './configuration-panel-shared'
+import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {
   const { data, isPending } = useQuery(configurationQueryOptions())
   type SubMerchant = NonNullable<typeof data>['subMerchants'][number]
-  const existingNames = useMemo(
-    () =>
-      new Set(
-        (data?.subMerchants ?? []).map((item) =>
-          item.name.trim().toLowerCase(),
-        ),
+  const existingNames = new Set(
+    (data?.subMerchants ?? []).map((item) => item.name.trim().toLowerCase()),
+  )
+
+  const columns: DataTableColumnDef<SubMerchant>[] = [
+    {
+      id: 'name',
+      header: 'Name',
+      width: 240,
+      cell: (item) => <span className="truncate font-medium">{item.name}</span>,
+    },
+    {
+      id: 'draft',
+      header: 'Draft',
+      width: 280,
+      cell: (item) => (
+        <a
+          href={item.googleDriveWebViewLink}
+          target="_blank"
+          rel="noreferrer"
+          className="truncate text-primary underline-offset-2 hover:underline"
+        >
+          {item.originalName}
+        </a>
       ),
-    [data?.subMerchants],
-  )
-  const columns = useMemo<DataTableColumnDef<SubMerchant>[]>(
-    () => [
-      {
-        id: 'name',
-        header: 'Name',
-        width: 240,
-        cell: (item) => (
-          <span className="truncate font-medium">{item.name}</span>
-        ),
-      },
-      {
-        id: 'draft',
-        header: 'Draft',
-        width: 280,
-        cell: (item) => (
-          <a
-            href={item.googleDriveWebViewLink}
-            target="_blank"
-            rel="noreferrer"
-            className="truncate text-primary underline-offset-2 hover:underline"
-          >
-            {item.originalName}
-          </a>
-        ),
-      },
-      {
-        id: 'sellerCode',
-        header: 'Seller Code',
-        width: 180,
-        cell: (item) => (
-          <span className="truncate font-mono text-xs">{item.sellerCode}</span>
-        ),
-      },
-      {
-        id: 'folder',
-        header: 'Folder',
-        width: 240,
-        cell: (item) => (
-          <span className="truncate font-mono text-xs text-muted-foreground">
-            Sub-Merchants / {item.name}
-          </span>
-        ),
-      },
-      {
-        id: 'updatedAt',
-        header: 'Updated',
-        width: 200,
-        cell: (item) => (
-          <span className="text-sm text-muted-foreground">
-            {formatDate(item.updatedAt)}
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: <span className="block text-right">Actions</span>,
-        width: 160,
-        cell: (item) => (
-          <div className="flex justify-end">
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={item.googleDriveWebViewLink}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink data-icon="inline-start" />
-                View draft
-              </a>
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [],
-  )
+    },
+    {
+      id: 'sellerCode',
+      header: 'Seller Code',
+      width: 180,
+      cell: (item) => (
+        <span className="truncate font-mono text-xs">{item.sellerCode}</span>
+      ),
+    },
+    {
+      id: 'folder',
+      header: 'Folder',
+      width: 240,
+      cell: (item) => (
+        <span className="truncate font-mono text-xs text-muted-foreground">
+          Sub-Merchants / {item.name}
+        </span>
+      ),
+    },
+    {
+      id: 'updatedAt',
+      header: 'Updated',
+      width: 200,
+      cell: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(item.updatedAt)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: <span className="block text-right">Actions</span>,
+      width: 160,
+      cell: (item) => (
+        <div className="flex justify-end">
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={item.googleDriveWebViewLink}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink data-icon="inline-start" />
+              View draft
+            </a>
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <ConfigurationSectionCard
       icon={Store}
@@ -245,6 +233,7 @@ function AddSubMerchantDialog({
               onChange={(event) => setName(event.target.value)}
               onBlur={() => setTouched(true)}
             />
+
             <FieldError>{showNameError ? nameError : null}</FieldError>
           </Field>
 
@@ -261,6 +250,7 @@ function AddSubMerchantDialog({
               onChange={(event) => setSellerCode(event.target.value)}
               onBlur={() => setTouched(true)}
             />
+
             <FieldError>
               {showSellerCodeError ? sellerCodeError : null}
             </FieldError>
@@ -434,6 +424,7 @@ function DraftFileDropzone({
         disabled={disabled}
         onChange={(event) => handleFile(event.target.files?.[0] ?? undefined)}
       />
+
       <div id={labelId} className="sr-only">
         File upload
       </div>
@@ -449,8 +440,10 @@ function formatFileSize(bytes: number) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  return SUB_MERCHANT_DATE_FORMATTER.format(new Date(value))
 }
+const SUB_MERCHANT_DATE_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

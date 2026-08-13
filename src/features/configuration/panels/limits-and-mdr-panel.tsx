@@ -32,9 +32,11 @@ import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
   PanelLoading,
+} from './configuration-panel-shared'
+import {
   getValidationErrors,
   hasValidationErrors,
-} from './configuration-panel-shared'
+} from './configuration-panel-utils'
 
 const numberInputProps = {
   type: 'number',
@@ -53,17 +55,12 @@ export function LimitsAndMdrPanel() {
     ? getValidationErrors(limitsAndMdrSettingsSchema.safeParse(value))
     : {}
   function update(path: string, nextValue: number) {
-    setForm((current) => {
-      const base = current ?? data?.limitsAndMdr
-      if (!base) return current
-      const next = structuredClone(base)
-      const [group, key] = path.split('.') as [
-        keyof LimitsAndMdrSettings,
-        string,
-      ]
-      ;(next[group] as Record<string, number>)[key] = nextValue
-      return next
-    })
+    const base = form ?? data?.limitsAndMdr
+    if (!base) return
+    const next = structuredClone(base)
+    const [group, key] = path.split('.') as [keyof LimitsAndMdrSettings, string]
+    ;(next[group] as Record<string, number>)[key] = nextValue
+    setForm(next)
   }
   if (isPending || !value) {
     return <PanelLoading />

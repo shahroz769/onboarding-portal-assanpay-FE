@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ComponentType, SVGProps } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -123,13 +123,13 @@ type MerchantDocument = {
   mimeType?: string | null
 }
 
-const CMS_LABELS = new Map(
+const CMS_LABELS: ReadonlyMap<string, string> = new Map(
   WEBSITE_CMS_OPTIONS.map((option) => [option.value, option.label]),
 )
-const MERCHANT_TYPE_LABELS = new Map(
+const MERCHANT_TYPE_LABELS: ReadonlyMap<string, string> = new Map(
   MERCHANT_TYPES.map((option) => [option.value, option.label]),
 )
-const RELATION_LABELS = new Map(
+const RELATION_LABELS: ReadonlyMap<string, string> = new Map(
   KIN_RELATIONS.map((option) => [option.value, option.label]),
 )
 
@@ -263,9 +263,7 @@ function formatDateValue(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
-  return new Intl.DateTimeFormat('en-PK', {
-    dateStyle: 'medium',
-  }).format(date)
+  return DOCUMENT_DATE_FORMATTER.format(date)
 }
 
 function SectionIcon({
@@ -314,13 +312,13 @@ export default function DocumentsReviewRenderer({
       (currentStage == null && caseDetail.case.closeOutcome == null))
   const merchantData = merchant
 
-  const persistedReviewByField = useMemo(() => {
+  const persistedReviewByField = (() => {
     const map = new Map<string, (typeof fieldReviews)[number]>()
     for (const review of fieldReviews) {
       map.set(review.fieldName, review)
     }
     return map
-  }, [fieldReviews])
+  })()
 
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean
@@ -338,11 +336,12 @@ export default function DocumentsReviewRenderer({
   >(null)
   const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
   const subMerchants = subMerchantOptionsQuery.data ?? []
+  const selectedSubMerchantIdSet = new Set(selectedSubMerchantIds)
   const selectedSubMerchants = subMerchants.filter((item) =>
-    selectedSubMerchantIds.includes(item.id),
+    selectedSubMerchantIdSet.has(item.id),
   )
 
-  const sections = useMemo(() => {
+  const sections = (() => {
     return REVIEW_SECTIONS.map((section) => {
       const items = section.fields
         .map<ReviewItem | null>((field) => {
@@ -371,9 +370,9 @@ export default function DocumentsReviewRenderer({
         items,
       }
     }).filter((section) => section.items.length > 0)
-  }, [merchantData])
+  })()
 
-  const documents = useMemo<ReviewDocument[]>(() => {
+  const documents = (() => {
     const merchantType = formatDisplayValue(merchantData.merchantType)
     const merchantSpecificDocs = merchantType
       ? MERCHANT_SPECIFIC_DOCUMENTS[
@@ -411,7 +410,7 @@ export default function DocumentsReviewRenderer({
         }
       })
       .filter((item): item is ReviewDocument => item !== null)
-  }, [caseDetail.documents, merchantData.merchantType])
+  })()
 
   function openRejectDialog(item: { key: string; label: string }) {
     if (!isEditable) return
@@ -449,9 +448,9 @@ export default function DocumentsReviewRenderer({
       return
     }
 
-    try {
-      setRejectDialogAction('save')
-      await saveFieldReviews.mutateAsync({
+    setRejectDialogAction('save')
+    await saveFieldReviews
+      .mutateAsync({
         reviews: [
           {
             fieldName: dialogItem.key,
@@ -460,13 +459,14 @@ export default function DocumentsReviewRenderer({
           },
         ],
       })
-      saveRejectedReview(dialogItem.key, trimmedRemarks)
-      closeRejectDialog()
-    } catch {
-      // Mutation hook already surfaces the backend error via toast.
-    } finally {
-      setRejectDialogAction(null)
-    }
+      .then(() => {
+        saveRejectedReview(dialogItem.key, trimmedRemarks)
+        closeRejectDialog()
+      })
+      .catch(() => {
+        // Mutation hook already surfaces the backend error via toast.
+      })
+      .finally(() => setRejectDialogAction(null))
   }
 
   async function deleteReject() {
@@ -478,9 +478,9 @@ export default function DocumentsReviewRenderer({
       return
     }
 
-    try {
-      setRejectDialogAction('delete')
-      await saveFieldReviews.mutateAsync({
+    setRejectDialogAction('delete')
+    await saveFieldReviews
+      .mutateAsync({
         reviews: [
           {
             fieldName: dialogItem.key,
@@ -488,13 +488,14 @@ export default function DocumentsReviewRenderer({
           },
         ],
       })
-      clearRejectedReview(dialogItem.key)
-      closeRejectDialog()
-    } catch {
-      // Mutation hook already surfaces the backend error via toast.
-    } finally {
-      setRejectDialogAction(null)
-    }
+      .then(() => {
+        clearRejectedReview(dialogItem.key)
+        closeRejectDialog()
+      })
+      .catch(() => {
+        // Mutation hook already surfaces the backend error via toast.
+      })
+      .finally(() => setRejectDialogAction(null))
   }
 
   const isRejectedItem = rejectDialog.item
@@ -516,6 +517,7 @@ export default function DocumentsReviewRenderer({
                   icon={Building2}
                   toneClass="bg-cyan-500/10 text-cyan-500"
                 />
+
                 <div>
                   <CardTitle>Case Owner Fields</CardTitle>
                   <CardDescription>
@@ -639,6 +641,7 @@ export default function DocumentsReviewRenderer({
                     icon={section.icon}
                     toneClass={section.toneClass}
                   />
+
                   <div>
                     <CardTitle>{section.title}</CardTitle>
                     <CardDescription>{section.description}</CardDescription>
@@ -675,6 +678,7 @@ export default function DocumentsReviewRenderer({
                   icon={FileText}
                   toneClass="bg-orange-500/10 text-orange-500"
                 />
+
                 <div>
                   <CardTitle>Documents</CardTitle>
                   <CardDescription>
@@ -752,6 +756,7 @@ export default function DocumentsReviewRenderer({
                 placeholder="Explain what is wrong or missing."
                 className="min-h-28"
               />
+
               <FieldDescription>
                 These remarks will be shown beneath the rejected field.
               </FieldDescription>
@@ -797,9 +802,7 @@ export default function DocumentsReviewRenderer({
 function UpdatedBadge({ resubmittedAt }: { resubmittedAt: string }) {
   let label = 'Updated'
   try {
-    const formatted = new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-    }).format(new Date(resubmittedAt))
+    const formatted = DOCUMENT_DATE_FORMATTER.format(new Date(resubmittedAt))
     label = `Updated ${formatted}`
   } catch {
     /* keep fallback label */
@@ -968,3 +971,7 @@ function ReadOnlyDocumentField({
     </div>
   )
 }
+const DOCUMENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  dateStyle: 'medium',
+  timeZone: 'Asia/Karachi',
+})

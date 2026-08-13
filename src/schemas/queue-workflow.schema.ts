@@ -1,5 +1,3 @@
-import { z } from 'zod'
-
 /**
  * Mirrors BE `src/contracts/queues.ts` (plans 003–004).
  * Keep these unions in sync when backend contracts change.
@@ -22,6 +20,3 @@ export type QueueWorkflowType = (typeof QUEUE_WORKFLOW_TYPES)[number]
 export const QUEUE_LIFECYCLES = ['draft', 'active', 'inactive'] as const
 
 export type QueueLifecycle = (typeof QUEUE_LIFECYCLES)[number]
-
-export const queueWorkflowTypeSchema = z.enum(QUEUE_WORKFLOW_TYPES)
-export const queueLifecycleSchema = z.enum(QUEUE_LIFECYCLES)

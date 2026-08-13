@@ -1,9 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-
+import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-
 import { Plus, Workflow } from 'lucide-react'
-
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import {
@@ -54,22 +51,53 @@ import {
 } from '#/hooks/use-configuration-query'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import type { QueueLifecycle, QueueWorkflowType } from '#/schemas/cases.schema'
-
 import { ConfigurationSectionCard } from './configuration-panel-shared'
 
-const WORKFLOW_OPTIONS: Array<{ value: QueueWorkflowType; label: string }> = [
-  { value: 'generic', label: 'Generic' },
-  { value: 'document_review', label: 'Document review' },
-  { value: 'agreement', label: 'Agreement' },
-  { value: 'mid', label: 'MID' },
-  { value: 'testing', label: 'Testing' },
-  { value: 'wordpress', label: 'WordPress' },
-  { value: 'card', label: 'Card' },
-  { value: 'physical_agreement', label: 'Physical agreement' },
-  { value: 'live', label: 'Live' },
-  { value: 'sub_merchant_form', label: 'Sub-merchant form' },
+const WORKFLOW_OPTIONS: Array<{
+  value: QueueWorkflowType
+  label: string
+}> = [
+  {
+    value: 'generic',
+    label: 'Generic',
+  },
+  {
+    value: 'document_review',
+    label: 'Document review',
+  },
+  {
+    value: 'agreement',
+    label: 'Agreement',
+  },
+  {
+    value: 'mid',
+    label: 'MID',
+  },
+  {
+    value: 'testing',
+    label: 'Testing',
+  },
+  {
+    value: 'wordpress',
+    label: 'WordPress',
+  },
+  {
+    value: 'card',
+    label: 'Card',
+  },
+  {
+    value: 'physical_agreement',
+    label: 'Physical agreement',
+  },
+  {
+    value: 'live',
+    label: 'Live',
+  },
+  {
+    value: 'sub_merchant_form',
+    label: 'Sub-merchant form',
+  },
 ]
-
 function lifecycleLabel(queue: {
   lifecycle?: QueueLifecycle | null
   isActive?: boolean | null
@@ -77,123 +105,116 @@ function lifecycleLabel(queue: {
   if (queue.lifecycle) return queue.lifecycle
   return queue.isActive === false ? 'inactive' : 'active'
 }
-
 function lifecycleBadgeVariant(lifecycle: string) {
   if (lifecycle === 'active') return 'secondary' as const
   if (lifecycle === 'draft') return 'outline' as const
   return 'outline' as const
 }
-
 export function QueuesPanel() {
   const { data: queues = [], isPending } = useQuery(
-    queuesQueryOptions({ includeInactive: true }),
+    queuesQueryOptions({
+      includeInactive: true,
+    }),
   )
   const updateStatus = useUpdateQueueStatusMutation()
   type Queue = (typeof queues)[number]
-  const columns = useMemo<DataTableColumnDef<Queue>[]>(
-    () => [
-      {
-        id: 'name',
-        header: 'Queue',
-        width: 220,
-        cell: (queue) => (
-          <span className="truncate font-medium">{queue.name}</span>
-        ),
+  const columns: DataTableColumnDef<Queue>[] = [
+    {
+      id: 'name',
+      header: 'Queue',
+      width: 220,
+      cell: (queue) => (
+        <span className="truncate font-medium">{queue.name}</span>
+      ),
+    },
+    {
+      id: 'slug',
+      header: 'Slug',
+      width: 180,
+      cell: (queue) => (
+        <span className="truncate font-mono text-xs">{queue.slug}</span>
+      ),
+    },
+    {
+      id: 'workflowType',
+      header: 'Workflow',
+      width: 160,
+      cell: (queue) => (
+        <span className="truncate font-mono text-xs">{queue.workflowType}</span>
+      ),
+    },
+    {
+      id: 'prefix',
+      header: 'Prefix',
+      width: 100,
+      cell: (queue) => <span className="truncate">{queue.prefix}</span>,
+    },
+    {
+      id: 'sla',
+      header: 'SLA',
+      width: 140,
+      cell: (queue) => (
+        <QueueSlaCell
+          queueId={queue.id}
+          queueName={queue.name}
+          slaHours={queue.slaHours ?? DEFAULT_SLA_HOURS}
+          revision={queue.revision}
+        />
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Lifecycle',
+      width: 120,
+      cell: (queue) => {
+        const lifecycle = lifecycleLabel(queue)
+        return (
+          <Badge variant={lifecycleBadgeVariant(lifecycle)}>{lifecycle}</Badge>
+        )
       },
-      {
-        id: 'slug',
-        header: 'Slug',
-        width: 180,
-        cell: (queue) => (
-          <span className="truncate font-mono text-xs">{queue.slug}</span>
-        ),
+    },
+    {
+      id: 'actions',
+      header: <span className="block text-right">Actions</span>,
+      width: 280,
+      cell: (queue) => {
+        const lifecycle = lifecycleLabel(queue)
+        return (
+          <div className="flex justify-end gap-2">
+            <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={updateStatus.isPending || lifecycle === 'active'}
+              onClick={() =>
+                updateStatus.mutate({
+                  queueId: queue.id,
+                  lifecycle: 'active',
+                  revision: queue.revision,
+                })
+              }
+            >
+              Activate
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={updateStatus.isPending || lifecycle === 'inactive'}
+              onClick={() =>
+                updateStatus.mutate({
+                  queueId: queue.id,
+                  lifecycle: 'inactive',
+                  revision: queue.revision,
+                })
+              }
+            >
+              Deactivate
+            </Button>
+          </div>
+        )
       },
-      {
-        id: 'workflowType',
-        header: 'Workflow',
-        width: 160,
-        cell: (queue) => (
-          <span className="truncate font-mono text-xs">
-            {queue.workflowType}
-          </span>
-        ),
-      },
-      {
-        id: 'prefix',
-        header: 'Prefix',
-        width: 100,
-        cell: (queue) => <span className="truncate">{queue.prefix}</span>,
-      },
-      {
-        id: 'sla',
-        header: 'SLA',
-        width: 140,
-        cell: (queue) => (
-          <QueueSlaCell
-            queueId={queue.id}
-            queueName={queue.name}
-            slaHours={queue.slaHours ?? DEFAULT_SLA_HOURS}
-            revision={queue.revision}
-          />
-        ),
-      },
-      {
-        id: 'status',
-        header: 'Lifecycle',
-        width: 120,
-        cell: (queue) => {
-          const lifecycle = lifecycleLabel(queue)
-          return (
-            <Badge variant={lifecycleBadgeVariant(lifecycle)}>
-              {lifecycle}
-            </Badge>
-          )
-        },
-      },
-      {
-        id: 'actions',
-        header: <span className="block text-right">Actions</span>,
-        width: 280,
-        cell: (queue) => {
-          const lifecycle = lifecycleLabel(queue)
-          return (
-            <div className="flex justify-end gap-2">
-              <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={updateStatus.isPending || lifecycle === 'active'}
-                onClick={() =>
-                  updateStatus.mutate({
-                    queueId: queue.id,
-                    lifecycle: 'active',
-                    revision: queue.revision,
-                  })
-                }
-              >
-                Activate
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={updateStatus.isPending || lifecycle === 'inactive'}
-                onClick={() =>
-                  updateStatus.mutate({
-                    queueId: queue.id,
-                    lifecycle: 'inactive',
-                    revision: queue.revision,
-                  })
-                }
-              >
-                Deactivate
-              </Button>
-            </div>
-          )
-        },
-      },
-    ],
-    [updateStatus],
-  )
+    },
+  ]
   return (
     <ConfigurationSectionCard
       icon={Workflow}
@@ -216,7 +237,6 @@ export function QueuesPanel() {
     </ConfigurationSectionCard>
   )
 }
-
 function CreateQueueDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -225,7 +245,6 @@ function CreateQueueDialog() {
   const [workflowType, setWorkflowType] = useState<QueueWorkflowType>('generic')
   const [touched, setTouched] = useState(false)
   const createQueue = useCreateQueueMutation()
-
   const nameError = !name.trim() ? 'Name is required.' : null
   const slugError = !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug.trim())
     ? 'Slug must be lowercase alphanumeric with hyphens.'
@@ -233,7 +252,6 @@ function CreateQueueDialog() {
   const prefixError = !/^[A-Z]{1,4}$/.test(prefix.trim())
     ? 'Prefix must be 1-4 uppercase letters.'
     : null
-
   function reset() {
     setName('')
     setSlug('')
@@ -241,7 +259,6 @@ function CreateQueueDialog() {
     setWorkflowType('generic')
     setTouched(false)
   }
-
   function handleSubmit() {
     setTouched(true)
     if (nameError || slugError || prefixError) return
@@ -261,7 +278,6 @@ function CreateQueueDialog() {
       },
     )
   }
-
   return (
     <Dialog
       open={open}
@@ -357,7 +373,6 @@ function CreateQueueDialog() {
     </Dialog>
   )
 }
-
 function QueueEditorDialog({
   queueId,
   queueName,
@@ -374,30 +389,24 @@ function QueueEditorDialog({
   })
   const updateQueue = useUpdateQueueMutation()
   const detail = detailQuery.data
-  const [stages, setStages] = useState<
-    Array<{
-      name: string
-      slug: string
-      order: number
-      category: 'new' | 'in_progress' | 'qc' | 'error' | 'closed'
-      isActive: boolean
-    }>
-  >([])
-
-  useEffect(() => {
-    if (!detail) return
-    setStages(
-      detail.stages.map((stage) => ({
-        name: stage.name,
-        slug: stage.slug,
-        order: stage.order,
-        category: stage.category as
-          'new' | 'in_progress' | 'qc' | 'error' | 'closed',
-        isActive: stage.isActive,
-      })),
-    )
-  }, [detail])
-
+  const [stageDraft, setStageDraft] = useState<Array<{
+    name: string
+    slug: string
+    order: number
+    category: 'new' | 'in_progress' | 'qc' | 'error' | 'closed'
+    isActive: boolean
+  }> | null>(null)
+  const stages =
+    stageDraft ??
+    detail?.stages.map((stage) => ({
+      name: stage.name,
+      slug: stage.slug,
+      order: stage.order,
+      category: stage.category as
+        'new' | 'in_progress' | 'qc' | 'error' | 'closed',
+      isActive: stage.isActive,
+    })) ??
+    []
   async function handleSave() {
     if (!detail) return
     try {
@@ -415,7 +424,6 @@ function QueueEditorDialog({
       // toast handled by mutation unless revision conflict
     }
   }
-
   async function handleActivate() {
     if (!detail) return
     try {
@@ -433,10 +441,15 @@ function QueueEditorDialog({
       }
     }
   }
-
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen)
+          if (!nextOpen) setStageDraft(null)
+        }}
+      >
         <DialogTrigger asChild>
           <Button type="button" variant="outline" size="sm">
             Stages
@@ -478,7 +491,7 @@ function QueueEditorDialog({
               <div className="space-y-3">
                 {stages.map((stage, index) => (
                   <div
-                    key={`${stage.slug}-${index}`}
+                    key={stage.slug}
                     className="grid gap-2 rounded-md border p-3 md:grid-cols-[1fr_1fr_90px_140px_auto]"
                   >
                     <Input
@@ -489,7 +502,7 @@ function QueueEditorDialog({
                           ...stage,
                           name: event.target.value,
                         }
-                        setStages(next)
+                        setStageDraft(next)
                       }}
                       placeholder="Name"
                     />
@@ -501,7 +514,7 @@ function QueueEditorDialog({
                           ...stage,
                           slug: event.target.value,
                         }
-                        setStages(next)
+                        setStageDraft(next)
                       }}
                       placeholder="Slug"
                     />
@@ -514,7 +527,7 @@ function QueueEditorDialog({
                           ...stage,
                           order: Number(event.target.value),
                         }
-                        setStages(next)
+                        setStageDraft(next)
                       }}
                     />
                     <Select
@@ -525,7 +538,7 @@ function QueueEditorDialog({
                           ...stage,
                           category: value as typeof stage.category,
                         }
-                        setStages(next)
+                        setStageDraft(next)
                       }}
                     >
                       <SelectTrigger>
@@ -549,7 +562,7 @@ function QueueEditorDialog({
                           ...stage,
                           isActive: !stage.isActive,
                         }
-                        setStages(next)
+                        setStageDraft(next)
                       }}
                     >
                       {stage.isActive ? 'Active' : 'Inactive'}
@@ -600,6 +613,7 @@ function QueueEditorDialog({
                 void queryClient.invalidateQueries({
                   queryKey: ['queue-detail', queueId],
                 })
+                setStageDraft(null)
                 setStaleOpen(false)
               }}
             >
@@ -611,7 +625,6 @@ function QueueEditorDialog({
     </>
   )
 }
-
 function QueueSlaCell({
   queueId,
   queueName,
@@ -626,22 +639,29 @@ function QueueSlaCell({
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(String(slaHours))
   const updateSla = useUpdateQueueSlaMutation()
-  useEffect(() => {
-    if (open) {
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
       setValue(String(slaHours))
     }
-  }, [open, slaHours])
+    setOpen(nextOpen)
+  }
   const parsed = Number(value)
   const isValid = Number.isInteger(parsed) && parsed >= 1 && parsed <= 8760
   function handleSave() {
     if (!isValid) return
     updateSla.mutate(
-      { queueId, slaHours: parsed, revision },
-      { onSuccess: () => setOpen(false) },
+      {
+        queueId,
+        slaHours: parsed,
+        revision,
+      },
+      {
+        onSuccess: () => setOpen(false),
+      },
     )
   }
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           type="button"

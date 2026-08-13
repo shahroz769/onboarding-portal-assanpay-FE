@@ -12,14 +12,14 @@ export const notificationTypeValues = [
 export type NotificationType = (typeof notificationTypeValues)[number]
 
 export const notificationSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   type: z.enum(notificationTypeValues),
   title: z.string(),
   body: z.string(),
-  caseId: z.string().uuid().nullable(),
+  caseId: z.uuid().nullable(),
   caseNumber: z.string().nullable(),
-  commentId: z.string().uuid().nullable(),
-  actorId: z.string().uuid().nullable(),
+  commentId: z.uuid().nullable(),
+  actorId: z.uuid().nullable(),
   actorName: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
   isRead: z.boolean(),
@@ -44,7 +44,7 @@ export const unreadCountResponseSchema = z.object({
 })
 
 export const markNotificationReadResponseSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   isRead: z.boolean(),
   readAt: z.string().nullable(),
 })

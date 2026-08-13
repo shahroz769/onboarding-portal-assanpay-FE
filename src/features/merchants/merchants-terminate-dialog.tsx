@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -35,12 +35,6 @@ export function MerchantTerminateDialog({
 }: MerchantTerminateDialogProps) {
   const [reason, setReason] = useState('')
   const trimmedReason = reason.trim()
-
-  useEffect(() => {
-    if (open) {
-      setReason('')
-    }
-  }, [open])
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()

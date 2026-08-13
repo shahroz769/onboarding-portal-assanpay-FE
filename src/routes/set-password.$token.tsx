@@ -5,7 +5,7 @@ import {
   useRouter,
 } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, Clock3 } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
@@ -57,11 +57,13 @@ function RouteComponent() {
   const { token } = Route.useParams()
   const navigate = useNavigate()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const setPasswordMutation = useMutation({
     mutationFn: (value: { password: string; confirmPassword: string }) =>
       setPasswordRequest(token, value),
     onSuccess: async () => {
       toast.success('Password set successfully. You can now login.')
+      await queryClient.invalidateQueries({ queryKey: ['users'] })
       await navigate({ to: '/login' })
     },
     onError: (error) => {
@@ -107,9 +109,8 @@ function RouteComponent() {
             }}
           >
             <FieldGroup>
-              <form.Field
-                name="password"
-                children={(field) => {
+              <form.Field name="password">
+                {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
@@ -126,16 +127,17 @@ function RouteComponent() {
                         aria-invalid={isInvalid}
                         autoComplete="new-password"
                       />
+
                       {isInvalid ? (
                         <FieldError errors={field.state.meta.errors} />
                       ) : null}
                     </Field>
                   )
                 }}
-              />
-              <form.Field
-                name="confirmPassword"
-                children={(field) => {
+              </form.Field>
+
+              <form.Field name="confirmPassword">
+                {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
@@ -154,22 +156,24 @@ function RouteComponent() {
                         aria-invalid={isInvalid}
                         autoComplete="new-password"
                       />
+
                       {isInvalid ? (
                         <FieldError errors={field.state.meta.errors} />
                       ) : null}
                     </Field>
                   )
                 }}
-              />
-              <form.Subscribe
-                selector={(state) => state.isSubmitting}
-                children={(isSubmitting) => (
+              </form.Field>
+
+              <form.Subscribe selector={(state) => state.isSubmitting}>
+                {(isSubmitting) => (
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Spinner data-icon="inline-start" /> : null}
                     {isSubmitting ? 'Saving...' : 'Set Password'}
                   </Button>
                 )}
-              />
+              </form.Subscribe>
+
               <Button asChild variant="ghost">
                 <Link to="/login">Back to login</Link>
               </Button>

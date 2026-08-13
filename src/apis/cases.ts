@@ -5,8 +5,6 @@ import type {
   CaseFilters,
   CaseHistory,
   CaseListResponse,
-  CaseOwner,
-  CaseStatus,
   CloseUnsuccessfulInput,
   CreateCommentInput,
   Queue,
@@ -19,7 +17,6 @@ import type {
   SendMidCreationEmailInput,
   EmailRecipientSelection,
   EmailRecipientType,
-  SelectSubMerchantFormInput,
   AgreementEmailResponse,
   MidCreationEmailResponse,
 } from '#/schemas/cases.schema'
@@ -62,21 +59,6 @@ export async function createCase(params: CreateCaseParams) {
 
 // ─── Update Case Status ─────────────────────────────────────────────────────
 
-interface UpdateCaseStatusParams {
-  caseId: string
-  status: CaseStatus
-}
-
-export async function updateCaseStatus({
-  caseId,
-  status,
-}: UpdateCaseStatusParams) {
-  const response = await apiClient.patch(`/api/cases/${caseId}/status`, {
-    status,
-  })
-  return response.data
-}
-
 // ─── Assign Case ────────────────────────────────────────────────────────────
 
 interface AssignCaseParams {
@@ -103,11 +85,6 @@ export async function fetchQueues(
 }
 
 // ─── Fetch Case Owners ──────────────────────────────────────────────────────
-
-export async function fetchCaseOwners(): Promise<CaseOwner[]> {
-  const response = await apiClient.get<CaseOwner[]>('/api/cases/owners')
-  return response.data
-}
 
 // ─── Bulk Assign Cases ──────────────────────────────────────────────────────
 
@@ -213,17 +190,6 @@ export async function sendForResubmission(
 }
 
 // ─── EP Sub-Merchant Form ───────────────────────────────────────────────────
-
-export async function selectSubMerchantForm(
-  caseId: string,
-  input: SelectSubMerchantFormInput,
-) {
-  const response = await apiClient.put(
-    `/api/cases/${caseId}/sub-merchant-form/selection`,
-    input,
-  )
-  return response.data
-}
 
 export async function uploadSubMerchantFinalForm({
   caseId,
@@ -528,14 +494,6 @@ export async function saveMidCreationDetails(
 }
 
 // ─── Case Comments ──────────────────────────────────────────────────────────
-
-export async function markTestingLimitsApplied(caseId: string) {
-  const response = await apiClient.post(
-    `/api/cases/${caseId}/testing/limits-applied`,
-    { applied: true },
-  )
-  return response.data
-}
 
 export async function markLiveLimitsApplied(caseId: string) {
   const response = await apiClient.post(

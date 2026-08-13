@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import type { ComponentType, KeyboardEvent, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { toast } from 'sonner'
@@ -273,113 +273,102 @@ export function MerchantOnboardingForm({
   )
   const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts)
 
-  const getDocLabel = useCallback(
-    (doc: DocumentFieldName): string => {
-      const label = DOCUMENT_LABELS[doc]
-      if (
-        (doc === 'next_of_kin_cnic_front' || doc === 'next_of_kin_cnic_back') &&
-        nextOfKinRelation
-      ) {
-        const relationLabel = KIN_RELATIONS.find(
-          (r) => r.value === nextOfKinRelation,
-        )?.label
-        if (relationLabel) {
-          return label.replace('Next Of Kin', `${relationLabel}'s`)
-        }
+  const getDocLabel = (doc: DocumentFieldName): string => {
+    const label = DOCUMENT_LABELS[doc]
+    if (
+      (doc === 'next_of_kin_cnic_front' || doc === 'next_of_kin_cnic_back') &&
+      nextOfKinRelation
+    ) {
+      const relationLabel = KIN_RELATIONS.find(
+        (r) => r.value === nextOfKinRelation,
+      )?.label
+      if (relationLabel) {
+        return label.replace('Next Of Kin', `${relationLabel}'s`)
       }
-      return label
-    },
-    [nextOfKinRelation],
-  )
+    }
+    return label
+  }
 
-  const validateDocuments = useCallback(
-    (type: string): Record<string, string> => {
-      const errors: Record<string, string> = {}
+  const validateDocuments = (type: string): Record<string, string> => {
+    const errors: Record<string, string> = {}
 
-      // Base documents are always required
-      for (const doc of BASE_DOCUMENTS) {
+    // Base documents are always required
+    for (const doc of BASE_DOCUMENTS) {
+      if (!documents[doc]) {
+        errors[doc] = `${DOCUMENT_LABELS[doc]} is required.`
+      }
+    }
+
+    // Merchant-type specific required documents
+    if (type && type in MERCHANT_SPECIFIC_DOCUMENTS) {
+      const specific =
+        MERCHANT_SPECIFIC_DOCUMENTS[
+          type as keyof typeof MERCHANT_SPECIFIC_DOCUMENTS
+        ]
+
+      for (const doc of specific.required) {
         if (!documents[doc]) {
           errors[doc] = `${DOCUMENT_LABELS[doc]} is required.`
         }
       }
+    }
 
-      // Merchant-type specific required documents
-      if (type && type in MERCHANT_SPECIFIC_DOCUMENTS) {
-        const specific =
-          MERCHANT_SPECIFIC_DOCUMENTS[
-            type as keyof typeof MERCHANT_SPECIFIC_DOCUMENTS
-          ]
-        for (const doc of specific.required) {
-          if (!documents[doc]) {
-            errors[doc] = `${DOCUMENT_LABELS[doc]} is required.`
-          }
-        }
-      }
+    return errors
+  }
 
-      return errors
-    },
-    [documents],
-  )
-
-  const resetFormState = useCallback(() => {
+  const resetFormState = () => {
     form.reset()
     setDocuments({})
     setDocumentErrors({})
     setSubmissionError(null)
     setSubmissionData(null)
     onSubmittedChange?.(false)
-  }, [form, onSubmittedChange])
+  }
 
-  const handleDocumentChange = useCallback(
-    (name: DocumentFieldName, file: File | null) => {
-      setDocuments((prev) => {
+  const handleDocumentChange = (name: DocumentFieldName, file: File | null) => {
+    setDocuments((prev) => {
+      const next = { ...prev }
+      if (file) {
+        next[name] = file
+      } else {
+        delete next[name]
+      }
+      return next
+    })
+    // Clear error for this document when a file is selected
+    if (file) {
+      setDocumentErrors((prev) => {
         const next = { ...prev }
-        if (file) {
-          next[name] = file
-        } else {
-          delete next[name]
-        }
+        delete next[name]
         return next
       })
-      // Clear error for this document when a file is selected
-      if (file) {
-        setDocumentErrors((prev) => {
-          const next = { ...prev }
-          delete next[name]
-          return next
-        })
-      }
-    },
-    [],
-  )
+    }
+  }
 
-  const handleDocumentValidationError = useCallback(
-    (name: DocumentFieldName, message: string) => {
-      setDocumentErrors((prev) => ({
-        ...prev,
-        [name]: message,
-      }))
-      toast.error(message)
-    },
-    [],
-  )
+  const handleDocumentValidationError = (
+    name: DocumentFieldName,
+    message: string,
+  ) => {
+    setDocumentErrors((prev) => ({
+      ...prev,
+      [name]: message,
+    }))
+    toast.error(message)
+  }
 
-  const getIsInvalid = useCallback(
-    (field: {
-      state: {
-        meta: {
-          isTouched: boolean
-          isValid: boolean
-        }
+  const getIsInvalid = (field: {
+    state: {
+      meta: {
+        isTouched: boolean
+        isValid: boolean
       }
-    }) => {
-      return (
-        (field.state.meta.isTouched || submissionAttempts > 0) &&
-        !field.state.meta.isValid
-      )
-    },
-    [submissionAttempts],
-  )
+    }
+  }) => {
+    return (
+      (field.state.meta.isTouched || submissionAttempts > 0) &&
+      !field.state.meta.isValid
+    )
+  }
 
   // ── Success View ────────────────────────────────────────────────────────
 
@@ -419,6 +408,7 @@ export function MerchantOnboardingForm({
               icon={Mail}
               colorClass="bg-blue-500/10 text-blue-500"
             />
+
             <div>
               <CardTitle>Submitter Information</CardTitle>
               <CardDescription>
@@ -429,9 +419,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <FieldGroup className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="email"
-              children={(field) => {
+            <form.Field name="email">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -449,17 +438,17 @@ export function MerchantOnboardingForm({
                       placeholder="email@example.com"
                       autoComplete="email"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="activeWhatsappNumber"
-              children={(field) => {
+            <form.Field name="activeWhatsappNumber">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -486,13 +475,14 @@ export function MerchantOnboardingForm({
                       placeholder="03XXXXXXXXX"
                       autoComplete="tel"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </FieldGroup>
         </CardContent>
       </Card>
@@ -505,6 +495,7 @@ export function MerchantOnboardingForm({
               icon={Building2}
               colorClass="bg-violet-500/10 text-violet-500"
             />
+
             <div>
               <CardTitle>Business Information</CardTitle>
               <CardDescription>
@@ -515,9 +506,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="businessName"
-              children={(field) => {
+            <form.Field name="businessName">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -533,17 +523,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Enter business name"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessPhone"
-              children={(field) => {
+            <form.Field name="businessPhone">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -567,17 +557,17 @@ export function MerchantOnboardingForm({
                       placeholder="Enter business phone"
                       autoComplete="tel"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessEmail"
-              children={(field) => {
+            <form.Field name="businessEmail">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -594,17 +584,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="business@example.com"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessWebsite"
-              children={(field) => {
+            <form.Field name="businessWebsite">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -621,17 +611,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="https://example.com"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessAddress"
-              children={(field) => {
+            <form.Field name="businessAddress">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
@@ -648,17 +638,17 @@ export function MerchantOnboardingForm({
                       placeholder="Enter full business address"
                       className="min-h-20"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="websiteCms"
-              children={(field) => {
+            <form.Field name="websiteCms">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -693,11 +683,10 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessNature"
-              children={(field) => {
+            <form.Field name="businessNature">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -713,17 +702,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="e.g. E-commerce, SaaS, Retail"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessRegistrationDate"
-              children={(field) => {
+            <form.Field name="businessRegistrationDate">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 const selectedDate = field.state.value
                   ? new Date(field.state.value + 'T00:00:00')
@@ -767,11 +756,10 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="businessDescription"
-              children={(field) => {
+            <form.Field name="businessDescription">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
@@ -788,13 +776,14 @@ export function MerchantOnboardingForm({
                       placeholder="Describe what your business does"
                       className="min-h-20"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </div>
         </CardContent>
       </Card>
@@ -807,6 +796,7 @@ export function MerchantOnboardingForm({
               icon={Briefcase}
               colorClass="bg-teal-500/10 text-teal-500"
             />
+
             <div>
               <CardTitle>Business Classification</CardTitle>
               <CardDescription>
@@ -817,9 +807,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="merchantType"
-              children={(field) => {
+            <form.Field name="merchantType">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid} className="sm:col-span-2">
@@ -857,11 +846,10 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="estimatedMonthlyTransactions"
-              children={(field) => {
+            <form.Field name="estimatedMonthlyTransactions">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -884,17 +872,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="e.g. 500"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="estimatedMonthlyVolume"
-              children={(field) => {
+            <form.Field name="estimatedMonthlyVolume">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -917,13 +905,14 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="e.g. 1000000"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </div>
         </CardContent>
       </Card>
@@ -936,6 +925,7 @@ export function MerchantOnboardingForm({
               icon={CreditCard}
               colorClass="bg-green-500/10 text-green-500"
             />
+
             <div>
               <CardTitle>Financial Information</CardTitle>
               <CardDescription>
@@ -946,9 +936,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="accountTitle"
-              children={(field) => {
+            <form.Field name="accountTitle">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -964,17 +953,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Enter account title"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="bankName"
-              children={(field) => {
+            <form.Field name="bankName">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -991,6 +980,7 @@ export function MerchantOnboardingForm({
                         onBlur={field.handleBlur}
                         showClear
                       />
+
                       <ComboboxContent>
                         <ComboboxEmpty>No bank found.</ComboboxEmpty>
                         <ComboboxList>
@@ -1008,11 +998,10 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="branchName"
-              children={(field) => {
+            <form.Field name="branchName">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1026,17 +1015,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Enter branch name"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="accountNumberIban"
-              children={(field) => {
+            <form.Field name="accountNumberIban">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1052,17 +1041,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Enter account number or IBAN"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="swiftCode"
-              children={(field) => {
+            <form.Field name="swiftCode">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1076,6 +1065,7 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Optional"
                     />
+
                     <FieldDescription>
                       Required only for international transfers.
                     </FieldDescription>
@@ -1085,7 +1075,7 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </div>
         </CardContent>
       </Card>
@@ -1098,6 +1088,7 @@ export function MerchantOnboardingForm({
               icon={User}
               colorClass="bg-amber-500/10 text-amber-500"
             />
+
             <div>
               <CardTitle>Director/CEO/Owner Information</CardTitle>
               <CardDescription>
@@ -1108,9 +1099,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
-            <form.Field
-              name="ownerFullName"
-              children={(field) => {
+            <form.Field name="ownerFullName">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1124,17 +1114,17 @@ export function MerchantOnboardingForm({
                       aria-invalid={isInvalid}
                       placeholder="Enter full name"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
-            <form.Field
-              name="ownerPhone"
-              children={(field) => {
+            <form.Field name="ownerPhone">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1159,13 +1149,14 @@ export function MerchantOnboardingForm({
                       placeholder="03XXXXXXXXX"
                       autoComplete="tel"
                     />
+
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </div>
         </CardContent>
       </Card>
@@ -1178,6 +1169,7 @@ export function MerchantOnboardingForm({
               icon={Users}
               colorClass="bg-rose-500/10 text-rose-500"
             />
+
             <div>
               <CardTitle>Next of Kin</CardTitle>
               <CardDescription>Emergency contact relationship</CardDescription>
@@ -1186,9 +1178,8 @@ export function MerchantOnboardingForm({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <form.Field
-              name="nextOfKinRelation"
-              children={(field) => {
+            <form.Field name="nextOfKinRelation">
+              {(field) => {
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
@@ -1223,7 +1214,7 @@ export function MerchantOnboardingForm({
                   </Field>
                 )
               }}
-            />
+            </form.Field>
           </FieldGroup>
         </CardContent>
       </Card>
@@ -1236,6 +1227,7 @@ export function MerchantOnboardingForm({
               icon={FileText}
               colorClass="bg-orange-500/10 text-orange-500"
             />
+
             <div>
               <CardTitle>Documents</CardTitle>
               <CardDescription>
@@ -1358,15 +1350,14 @@ export function MerchantOnboardingForm({
         <Button type="button" variant="outline" onClick={resetFormState}>
           Reset
         </Button>
-        <form.Subscribe
-          selector={(state) => state.isSubmitting}
-          children={(isSubmitting) => (
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
             <Button type="submit" size="lg" disabled={isSubmitting}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
               {isSubmitting ? 'Submitting...' : 'Submit Application'}
             </Button>
           )}
-        />
+        </form.Subscribe>
       </div>
     </form>
   )

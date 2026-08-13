@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -59,10 +58,7 @@ function formatDate(value: string | null) {
     const date = new Date(value)
     if (date.getUTCFullYear() >= 9999) return 'No Expiry'
 
-    return new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date)
+    return AGREEMENT_ROUND_DATE_FORMATTER.format(date)
   } catch {
     return null
   }
@@ -174,10 +170,9 @@ function buildAgreementRounds(history: Array<CaseHistory>) {
 export function AgreementRoundsCard({ caseId }: AgreementRoundsCardProps) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
 
-  const rounds = useMemo(
-    () => (historyQuery.data ? buildAgreementRounds(historyQuery.data) : []),
-    [historyQuery.data],
-  )
+  const rounds = historyQuery.data
+    ? buildAgreementRounds(historyQuery.data)
+    : []
 
   if (rounds.length === 0) return null
 
@@ -210,6 +205,7 @@ export function AgreementRoundsCard({ caseId }: AgreementRoundsCardProps) {
             label="Latest round"
             value={`Round ${latestRound.index}`}
           />
+
           <SummaryMetric
             label="Current state"
             value={getRoundStateLabel(latestRound)}
@@ -410,3 +406,8 @@ function getRoundStateLabel(round: AgreementRound) {
   if (round.sentEntry) return 'Awaiting client'
   return 'Uploaded'
 }
+const AGREEMENT_ROUND_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
+})

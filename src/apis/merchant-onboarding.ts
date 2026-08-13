@@ -1,4 +1,8 @@
-import { queryOptions, useMutation } from '@tanstack/react-query'
+import {
+  queryOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { apiClient } from '#/lib/api-client'
@@ -71,10 +75,19 @@ export async function submitMerchantOnboardingForm(
 }
 
 export function useSubmitMerchantOnboardingMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationKey: ['merchant-onboarding', 'submit'],
     mutationFn: submitMerchantOnboardingForm,
     retry: false,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['merchants'] }),
+        queryClient.invalidateQueries({ queryKey: ['cases'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      ])
+    },
   })
 }
 
@@ -144,10 +157,16 @@ export async function submitResubmission(
 }
 
 export function useSubmitResubmissionMutation(token: string) {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationKey: ['resubmission', 'submit', token] as const,
     mutationFn: (formData: FormData) => submitResubmission(token, formData),
     retry: false,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['resubmission-context', token],
+      }),
   })
 }
 
@@ -208,10 +227,16 @@ export async function submitAgreementUpload(
 }
 
 export function useSubmitAgreementUploadMutation(token: string) {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationKey: ['agreement-upload', 'submit', token] as const,
     mutationFn: (file: File) => submitAgreementUpload(token, file),
     retry: false,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['agreement-upload-context', token],
+      }),
   })
 }
 
@@ -263,10 +288,16 @@ export async function activateMidGoLive(
 }
 
 export function useActivateMidGoLiveMutation(token: string) {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationKey: ['mid-go-live', 'activate', token] as const,
     mutationFn: () => activateMidGoLive(token),
     retry: false,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['mid-go-live-context', token],
+      }),
     onError: (error: unknown) => {
       toast.error(
         getApiErrorMessage(error, 'Unable to start Go-Live activation.'),

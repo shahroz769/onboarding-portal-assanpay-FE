@@ -668,7 +668,7 @@ function ScreenshotUpload({
         <div className="flex flex-col gap-2">
           {files.map((file, index) => (
             <div
-              key={`${file.name}-${file.lastModified}-${index}`}
+              key={`${file.name}-${file.size}-${file.lastModified}`}
               className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2"
             >
               <FileImage className="size-4 shrink-0 text-muted-foreground" />

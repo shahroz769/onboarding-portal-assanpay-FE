@@ -1,6 +1,6 @@
 'use client'
 
-import * as React from 'react'
+import type * as React from 'react'
 import { Laptop, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -40,13 +40,7 @@ const THEME_OPTIONS: Array<{
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme()
-  const [selectedValue, setSelectedValue] = React.useState<ThemeMode>(
-    (theme as ThemeMode | undefined) ?? 'system',
-  )
-
-  React.useEffect(() => {
-    setSelectedValue((theme as ThemeMode | undefined) ?? 'system')
-  }, [theme])
+  const selectedValue = (theme as ThemeMode | undefined) ?? 'system'
 
   const selectedTheme =
     THEME_OPTIONS.find((option) => option.value === selectedValue) ??
@@ -54,12 +48,12 @@ export function ThemeToggle() {
   const SelectedIcon = selectedTheme.icon
 
   const updateTheme = (nextTheme: ThemeMode) => {
-    setSelectedValue(nextTheme)
-
     const apply = () => setTheme(nextTheme)
+    const startViewTransition = Reflect.get(document, 'startViewTransition') as
+      undefined | ((callback: () => void) => void)
 
-    if (document.startViewTransition) {
-      document.startViewTransition(apply)
+    if (startViewTransition) {
+      startViewTransition.call(document, apply)
     } else {
       apply()
     }

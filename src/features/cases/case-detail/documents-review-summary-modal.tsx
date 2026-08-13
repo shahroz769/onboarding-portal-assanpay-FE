@@ -102,16 +102,17 @@ export function DocumentsReviewSummaryModal({
   async function handleAutoConfirm() {
     if (!canTrigger || isConfirmingRef.current) return
     isConfirmingRef.current = true
-    try {
-      const data = await sendForResubmission.mutateAsync({
-        recipientEmailType,
+    await sendForResubmission
+      .mutateAsync({ recipientEmailType })
+      .then((data) => {
+        if (data.status === 'sent') setPreview(null)
       })
-      if (data.status === 'sent') setPreview(null)
-    } catch {
-      // already toasted
-    } finally {
-      isConfirmingRef.current = false
-    }
+      .catch(() => {
+        // Mutation hook already surfaces the backend error via toast.
+      })
+      .finally(() => {
+        isConfirmingRef.current = false
+      })
   }
 
   async function handleLoadPreview() {
@@ -126,17 +127,19 @@ export function DocumentsReviewSummaryModal({
   ) {
     if (!preview || isConfirmingRef.current) return
     isConfirmingRef.current = true
-    try {
-      await confirmManual.mutateAsync({
+    await confirmManual
+      .mutateAsync({
         tokenId: preview.tokenId,
         file,
         channel,
         recipientEmailType,
       })
-      if (channel === 'whatsapp') onOpenChange(false)
-    } finally {
-      isConfirmingRef.current = false
-    }
+      .then(() => {
+        if (channel === 'whatsapp') onOpenChange(false)
+      })
+      .finally(() => {
+        isConfirmingRef.current = false
+      })
   }
 
   const autoContent = (

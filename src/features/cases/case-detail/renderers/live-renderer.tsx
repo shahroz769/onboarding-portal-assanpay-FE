@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, Info, Mail, MailCheck, Rocket } from 'lucide-react'
@@ -113,15 +113,11 @@ export default function LiveRenderer({
     null,
   )
 
-  const emailPreview = useMemo(
-    () =>
-      buildEmailPreview({
-        merchantName,
-        merchantPortalUrl,
-        liveLimits: limits,
-      }),
-    [merchantName, merchantPortalUrl, limits],
-  )
+  const emailPreview = buildEmailPreview({
+    merchantName,
+    merchantPortalUrl,
+    liveLimits: limits,
+  })
 
   const selectedEmail =
     recipientEmailType === 'business' ? businessEmail : submitterEmail
@@ -183,6 +179,7 @@ export default function LiveRenderer({
               label="Collection"
               value={`${limits?.collectionMin ?? 100}-${limits?.collectionMax ?? 50000}`}
             />
+
             <LimitBlock
               label="Disbursement"
               value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}
@@ -201,6 +198,7 @@ export default function LiveRenderer({
                   }
                 }}
               />
+
               <FieldContent>
                 <FieldLabel htmlFor="live-limits-applied">
                   I have applied the live limits

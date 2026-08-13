@@ -1,5 +1,3 @@
-import { AxiosError } from 'axios'
-
 import { apiClient } from '#/lib/api-client'
 import type {
   CaseFlowConfiguration,
@@ -268,17 +266,4 @@ export async function updateQueue(input: {
   const { queueId, ...body } = input
   const response = await apiClient.patch(`/api/queues/${queueId}`, body)
   return response.data
-}
-
-export function isQueueRevisionConflict(error: unknown) {
-  if (!(error instanceof AxiosError) || error.response?.status !== 409) {
-    return false
-  }
-  const data = error.response.data
-  return (
-    Boolean(data) &&
-    typeof data === 'object' &&
-    'revision' in data &&
-    typeof data.revision === 'number'
-  )
 }

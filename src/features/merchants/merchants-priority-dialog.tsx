@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -49,19 +49,6 @@ export function MerchantPriorityDialog({
       : (merchant?.priority ?? 'normal'),
   )
   const [note, setNote] = useState(merchant?.priorityNote ?? '')
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    setPriority(
-      target?.type === 'bulk'
-        ? target.initialPriority
-        : (merchant?.priority ?? 'normal'),
-    )
-    setNote(merchant?.priorityNote ?? '')
-  }, [merchant, open, target])
 
   const handleOpenChange = (next: boolean) => {
     onOpenChange(next)

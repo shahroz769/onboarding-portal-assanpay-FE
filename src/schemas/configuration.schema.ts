@@ -8,7 +8,7 @@ const limitRangeSchema = z.object({
   disbursementMax: z.coerce.number().min(0),
 })
 
-const emailAddressSchema = z.string().email()
+const emailAddressSchema = z.email()
 
 export const limitsAndMdrSettingsSchema = z.object({
   testing: limitRangeSchema,
@@ -99,14 +99,14 @@ export const caseFlowQueueSchema = z.object({
 })
 
 export const caseFlowStartRuleSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.uuid().optional(),
   targetQueueId: z.string(),
   order: z.number(),
   isActive: z.boolean(),
 })
 
 export const caseFlowCloseTriggerSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.uuid().optional(),
   sourceQueueId: z.string(),
   targetQueueId: z.string(),
   order: z.number(),
@@ -114,14 +114,14 @@ export const caseFlowCloseTriggerSchema = z.object({
 })
 
 export const caseFlowCloseBlockerSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.uuid().optional(),
   blockedQueueId: z.string(),
   prerequisiteQueueId: z.string(),
   isActive: z.boolean(),
 })
 
 export const caseFlowCreationRequirementSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.uuid().optional(),
   targetQueueId: z.string(),
   prerequisiteQueueId: z.string(),
   isActive: z.boolean(),
@@ -159,9 +159,12 @@ export const merchantPortalSettingsSchema = z.object({
     .string()
     .trim()
     .max(320)
-    .refine((value) => value === '' || emailAddressSchema.safeParse(value).success, {
-      message: 'Enter a valid support email.',
-    })
+    .refine(
+      (value) => value === '' || emailAddressSchema.safeParse(value).success,
+      {
+        message: 'Enter a valid support email.',
+      },
+    )
     .default(''),
 })
 

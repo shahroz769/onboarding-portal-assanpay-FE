@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Plus, Save, Trash2 } from 'lucide-react'
 
@@ -46,6 +46,7 @@ import type {
 } from '#/schemas/configuration.schema'
 
 import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
+import { getValidationErrors } from './configuration-panel-utils'
 
 export type QueueOption = Pick<
   CaseFlowConfiguration['queues'][number],
@@ -54,10 +55,6 @@ export type QueueOption = Pick<
   isActive?: boolean
   lifecycle?: 'draft' | 'active' | 'inactive'
 }
-
-export const MAX_DRAFT_BYTES = 5 * 1024 * 1024
-
-export const DRAFT_EXTENSIONS = new Set(['.pdf', '.doc', '.docx'])
 
 export function QueueSelect({
   value,
@@ -97,9 +94,7 @@ export function QueueSelect({
             >
               <span className="min-w-0 flex-1 truncate">{queue.name}</span>
               {!isSelectable(queue) ? (
-                <Badge variant="outline">
-                  {queue.lifecycle ?? 'Inactive'}
-                </Badge>
+                <Badge variant="outline">{queue.lifecycle ?? 'Inactive'}</Badge>
               ) : null}
             </ComboboxItem>
           )}
@@ -141,10 +136,6 @@ export function MethodListPanel({
     ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
     : {}
   const formError = validationErrors.paymentMethods
-  useEffect(() => {
-    if (!data) return
-    setForm((current) => current ?? data)
-  }, [data])
   function updateMethod(id: string, label: string) {
     setForm((current) =>
       (current ?? data ?? []).map((method) =>
@@ -233,12 +224,10 @@ export function MethodListPanel({
         <Button
           onClick={() =>
             mutation.mutate(
-              value
-                .map((method) => ({
-                  ...method,
-                  label: method.label.trim(),
-                }))
-                .filter((method) => method.label),
+              value.flatMap((method) => {
+                const label = method.label.trim()
+                return label ? [{ ...method, label }] : []
+              }),
             )
           }
           disabled={mutation.isPending || Boolean(formError)}
@@ -255,7 +244,7 @@ export function MethodListPanel({
   )
 }
 
-export function createMethodId() {
+function createMethodId() {
   return crypto.randomUUID()
 }
 
@@ -299,7 +288,7 @@ export function ConfigurationActionBar({ children }: { children: ReactNode }) {
   )
 }
 
-export function ConfigurationCardHeaderContent({
+function ConfigurationCardHeaderContent({
   icon,
   colorClass,
   title,
@@ -331,47 +320,4 @@ export function ConfigurationCardHeaderContent({
 
 export function PanelLoading() {
   return <ConfigurationPanelSkeleton />
-}
-
-export function getValidationErrors(
-  result:
-    | {
-        success: true
-      }
-    | {
-        success: false
-        error: {
-          issues: Array<{
-            path: Array<string | number>
-            message: string
-          }>
-        }
-      },
-) {
-  if (result.success) return {}
-  const errors: Record<string, string> = {}
-  for (const issue of result.error.issues) {
-    const key = issue.path.join('.')
-    if (!errors[key]) {
-      errors[key] = issue.message
-    }
-  }
-  return errors
-}
-
-export function hasValidationErrors(errors: Record<string, string>) {
-  return Object.keys(errors).length > 0
-}
-
-export function getDraftFileError(file: File | null) {
-  if (!file) return null
-  if (file.size > MAX_DRAFT_BYTES) {
-    return 'Draft file must be 5 MB or smaller.'
-  }
-  const dotIndex = file.name.lastIndexOf('.')
-  const extension = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : ''
-  if (!DRAFT_EXTENSIONS.has(extension)) {
-    return 'Draft file must be a PDF, DOC, or DOCX file.'
-  }
-  return null
 }

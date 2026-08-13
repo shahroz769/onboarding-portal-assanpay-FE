@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useEffect,
-  use,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, use, useState } from 'react'
 import {
   useInfiniteQuery,
   useQuery,
@@ -107,7 +99,7 @@ export function useCasesTableMeta() {
   return useRequiredContext(CasesTableMetaContext)
 }
 
-function CasesTableProvider({
+function CasesTableProviderState({
   children,
   filters,
   setFilter,
@@ -119,22 +111,21 @@ function CasesTableProvider({
   const { user } = useAuth()
   const userRole = user?.roleType ?? 'agent'
 
-  const handleSort = useCallback(
-    (columnId: CaseSortableColumn) => {
-      const isSameColumn = filters.sortBy === columnId
-      const nextOrder =
-        isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
+  const handleSort = (columnId: CaseSortableColumn) => {
+    const isSameColumn = filters.sortBy === columnId
+    const nextOrder =
+      isSameColumn && filters.sortOrder === 'asc' ? 'desc' : 'asc'
 
-      if (!isSameColumn) {
-        queryClient.removeQueries({ queryKey: CASES_KEY })
-      }
+    if (!isSameColumn) {
+      queryClient.removeQueries({ queryKey: CASES_KEY })
+    }
 
-      setFilters({ sortBy: columnId, sortOrder: nextOrder })
-    },
-    [filters.sortBy, filters.sortOrder, queryClient, setFilters],
+    setFilters({ sortBy: columnId, sortOrder: nextOrder })
+  }
+
+  const [selectedIdCandidates, setSelectedIdSet] = useState<Set<string>>(
+    new Set(),
   )
-
-  const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [bulkAssignOwnerId, setBulkAssignOwnerId] = useState<string | null>(
     null,
   )
@@ -169,140 +160,70 @@ function CasesTableProvider({
 
   const bulkAssign = useBulkAssignCasesMutation()
 
-  const flatData = useMemo(
-    () => data?.pages.flatMap((page) => page.cases) ?? [],
-    [data],
-  )
-  const loadedCount = flatData.length
-  const assignableIds = useMemo(
-    () =>
-      userRole === 'super_admin' || userRole === 'admin'
-        ? flatData
-            .filter(
-              (item) =>
-                item.status !== 'closed' &&
-                item.status !== 'error' &&
-                !item.closeOutcome &&
-                !item.closedAt,
-            )
-            .map((item) => item.id)
-        : [],
-    [flatData, userRole],
-  )
-  const filtersKey = useMemo(
-    () =>
-      JSON.stringify({
-        search: filters.search,
-        queueId: filters.queueId,
-        ownerId: filters.ownerId,
-        status: filters.status,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-      }),
-    [
-      filters.ownerId,
-      filters.queueId,
-      filters.search,
-      filters.sortBy,
-      filters.sortOrder,
-      filters.status,
-    ],
-  )
-  const previousFiltersKeyRef = useRef(filtersKey)
+  const flatData = data?.pages.flatMap((page) => page.cases) ?? []
 
-  useEffect(() => {
-    if (previousFiltersKeyRef.current === filtersKey) {
-      return
+  const loadedCount = flatData.length
+  const assignableIds =
+    userRole === 'super_admin' || userRole === 'admin'
+      ? flatData.flatMap((item) =>
+          item.status !== 'closed' &&
+          item.status !== 'error' &&
+          !item.closeOutcome &&
+          !item.closedAt
+            ? [item.id]
+            : [],
+        )
+      : []
+
+  const assignableIdSet = new Set(assignableIds)
+  const selectedIdSet = new Set(
+    Array.from(selectedIdCandidates).filter((id) => assignableIdSet.has(id)),
+  )
+
+  const handleSelectRow = (id: string, selected: boolean) => {
+    const next = new Set(selectedIdCandidates)
+
+    if (selected) {
+      next.add(id)
+    } else {
+      next.delete(id)
     }
 
-    previousFiltersKeyRef.current = filtersKey
-    setSelectedIdSet(new Set())
-    setBulkAssignOwnerId(null)
-  }, [filtersKey])
+    setSelectedIdSet(next)
+    if (next.size === 0) {
+      setBulkAssignOwnerId(null)
+    }
+  }
 
-  useEffect(() => {
-    setSelectedIdSet((prev) => {
-      if (prev.size === 0) {
-        return prev
-      }
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedIdSet(selected ? new Set(assignableIds) : new Set())
+    if (!selected) {
+      setBulkAssignOwnerId(null)
+    }
+  }
 
-      const visibleIds = new Set(assignableIds)
-      const next = new Set(Array.from(prev).filter((id) => visibleIds.has(id)))
+  const selectedIds = Array.from(selectedIdSet)
 
-      if (next.size === prev.size) {
-        return prev
-      }
+  const columns = createCaseColumns({
+    userRole,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
+    onSort: handleSort,
+    selectedIds: selectedIdSet,
+    allIds: assignableIds,
+    onSelectRow: handleSelectRow,
+    onSelectAll: handleSelectAll,
+    onOpenAssignOwner: setAssignOwnerCase,
+    onOpenPriority: setPriorityCase,
+  })
 
-      if (next.size === 0) {
-        setBulkAssignOwnerId(null)
-      }
+  const commaToSet = (value: string | undefined) =>
+    new Set(value?.split(',').filter(Boolean) ?? [])
 
-      return next
-    })
-  }, [assignableIds])
+  const setToCommaString = (set: Set<string>) =>
+    set.size > 0 ? Array.from(set).join(',') : undefined
 
-  const handleSelectRow = useCallback((id: string, selected: boolean) => {
-    setSelectedIdSet((prev) => {
-      const next = new Set(prev)
-
-      if (selected) {
-        next.add(id)
-      } else {
-        next.delete(id)
-      }
-
-      return next
-    })
-  }, [])
-
-  const handleSelectAll = useCallback(
-    (selected: boolean) => {
-      setSelectedIdSet(selected ? new Set(assignableIds) : new Set())
-    },
-    [assignableIds],
-  )
-
-  const selectedIds = useMemo(() => Array.from(selectedIdSet), [selectedIdSet])
-
-  const columns = useMemo(
-    () =>
-      createCaseColumns({
-        userRole,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-        onSort: handleSort,
-        selectedIds: selectedIdSet,
-        allIds: assignableIds,
-        onSelectRow: handleSelectRow,
-        onSelectAll: handleSelectAll,
-        onOpenAssignOwner: setAssignOwnerCase,
-        onOpenPriority: setPriorityCase,
-      }),
-    [
-      userRole,
-      assignableIds,
-      filters.sortBy,
-      filters.sortOrder,
-      handleSelectAll,
-      handleSelectRow,
-      handleSort,
-      selectedIdSet,
-    ],
-  )
-
-  const commaToSet = useCallback(
-    (value: string | undefined) =>
-      new Set(value?.split(',').filter(Boolean) ?? []),
-    [],
-  )
-
-  const setToCommaString = useCallback(
-    (set: Set<string>) =>
-      set.size > 0 ? Array.from(set).join(',') : undefined,
-    [],
-  )
-
-  const submitBulkAssign = useCallback(() => {
+  const submitBulkAssign = () => {
     if (selectedIds.length === 0) {
       return
     }
@@ -321,85 +242,56 @@ function CasesTableProvider({
           ),
       },
     )
-  }, [bulkAssign, bulkAssignOwnerId, selectedIds])
+  }
 
-  const handleFetchNextPage = useCallback(() => {
+  const handleFetchNextPage = () => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+  }
 
-  const stateValue = useMemo<CasesTableState>(
-    () => ({
-      flatData,
-      selectedIds,
-      filters,
-      hideOwnerFilter,
-      hideStatusFilter,
-      userRole,
-      isLoading: isTableLoading,
-      loadedCount,
-      hasNextPage,
-      isFetchingNextPage,
-      queues,
-      isQueuesLoading,
-      users: caseUsers,
-      isUsersLoading,
-      bulkAssignOwnerId,
-      isBulkAssignPending: bulkAssign.isPending,
-      bulkAssignError,
-      assignOwnerCase,
-      priorityCase,
-    }),
-    [
-      assignOwnerCase,
-      bulkAssign.isPending,
-      bulkAssignError,
-      bulkAssignOwnerId,
-      caseUsers,
-      filters,
-      flatData,
-      hasNextPage,
-      hideOwnerFilter,
-      hideStatusFilter,
-      isFetchingNextPage,
-      isTableLoading,
-      isQueuesLoading,
-      isUsersLoading,
-      priorityCase,
-      queues,
-      selectedIds,
-      loadedCount,
-      userRole,
-    ],
-  )
+  const stateValue: CasesTableState = {
+    flatData,
+    selectedIds,
+    filters,
+    hideOwnerFilter,
+    hideStatusFilter,
+    userRole,
+    isLoading: isTableLoading,
+    loadedCount,
+    hasNextPage,
+    isFetchingNextPage,
+    queues,
+    isQueuesLoading,
+    users: caseUsers,
+    isUsersLoading,
+    bulkAssignOwnerId,
+    isBulkAssignPending: bulkAssign.isPending,
+    bulkAssignError,
+    assignOwnerCase,
+    priorityCase,
+  }
 
-  const actionsValue = useMemo<CasesTableActions>(
-    () => ({
-      setFilter,
-      fetchNextPage: handleFetchNextPage,
-      setBulkAssignOwnerId: (value) => {
-        setBulkAssignOwnerId(value)
-        setBulkAssignError(null)
-      },
-      submitBulkAssign,
-      openAssignOwnerDialog: setAssignOwnerCase,
-      closeAssignOwnerDialog: () => setAssignOwnerCase(null),
-      openPriorityDialog: setPriorityCase,
-      closePriorityDialog: () => setPriorityCase(null),
-    }),
-    [handleFetchNextPage, setFilter, submitBulkAssign],
-  )
+  const actionsValue: CasesTableActions = {
+    setFilter,
+    fetchNextPage: handleFetchNextPage,
+    setBulkAssignOwnerId: (value) => {
+      setBulkAssignOwnerId(value)
+      setBulkAssignError(null)
+    },
+    submitBulkAssign,
+    openAssignOwnerDialog: setAssignOwnerCase,
+    closeAssignOwnerDialog: () => setAssignOwnerCase(null),
+    openPriorityDialog: setPriorityCase,
+    closePriorityDialog: () => setPriorityCase(null),
+  }
 
-  const metaValue = useMemo<CasesTableMeta>(
-    () => ({
-      columns,
-      selectedIdSet,
-      commaToSet,
-      setToCommaString,
-    }),
-    [columns, commaToSet, selectedIdSet, setToCommaString],
-  )
+  const metaValue: CasesTableMeta = {
+    columns,
+    selectedIdSet,
+    commaToSet,
+    setToCommaString,
+  }
 
   return (
     <CasesTableStateContext value={stateValue}>
@@ -410,6 +302,19 @@ function CasesTableProvider({
       </CasesTableActionsContext>
     </CasesTableStateContext>
   )
+}
+
+function CasesTableProvider(props: CasesTableProviderProps) {
+  const resetKey = JSON.stringify({
+    search: props.filters.search,
+    queueId: props.filters.queueId,
+    ownerId: props.filters.ownerId,
+    status: props.filters.status,
+    sortBy: props.filters.sortBy,
+    sortOrder: props.filters.sortOrder,
+  })
+
+  return <CasesTableProviderState key={resetKey} {...props} />
 }
 
 export { CasesTableProvider }

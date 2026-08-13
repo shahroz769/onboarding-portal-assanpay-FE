@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { RotateCcw, Save } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
@@ -38,13 +38,15 @@ const numberInputProps = {
   inputMode: 'decimal' as const,
 }
 
-const LIMIT_FIELDS: { key: keyof MerchantLimitsMdr['testing']; label: string }[] =
-  [
-    { key: 'collectionMin', label: 'Collection minimum' },
-    { key: 'collectionMax', label: 'Collection maximum' },
-    { key: 'disbursementMin', label: 'Disbursement minimum' },
-    { key: 'disbursementMax', label: 'Disbursement maximum' },
-  ]
+const LIMIT_FIELDS: {
+  key: keyof MerchantLimitsMdr['testing']
+  label: string
+}[] = [
+  { key: 'collectionMin', label: 'Collection minimum' },
+  { key: 'collectionMax', label: 'Collection maximum' },
+  { key: 'disbursementMin', label: 'Disbursement minimum' },
+  { key: 'disbursementMax', label: 'Disbursement maximum' },
+]
 
 const RATE_FIELDS: { key: RateKey; label: string }[] = [
   { key: 'eWallets', label: 'E-Wallets (%)' },
@@ -87,14 +89,10 @@ export function MerchantLimitsMdrTab({
   const activeGroup: LimitGroup =
     detail.merchant.status === 'live' ? 'live' : 'testing'
 
-  const errors = useMemo(() => validate(form), [form])
+  const errors = validate(form)
   const hasErrors = Object.keys(errors).length > 0
-  const isDirty = useMemo(
-    () =>
-      JSON.stringify(form) !==
-      JSON.stringify(detail.limitsAndMdr.effective),
-    [form, detail.limitsAndMdr.effective],
-  )
+  const isDirty =
+    JSON.stringify(form) !== JSON.stringify(detail.limitsAndMdr.effective)
 
   function updateLimit(
     group: LimitGroup,
@@ -126,6 +124,7 @@ export function MerchantLimitsMdrTab({
           disabled={!canEdit}
           onChange={updateLimit}
         />
+
         <LimitSection
           title="Live Limits"
           group="live"
@@ -135,6 +134,7 @@ export function MerchantLimitsMdrTab({
           disabled={!canEdit}
           onChange={updateLimit}
         />
+
         <Card>
           <CardHeader>
             <CardTitle>Commission Rates (MDR)</CardTitle>
@@ -149,11 +149,14 @@ export function MerchantLimitsMdrTab({
                   {...numberInputProps}
                   max={100}
                   disabled={!canEdit}
-                  value={Number.isFinite(form.rates[key]) ? form.rates[key] : ''}
+                  value={
+                    Number.isFinite(form.rates[key]) ? form.rates[key] : ''
+                  }
                   onChange={(event) =>
                     updateRate(key, Number(event.target.value))
                   }
                 />
+
                 {errors[`rates.${key}`] ? (
                   <p className="text-xs text-destructive">
                     {errors[`rates.${key}`]}
@@ -183,9 +186,7 @@ export function MerchantLimitsMdrTab({
           ) : null}
           <Button
             onClick={() => updateMutation.mutate(form)}
-            disabled={
-              updateMutation.isPending || hasErrors || !isDirty
-            }
+            disabled={updateMutation.isPending || hasErrors || !isDirty}
           >
             {updateMutation.isPending ? (
               <Spinner data-icon="inline-start" />
@@ -249,6 +250,7 @@ function LimitSection({
                   onChange(group, key, Number(event.target.value))
                 }
               />
+
               {errors[errorKey] ? (
                 <p className="text-xs text-destructive">{errors[errorKey]}</p>
               ) : null}

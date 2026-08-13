@@ -60,7 +60,7 @@ export interface CaseOwner {
 
 // ─── Queue Schema ───────────────────────────────────────────────────────────
 
-export const queueSchema = z.object({
+const queueSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
@@ -103,7 +103,7 @@ export const caseListItemSchema = z.object({
 
 export type CaseListItem = z.infer<typeof caseListItemSchema>
 
-export const caseListResponseSchema = z.object({
+const caseListResponseSchema = z.object({
   cases: z.array(caseListItemSchema),
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
@@ -149,7 +149,7 @@ export const caseRouteSearchSchema = z.object({
 
 export type CaseRouteSearch = z.infer<typeof caseRouteSearchSchema>
 
-export const caseFiltersSchema = caseRouteSearchSchema.extend({
+const caseFiltersSchema = caseRouteSearchSchema.extend({
   createdAtFrom: z.string().optional().transform(normalizeOptionalString),
   createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })
@@ -205,7 +205,7 @@ export type FieldReview = z.infer<typeof fieldReviewSchema>
 
 // ─── Case Detail Response ───────────────────────────────────────────────────
 
-export const caseDetailSchema = z.object({
+const caseDetailSchema = z.object({
   case: z.object({
     id: z.string(),
     caseNumber: z.string(),
@@ -435,7 +435,7 @@ export type CaseDetail = z.infer<typeof caseDetailSchema>
 
 // ─── Case Comment ───────────────────────────────────────────────────────────
 
-export const caseCommentSchema = z.object({
+const caseCommentSchema = z.object({
   id: z.string(),
   caseId: z.string(),
   authorId: z.string(),
@@ -452,7 +452,7 @@ export type CaseComment = z.infer<typeof caseCommentSchema>
 
 // ─── Case History ───────────────────────────────────────────────────────────
 
-export const caseHistorySchema = z.object({
+const caseHistorySchema = z.object({
   id: z.string(),
   caseId: z.string(),
   actorId: z.string().nullable(),
@@ -466,7 +466,7 @@ export type CaseHistory = z.infer<typeof caseHistorySchema>
 
 // ─── Mutation Inputs ────────────────────────────────────────────────────────
 
-export const saveFieldReviewsInputSchema = z.object({
+const saveFieldReviewsInputSchema = z.object({
   reviews: z.array(
     z.object({
       fieldName: z.string().min(1),
@@ -478,15 +478,15 @@ export const saveFieldReviewsInputSchema = z.object({
 
 export type SaveFieldReviewsInput = z.infer<typeof saveFieldReviewsInputSchema>
 
-export const saveDocumentReviewSubMerchantInputSchema = z.object({
-  subMerchantIds: z.array(z.string().uuid()).min(1).max(30),
+const saveDocumentReviewSubMerchantInputSchema = z.object({
+  subMerchantIds: z.array(z.uuid()).min(1).max(30),
 })
 
 export type SaveDocumentReviewSubMerchantInput = z.infer<
   typeof saveDocumentReviewSubMerchantInputSchema
 >
 
-export const closeUnsuccessfulInputSchema = z.object({
+const closeUnsuccessfulInputSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 })
 
@@ -494,7 +494,7 @@ export type CloseUnsuccessfulInput = z.infer<
   typeof closeUnsuccessfulInputSchema
 >
 
-export const createCommentInputSchema = z.object({
+const createCommentInputSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty'),
   parentId: z.string().optional(),
   mentions: z.array(z.string()).optional(),
@@ -502,7 +502,7 @@ export const createCommentInputSchema = z.object({
 
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>
 
-export const selectSubMerchantFormInputSchema = z.object({
+const selectSubMerchantFormInputSchema = z.object({
   subMerchantKey: z.string().min(1),
 })
 
@@ -517,7 +517,7 @@ export type AgreementEmailResponse = {
   error?: string
 }
 
-export const saveMidCreationDetailsInputSchema = z.object({
+const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
   internalPortalMid: z.coerce.number().int().positive(),
   email: z.string().trim().email(),
@@ -559,13 +559,13 @@ export type EmailRecipientSelection = z.infer<
   typeof emailRecipientSelectionSchema
 >
 
-export const sendMidCreationEmailInputSchema = emailRecipientSelectionSchema
+const sendMidCreationEmailInputSchema = emailRecipientSelectionSchema
 
 export type SendMidCreationEmailInput = z.infer<
   typeof sendMidCreationEmailInputSchema
 >
 
-export const sendLiveEmailInputSchema = emailRecipientSelectionSchema
+const sendLiveEmailInputSchema = emailRecipientSelectionSchema
 
 export type SendLiveEmailInput = z.infer<typeof sendLiveEmailInputSchema>
 
@@ -576,7 +576,7 @@ export type MidCreationEmailResponse = {
   error?: string
 }
 
-export const saveWordpressWebsiteInputSchema = z.object({
+const saveWordpressWebsiteInputSchema = z.object({
   clonedWebsiteLink: z.string().trim().url(),
 })
 

@@ -164,7 +164,7 @@ export const merchantOnboardingSchema = z.object({
   bankName: z.enum(bankNameValues, 'Please select a bank.'),
   branchName: z.string().min(1, 'Branch name is required.'),
   accountNumberIban: z.string().min(1, 'Account number / IBAN is required.'),
-  swiftCode: z.string().optional(),
+  swiftCode: z.string(),
 
   // Section 6: Next of Kin
   nextOfKinRelation: z.enum(kinRelationValues, 'Please select a relation.'),
@@ -308,10 +308,7 @@ export const MERCHANT_SPECIFIC_DOCUMENTS: Record<
       'trustees_authorized_signatories_cnic',
       'proof_of_address',
     ],
-    optional: [
-      'tax_exemption_certificate',
-      'other_supporting_documents',
-    ],
+    optional: ['tax_exemption_certificate', 'other_supporting_documents'],
   },
 }
 
