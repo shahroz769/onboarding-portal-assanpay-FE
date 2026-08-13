@@ -21,8 +21,8 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import type { CaseRouteSearch } from '#/schemas/cases.schema'
-import { CASE_STATUSES, CASE_STATUS_LABELS } from '#/schemas/cases.schema'
+import type { CaseRouteSearch, CaseStatus } from '#/schemas/cases.schema'
+import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { CasePriorityDialog } from './case-priority-dialog'
 import {
@@ -32,7 +32,15 @@ import {
   useCasesTableState,
 } from './cases-table-context'
 
-const statusFilterOptions = CASE_STATUSES.map((status) => ({
+const CASE_STATUS_FILTER_ORDER = [
+  'new',
+  'working',
+  'awaiting_client',
+  'pending',
+  'closed',
+] as const satisfies ReadonlyArray<CaseStatus>
+
+const statusFilterOptions = CASE_STATUS_FILTER_ORDER.map((status) => ({
   label: CASE_STATUS_LABELS[status],
   value: status,
 }))
@@ -96,7 +104,7 @@ function Toolbar() {
         />
         {state.hideStatusFilter ? null : (
           <DataTableFilter
-            title="Status"
+            title="Case Status"
             options={statusFilterOptions}
             selectedValues={meta.commaToSet(filters.status)}
             onChange={(set) =>

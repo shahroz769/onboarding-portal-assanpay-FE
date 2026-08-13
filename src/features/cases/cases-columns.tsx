@@ -246,6 +246,20 @@ export function createCaseColumns({
       width: 200,
     },
 
+    // Case Owner
+    {
+      id: 'ownerName',
+      header: 'Case Owner',
+      cell: (item) => (
+        <OwnerCell
+          item={item}
+          canEdit={canEdit && !isCaseClosed(item)}
+          onOpenAssignOwner={onOpenAssignOwner}
+        />
+      ),
+      width: 150,
+    },
+
     // Queue
     {
       id: 'queueName',
@@ -302,20 +316,6 @@ export function createCaseColumns({
         />
       ),
       width: 100,
-    },
-
-    // Case Owner
-    {
-      id: 'ownerName',
-      header: 'Case Owner',
-      cell: (item) => (
-        <OwnerCell
-          item={item}
-          canEdit={canEdit && !isCaseClosed(item)}
-          onOpenAssignOwner={onOpenAssignOwner}
-        />
-      ),
-      width: 150,
     },
 
     // Creation Date
