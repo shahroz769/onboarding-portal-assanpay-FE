@@ -49,7 +49,7 @@ function MerchantsRoutePending() {
       actionWidth={148}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 200, kind: 'text', header: 'Merchant Name' },
+        { width: 200, grow: true, kind: 'text', header: 'Merchant Name' },
         { width: 130, kind: 'text', header: 'Business Scope', cellWidth: 92 },
         { width: 80, kind: 'text', header: 'Currency', cellWidth: 36 },
         { width: 120, kind: 'badge', header: 'Status', cellWidth: 88 },

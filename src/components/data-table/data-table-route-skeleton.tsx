@@ -13,6 +13,7 @@ type SkeletonCellKind =
 
 interface SkeletonColumn {
   width: number
+  grow?: boolean
   kind?: SkeletonCellKind
   header?: React.ReactNode
   cellWidth?: number
@@ -62,7 +63,10 @@ export function DataTableRouteSkeleton({
             <TableHeader className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]">
               <TableRow>
                 {resolvedColumns.map((column, columnIndex) => (
-                  <TableHead key={columnIndex} style={{ width: column.width }}>
+                  <TableHead
+                    key={columnIndex}
+                    style={column.grow ? undefined : { width: column.width }}
+                  >
                     {column.header}
                   </TableHead>
                 ))}
