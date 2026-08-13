@@ -158,7 +158,7 @@ export default function TestingRenderer({
           </div>
 
           {limitsAppliedAt ? (
-            <Alert>
+            <Alert variant="success">
               <CheckCircle2 />
               <AlertTitle>Limits have been applied</AlertTitle>
               <AlertDescription>
@@ -166,7 +166,7 @@ export default function TestingRenderer({
               </AlertDescription>
             </Alert>
           ) : (
-            <Alert>
+            <Alert variant="warning">
               <Info />
               <AlertTitle>Limits have not been applied</AlertTitle>
               <AlertDescription>
@@ -196,7 +196,7 @@ export default function TestingRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Alert>
+            <Alert variant={credentialsReady ? 'success' : 'warning'}>
               <Info />
               <AlertTitle>
                 {credentialsReady
@@ -224,7 +224,7 @@ export default function TestingRenderer({
       </Card>
 
       {!credentialsReady && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <Info />
           <AlertTitle>Portal credentials required</AlertTitle>
           <AlertDescription>
@@ -233,7 +233,7 @@ export default function TestingRenderer({
           </AlertDescription>
         </Alert>
       ) : credentialsReady && !limitsAppliedAt && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <Info />
           <AlertTitle>Limits have not been applied</AlertTitle>
           <AlertDescription>
@@ -242,7 +242,7 @@ export default function TestingRenderer({
           </AlertDescription>
         </Alert>
       ) : credentialsEmailSent ? (
-        <Alert>
+        <Alert variant="success">
           <CheckCircle2 />
           <AlertTitle>Credentials already sent</AlertTitle>
           <AlertDescription>

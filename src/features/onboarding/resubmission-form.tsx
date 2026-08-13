@@ -653,7 +653,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Alert>
+          <Alert variant="warning">
             <Info />
             <AlertTitle>Complete resubmission required</AlertTitle>
             <AlertDescription>
@@ -1018,7 +1018,7 @@ function DocumentResubmissionField({
       ) : null}
 
       {draft.action === 'remove' && !rejection.isRequired ? (
-        <Alert>
+        <Alert variant="warning">
           <Info />
           <AlertDescription>
             This optional document will be removed from the submission.

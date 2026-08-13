@@ -514,7 +514,7 @@ export default function WordpressWebsiteRenderer({
       ) : null}
 
       {!canEdit && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <Info />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>

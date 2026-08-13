@@ -348,7 +348,7 @@ export default function AgreementRenderer({
       ) : null}
 
       {!canEdit && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <FileText />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>

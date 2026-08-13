@@ -618,7 +618,7 @@ export default function DocumentsReviewRenderer({
             </div>
 
             {isAwaitingClient ? (
-              <Alert>
+              <Alert variant="warning">
                 <Info />
                 <AlertTitle>Awaiting client resubmission</AlertTitle>
                 <AlertDescription>
@@ -704,7 +704,7 @@ export default function DocumentsReviewRenderer({
                   </div>
                 </>
               ) : (
-                <Alert>
+                <Alert variant="warning">
                   <Info />
                   <AlertTitle>No uploaded documents</AlertTitle>
                   <AlertDescription>

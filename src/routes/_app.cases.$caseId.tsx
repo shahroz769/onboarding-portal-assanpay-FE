@@ -58,7 +58,7 @@ function CaseDetailsNotFound() {
 
   return (
     <RouteStateShell>
-      <Alert>
+      <Alert variant="warning">
         <FileQuestion />
         <AlertTitle>Case not found</AlertTitle>
         <AlertDescription>
@@ -87,7 +87,7 @@ function CaseDetailsError({ error }: { error: unknown }) {
 
   return (
     <RouteStateShell>
-      <Alert variant={isForbidden ? 'default' : 'destructive'}>
+      <Alert variant={isForbidden ? 'warning' : 'destructive'}>
         <AlertTriangle />
         <AlertTitle>{title}</AlertTitle>
         <AlertDescription>{message}</AlertDescription>

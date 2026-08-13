@@ -408,81 +408,81 @@ export function CaseChatter({
               />
             </PopoverAnchor>
 
-              <div className="flex min-w-0 flex-1 flex-col gap-3">
-                {replyTarget ? (
-                  <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <CornerDownRight className="size-3.5 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">
-                      Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
-                      {replyTarget.content}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      className="ml-auto"
-                      onClick={() => setReplyTarget(null)}
-                    >
-                      <X />
-                    </Button>
-                  </div>
-                ) : null}
-
-                <div className="relative min-h-6 min-w-0">
-                  <div
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute inset-0 z-0 min-h-6 overflow-hidden text-foreground/90 ${composerTypographyClassName}`}
-                  >
-                    <div
-                      style={{
-                        transform: `translateY(-${composerScrollTop}px)`,
-                      }}
-                    >
-                      {content
-                        ? renderComposerText(content, validUsernames)
-                        : null}
-                    </div>
-                  </div>
-
-                  <Textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={(event) => {
-                      setContent(event.target.value)
-                      setCursorPosition(event.target.selectionStart)
-                    }}
-                    onSelect={(event) =>
-                      setCursorPosition(event.currentTarget.selectionStart)
-                    }
-                    onClick={(event) =>
-                      setCursorPosition(event.currentTarget.selectionStart)
-                    }
-                    onScroll={(event) =>
-                      setComposerScrollTop(event.currentTarget.scrollTop)
-                    }
-                    placeholder={
-                      replyTarget
-                        ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
-                        : 'Write a review note. Use @ to mention a teammate.'
-                    }
-                    className={`scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0 ${composerTypographyClassName}`}
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              {replyTarget ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <CornerDownRight className="size-3.5 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">
+                    Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
+                    {replyTarget.content}
+                  </span>
                   <Button
-                    type="submit"
-                    disabled={!content.trim() || createComment.isPending}
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="ml-auto"
+                    onClick={() => setReplyTarget(null)}
                   >
-                    {createComment.isPending ? (
-                      <Spinner data-icon="inline-start" />
-                    ) : (
-                      <SendHorizontal data-icon="inline-start" />
-                    )}
-                    {createComment.isPending ? 'Posting reply' : 'Post update'}
+                    <X />
                   </Button>
                 </div>
+              ) : null}
+
+              <div className="relative min-h-6 min-w-0">
+                <div
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-0 z-0 min-h-6 overflow-hidden text-foreground/90 ${composerTypographyClassName}`}
+                >
+                  <div
+                    style={{
+                      transform: `translateY(-${composerScrollTop}px)`,
+                    }}
+                  >
+                    {content
+                      ? renderComposerText(content, validUsernames)
+                      : null}
+                  </div>
+                </div>
+
+                <Textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(event) => {
+                    setContent(event.target.value)
+                    setCursorPosition(event.target.selectionStart)
+                  }}
+                  onSelect={(event) =>
+                    setCursorPosition(event.currentTarget.selectionStart)
+                  }
+                  onClick={(event) =>
+                    setCursorPosition(event.currentTarget.selectionStart)
+                  }
+                  onScroll={(event) =>
+                    setComposerScrollTop(event.currentTarget.scrollTop)
+                  }
+                  placeholder={
+                    replyTarget
+                      ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
+                      : 'Write a review note. Use @ to mention a teammate.'
+                  }
+                  className={`scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0 ${composerTypographyClassName}`}
+                />
               </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <Button
+                  type="submit"
+                  disabled={!content.trim() || createComment.isPending}
+                >
+                  {createComment.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <SendHorizontal data-icon="inline-start" />
+                  )}
+                  {createComment.isPending ? 'Posting reply' : 'Post update'}
+                </Button>
+              </div>
+            </div>
           </form>
 
           <PopoverContent
@@ -531,7 +531,7 @@ export function CaseChatter({
           </PopoverContent>
         </Popover>
       ) : (
-        <Alert>
+        <Alert variant="warning">
           <AlertTitle>Read-only chatter</AlertTitle>
           <AlertDescription>
             You need access to this case before you can post updates or replies.

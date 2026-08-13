@@ -120,6 +120,7 @@ export function createMerchantColumns({
           {merchant.businessName}
         </span>
       ),
+      width: 240,
     },
 
     // Business Scope

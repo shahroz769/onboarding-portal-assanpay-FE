@@ -179,7 +179,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
               </Button>
             </div>
             {!canApply ? (
-              <Alert>
+              <Alert variant="warning">
                 <ShieldCheck />
                 <AlertTitle>Super Admin or Admin required</AlertTitle>
                 <AlertDescription>
@@ -191,7 +191,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           </>
         ) : (
           <>
-            <Alert>
+            <Alert variant="success">
               <CheckCircle2 />
               <AlertTitle>All eligible portal MIDs are complete</AlertTitle>
               <AlertDescription>
@@ -214,7 +214,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
               </Button>
             </div>
             {!canApply ? (
-              <Alert>
+              <Alert variant="warning">
                 <ShieldCheck />
                 <AlertTitle>Super Admin or Admin required</AlertTitle>
                 <AlertDescription>

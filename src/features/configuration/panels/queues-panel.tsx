@@ -158,10 +158,7 @@ export function QueuesPanel() {
           const lifecycle = lifecycleLabel(queue)
           return (
             <div className="flex justify-end gap-2">
-              <QueueEditorDialog
-                queueId={queue.id}
-                queueName={queue.name}
-              />
+              <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
               <Button
                 variant="outline"
                 size="sm"
@@ -225,8 +222,7 @@ function CreateQueueDialog() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [prefix, setPrefix] = useState('')
-  const [workflowType, setWorkflowType] =
-    useState<QueueWorkflowType>('generic')
+  const [workflowType, setWorkflowType] = useState<QueueWorkflowType>('generic')
   const [touched, setTouched] = useState(false)
   const createQueue = useCreateQueueMutation()
 
@@ -396,11 +392,7 @@ function QueueEditorDialog({
         slug: stage.slug,
         order: stage.order,
         category: stage.category as
-          | 'new'
-          | 'in_progress'
-          | 'qc'
-          | 'error'
-          | 'closed',
+          'new' | 'in_progress' | 'qc' | 'error' | 'closed',
         isActive: stage.isActive,
       })),
     )
@@ -476,7 +468,7 @@ function QueueEditorDialog({
                   </AlertDescription>
                 </Alert>
               ) : (
-                <Alert>
+                <Alert variant="success">
                   <AlertTitle>Ready to activate</AlertTitle>
                   <AlertDescription>
                     Stages, prefix, and sequence look valid.

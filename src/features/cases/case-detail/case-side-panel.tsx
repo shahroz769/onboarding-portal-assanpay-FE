@@ -636,7 +636,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 hasOwner &&
                 category === 'in_progress' &&
                 isReviewApproved ? (
-                  <Alert>
+                  <Alert variant="success">
                     <CheckCircle2 />
                     <AlertTitle>Review approved</AlertTitle>
                     <AlertDescription>

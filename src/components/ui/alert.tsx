@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { cva  } from 'class-variance-authority'
-import type {VariantProps} from 'class-variance-authority';
+import { cva } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 
 import { cn } from '#/lib/utils'
 
@@ -9,9 +9,14 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-card text-card-foreground',
+        default:
+          'border-blue-100 bg-blue-50 text-blue-800 *:data-[slot=alert-description]:text-blue-800/90 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300 dark:*:data-[slot=alert-description]:text-blue-300/90',
+        success:
+          'border-emerald-100 bg-emerald-50 text-emerald-800 *:data-[slot=alert-description]:text-emerald-800/90 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300 dark:*:data-[slot=alert-description]:text-emerald-300/90',
+        warning:
+          'border-amber-100 bg-amber-50 text-amber-800 *:data-[slot=alert-description]:text-amber-800/90 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300 dark:*:data-[slot=alert-description]:text-amber-300/90',
         destructive:
-          'bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current',
+          'border-red-100 bg-red-50 text-red-800 *:data-[slot=alert-description]:text-red-800/90 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300 dark:*:data-[slot=alert-description]:text-red-300/90',
       },
     },
     defaultVariants: {

@@ -326,7 +326,7 @@ function RejectionsList({
 
 function EmptyState() {
   return (
-    <Alert>
+    <Alert variant="warning">
       <ShieldAlert />
       <AlertTitle>No rejected fields</AlertTitle>
       <AlertDescription>

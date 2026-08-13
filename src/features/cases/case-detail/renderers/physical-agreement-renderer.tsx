@@ -127,7 +127,7 @@ export default function PhysicalAgreementRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Alert>
+            <Alert variant="warning">
               <Info />
               <AlertTitle>Go-Live requirement</AlertTitle>
               <AlertDescription>

@@ -520,7 +520,7 @@ export default function SubMerchantFormRenderer({
       ) : null}
 
       {!inheritedSubMerchant ? (
-        <Alert>
+        <Alert variant="warning">
           <FileText />
           <AlertTitle>Sub-merchant selection required</AlertTitle>
           <AlertDescription>
@@ -531,7 +531,7 @@ export default function SubMerchantFormRenderer({
       ) : null}
 
       {!canEdit && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <FileText />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>

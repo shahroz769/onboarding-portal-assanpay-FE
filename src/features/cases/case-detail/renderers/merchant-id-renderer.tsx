@@ -764,7 +764,7 @@ export default function MerchantIdRenderer({
       </Card>
 
       {savedCredentialsReady ? (
-        <Alert>
+        <Alert variant="success">
           <CheckCircle2 />
           <AlertTitle>Merchant IDs saved</AlertTitle>
           <AlertDescription>
@@ -773,7 +773,7 @@ export default function MerchantIdRenderer({
           </AlertDescription>
         </Alert>
       ) : !canEdit && isWorking ? (
-        <Alert>
+        <Alert variant="warning">
           <Info />
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>

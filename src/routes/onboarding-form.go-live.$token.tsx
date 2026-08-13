@@ -75,7 +75,7 @@ function MidGoLiveContent({ token }: { token: string }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {status === 'not_ready' ? (
-          <Alert>
+          <Alert variant="warning">
             <Clock3 />
             <AlertTitle>
               {availabilityLabel
@@ -88,7 +88,7 @@ function MidGoLiveContent({ token }: { token: string }) {
             </AlertDescription>
           </Alert>
         ) : status === 'started' ? (
-          <Alert>
+          <Alert variant="success">
             <CheckCircle2 />
             <AlertTitle>Live process started</AlertTitle>
             <AlertDescription>

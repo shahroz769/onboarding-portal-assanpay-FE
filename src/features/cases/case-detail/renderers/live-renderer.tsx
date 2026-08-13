@@ -94,7 +94,10 @@ export default function LiveRenderer({
   )
   const canSendLiveEmail =
     isCaseOwner && isWorking && !liveEmailSent && !historyQuery.isPending
-  const submitterEmail = getMerchantString(caseDetail.merchant, 'submitterEmail')
+  const submitterEmail = getMerchantString(
+    caseDetail.merchant,
+    'submitterEmail',
+  )
   const businessEmail = getMerchantString(caseDetail.merchant, 'businessEmail')
   const activeWhatsappNumber = getMerchantString(
     caseDetail.merchant,
@@ -218,7 +221,7 @@ export default function LiveRenderer({
           ) : null}
 
           {limitsAppliedAt ? (
-            <Alert>
+            <Alert variant="success">
               <CheckCircle2 />
               <AlertTitle>Limits applied</AlertTitle>
               <AlertDescription>
@@ -227,7 +230,7 @@ export default function LiveRenderer({
               </AlertDescription>
             </Alert>
           ) : !canConfirm && isWorking ? (
-            <Alert>
+            <Alert variant="warning">
               <Info />
               <AlertTitle>Owner action required</AlertTitle>
               <AlertDescription>
@@ -283,7 +286,7 @@ export default function LiveRenderer({
       </Card>
 
       {liveEmailSent ? (
-        <Alert>
+        <Alert variant="success">
           <CheckCircle2 />
           <AlertTitle>Live email already sent</AlertTitle>
           <AlertDescription>
