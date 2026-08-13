@@ -44,6 +44,7 @@ function UsersRoutePending() {
         { width: 130, kind: 'mono', header: 'Username' },
         { width: 120, kind: 'badge', header: 'Role' },
         { width: 110, kind: 'badge', header: 'Status' },
+        { width: 120, kind: 'badge', header: 'Password' },
         { width: 150, kind: 'badge', header: 'View Access' },
         { width: 150, kind: 'badge', header: 'Work Access' },
         { width: 130, kind: 'link', header: 'Cases' },

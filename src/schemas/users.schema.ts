@@ -79,6 +79,7 @@ export const userListItemSchema = z.object({
   gender: z.enum(userGenders),
   roleType: z.enum(roleTypes),
   status: z.enum(userStatuses),
+  hasSetPassword: z.boolean(),
   queueViewScope: z.enum(queueViewScopes),
   viewQueueIds: z.array(z.string()),
   workQueueIds: z.array(z.string()),

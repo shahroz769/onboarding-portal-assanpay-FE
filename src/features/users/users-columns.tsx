@@ -6,10 +6,7 @@ import { Badge } from '#/components/ui/badge'
 import { Checkbox } from '#/components/ui/checkbox'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type { UserListItem } from '#/schemas/users.schema'
-import {
-  USER_ROLE_LABELS,
-  USER_STATUS_LABELS,
-} from '#/schemas/users.schema'
+import { USER_ROLE_LABELS, USER_STATUS_LABELS } from '#/schemas/users.schema'
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-'
@@ -154,6 +151,16 @@ export function createUserColumns({
         </Badge>
       ),
       width: 110,
+    },
+    {
+      id: 'passwordStatus',
+      header: 'Password',
+      cell: (user) => (
+        <Badge variant={user.hasSetPassword ? 'secondary' : 'outline'}>
+          {user.hasSetPassword ? 'Set' : 'Not set'}
+        </Badge>
+      ),
+      width: 120,
     },
     {
       id: 'viewAccess',
