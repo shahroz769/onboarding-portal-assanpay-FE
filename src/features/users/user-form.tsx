@@ -665,7 +665,7 @@ export function UserForm({
       ) : null}
 
       <div className="mt-auto flex flex-wrap justify-end gap-3">
-        {mode === 'edit' && user ? (
+        {mode === 'edit' && user && currentUser?.roleType === 'super_admin' ? (
           <Button
             type="button"
             variant="outline"

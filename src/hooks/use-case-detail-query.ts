@@ -36,10 +36,15 @@ import {
   fetchLiveEmailPreview,
   confirmLiveEmailManual,
 } from '#/apis/cases'
-import type { ManualCommunicationChannel } from '#/apis/cases'
+import type {
+  CaseTransitionResult,
+  ManualCommunicationChannel,
+} from '#/apis/cases'
+import { useAuth } from '#/features/auth/auth-client'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { merchantDetailKey } from '#/hooks/use-merchants-query'
 import type {
+  CaseDetail,
   CloseUnsuccessfulInput,
   CreateCommentInput,
   SaveFieldReviewsInput,
@@ -131,19 +136,65 @@ function invalidateCaseDetailQueries(queryClient: QueryClient, caseId: string) {
   ])
 }
 
+function applyCaseTransition(
+  queryClient: QueryClient,
+  caseId: string,
+  transition: CaseTransitionResult,
+  owner?: { id: string; name: string },
+) {
+  queryClient.setQueryData<CaseDetail>(
+    [...CASE_DETAIL_KEY, caseId],
+    (current) => {
+      if (!current) return current
+
+      const currentStage =
+        current.stages.find(
+          (stage) => stage.id === transition.currentStageId,
+        ) ?? current.currentStage
+
+      return {
+        ...current,
+        case: {
+          ...current.case,
+          status: transition.status,
+          closeOutcome: transition.closeOutcome,
+          closeReason: transition.closeReason,
+          closedAt: transition.closedAt,
+          slaBreached: transition.slaBreached,
+          updatedAt: transition.updatedAt,
+        },
+        currentStage,
+        owner:
+          transition.ownerId === null
+            ? null
+            : owner?.id === transition.ownerId
+              ? owner
+              : current.owner,
+      }
+    },
+  )
+}
+
 export function useTakeOwnership(caseId: string) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
 
   return useMutation({
     mutationFn: () => takeOwnership(caseId),
-    onSuccess: () => {
+    onSuccess: (transition) => {
+      applyCaseTransition(
+        queryClient,
+        caseId,
+        transition,
+        user ? { id: user.id, name: user.name } : undefined,
+      )
       toast.success('Ownership taken successfully')
     },
     onError: () => {
       toast.error('Failed to take ownership')
     },
-    onSettled: async () => {
-      await invalidateCaseWorkflowQueries(queryClient, caseId)
+    onSettled: () => {
+      void invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }
@@ -153,14 +204,15 @@ export function useAdvanceStage(caseId: string) {
 
   return useMutation({
     mutationFn: () => advanceStage(caseId),
-    onSuccess: () => {
+    onSuccess: (transition) => {
+      applyCaseTransition(queryClient, caseId, transition)
       toast.success('Stage advanced successfully')
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to advance stage'))
     },
-    onSettled: async () => {
-      await invalidateCaseWorkflowQueries(queryClient, caseId)
+    onSettled: () => {
+      void invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }
@@ -223,14 +275,15 @@ export function useCloseUnsuccessful(caseId: string) {
   return useMutation({
     mutationFn: (input: CloseUnsuccessfulInput) =>
       closeUnsuccessful(caseId, input),
-    onSuccess: () => {
+    onSuccess: (transition) => {
+      applyCaseTransition(queryClient, caseId, transition)
       toast.success('Case closed')
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to close case'))
     },
-    onSettled: async () => {
-      await invalidateCaseWorkflowQueries(queryClient, caseId)
+    onSettled: () => {
+      void invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }

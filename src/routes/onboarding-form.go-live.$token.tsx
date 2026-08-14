@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '#/components/ui/card'
 import { Spinner } from '#/components/ui/spinner'
+import { MotionSwap } from '#/components/ui/motion-swap'
 
 export const Route = createFileRoute('/onboarding-form/go-live/$token')({
   loader: async ({ context, params }) => {
@@ -74,37 +75,39 @@ function MidGoLiveContent({ token }: { token: string }) {
         <CardDescription>{data.merchantName}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {status === 'not_ready' ? (
-          <Alert variant="warning">
-            <Clock3 />
-            <AlertTitle>
-              {availabilityLabel
-                ? `Go-Live unlocks after ${availabilityLabel}`
-                : 'Go-Live is not available yet'}
-            </AlertTitle>
-            <AlertDescription>
-              This link will work after {availableAt}. Until then, complete
-              testing in the merchant portal.
-            </AlertDescription>
-          </Alert>
-        ) : status === 'started' ? (
-          <Alert variant="success">
-            <CheckCircle2 />
-            <AlertTitle>Live process started</AlertTitle>
-            <AlertDescription>
-              Your request has been submitted to AssanPay onboarding.
-              {liveCaseNumber ? ` Reference: ${liveCaseNumber}.` : null}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <Alert>
-            <Rocket />
-            <AlertTitle>Ready for live activation</AlertTitle>
-            <AlertDescription>
-              Select Go Live to start the live activation process.
-            </AlertDescription>
-          </Alert>
-        )}
+        <MotionSwap motionKey={status}>
+          {status === 'not_ready' ? (
+            <Alert variant="warning">
+              <Clock3 />
+              <AlertTitle>
+                {availabilityLabel
+                  ? `Go-Live unlocks after ${availabilityLabel}`
+                  : 'Go-Live is not available yet'}
+              </AlertTitle>
+              <AlertDescription>
+                This link will work after {availableAt}. Until then, complete
+                testing in the merchant portal.
+              </AlertDescription>
+            </Alert>
+          ) : status === 'started' ? (
+            <Alert variant="success">
+              <CheckCircle2 />
+              <AlertTitle>Live process started</AlertTitle>
+              <AlertDescription>
+                Your request has been submitted to AssanPay onboarding.
+                {liveCaseNumber ? ` Reference: ${liveCaseNumber}.` : null}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <Rocket />
+              <AlertTitle>Ready for live activation</AlertTitle>
+              <AlertDescription>
+                Select Go Live to start the live activation process.
+              </AlertDescription>
+            </Alert>
+          )}
+        </MotionSwap>
 
         <div className="flex justify-end">
           <Button

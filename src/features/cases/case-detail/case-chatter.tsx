@@ -255,10 +255,31 @@ export function CaseChatter({
   const [content, setContent] = useState('')
   const [cursorPosition, setCursorPosition] = useState(0)
   const [replyTarget, setReplyTarget] = useState<CaseComment | null>(null)
+  const [isClosingReplyTarget, setIsClosingReplyTarget] = useState(false)
   const mentionMapRef = useRef<Record<string, string>>({})
   const [mentionSearchOverride, setMentionSearchOverride] = useState<
     string | null
   >(null)
+
+  function handleSelectReply(comment: CaseComment) {
+    setIsClosingReplyTarget(false)
+    setReplyTarget(comment)
+  }
+
+  function handleReplyTargetTransitionEnd(
+    event: React.TransitionEvent<HTMLDivElement>,
+  ) {
+    if (
+      !isClosingReplyTarget ||
+      event.target !== event.currentTarget ||
+      event.propertyName !== 'opacity'
+    ) {
+      return
+    }
+
+    setReplyTarget(null)
+    setIsClosingReplyTarget(false)
+  }
   const [mentionAnchorPosition, setMentionAnchorPosition] =
     useState<AnchorPosition>({ left: 0, top: 0 })
   const [composerScrollTop, setComposerScrollTop] = useState(0)
@@ -360,6 +381,7 @@ export function CaseChatter({
         onSuccess: () => {
           setContent('')
           setCursorPosition(0)
+          setIsClosingReplyTarget(false)
           setReplyTarget(null)
           mentionMapRef.current = {}
         },
@@ -398,7 +420,11 @@ export function CaseChatter({
 
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               {replyTarget ? (
-                <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <div
+                  data-motion={isClosingReplyTarget ? 'exiting' : 'entering'}
+                  className="motion-reply-target flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+                  onTransitionEnd={handleReplyTargetTransitionEnd}
+                >
                   <CornerDownRight className="size-3.5 shrink-0" />
                   <span className="min-w-0 flex-1 truncate">
                     Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
@@ -409,7 +435,7 @@ export function CaseChatter({
                     variant="ghost"
                     size="icon-xs"
                     className="ml-auto"
-                    onClick={() => setReplyTarget(null)}
+                    onClick={() => setIsClosingReplyTarget(true)}
                   >
                     <X />
                   </Button>
@@ -539,7 +565,7 @@ export function CaseChatter({
                 key={comment.id}
                 comment={comment}
                 childrenByParent={threads.childrenByParent}
-                onReply={canPost ? setReplyTarget : undefined}
+                onReply={canPost ? handleSelectReply : undefined}
               />
             ))}
           </div>

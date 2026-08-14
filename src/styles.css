@@ -39,6 +39,8 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   /* --sidebar: oklch(0.985 0 0); */
   --sidebar: #f6f6f4;
   --sidebar-foreground: oklch(0.141 0.005 285.823);
@@ -153,6 +155,207 @@ body,
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0.01s;
+  }
+}
+
+/* Purposeful motion for occasional and first-time state changes. */
+.motion-success-enter {
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.motion-success-icon {
+  transition:
+    opacity 200ms var(--ease-out) 50ms,
+    transform 200ms var(--ease-out) 50ms;
+}
+
+.motion-swap {
+  display: grid;
+}
+
+.motion-swap-item {
+  grid-area: 1 / 1;
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.motion-swap-item[data-motion='exiting'] {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.motion-file-state,
+.motion-reply-target,
+.motion-list-item {
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+.motion-file-state[data-motion='exiting'],
+.motion-reply-target[data-motion='exiting'] {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.motion-list-item[data-motion='exiting'] {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.motion-case-stage {
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out);
+}
+
+.motion-case-stage-indicator {
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 250ms var(--ease-in-out);
+}
+
+.motion-case-stage-icon {
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.motion-collapsible-content {
+  overflow: hidden;
+}
+
+.motion-collapsible-content[data-state='open'] {
+  animation: motion-collapsible-open 200ms var(--ease-out);
+}
+
+.motion-collapsible-content[data-state='closed'] {
+  animation: motion-collapsible-close 150ms var(--ease-out);
+}
+
+@starting-style {
+  .motion-success-enter {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+
+  .motion-success-icon {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  .motion-swap-item[data-motion='entering'] {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .motion-file-state[data-motion='entering'],
+  .motion-list-item[data-motion='entering'] {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .motion-reply-target[data-motion='entering'],
+  .motion-file-state[data-motion='returning'] {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  .motion-case-stage-icon {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes motion-collapsible-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes motion-collapsible-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-success-enter,
+  .motion-success-icon,
+  .motion-swap-item,
+  .motion-file-state,
+  .motion-reply-target,
+  .motion-list-item,
+  .motion-case-stage,
+  .motion-case-stage-icon {
+    transform: none;
+    transition-duration: 100ms;
+    transition-delay: 0ms;
+  }
+
+  .motion-case-stage-indicator {
+    transition-property: opacity;
+    transition-duration: 100ms;
+  }
+
+  .motion-swap-item[data-motion='exiting'],
+  .motion-file-state[data-motion='exiting'],
+  .motion-reply-target[data-motion='exiting'] {
+    transform: none;
+  }
+
+  .motion-collapsible-content[data-state='open'] {
+    animation: motion-fade-in 100ms var(--ease-out);
+  }
+
+  .motion-collapsible-content[data-state='closed'] {
+    animation: motion-fade-out 100ms var(--ease-out);
+  }
+
+  @starting-style {
+    .motion-success-enter,
+    .motion-success-icon,
+    .motion-swap-item[data-motion='entering'],
+    .motion-file-state[data-motion='entering'],
+    .motion-file-state[data-motion='returning'],
+    .motion-reply-target[data-motion='entering'],
+    .motion-list-item[data-motion='entering'],
+    .motion-case-stage-icon {
+      transform: none;
+    }
   }
 }
 

@@ -28,6 +28,7 @@ import {
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
 import type { CaseDetail } from '#/schemas/cases.schema'
+import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 
 import { AgreementRoundsCard } from './agreement-rounds-card'
 import { CaseChatter } from './case-chatter'
@@ -752,14 +753,9 @@ function AwaitingClientAlert({
     return details?.expiresAt ?? null
   })()
 
-  const expiresLabel = (() => {
-    if (!expiresAt) return null
-    try {
-      return EXPIRY_DATE_TIME_FORMATTER.format(new Date(expiresAt))
-    } catch {
-      return null
-    }
-  })()
+  const expiresLabel = formatExpiryLabel(expiresAt, (date) =>
+    EXPIRY_DATE_TIME_FORMATTER.format(date),
+  )
 
   return (
     <Alert>
@@ -769,7 +765,9 @@ function AwaitingClientAlert({
         {description}
         {expiresLabel ? (
           <span className="mt-1 block text-xs text-muted-foreground">
-            Link expires {expiresLabel}
+            {expiresLabel === NO_EXPIRY_LABEL
+              ? expiresLabel
+              : `Link expires ${expiresLabel}`}
           </span>
         ) : null}
       </AlertDescription>

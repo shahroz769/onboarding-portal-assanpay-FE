@@ -120,15 +120,31 @@ export async function fetchCaseDetail(caseId: string): Promise<CaseDetail> {
 
 // ─── Take Ownership ─────────────────────────────────────────────────────────
 
+export interface CaseTransitionResult {
+  id: string
+  ownerId: string | null
+  currentStageId: string | null
+  status: CaseDetail['case']['status']
+  closeOutcome: CaseDetail['case']['closeOutcome']
+  closeReason: string | null
+  closedAt: string | null
+  slaBreached: boolean | null
+  updatedAt: string
+}
+
 export async function takeOwnership(caseId: string) {
-  const response = await apiClient.patch(`/api/cases/${caseId}/take-ownership`)
+  const response = await apiClient.patch<CaseTransitionResult>(
+    `/api/cases/${caseId}/take-ownership`,
+  )
   return response.data
 }
 
 // ─── Advance Stage ──────────────────────────────────────────────────────────
 
 export async function advanceStage(caseId: string) {
-  const response = await apiClient.patch(`/api/cases/${caseId}/advance-stage`)
+  const response = await apiClient.patch<CaseTransitionResult>(
+    `/api/cases/${caseId}/advance-stage`,
+  )
   return response.data
 }
 
@@ -162,7 +178,7 @@ export async function closeUnsuccessful(
   caseId: string,
   input: CloseUnsuccessfulInput,
 ) {
-  const response = await apiClient.patch(
+  const response = await apiClient.patch<CaseTransitionResult>(
     `/api/cases/${caseId}/close-unsuccessful`,
     input,
   )

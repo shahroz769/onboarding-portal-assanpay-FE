@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { PlusIcon } from 'lucide-react'
+import { MailIcon, PlusIcon } from 'lucide-react'
 
 import {
   DataTable,
@@ -13,6 +13,16 @@ import {
 } from '#/components/data-table'
 import { Button } from '#/components/ui/button'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '#/components/ui/alert-dialog'
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -21,10 +31,13 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Skeleton } from '#/components/ui/skeleton'
+import { Spinner } from '#/components/ui/spinner'
+import { useAuth } from '#/features/auth/auth-client'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { useHydrated } from '#/hooks/use-hydrated'
 import {
   usersQueryOptions,
+  useBulkSendUserResetPasswordsMutation,
   useBulkUpdateUserStatusMutation,
 } from '#/hooks/use-users-query'
 import type { UserRouteSearch } from '#/schemas/users.schema'
@@ -86,8 +99,11 @@ export function UsersTableComposed({
 }: UsersTableComposedProps) {
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState<'active' | 'inactive'>('active')
+  const [resetConfirmationOpen, setResetConfirmationOpen] = useState(false)
+  const { user: currentUser } = useAuth()
   const usersQuery = useQuery(usersQueryOptions(filters))
   const bulkStatusMutation = useBulkUpdateUserStatusMutation()
+  const bulkResetMutation = useBulkSendUserResetPasswordsMutation()
   const isTableLoading = usersQuery.isLoading || usersQuery.isFetching
 
   const users = usersQuery.data ?? EMPTY_USERS
@@ -121,6 +137,19 @@ export function UsersTableComposed({
       {
         onSuccess: () => {
           setSelectedIdSet(new Set())
+        },
+      },
+    )
+  }
+
+  const handleSendResetEmails = () => {
+    if (selectedIds.length === 0) return
+    bulkResetMutation.mutate(
+      { ids: selectedIds },
+      {
+        onSuccess: (result) => {
+          setResetConfirmationOpen(false)
+          setSelectedIdSet(new Set(result.failedIds))
         },
       },
     )
@@ -193,10 +222,26 @@ export function UsersTableComposed({
                 variant="outline"
                 size="sm"
                 onClick={handleSubmitBulkStatus}
-                disabled={bulkStatusMutation.isPending}
+                disabled={
+                  bulkStatusMutation.isPending || bulkResetMutation.isPending
+                }
               >
                 Set Status
               </Button>
+              {currentUser?.roleType === 'super_admin' &&
+              selectedIds.length === 1 ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setResetConfirmationOpen(true)}
+                  disabled={
+                    bulkStatusMutation.isPending || bulkResetMutation.isPending
+                  }
+                >
+                  <MailIcon data-icon="inline-start" />
+                  Send reset email
+                </Button>
+              ) : null}
             </DataTableSelectionInfo>
           </div>
 
@@ -219,6 +264,42 @@ export function UsersTableComposed({
           </div>
         </div>
       </TooltipProvider>
+
+      <AlertDialog
+        open={resetConfirmationOpen}
+        onOpenChange={setResetConfirmationOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send password reset emails?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedIds.length} selected user
+              {selectedIds.length === 1 ? '' : 's'} will receive a secure,
+              single-use password link. This works for users with an existing
+              password and users who have not set one yet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkResetMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={bulkResetMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault()
+                handleSendResetEmails()
+              }}
+            >
+              {bulkResetMutation.isPending ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <MailIcon data-icon="inline-start" />
+              )}
+              {bulkResetMutation.isPending ? 'Sending' : 'Send reset emails'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

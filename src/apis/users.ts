@@ -58,6 +58,21 @@ export async function bulkUpdateUserStatus(input: {
   return response.data
 }
 
+export type BulkResetPasswordResult = {
+  requested: number
+  sent: number
+  failed: number
+  failedIds: string[]
+}
+
+export async function bulkSendUserResetPasswords(input: { ids: string[] }) {
+  const response = await apiClient.post<BulkResetPasswordResult>(
+    '/api/users/bulk-reset-password',
+    input,
+  )
+  return response.data
+}
+
 export async function sendUserResetPassword(userId: string) {
   const response = await apiClient.post<{ success: true }>(
     `/api/users/${userId}/reset-password`,

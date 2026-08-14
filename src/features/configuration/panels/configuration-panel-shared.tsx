@@ -131,6 +131,12 @@ export function MethodListPanel({
   emptyMessage: string
 }) {
   const [form, setForm] = useState<PaymentMethodSettings | null>(null)
+  const [enteringMethodIds, setEnteringMethodIds] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [removingMethodIds, setRemovingMethodIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const value = form ?? data ?? null
   const validationErrors = value
     ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
@@ -144,15 +150,48 @@ export function MethodListPanel({
     )
   }
   function addMethod() {
-    setForm((current) => [
-      ...(current ?? data ?? []),
-      { id: createMethodId(), label: '' },
-    ])
+    const id = createMethodId()
+    setForm((current) => [...(current ?? data ?? []), { id, label: '' }])
+    setEnteringMethodIds((current) => new Set(current).add(id))
   }
   function removeMethod(id: string) {
-    setForm((current) =>
-      (current ?? data ?? []).filter((method) => method.id !== id),
-    )
+    setRemovingMethodIds((current) => new Set(current).add(id))
+  }
+  function finishMethodTransition(
+    id: string,
+    event: React.TransitionEvent<HTMLDivElement>,
+  ) {
+    if (
+      event.target !== event.currentTarget ||
+      event.propertyName !== 'opacity'
+    ) {
+      return
+    }
+
+    if (removingMethodIds.has(id)) {
+      setForm((current) =>
+        (current ?? data ?? []).filter((method) => method.id !== id),
+      )
+      setRemovingMethodIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
+      setEnteringMethodIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
+      return
+    }
+
+    if (enteringMethodIds.has(id)) {
+      setEnteringMethodIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
+    }
   }
   if (isPending || !value) {
     return <PanelLoading />
@@ -169,7 +208,7 @@ export function MethodListPanel({
             type="button"
             variant="outline"
             onClick={addMethod}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || removingMethodIds.size > 0}
           >
             <Plus data-icon="inline-start" />
             {addLabel}
@@ -179,7 +218,20 @@ export function MethodListPanel({
         <FieldGroup>
           {value.length > 0 ? (
             value.map((method, index) => (
-              <Field key={method.id}>
+              <Field
+                key={method.id}
+                data-motion={
+                  removingMethodIds.has(method.id)
+                    ? 'exiting'
+                    : enteringMethodIds.has(method.id)
+                      ? 'entering'
+                      : undefined
+                }
+                className="motion-list-item"
+                onTransitionEnd={(event) =>
+                  finishMethodTransition(method.id, event)
+                }
+              >
                 <FieldLabel htmlFor={`${method.id}-label`}>
                   Method {index + 1}
                 </FieldLabel>
@@ -190,7 +242,9 @@ export function MethodListPanel({
                     onChange={(event) =>
                       updateMethod(method.id, event.target.value)
                     }
-                    disabled={mutation.isPending}
+                    disabled={
+                      mutation.isPending || removingMethodIds.has(method.id)
+                    }
                     placeholder="Method name"
                   />
                   <Button
@@ -198,7 +252,9 @@ export function MethodListPanel({
                     variant="outline"
                     size="icon"
                     onClick={() => removeMethod(method.id)}
-                    disabled={mutation.isPending}
+                    disabled={
+                      mutation.isPending || removingMethodIds.has(method.id)
+                    }
                     aria-label="Remove method"
                   >
                     <Trash2 />
@@ -230,7 +286,11 @@ export function MethodListPanel({
               }),
             )
           }
-          disabled={mutation.isPending || Boolean(formError)}
+          disabled={
+            mutation.isPending ||
+            removingMethodIds.size > 0 ||
+            Boolean(formError)
+          }
         >
           {mutation.isPending ? (
             <Spinner data-icon="inline-start" />

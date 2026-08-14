@@ -24,6 +24,7 @@ import type {
   ResubmissionRejection,
 } from '#/apis/merchant-onboarding'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -503,13 +504,9 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const mutation = useSubmitResubmissionMutation(token)
 
-  const expiresLabel = (() => {
-    try {
-      return format(new Date(context.expiresAt), 'PPP')
-    } catch {
-      return null
-    }
-  })()
+  const expiresLabel = formatExpiryLabel(context.expiresAt, (date) =>
+    format(date, 'PPP'),
+  )
 
   const groupedSections = groupRejections(context.rejections)
 
@@ -645,7 +642,9 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
           <CardDescription>
             {context.merchantName}
             {expiresLabel
-              ? ` - this secure link expires ${expiresLabel}.`
+              ? expiresLabel === NO_EXPIRY_LABEL
+                ? ` - ${NO_EXPIRY_LABEL}.`
+                : ` - this secure link expires ${expiresLabel}.`
               : '.'}
           </CardDescription>
         </CardHeader>
@@ -1039,10 +1038,12 @@ function DocumentResubmissionField({
 
 function ResubmissionSuccess() {
   return (
-    <Card>
+    <Card className="motion-success-enter">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CheckCircle2 className="size-5 text-green-600" />
+          <span className="motion-success-icon flex">
+            <CheckCircle2 className="size-5 text-green-600" />
+          </span>
           Updates submitted
         </CardTitle>
         <CardDescription>

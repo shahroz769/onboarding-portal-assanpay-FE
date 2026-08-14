@@ -30,6 +30,7 @@ import {
 } from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { cn } from '#/lib/utils'
 
 interface AgreementUploadFormProps {
@@ -78,13 +79,9 @@ export function AgreementUploadForm({
   const [submitted, setSubmitted] = useState(false)
   const mutation = useSubmitAgreementUploadMutation(token)
 
-  const expiresLabel = (() => {
-    try {
-      return format(new Date(context.expiresAt), 'PPP')
-    } catch {
-      return null
-    }
-  })()
+  const expiresLabel = formatExpiryLabel(context.expiresAt, (date) =>
+    format(date, 'PPP'),
+  )
 
   function handleFileChange(nextFile: File | null) {
     if (!nextFile) {
@@ -123,10 +120,12 @@ export function AgreementUploadForm({
 
   if (submitted) {
     return (
-      <Card>
+      <Card className="motion-success-enter">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="size-5 text-green-600" />
+            <span className="motion-success-icon flex">
+              <CheckCircle2 className="size-5 text-green-600" />
+            </span>
             Agreement submitted
           </CardTitle>
           <CardDescription>
@@ -151,7 +150,11 @@ export function AgreementUploadForm({
         <CardHeader>
           <CardTitle>Submit signed agreement</CardTitle>
           <CardDescription>
-            {expiresLabel ? `This secure link expires ${expiresLabel}.` : null}
+            {expiresLabel
+              ? expiresLabel === NO_EXPIRY_LABEL
+                ? `${NO_EXPIRY_LABEL}.`
+                : `This secure link expires ${expiresLabel}.`
+              : null}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">

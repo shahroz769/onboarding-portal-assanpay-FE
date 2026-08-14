@@ -29,6 +29,7 @@ import {
 } from '#/components/ui/collapsible'
 import { Separator } from '#/components/ui/separator'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
+import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import type { CaseHistory } from '#/schemas/cases.schema'
 
 interface AgreementRoundsCardProps {
@@ -52,16 +53,9 @@ type AgreementRound = {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return null
-
-  try {
-    const date = new Date(value)
-    if (date.getUTCFullYear() >= 9999) return 'No Expiry'
-
-    return AGREEMENT_ROUND_DATE_FORMATTER.format(date)
-  } catch {
-    return null
-  }
+  return formatExpiryLabel(value, (date) =>
+    AGREEMENT_ROUND_DATE_FORMATTER.format(date),
+  )
 }
 
 function formatFileSize(bytes: number | null) {
@@ -273,7 +267,7 @@ function AgreementRoundRow({ round }: { round: AgreementRound }) {
         </div>
         <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="motion-collapsible-content">
         <Separator />
         <div className="flex flex-col gap-3 p-3 text-sm">
           {round.emailFailed ? (
@@ -336,7 +330,7 @@ function AgreementRoundDetails({ round }: { round: AgreementRound }) {
           title={round.recipient ?? 'Recipient unavailable'}
           description={
             expiresAt
-              ? expiresAt === 'No Expiry'
+              ? expiresAt === NO_EXPIRY_LABEL
                 ? expiresAt
                 : `Link expires ${expiresAt}`
               : null

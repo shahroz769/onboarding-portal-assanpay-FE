@@ -28,6 +28,7 @@ import {
 } from '#/components/ui/collapsible'
 import { Separator } from '#/components/ui/separator'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
+import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { cn } from '#/lib/utils'
 import type { CaseHistory } from '#/schemas/cases.schema'
 
@@ -64,16 +65,9 @@ type RoundFieldDetail = {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return null
-
-  try {
-    const date = new Date(value)
-    if (date.getUTCFullYear() >= 9999) return 'No Expiry'
-
-    return REJECTION_ROUND_DATE_FORMATTER.format(date)
-  } catch {
-    return null
-  }
+  return formatExpiryLabel(value, (date) =>
+    REJECTION_ROUND_DATE_FORMATTER.format(date),
+  )
 }
 
 function getStringList(value: unknown) {
@@ -313,7 +307,7 @@ function RoundRow({ round }: { round: Round }) {
         </div>
         <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="motion-collapsible-content">
         <Separator />
         <div className="min-w-0 p-3 text-sm">
           {round.emailFailed ? (
@@ -391,7 +385,7 @@ function RoundDetails({
         title={round.recipient ?? 'Recipient unavailable'}
         description={
           expiresAt
-            ? expiresAt === 'No Expiry'
+            ? expiresAt === NO_EXPIRY_LABEL
               ? expiresAt
               : `Link expires ${expiresAt}`
             : null

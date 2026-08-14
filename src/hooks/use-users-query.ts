@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner'
 
 import {
+  bulkSendUserResetPasswords,
   bulkUpdateUserStatus,
   createUser,
   fetchUser,
@@ -88,6 +89,33 @@ export function useBulkUpdateUserStatusMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to update users.'))
+    },
+  })
+}
+
+export function useBulkSendUserResetPasswordsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: bulkSendUserResetPasswords,
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: USERS_KEY })
+
+      if (result.failed > 0) {
+        toast.warning(
+          `${result.sent} reset email${result.sent === 1 ? '' : 's'} sent; ${result.failed} failed.`,
+        )
+        return
+      }
+
+      toast.success(
+        `${result.sent} password reset email${result.sent === 1 ? '' : 's'} sent.`,
+      )
+    },
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to send password reset emails.'),
+      )
     },
   })
 }

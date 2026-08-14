@@ -109,7 +109,7 @@ function CaseStagesBlock({
   return (
     <div className="overflow-hidden rounded-md bg-muted md:col-span-3">
       <div
-        className="grid gap-0 overflow-hidden"
+        className="relative grid gap-0 overflow-hidden"
         style={{
           gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))`,
         }}
@@ -127,8 +127,11 @@ function CaseStagesBlock({
           return (
             <div key={stage.id} className="min-w-0">
               <div
+                data-stage-state={
+                  isCurrent ? 'current' : isPassed ? 'passed' : 'upcoming'
+                }
                 className={cn(
-                  'relative inline-flex h-9 w-full items-center justify-center gap-1.5 text-center text-sm whitespace-nowrap transition-all',
+                  'motion-case-stage relative inline-flex h-9 w-full items-center justify-center gap-1.5 text-center text-sm whitespace-nowrap',
                   !isCurrent &&
                     !isPassed &&
                     'bg-muted text-muted-foreground/50',
@@ -165,13 +168,24 @@ function CaseStagesBlock({
                 )}
               >
                 {showCompletedIcon ? (
-                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span className="motion-case-stage-icon flex shrink-0">
+                    <CheckCircle2 className="size-4" />
+                  </span>
                 ) : null}
                 <span>{stage.name}</span>
               </div>
             </div>
           )
         })}
+        <div
+          aria-hidden="true"
+          className="motion-case-stage-indicator pointer-events-none absolute bottom-0 left-0 h-0.5 rounded-full bg-foreground/50"
+          style={{
+            width: `${100 / stages.length}%`,
+            opacity: currentStageIndex >= 0 ? 1 : 0,
+            transform: `translateX(${Math.max(currentStageIndex, 0) * 100}%)`,
+          }}
+        />
       </div>
     </div>
   )

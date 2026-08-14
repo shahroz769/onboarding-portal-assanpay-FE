@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { FileText, Upload, X } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
@@ -48,6 +48,8 @@ export function DocumentUploadField({
   error,
 }: DocumentUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [isRemoving, setIsRemoving] = useState(false)
+  const [hasReturnedToPicker, setHasReturnedToPicker] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0]
@@ -66,6 +68,20 @@ export function DocumentUploadField({
   }
 
   function handleRemove() {
+    setIsRemoving(true)
+  }
+
+  function finishRemove(event: React.TransitionEvent<HTMLDivElement>) {
+    if (
+      !isRemoving ||
+      event.target !== event.currentTarget ||
+      event.propertyName !== 'opacity'
+    ) {
+      return
+    }
+
+    setIsRemoving(false)
+    setHasReturnedToPicker(true)
     onFileChange(null)
     if (inputRef.current) inputRef.current.value = ''
   }
@@ -98,7 +114,11 @@ export function DocumentUploadField({
       />
 
       {file ? (
-        <div className="flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-2">
+        <div
+          data-motion={isRemoving ? 'exiting' : 'entering'}
+          className="motion-file-state flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-2"
+          onTransitionEnd={finishRemove}
+        >
           <FileText className="size-4 shrink-0 text-muted-foreground" />
           <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
             <span className="truncate text-sm">{file.name}</span>
@@ -121,7 +141,11 @@ export function DocumentUploadField({
         <Button
           type="button"
           variant="outline"
-          className="justify-start gap-2"
+          data-motion={hasReturnedToPicker ? 'returning' : undefined}
+          className={cn(
+            'justify-start gap-2',
+            hasReturnedToPicker && 'motion-file-state',
+          )}
           onClick={() => inputRef.current?.click()}
         >
           <Upload data-icon="inline-start" />

@@ -505,7 +505,7 @@ export function CaseHistoryTimeline({
 
   if (embedded) {
     return (
-      <div className="scrollbar-none flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/10 p-3">
+      <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/10 p-3">
         {content}
       </div>
     )

@@ -24,6 +24,8 @@ function getStatusBadgeClasses(item: CaseListItem): string {
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
     case 'working':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+    case 'awaiting_client':
+      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
     case 'pending':
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
     case 'qc':
@@ -39,7 +41,7 @@ function getStatusBadgeClasses(item: CaseListItem): string {
 
 function getStatusLabel(item: CaseListItem) {
   if (item.status === 'closed' && item.closeOutcome === 'unsuccessful') {
-    return 'Closed Unsuccessful'
+    return 'Unsuccessful'
   }
 
   return CASE_STATUS_LABELS[item.status]
@@ -69,15 +71,20 @@ function OwnerCell({
   canEdit: boolean
   onOpenAssignOwner: (item: CaseListItem) => void
 }) {
+  const ownerName = item.ownerName ?? 'AP System'
+
+  if (!canEdit) {
+    return <span className="text-sm font-medium text-primary">{ownerName}</span>
+  }
+
   return (
     <Button
       type="button"
       variant="ghost"
       className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
-      onClick={canEdit ? () => onOpenAssignOwner(item) : undefined}
-      disabled={!canEdit}
+      onClick={() => onOpenAssignOwner(item)}
     >
-      {item.ownerName ?? 'AP System'}
+      {ownerName}
     </Button>
   )
 }
@@ -92,7 +99,8 @@ function PriorityCell({
   onOpenPriority: (item: CaseListItem) => void
 }) {
   const className = cn(
-    item.priority === 'high' && 'bg-amber-100 text-amber-800',
+    item.priority === 'high' &&
+      'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
     canEdit && 'cursor-pointer transition-colors',
   )
 
@@ -121,16 +129,16 @@ function SlaCell({ item }: { item: CaseListItem }) {
     slaHours: item.queueSlaHours,
     slaBreached: item.slaBreached,
   })
-  if (sla.isBreached) {
-    return (
-      <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-        Breached
-      </Badge>
-    )
-  }
+
   return (
-    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
-      On Time
+    <Badge
+      variant="secondary"
+      className={cn(
+        sla.isBreached &&
+          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+      )}
+    >
+      {sla.isBreached ? 'Breached' : 'On Time'}
     </Badge>
   )
 }
@@ -311,7 +319,7 @@ export function createCaseColumns({
       cell: (item) => (
         <PriorityCell
           item={item}
-          canEdit={canEdit}
+          canEdit={canEdit && !isCaseClosed(item)}
           onOpenPriority={onOpenPriority}
         />
       ),
