@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { Badge } from '#/components/ui/badge'
+import { EmptyState } from '#/components/empty-state'
+import { SectionIcon } from '#/components/section-icon'
 import {
   Card,
   CardContent,
@@ -19,6 +21,7 @@ import {
   CardTitle,
 } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
+import type { StatusTint } from '#/lib/status-styles'
 import type {
   MerchantCase,
   MerchantDetailResponse,
@@ -115,24 +118,6 @@ const toneClasses: Record<HistoryTone, string> = {
     'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300',
   red: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
   muted: 'bg-muted text-muted-foreground',
-}
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={cn(
-        'flex size-10 items-center justify-center rounded-lg',
-        colorClass,
-      )}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
 }
 export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
   const { merchant, cases, timeline, milestones } = detail
@@ -232,11 +217,12 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
   if (milestoneItems.length === 0 && caseGroups.length === 0) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
-          <History className="size-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No history recorded for this merchant yet.
-          </p>
+        <CardContent>
+          <EmptyState
+            icon={History}
+            title="No history recorded for this merchant yet."
+            className="py-14"
+          />
         </CardContent>
       </Card>
     )
@@ -246,7 +232,7 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
       {milestoneItems.length > 0 ? (
         <HistorySection
           icon={FileSignature}
-          colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+          tone="amber"
           title="Merchant milestones"
           description="Merchant-level lifecycle events."
         >
@@ -257,7 +243,7 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
       {caseGroups.length > 0 ? (
         <HistorySection
           icon={History}
-          colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+          tone="blue"
           title="Cases"
           description="Each case groups its creation, status changes, client actions, and closing activity."
         >
@@ -309,13 +295,13 @@ function CaseStatusSummary({
 }
 function HistorySection({
   icon,
-  colorClass,
+  tone,
   title,
   description,
   children,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   children: ReactNode
@@ -324,7 +310,7 @@ function HistorySection({
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} colorClass={colorClass} />
+          <SectionIcon icon={icon} tone={tone} />
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>

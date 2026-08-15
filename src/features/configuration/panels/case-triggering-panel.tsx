@@ -98,7 +98,7 @@ export function CaseTriggeringPanel() {
   return (
     <ConfigurationSectionCard
       icon={Play}
-      colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      tone="emerald"
       title="Case Triggering"
       description="Create a case manually for a selected merchant and queue."
     >

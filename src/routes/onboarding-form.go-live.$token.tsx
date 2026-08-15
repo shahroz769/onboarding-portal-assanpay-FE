@@ -142,7 +142,7 @@ function TokenErrorScreen({ error }: { error: unknown }) {
     <div className="rounded-xl border bg-background p-8">
       <div className="flex flex-col items-center gap-3 text-center">
         <AlertCircle className="size-10 text-destructive" />
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-2xl font-semibold tracking-tight">
           {status === 404 ? 'Link not found' : 'Unable to load Go-Live'}
         </h1>
         <p className="max-w-md text-sm text-muted-foreground">

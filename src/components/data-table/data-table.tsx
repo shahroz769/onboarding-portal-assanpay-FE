@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { SearchX } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 import {
@@ -11,9 +12,10 @@ import {
 } from '#/components/ui/table'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
+import { EmptyState } from '#/components/empty-state'
 
 const stickyHeaderClassName =
-  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]'
+  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_var(--border)]'
 
 // ─── Column Definition ──────────────────────────────────────────────────────
 
@@ -98,6 +100,8 @@ interface DataTableProps<TData> {
   isFetchingMore?: boolean
   /** Whether there are more pages to fetch */
   hasMore?: boolean
+  /** Extra classes for the outer container (e.g. cap height in cards) */
+  className?: string
 }
 
 export function DataTable<TData>({
@@ -110,6 +114,7 @@ export function DataTable<TData>({
   onScrollEnd,
   isFetchingMore = false,
   hasMore = false,
+  className,
 }: DataTableProps<TData>) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -149,7 +154,12 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="view-transition-none h-full overflow-auto rounded-md border bg-background">
+      <div
+        className={cn(
+          'view-transition-none h-full overflow-auto rounded-md border bg-background',
+          className,
+        )}
+      >
         <Table className="table-fixed">
           <TableHeader className={stickyHeaderClassName}>
             {headerRow}
@@ -179,7 +189,12 @@ export function DataTable<TData>({
 
   if (data.length === 0) {
     return (
-      <div className="view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
+      <div
+        className={cn(
+          'view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border',
+          className,
+        )}
+      >
         <Table className="table-fixed">
           <TableHeader className={stickyHeaderClassName}>
             {headerRow}
@@ -187,10 +202,11 @@ export function DataTable<TData>({
         </Table>
         <div className="flex min-h-0 flex-1 items-center justify-center bg-background">
           {emptyContent ?? (
-            <div className="flex flex-col items-center gap-1 text-muted-foreground">
-              <p className="text-sm">No cases found.</p>
-              <p className="text-xs">Try adjusting your search or filters.</p>
-            </div>
+            <EmptyState
+              icon={SearchX}
+              title="No results found."
+              description="Try adjusting your search or filters."
+            />
           )}
         </div>
       </div>
@@ -200,7 +216,10 @@ export function DataTable<TData>({
   return (
     <div
       ref={scrollContainerRef}
-      className="view-transition-none h-full overflow-auto rounded-md border bg-background"
+      className={cn(
+        'view-transition-none h-full overflow-auto rounded-md border bg-background',
+        className,
+      )}
     >
       <Table className="table-fixed">
         <TableHeader className={stickyHeaderClassName}>{headerRow}</TableHeader>

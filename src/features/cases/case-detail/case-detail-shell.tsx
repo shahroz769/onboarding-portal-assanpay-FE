@@ -8,6 +8,8 @@ import { Card, CardContent } from '#/components/ui/card'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
+import type { StatusTint } from '#/lib/status-styles'
+import { slaBadgeClasses, statusTint } from '#/lib/status-styles'
 import type {
   CaseDetail,
   CloseOutcome,
@@ -124,6 +126,19 @@ function CaseStagesBlock({
             isPassed ||
             (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
 
+          // Current-stage hues mirror the case-status tints in
+          // lib/status-styles so a case keeps its color from list → detail.
+          let currentTint: StatusTint | null = null
+          if (isCurrent) {
+            if (isClosedUnsuccessfully) currentTint = 'red'
+            else if (stage.slug === 'new') currentTint = 'blue'
+            else if (stage.slug === 'working') currentTint = 'amber'
+            else if (stage.slug === 'awaiting_client') currentTint = 'sky'
+            else if (stage.slug.includes('pending')) currentTint = 'orange'
+            else if (stage.slug === 'docs_upload') currentTint = 'sky'
+            else if (stage.slug === 'closed') currentTint = 'emerald'
+          }
+
           return (
             <div key={stage.id} className="min-w-0">
               <div
@@ -135,35 +150,9 @@ function CaseStagesBlock({
                   !isCurrent &&
                     !isPassed &&
                     'bg-muted text-muted-foreground/50',
-                  isPassed &&
-                    stage.slug !== 'closed' &&
-                    'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-900 dark:text-emerald-300',
-                  isPassed &&
-                    stage.slug === 'closed' &&
-                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
+                  isPassed && cn(statusTint('emerald'), 'font-semibold'),
                   connectsToCompletedFlow && 'rounded-r-none',
-                  isCurrent &&
-                    stage.slug === 'new' &&
-                    'bg-slate-200 text-slate-900 font-semibold dark:bg-slate-800 dark:text-slate-100',
-                  isCurrent &&
-                    stage.slug === 'working' &&
-                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
-                  isCurrent &&
-                    stage.slug === 'awaiting_client' &&
-                    'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
-                  isCurrent &&
-                    stage.slug.includes('pending') &&
-                    'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-900 dark:text-amber-300',
-                  isCurrent &&
-                    stage.slug === 'docs_upload' &&
-                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
-                  isCurrent &&
-                    stage.slug === 'closed' &&
-                    !isClosedUnsuccessfully &&
-                    'bg-blue-100 text-blue-800 font-semibold dark:bg-blue-900 dark:text-blue-300',
-                  isCurrent &&
-                    isClosedUnsuccessfully &&
-                    'bg-red-100 text-red-800 font-semibold dark:bg-red-900 dark:text-red-300',
+                  currentTint && cn(statusTint(currentTint), 'font-semibold'),
                   'rounded-none',
                 )}
               >
@@ -225,13 +214,9 @@ function CaseSlaBox({ caseDetail }: { caseDetail: CaseDetail }) {
             <span className="text-sm font-semibold">SLA</span>
           </div>
           {sla.isBreached ? (
-            <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-              Breached
-            </Badge>
+            <Badge className={slaBadgeClasses(true)}>Breached</Badge>
           ) : (
-            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
-              On Time
-            </Badge>
+            <Badge className={slaBadgeClasses(false)}>On Time</Badge>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-3">

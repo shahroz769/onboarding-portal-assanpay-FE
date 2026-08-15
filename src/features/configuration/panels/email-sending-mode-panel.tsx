@@ -75,7 +75,7 @@ export function EmailSendingModePanel() {
   return (
     <ConfigurationSectionCard
       icon={Mail}
-      colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      tone="blue"
       title="Email Sending"
       description="Choose how case emails are sent from the portal."
     >

@@ -8,6 +8,12 @@ import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
+import {
+  CLICKABLE_BADGE_CLASSES,
+  caseStatusBadgeClasses,
+  priorityBadgeClasses,
+  slaBadgeClasses,
+} from '#/lib/status-styles'
 import type { CaseListItem, CaseSortableColumn } from '#/schemas/cases.schema'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import type { RoleType } from '#/types/auth'
@@ -15,28 +21,7 @@ import type { RoleType } from '#/types/auth'
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getStatusBadgeClasses(item: CaseListItem): string {
-  if (item.status === 'closed' && item.closeOutcome === 'unsuccessful') {
-    return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-  }
-
-  switch (item.status) {
-    case 'new':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-    case 'working':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-    case 'awaiting_client':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-    case 'pending':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-    case 'qc':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-    case 'error':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-    case 'closed':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-    default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  }
+  return caseStatusBadgeClasses(item.status, item.closeOutcome)
 }
 
 function getStatusLabel(item: CaseListItem) {
@@ -99,9 +84,8 @@ function PriorityCell({
   onOpenPriority: (item: CaseListItem) => void
 }) {
   const className = cn(
-    item.priority === 'high' &&
-      'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    canEdit && 'cursor-pointer transition-colors',
+    priorityBadgeClasses(item.priority),
+    canEdit && CLICKABLE_BADGE_CLASSES,
   )
 
   if (!canEdit) {
@@ -131,13 +115,7 @@ function SlaCell({ item }: { item: CaseListItem }) {
   })
 
   return (
-    <Badge
-      variant="secondary"
-      className={cn(
-        sla.isBreached &&
-          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-      )}
-    >
+    <Badge variant="secondary" className={slaBadgeClasses(sla.isBreached)}>
       {sla.isBreached ? 'Breached' : 'On Time'}
     </Badge>
   )

@@ -60,7 +60,7 @@ export function DataTableRouteSkeleton({
       <div className="min-h-0 flex-1">
         <div className="view-transition-none h-full overflow-auto rounded-md border bg-background">
           <Table className="table-fixed">
-            <TableHeader className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_hsl(var(--border))]">
+            <TableHeader className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_var(--border)]">
               <TableRow>
                 {resolvedColumns.map((column, columnIndex) => (
                   <TableHead

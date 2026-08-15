@@ -18,7 +18,7 @@ export function PayoutMethodsPanel() {
       isPending={isPending}
       mutation={mutation}
       icon={Send}
-      colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+      tone="sky"
       title="Payout Methods"
       description="Manage payout methods available during MID Creation."
       addLabel="Add payout method"

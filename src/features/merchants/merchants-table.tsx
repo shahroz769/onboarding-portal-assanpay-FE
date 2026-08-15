@@ -1,6 +1,7 @@
-import { AlertTriangleIcon, BanIcon } from 'lucide-react'
+import { AlertTriangleIcon, BanIcon, Store } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
+import { EmptyState } from '#/components/empty-state'
 import { Skeleton } from '#/components/ui/skeleton'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
@@ -172,6 +173,13 @@ function Grid() {
       onScrollEnd={actions.fetchNextPage}
       isFetchingMore={state.isFetchingNextPage}
       hasMore={state.hasNextPage}
+      emptyContent={
+        <EmptyState
+          icon={Store}
+          title="No merchants found."
+          description="Try adjusting your search or filters."
+        />
+      }
     />
   )
 }

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ListOrdered, Pause, Play, Plus, Workflow } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
+import { EmptyState } from '#/components/empty-state'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -239,7 +240,7 @@ export function QueuesPanel() {
   return (
     <ConfigurationSectionCard
       icon={Workflow}
-      colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+      tone="violet"
       title="Queues"
       description="Create queues with workflow types, edit stages, and manage lifecycle."
       action={<CreateQueueDialog />}
@@ -250,9 +251,11 @@ export function QueuesPanel() {
         getRowId={(queue) => queue.id}
         isLoading={isPending}
         emptyContent={
-          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-            <p className="text-sm">No queues configured.</p>
-          </div>
+          <EmptyState
+            icon={ListOrdered}
+            title="No queues configured."
+            description="Use Create Queue to add one."
+          />
         }
       />
     </ConfigurationSectionCard>

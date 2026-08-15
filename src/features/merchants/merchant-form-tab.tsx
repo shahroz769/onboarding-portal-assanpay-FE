@@ -19,8 +19,10 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { SectionIcon } from '#/components/section-icon'
 import { Separator } from '#/components/ui/separator'
 import { cn } from '#/lib/utils'
+import type { StatusTint } from '#/lib/status-styles'
 import type {
   MerchantAgreementFile,
   MerchantDetailResponse,
@@ -56,34 +58,15 @@ type DocumentSubmissionGroup = {
   files: DocumentFileView[]
 }
 
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={cn(
-        'flex size-10 items-center justify-center rounded-lg',
-        colorClass,
-      )}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
-}
-
 function Section({
   icon,
-  colorClass,
+  tone,
   title,
   description,
   children,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   children: ReactNode
@@ -92,7 +75,7 @@ function Section({
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} colorClass={colorClass} />
+          <SectionIcon icon={icon} tone={tone} />
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
@@ -139,7 +122,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
     <div className="flex flex-col gap-6">
       <Section
         icon={Mail}
-        colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+        tone="blue"
         title="Submitter"
         description="Who submitted this onboarding application."
       >
@@ -148,7 +131,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
       <Section
         icon={User}
-        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        tone="violet"
         title="Owner"
         description="Primary owner of the business."
       >
@@ -162,7 +145,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
       <Section
         icon={Building2}
-        colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+        tone="emerald"
         title="Business Information"
         description="Core details about the business."
       >
@@ -213,7 +196,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
       <Section
         icon={Briefcase}
-        colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        tone="amber"
         title="Business Classification"
         description="Type of entity and transaction estimates."
       >
@@ -236,7 +219,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
       <Section
         icon={CreditCard}
-        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        tone="sky"
         title="Financial Information"
         description="Settlement bank account details."
       >
@@ -252,7 +235,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
 
       <Section
         icon={Users}
-        colorClass="bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+        tone="rose"
         title="Next of Kin"
         description="Declared next of kin relationship."
       >
@@ -265,10 +248,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={FileText}
-              colorClass="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-            />
+            <SectionIcon icon={FileText} tone="indigo" />
             <div>
               <CardTitle>Uploaded Documents</CardTitle>
               <CardDescription>
@@ -293,10 +273,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={FileText}
-              colorClass="bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
-            />
+            <SectionIcon icon={FileText} tone="teal" />
             <div>
               <CardTitle>Agreements</CardTitle>
               <CardDescription>

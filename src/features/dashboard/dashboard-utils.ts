@@ -45,11 +45,13 @@ function parseDateKey(value: string) {
   return new Date(year, month - 1, day)
 }
 
-// ─── Brand chart palette (rgb(74, 109, 101)) ────────────────────────────────
+// ─── Brand chart palette ────────────────────────────────────────────────────
+// Single-series charts use the --chart-1 token, which is the brand teal in
+// both themes — charts follow rebrands automatically.
 
 const BRAND_PRIMARY = {
-  light: 'rgb(74, 109, 101)',
-  dark: 'rgb(106, 174, 159)',
+  light: 'var(--chart-1)',
+  dark: 'var(--chart-1)',
 }
 
 export const submissionsChartConfig = {

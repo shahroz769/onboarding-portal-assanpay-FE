@@ -19,7 +19,7 @@ export function PaymentMethodsPanel() {
       isPending={isPending}
       mutation={mutation}
       icon={Wallet}
-      colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+      tone="violet"
       title="Payment Methods"
       description="Manage collection methods available during MID Creation."
       addLabel="Add payment method"

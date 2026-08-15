@@ -8,6 +8,7 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useAuth } from '#/features/auth/auth-client'
 import { merchantDetailQueryOptions } from '#/hooks/use-merchants-query'
+import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 
 import { MerchantFormTab } from './merchant-form-tab'
 import { MerchantHistoryTab } from './merchant-history-tab'
@@ -18,28 +19,12 @@ type MerchantDetailsProps = {
   merchantId: string
 }
 
-function statusBadgeClasses(status: string) {
-  switch (status) {
-    case 'pending':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
-    case 'testing':
-      return 'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300'
-    case 'live':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-    case 'terminated':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300'
-    default:
-      return ''
-  }
-}
-
 export function MerchantDetails({ merchantId }: MerchantDetailsProps) {
   const { data: detail, isPending } = useQuery(
     merchantDetailQueryOptions(merchantId),
   )
   const { user } = useAuth()
-  const canEdit =
-    user?.roleType === 'super_admin' || user?.roleType === 'admin'
+  const canEdit = user?.roleType === 'super_admin' || user?.roleType === 'admin'
 
   if (isPending || !detail) {
     return <MerchantDetailsSkeleton />
@@ -63,7 +48,7 @@ export function MerchantDetails({ merchantId }: MerchantDetailsProps) {
                 </h2>
                 <Badge
                   variant="secondary"
-                  className={statusBadgeClasses(merchant.status)}
+                  className={merchantStatusBadgeClasses(merchant.status)}
                 >
                   {merchant.status.charAt(0).toUpperCase() +
                     merchant.status.slice(1)}

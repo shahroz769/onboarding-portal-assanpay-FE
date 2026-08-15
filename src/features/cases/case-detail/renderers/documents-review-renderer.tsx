@@ -57,6 +57,9 @@ import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { cn } from '#/lib/utils'
+import { statusTint } from '#/lib/status-styles'
+import type { StatusTint } from '#/lib/status-styles'
+import { SectionIcon } from '#/components/section-icon'
 import {
   BASE_DOCUMENTS,
   DOCUMENT_LABELS,
@@ -91,7 +94,7 @@ type ReviewSection = {
   title: string
   description: string
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  toneClass: string
+  tone: StatusTint
   layout: 'single' | 'two-column'
   fields: ReviewField[]
 }
@@ -138,7 +141,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Submitter Information',
     description: 'Email address of the person submitting this form',
     icon: Mail,
-    toneClass: 'bg-blue-500/10 text-blue-500',
+    tone: 'blue',
     layout: 'two-column',
     fields: [
       { key: 'submitterEmail', label: 'Submitter Email' },
@@ -149,7 +152,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Director/CEO/Owner Information',
     description: 'Details of the Director, CEO, or owner',
     icon: User,
-    toneClass: 'bg-amber-500/10 text-amber-500',
+    tone: 'amber',
     layout: 'two-column',
     fields: [
       { key: 'ownerFullName', label: 'Full Name' },
@@ -160,7 +163,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Business Information',
     description: 'Basic business and contact details',
     icon: Building2,
-    toneClass: 'bg-violet-500/10 text-violet-500',
+    tone: 'violet',
     layout: 'two-column',
     fields: [
       { key: 'businessName', label: 'Business Name' },
@@ -199,7 +202,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Business Classification',
     description: 'Business type and transaction estimates',
     icon: Briefcase,
-    toneClass: 'bg-teal-500/10 text-teal-500',
+    tone: 'teal',
     layout: 'two-column',
     fields: [
       {
@@ -223,7 +226,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Financial Information',
     description: 'Bank account and settlement details',
     icon: CreditCard,
-    toneClass: 'bg-green-500/10 text-green-500',
+    tone: 'green',
     layout: 'two-column',
     fields: [
       { key: 'accountTitle', label: 'Account Title' },
@@ -237,7 +240,7 @@ const REVIEW_SECTIONS: ReviewSection[] = [
     title: 'Next of Kin',
     description: 'Emergency contact relationship',
     icon: Users,
-    toneClass: 'bg-rose-500/10 text-rose-500',
+    tone: 'rose',
     layout: 'single',
     fields: [
       {
@@ -264,25 +267,6 @@ function formatDateValue(value: string) {
   if (Number.isNaN(date.getTime())) return value
 
   return DOCUMENT_DATE_FORMATTER.format(date)
-}
-
-function SectionIcon({
-  icon: Icon,
-  toneClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  toneClass: string
-}) {
-  return (
-    <div
-      className={cn(
-        'flex size-10 items-center justify-center rounded-lg',
-        toneClass,
-      )}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
 }
 
 export default function DocumentsReviewRenderer({
@@ -513,10 +497,7 @@ export default function DocumentsReviewRenderer({
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <SectionIcon
-                  icon={Building2}
-                  toneClass="bg-cyan-500/10 text-cyan-500"
-                />
+                <SectionIcon icon={Building2} tone="cyan" />
 
                 <div>
                   <CardTitle>Case Owner Fields</CardTitle>
@@ -637,10 +618,7 @@ export default function DocumentsReviewRenderer({
               <div key={section.title} className="flex flex-col gap-4">
                 {index > 0 ? <Separator /> : null}
                 <div className="flex items-center gap-3">
-                  <SectionIcon
-                    icon={section.icon}
-                    toneClass={section.toneClass}
-                  />
+                  <SectionIcon icon={section.icon} tone={section.tone} />
 
                   <div>
                     <CardTitle>{section.title}</CardTitle>
@@ -674,10 +652,7 @@ export default function DocumentsReviewRenderer({
 
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <SectionIcon
-                  icon={FileText}
-                  toneClass="bg-orange-500/10 text-orange-500"
-                />
+                <SectionIcon icon={FileText} tone="orange" />
 
                 <div>
                   <CardTitle>Documents</CardTitle>
@@ -810,7 +785,7 @@ function UpdatedBadge({ resubmittedAt }: { resubmittedAt: string }) {
   return (
     <Badge
       variant="secondary"
-      className="border-transparent bg-blue-100 text-blue-800"
+      className={cn('border-transparent', statusTint('blue'))}
       title={label}
     >
       Updated
@@ -852,7 +827,10 @@ function ReadOnlyReviewField({
           <div className="flex shrink-0 items-center gap-2">
             {isRejected ? (
               <Badge
-                className="cursor-pointer border-transparent bg-red-100 text-red-800 hover:bg-red-200"
+                className={cn(
+                  statusTint('red'),
+                  'cursor-pointer border-transparent hover:bg-red-200 dark:hover:bg-red-800',
+                )}
                 onClick={onReject}
               >
                 Rejected
@@ -933,7 +911,10 @@ function ReadOnlyDocumentField({
           <div className="flex shrink-0 items-center gap-2">
             {isRejected ? (
               <Badge
-                className="cursor-pointer border-transparent bg-red-100 text-red-800 hover:bg-red-200"
+                className={cn(
+                  statusTint('red'),
+                  'cursor-pointer border-transparent hover:bg-red-200 dark:hover:bg-red-800',
+                )}
                 onClick={onReject}
               >
                 Rejected

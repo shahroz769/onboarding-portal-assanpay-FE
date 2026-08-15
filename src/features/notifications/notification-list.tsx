@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { BellOff, Loader2 } from 'lucide-react'
+import { BellOff } from 'lucide-react'
+
+import { EmptyState } from '#/components/empty-state'
+import { Spinner } from '#/components/ui/spinner'
 
 import { Skeleton } from '#/components/ui/skeleton'
 import { ScrollArea } from '#/components/ui/scroll-area'
@@ -65,10 +68,12 @@ export function NotificationList({
         ) : null}
 
         {!isLoading && !isError && items.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-sm text-muted-foreground">
-            <BellOff className="size-8 opacity-40" aria-hidden="true" />
-            <span>You're all caught up.</span>
-          </div>
+          <EmptyState
+            icon={BellOff}
+            tone="success"
+            title="You're all caught up."
+            description="New notifications will appear here."
+          />
         ) : null}
 
         {items.length > 0 ? (
@@ -91,7 +96,7 @@ export function NotificationList({
           >
             {isFetchingNextPage ? (
               <span className="flex items-center gap-1.5">
-                <Loader2 className="size-3.5 animate-spin" />
+                <Spinner className="size-3.5" />
                 Loading…
               </span>
             ) : (

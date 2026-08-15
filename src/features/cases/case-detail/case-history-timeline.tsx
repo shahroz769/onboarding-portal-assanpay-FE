@@ -14,10 +14,12 @@ import {
   UserRoundCheck,
   Globe,
   ExternalLink,
+  History,
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { EmptyState } from '#/components/empty-state'
 import {
   Card,
   CardContent,
@@ -409,8 +411,12 @@ export function CaseHistoryTimeline({
         </div>
       ) : null}
       {history.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-          No history has been recorded for this case yet.
+        <div className="rounded-xl border border-dashed bg-muted/20 px-4">
+          <EmptyState
+            icon={History}
+            title="No history has been recorded for this case yet."
+            className="py-8"
+          />
         </div>
       ) : (
         <div className="flex min-w-0 flex-col gap-4">

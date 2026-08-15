@@ -34,7 +34,8 @@ import { Spinner } from '#/components/ui/spinner'
 
 import { ConfigurationPanelSkeleton } from '../configuration-route-skeleton'
 
-import { cn } from '#/lib/utils'
+import { SectionIcon } from '#/components/section-icon'
+import type { StatusTint } from '#/lib/status-styles'
 
 import type {
   CaseFlowConfiguration,
@@ -105,7 +106,7 @@ export function MethodListPanel({
   isPending,
   mutation,
   icon,
-  colorClass,
+  tone,
   title,
   description,
   addLabel,
@@ -119,7 +120,7 @@ export function MethodListPanel({
     mutate: (value: PaymentMethodSettings) => void
   }
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   addLabel: string
@@ -196,7 +197,7 @@ export function MethodListPanel({
     <div className="flex flex-col gap-6">
       <ConfigurationSectionCard
         icon={icon}
-        colorClass={colorClass}
+        tone={tone}
         title={title}
         description={description}
         action={
@@ -310,14 +311,14 @@ function createMethodId() {
 
 export function ConfigurationSectionCard({
   icon,
-  colorClass,
+  tone,
   title,
   description,
   action,
   children,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   action?: ReactNode
@@ -328,7 +329,7 @@ export function ConfigurationSectionCard({
       <CardHeader>
         <ConfigurationCardHeaderContent
           icon={icon}
-          colorClass={colorClass}
+          tone={tone}
           title={title}
           description={description}
         />
@@ -349,26 +350,18 @@ export function ConfigurationActionBar({ children }: { children: ReactNode }) {
 
 function ConfigurationCardHeaderContent({
   icon,
-  colorClass,
+  tone,
   title,
   description,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
 }) {
-  const Icon = icon
   return (
     <div className="flex items-center gap-3">
-      <div
-        className={cn(
-          'flex size-10 items-center justify-center rounded-lg',
-          colorClass,
-        )}
-      >
-        <Icon className="size-5" />
-      </div>
+      <SectionIcon icon={icon} tone={tone} />
       <div>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

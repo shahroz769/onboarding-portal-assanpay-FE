@@ -18,22 +18,24 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
+  /* AssanPay brand teal — drives primary buttons, links, checkboxes,
+     switches, checkmarks, calendar selection, and notification accents. */
+  --primary: rgb(74 109 101);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
-  /* --muted: oklch(0.967 0.001 286.375); */
   --muted: #f6f6f4;
   --muted-foreground: oklch(0.552 0.016 285.938);
-  /* --accent: oklch(0.967 0.001 286.375); */
   --accent: #f6f6f4;
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.871 0.006 286.286);
-  --chart-1: oklch(0.646 0.222 41.116);
+  /* Chart palette — chart-1 is the brand teal; 2-5 harmonize with it for
+     multi-series use. */
+  --chart-1: var(--primary);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
@@ -41,13 +43,11 @@
   --radius: 0.625rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  /* --sidebar: oklch(0.985 0 0); */
   --sidebar: #f6f6f4;
   --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  /* --sidebar-accent: oklch(0.967 0.001 286.375); */
-  --sidebar-accent: rgba(74, 109, 101, 0.096);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: color-mix(in oklab, var(--primary) 10%, transparent);
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.871 0.006 286.286);
@@ -60,7 +60,9 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.141 0.005 285.823);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
+  /* Lighter brand teal for dark surfaces — keeps text/links above contrast
+     thresholds where light mode uses the deeper shade. */
+  --primary: rgb(106 174 159);
   --primary-foreground: oklch(0.21 0.006 285.885);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
@@ -69,11 +71,11 @@
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.274 0.006 286.033);
   --input: oklch(0.274 0.006 286.033);
   --ring: oklch(0.442 0.017 285.786);
-  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-1: var(--primary);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
@@ -144,65 +146,25 @@ body,
   }
 }
 
-/* Brand color rgb(74, 109, 101) for primary buttons only.
-   Scoped to data-variant="default" so links, badges, checkboxes, etc.
-   keep using the neutral --primary token. Unlayered on purpose so it
-   wins over the bg-primary / hover:bg-primary/90 utilities. */
-[data-slot='button'][data-variant='default'] {
-  background-color: rgb(74 109 101);
-  color: oklch(0.985 0 0);
-
-  &:hover:not(:disabled) {
-    background-color: rgb(64 94 87);
-  }
-}
-
-.dark [data-slot='button'][data-variant='default']:hover:not(:disabled) {
-  background-color: rgb(84 123 114);
-}
-
-/* Same brand color for checkbox ticks (checked / indeterminate). */
-[data-slot='checkbox'][data-state='checked'],
-[data-slot='checkbox'][data-state='indeterminate'] {
-  border-color: rgb(74 109 101);
-  background-color: rgb(74 109 101);
-  color: oklch(0.985 0 0);
-}
-
-/* Switch track when on. */
-[data-slot='switch'][data-state='checked'] {
-  background-color: rgb(74 109 101);
-}
-
-[data-slot='switch'][data-state='checked'] [data-slot='switch-thumb'] {
-  background-color: oklch(0.985 0 0);
-}
-
-/* Tick icons in select, combobox, dropdown menu, and command items. */
+/* Brand tint for check indicators inside pickers and menus. Token-driven
+   so it follows --primary in both themes. Unlayered on purpose so it wins
+   over component utilities. */
 [data-slot='select-item-indicator'] svg,
 [data-slot='combobox-item-indicator'] svg,
 [data-slot='dropdown-menu-checkbox-item'] > span:first-child svg,
 [data-slot='dropdown-menu-radio-item'] > span:first-child svg,
 [data-slot='command-item'] svg.lucide-check {
-  color: rgb(74 109 101);
-}
-
-.dark [data-slot='select-item-indicator'] svg,
-.dark [data-slot='combobox-item-indicator'] svg,
-.dark [data-slot='dropdown-menu-checkbox-item'] > span:first-child svg,
-.dark [data-slot='dropdown-menu-radio-item'] > span:first-child svg,
-.dark [data-slot='command-item'] svg.lucide-check {
-  color: rgb(106 174 159);
+  color: var(--primary);
 }
 
 /* Data-table faceted filter tick boxes (e.g. merchants Priority filter). */
 [data-slot='data-table-filter-tick'] {
-  border-color: rgb(74 109 101);
+  border-color: var(--primary);
 }
 
 [data-slot='data-table-filter-tick'][data-selected] {
-  background-color: rgb(74 109 101);
-  color: oklch(0.985 0 0);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 /* Smooth dark mode transition via View Transitions API */

@@ -44,25 +44,57 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
 import { Textarea } from '#/components/ui/textarea'
+import { DataTable } from '#/components/data-table'
+import type { DataTableColumnDef } from '#/components/data-table'
+import { EmptyState } from '#/components/empty-state'
 import { useAuth } from '#/features/auth/auth-client'
 import { useApplyPortalMidLimits } from '#/hooks/use-dashboard-query'
 import type {
   ApplyPortalMidLimitsInput,
+  DashboardPendingPortalMidLimit,
   DashboardResponse,
 } from '#/schemas/dashboard.schema'
 
 const pastedMidsSchema = z
   .array(z.number().int().positive())
   .min(1, 'Paste at least one portal MID.')
+
+const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
+  [
+    {
+      id: 'merchant',
+      header: 'Merchant',
+      cell: (item) => (
+        <div className="flex flex-col leading-tight whitespace-normal">
+          <span className="font-medium">{item.merchantName}</span>
+          <span className="text-xs text-muted-foreground">
+            {item.subMerchantName ?? 'Sub-merchant not selected'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: 'midKind',
+      header: 'MID type',
+      width: 110,
+      cell: (item) => (
+        <Badge variant={item.midKind === 'internal' ? 'secondary' : 'outline'}>
+          {item.midKind === 'internal' ? 'Internal' : 'Standard'}
+        </Badge>
+      ),
+    },
+    {
+      id: 'portalMid',
+      header: <span className="block text-right">Portal MID</span>,
+      width: 130,
+      cell: (item) => (
+        <span className="block text-right font-mono font-medium tabular-nums">
+          {item.portalMid}
+        </span>
+      ),
+    },
+  ]
 
 export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
   const { user } = useAuth()
@@ -154,70 +186,22 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {pending.length > 0 ? (
-          <div className="overflow-hidden rounded-md border">
-            <ScrollArea className="max-h-72">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-4">Merchant</TableHead>
-                    <TableHead>MID type</TableHead>
-                    <TableHead className="pr-4 text-right">
-                      Portal MID
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pending.map((item) => (
-                    <TableRow
-                      key={`${item.caseId}-${item.midKind}-${item.portalMid}`}
-                    >
-                      <TableCell className="pl-4 whitespace-normal">
-                        <div className="flex flex-col leading-tight">
-                          <span className="font-medium">
-                            {item.merchantName}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {item.subMerchantName ??
-                              'Sub-merchant not selected'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            item.midKind === 'internal'
-                              ? 'secondary'
-                              : 'outline'
-                          }
-                        >
-                          {item.midKind === 'internal'
-                            ? 'Internal'
-                            : 'Standard'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="pr-4 text-right font-mono font-medium tabular-nums">
-                        {item.portalMid}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
-            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-              <CheckCircle2 className="size-5" />
-            </div>
-            <p className="font-medium">All eligible portal MIDs are complete</p>
-            <p className="max-w-md text-sm text-pretty text-muted-foreground">
-              No successful MID Creation cases are waiting for testing or limit
-              application. You can still pre-apply limits for MIDs before
-              onboarding.
-            </p>
-          </div>
-        )}
+        <DataTable
+          columns={pendingMidColumns}
+          data={pending}
+          getRowId={(item) =>
+            `${item.caseId}-${item.midKind}-${item.portalMid}`
+          }
+          className="h-auto max-h-72"
+          emptyContent={
+            <EmptyState
+              icon={CheckCircle2}
+              tone="success"
+              title="All eligible portal MIDs are complete"
+              description="No successful MID Creation cases are waiting for testing or limit application. You can still pre-apply limits for MIDs before onboarding."
+            />
+          }
+        />
         {!canApply ? (
           <Alert variant="warning">
             <ShieldCheck />

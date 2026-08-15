@@ -55,7 +55,7 @@ export function MerchantPortalPanel() {
   return (
     <ConfigurationSectionCard
       icon={Send}
-      colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+      tone="sky"
       title="Merchant Portal & Support"
       description="Configure the merchant portal link and support contact details."
     >

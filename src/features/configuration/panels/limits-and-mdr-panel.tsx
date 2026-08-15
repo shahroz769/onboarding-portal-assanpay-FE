@@ -31,6 +31,7 @@ import {
 } from '#/hooks/use-configuration-query'
 
 import type { LimitsAndMdrSettings } from '#/schemas/configuration.schema'
+import type { StatusTint } from '#/lib/status-styles'
 
 import { limitsAndMdrSettingsSchema } from '#/schemas/configuration.schema'
 
@@ -79,7 +80,7 @@ export function LimitsAndMdrPanel() {
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <LimitSection
           icon={BadgeDollarSign}
-          colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+          tone="blue"
           title="Testing Limits"
           description="Transaction ranges used before merchant go-live."
           prefix="testing"
@@ -89,7 +90,7 @@ export function LimitsAndMdrPanel() {
         />
         <LimitSection
           icon={Rocket}
-          colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+          tone="emerald"
           title="Live Limits"
           description="Production transaction ranges for live merchants."
           prefix="live"
@@ -100,7 +101,7 @@ export function LimitsAndMdrPanel() {
       </div>
       <RatesSection
         icon={Wallet}
-        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        tone="sky"
         value={value.rates}
         errors={validationErrors}
         onChange={update}
@@ -140,7 +141,7 @@ function getRangeOrderErrors(value: LimitsAndMdrSettings) {
 
 function LimitSection({
   icon,
-  colorClass,
+  tone,
   title,
   description,
   prefix,
@@ -149,7 +150,7 @@ function LimitSection({
   onChange,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   prefix: 'testing' | 'live'
@@ -160,7 +161,7 @@ function LimitSection({
   return (
     <ConfigurationSectionCard
       icon={icon}
-      colorClass={colorClass}
+      tone={tone}
       title={title}
       description={description}
     >
@@ -237,13 +238,13 @@ function RangeGroup({
 
 function RatesSection({
   icon,
-  colorClass,
+  tone,
   value,
   errors,
   onChange,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   value: LimitsAndMdrSettings['rates']
   errors: Record<string, string>
   onChange: (path: string, value: number) => void
@@ -251,7 +252,7 @@ function RatesSection({
   return (
     <ConfigurationSectionCard
       icon={icon}
-      colorClass={colorClass}
+      tone={tone}
       title="Commission Rates"
       description="Global MDR and payout rates used by case emails and reviews. All values are percentages."
     >

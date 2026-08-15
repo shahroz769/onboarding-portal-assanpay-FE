@@ -14,6 +14,8 @@ export function showNotificationToast(
 ) {
   toast(notification.title, {
     description: notification.body,
+    // Longer dwell than sonner's default: these toasts carry a View action,
+    // which needs time to be read and clicked.
     duration: 8000,
     action: notification.caseId
       ? {

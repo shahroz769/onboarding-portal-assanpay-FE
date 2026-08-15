@@ -97,7 +97,7 @@ export function CaseFlowRulesPanel() {
     <div className="flex flex-col gap-6">
       <ConfigurationSectionCard
         icon={Play}
-        colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+        tone="emerald"
         title="First case after submission"
         description="When a merchant submits onboarding, automatically open these cases."
         action={
@@ -152,7 +152,7 @@ export function CaseFlowRulesPanel() {
 
       <ConfigurationSectionCard
         icon={GitBranch}
-        colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+        tone="blue"
         title="Close triggers"
         description="When a case closes, automatically open another case for the same merchant."
         action={
@@ -213,7 +213,7 @@ export function CaseFlowRulesPanel() {
 
       <ConfigurationSectionCard
         icon={FileCheck2}
-        colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        tone="amber"
         title="Close requirements"
         description="Prevent a case from closing until another case has closed first."
         action={
@@ -273,7 +273,7 @@ export function CaseFlowRulesPanel() {
 
       <ConfigurationSectionCard
         icon={Landmark}
-        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        tone="violet"
         title="Case creation requirements"
         description="Prevent creating a case until another case has closed successfully."
         action={

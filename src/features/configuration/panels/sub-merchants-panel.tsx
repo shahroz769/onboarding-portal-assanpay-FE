@@ -6,6 +6,7 @@ import { ExternalLink, FileText, Plus, Store, Upload, X } from 'lucide-react'
 
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
+import { EmptyState } from '#/components/empty-state'
 
 import { Button } from '#/components/ui/button'
 
@@ -109,7 +110,7 @@ export function SubMerchantsPanel() {
   return (
     <ConfigurationSectionCard
       icon={Store}
-      colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      tone="emerald"
       title="Sub-Merchants"
       description="Manage draft forms and seller codes for sub-merchant onboarding."
       action={<AddSubMerchantDialog existingNames={existingNames} />}
@@ -120,10 +121,11 @@ export function SubMerchantsPanel() {
         getRowId={(item) => item.id}
         isLoading={isPending}
         emptyContent={
-          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-            <p className="text-sm">No sub-merchants yet.</p>
-            <p className="text-xs">Use Add Sub-Merchant to create one.</p>
-          </div>
+          <EmptyState
+            icon={Store}
+            title="No sub-merchants yet."
+            description="Use Add Sub-Merchant to create one."
+          />
         }
       />
     </ConfigurationSectionCard>

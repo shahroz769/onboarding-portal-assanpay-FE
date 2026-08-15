@@ -1,11 +1,5 @@
 import { format } from 'date-fns'
-import {
-  Activity,
-  Building2,
-  CalendarClock,
-  Send,
-  Wallet,
-} from 'lucide-react'
+import { Activity, Building2, CalendarClock, Send, Wallet } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 
 import { Badge } from '#/components/ui/badge'
@@ -16,7 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
-import { cn } from '#/lib/utils'
+import { SectionIcon } from '#/components/section-icon'
+import { merchantStatusBadgeClasses } from '#/lib/status-styles'
+import type { StatusTint } from '#/lib/status-styles'
 import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
 
 import { formatNumber, isCaseOpen } from './merchant-detail-helpers'
@@ -30,25 +26,6 @@ function formatDate(value: string | null, withTime = false) {
   return format(
     new Date(value),
     withTime ? 'dd MMM yyyy, hh:mm a' : 'dd MMM yyyy',
-  )
-}
-
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={cn(
-        'flex size-10 items-center justify-center rounded-lg',
-        colorClass,
-      )}
-    >
-      <Icon className="size-5" />
-    </div>
   )
 }
 
@@ -73,7 +50,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
     <div className="flex flex-col gap-6">
       <ProfileSection
         icon={Building2}
-        colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+        tone="emerald"
         title="Profile"
         description="Business identity and onboarding status."
       >
@@ -84,7 +61,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
           value={
             <Badge
               variant="secondary"
-              className={merchantStatusBadge(merchant.status)}
+              className={merchantStatusBadgeClasses(merchant.status)}
             >
               {merchant.status.charAt(0).toUpperCase() +
                 merchant.status.slice(1)}
@@ -114,7 +91,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
       <ProfileSection
         icon={CalendarClock}
-        colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        tone="amber"
         title="Journey"
         description="Key timestamps across the merchant lifecycle."
       >
@@ -135,7 +112,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
       <ProfileSection
         icon={Activity}
-        colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+        tone="blue"
         title="Cases"
         description="Workflow case counts and current SLA signal."
       >
@@ -148,7 +125,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
       <ProfileSection
         icon={Wallet}
-        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        tone="sky"
         title="MDR &amp; Limits"
         description={`${activeRatesLabel} · ${
           limitsAndMdr.isOverridden
@@ -184,7 +161,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
       <ProfileSection
         icon={Wallet}
-        colorClass="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+        tone="violet"
         title="Payment Methods"
         description="Collection methods saved from MID Creation."
       >
@@ -196,7 +173,7 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
       <ProfileSection
         icon={Send}
-        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        tone="sky"
         title="Payout Methods"
         description="Payout methods saved from MID Creation."
       >
@@ -211,13 +188,13 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
 
 function ProfileSection({
   icon,
-  colorClass,
+  tone,
   title,
   description,
   children,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone?: StatusTint
   title: string
   description: string
   children: ReactNode
@@ -226,7 +203,7 @@ function ProfileSection({
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} colorClass={colorClass} />
+          <SectionIcon icon={icon} tone={tone} />
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
@@ -280,19 +257,4 @@ function MethodList({
       ))}
     </>
   )
-}
-
-function merchantStatusBadge(status: string) {
-  switch (status) {
-    case 'pending':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
-    case 'testing':
-      return 'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300'
-    case 'live':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-    case 'terminated':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300'
-    default:
-      return ''
-  }
 }

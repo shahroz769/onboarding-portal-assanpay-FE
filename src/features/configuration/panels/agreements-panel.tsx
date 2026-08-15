@@ -73,7 +73,7 @@ export function AgreementsPanel() {
   return (
     <ConfigurationSectionCard
       icon={FileText}
-      colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      tone="blue"
       title="Agreement Drafts"
       description="Upload and review agreement templates by business type."
     >

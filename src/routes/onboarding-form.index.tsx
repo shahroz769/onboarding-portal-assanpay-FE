@@ -15,8 +15,10 @@ function OnboardingFormIndexRoute() {
       <div className="mx-auto max-w-4xl">
         {!isSubmitted ? (
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">Merchant Onboarding</h1>
-            <p className="mt-2 text-muted-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Merchant Onboarding
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Complete the form below to submit your merchant application
             </p>
           </div>

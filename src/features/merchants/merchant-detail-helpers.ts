@@ -48,25 +48,7 @@ export function humanize(value: string) {
 
 // ─── Badge Class Helpers ────────────────────────────────────────────────────
 
-export function caseStatusBadgeClasses(status: string): string {
-  switch (status) {
-    case 'new':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300'
-    case 'working':
-      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300'
-    case 'pending':
-    case 'awaiting_client':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
-    case 'qc':
-      return 'bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-300'
-    case 'error':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300'
-    case 'closed':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-    default:
-      return 'bg-muted text-muted-foreground'
-  }
-}
+export { caseStatusBadgeClasses } from '#/lib/status-styles'
 
 // ─── Open / Closed classification ───────────────────────────────────────────
 

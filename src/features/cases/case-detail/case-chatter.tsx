@@ -31,6 +31,7 @@ import { Popover, PopoverAnchor, PopoverContent } from '#/components/ui/popover'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
+import { EmptyState } from '#/components/empty-state'
 import {
   caseCommentsQueryOptions,
   useCreateComment,
@@ -156,7 +157,7 @@ function renderCommentText(content: string) {
     part.startsWith('@') ? (
       <span
         key={`${part}-${index}`}
-        className="break-all rounded-full bg-sky-500/10 px-1.5 py-0.5 font-semibold text-sky-700"
+        className="break-all rounded-full bg-sky-500/10 px-1.5 py-0.5 font-semibold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300"
       >
         {part}
       </span>
@@ -184,7 +185,7 @@ function renderComposerText(
         key={`${part}-${index}`}
         className={
           isValidMention
-            ? 'rounded-sm bg-sky-500/10 text-sky-700 [box-decoration-break:clone]'
+            ? 'rounded-sm bg-sky-500/10 text-sky-700 [box-decoration-break:clone] dark:bg-sky-500/20 dark:text-sky-300'
             : undefined
         }
       >
@@ -390,11 +391,13 @@ export function CaseChatter({
   }
 
   const emptyState = (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-10 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full border border-border/70 bg-background shadow-sm">
-        <MessageSquareMore className="size-5 text-muted-foreground" />
-      </div>
-      <p className="text-sm font-medium">No conversation yet</p>
+    <div className="flex min-h-full flex-1 flex-col rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-10">
+      <EmptyState
+        icon={MessageSquareMore}
+        title="No conversation yet"
+        description={canPost ? 'Start the discussion below.' : undefined}
+        className="m-auto"
+      />
     </div>
   )
 

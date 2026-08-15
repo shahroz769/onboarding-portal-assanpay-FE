@@ -63,7 +63,7 @@ export function LinkDeadlinesPanel() {
   return (
     <ConfigurationSectionCard
       icon={LinkIcon}
-      colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+      tone="amber"
       title="Link Deadlines"
       description="Configure expiry and availability windows for secure links. Leave a field blank for no expiry."
     >

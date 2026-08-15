@@ -70,7 +70,7 @@ function TokenErrorScreen({ error }: { error: unknown }) {
         ) : (
           <AlertCircle className="size-10 text-destructive" />
         )}
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-2xl font-semibold tracking-tight">
           {isExpired
             ? 'This link has expired or was already used'
             : isMissing

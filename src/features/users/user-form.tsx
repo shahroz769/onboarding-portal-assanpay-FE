@@ -1,4 +1,3 @@
-import type { ComponentType, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import {
@@ -67,25 +66,7 @@ import {
   userFormSchema,
 } from '#/schemas/users.schema'
 import { cn } from '#/lib/utils'
-
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={cn(
-        'flex size-10 shrink-0 items-center justify-center rounded-lg',
-        colorClass,
-      )}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
-}
+import { SectionIcon } from '#/components/section-icon'
 
 function RequiredMark() {
   return (
@@ -353,10 +334,7 @@ export function UserForm({
         <Card>
           <CardHeader>
             <div className="flex min-w-0 items-center gap-3">
-              <SectionIcon
-                icon={UserRoundIcon}
-                colorClass="bg-blue-500/10 text-blue-500"
-              />
+              <SectionIcon icon={UserRoundIcon} tone="blue" />
 
               <div className="min-w-0">
                 <CardTitle>Employee Details</CardTitle>
@@ -610,10 +588,7 @@ export function UserForm({
         <Card>
           <CardHeader>
             <div className="flex min-w-0 items-center gap-3">
-              <SectionIcon
-                icon={ListChecksIcon}
-                colorClass="bg-teal-500/10 text-teal-500"
-              />
+              <SectionIcon icon={ListChecksIcon} tone="teal" />
 
               <div className="min-w-0">
                 <CardTitle>Queue Access</CardTitle>

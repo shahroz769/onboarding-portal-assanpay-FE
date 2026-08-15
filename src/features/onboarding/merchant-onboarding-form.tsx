@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { ComponentType, KeyboardEvent, SVGProps } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { SectionIcon } from '#/components/section-icon'
 import {
   Select,
   SelectContent,
@@ -77,25 +78,88 @@ import type {
 } from '#/schemas/merchant-onboarding.schema'
 import type { MerchantSubmissionResponse } from '#/apis/merchant-onboarding'
 import { DocumentUploadField } from './document-upload-field'
+import { OnboardingSectionNav } from './onboarding-section-nav'
+import type { OnboardingNavSection } from './onboarding-section-nav'
+import type { StatusTint } from '#/lib/status-styles'
 import { SubmissionSuccess } from './submission-success'
 
-// ── Section Header ──────────────────────────────────────────────────────────
+// ── Sections & draft autosave ───────────────────────────────────────────────
 
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={`flex size-10 items-center justify-center rounded-lg ${colorClass}`}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
+const DRAFT_STORAGE_KEY = 'assanpay:merchant-onboarding-draft'
+
+function createDebouncedTask(task: () => void, delay: number) {
+  let timeout: ReturnType<typeof setTimeout> | undefined
+
+  return {
+    schedule() {
+      clearTimeout(timeout)
+      timeout = setTimeout(task, delay)
+    },
+    cancel() {
+      clearTimeout(timeout)
+    },
+  }
 }
+
+// Order and ids must match the rendered <Card id="..."> anchors below.
+const FORM_SECTIONS = [
+  {
+    id: 'submitter',
+    label: 'Submitter',
+    tone: 'blue',
+    fields: ['email', 'activeWhatsappNumber'],
+  },
+  {
+    id: 'business',
+    label: 'Business',
+    tone: 'violet',
+    fields: [
+      'businessName',
+      'businessPhone',
+      'businessEmail',
+      'businessWebsite',
+      'businessAddress',
+      'websiteCms',
+      'businessDescription',
+      'businessRegistrationDate',
+      'businessNature',
+    ],
+  },
+  {
+    id: 'classification',
+    label: 'Classification',
+    tone: 'teal',
+    fields: [
+      'merchantType',
+      'estimatedMonthlyTransactions',
+      'estimatedMonthlyVolume',
+    ],
+  },
+  {
+    id: 'financial',
+    label: 'Financial',
+    tone: 'green',
+    fields: ['accountTitle', 'bankName', 'branchName', 'accountNumberIban'],
+  },
+  {
+    id: 'owner',
+    label: 'Owner',
+    tone: 'amber',
+    fields: ['ownerFullName', 'ownerPhone'],
+  },
+  {
+    id: 'kin',
+    label: 'Next of kin',
+    tone: 'rose',
+    fields: ['nextOfKinRelation'],
+  },
+  { id: 'documents', label: 'Documents', tone: 'orange', fields: [] },
+] as const satisfies ReadonlyArray<{
+  id: string
+  label: string
+  tone: StatusTint
+  fields: ReadonlyArray<keyof MerchantOnboardingFormValues>
+}>
 
 // ── Main Form ───────────────────────────────────────────────────────────────
 
@@ -252,6 +316,7 @@ export function MerchantOnboardingForm({
       try {
         const response =
           await submitMerchantOnboardingMutation.mutateAsync(formData)
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY)
         setSubmissionData(response)
         onSubmittedChange?.(true)
         toast.success('Form submitted successfully!')
@@ -272,6 +337,89 @@ export function MerchantOnboardingForm({
     (s) => s.values.nextOfKinRelation,
   )
   const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts)
+
+  // Per-section completion (primitive selectors → rerender only on flips)
+  const submitterComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[0].fields.every((name) => s.values[name].trim() !== ''),
+  )
+  const businessComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[1].fields.every((name) => s.values[name].trim() !== ''),
+  )
+  const classificationComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[2].fields.every((name) => s.values[name].trim() !== ''),
+  )
+  const financialComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[3].fields.every((name) => s.values[name].trim() !== ''),
+  )
+  const ownerComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[4].fields.every((name) => s.values[name].trim() !== ''),
+  )
+  const kinComplete = useStore(form.store, (s) =>
+    FORM_SECTIONS[5].fields.every((name) => s.values[name].trim() !== ''),
+  )
+
+  const specificDocs = merchantType
+    ? MERCHANT_SPECIFIC_DOCUMENTS[
+        merchantType as keyof typeof MERCHANT_SPECIFIC_DOCUMENTS
+      ]
+    : null
+  const documentsComplete =
+    BASE_DOCUMENTS.every((doc) => Boolean(documents[doc])) &&
+    (specificDocs?.required ?? []).every((doc) => Boolean(documents[doc]))
+
+  // ── Draft autosave ─────────────────────────────────────────────────────
+  // Text fields persist to this device's localStorage; files can't be
+  // persisted, so the restore toast tells the user to re-attach documents.
+  // StrictMode re-runs effects; the ref guarantees one restore + one toast.
+  const didRestoreDraftRef = useRef(false)
+  useEffect(() => {
+    if (didRestoreDraftRef.current) return
+    didRestoreDraftRef.current = true
+    try {
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+      if (!raw) return
+      const draft: unknown = JSON.parse(raw)
+      if (!draft || typeof draft !== 'object') return
+      let restoredCount = 0
+      for (const [key, val] of Object.entries(draft)) {
+        if (typeof val === 'string' && val !== '' && key in form.state.values) {
+          form.setFieldValue(key as keyof MerchantOnboardingFormValues, val)
+          restoredCount += 1
+        }
+      }
+      if (restoredCount > 0) {
+        toast.info('Your draft was restored from this device.', {
+          description: 'Documents are not saved — re-attach them below.',
+        })
+      }
+    } catch {
+      // Unavailable or corrupted storage — start fresh.
+    }
+  }, [form])
+
+  useEffect(() => {
+    const draftSave = createDebouncedTask(() => {
+      try {
+        const values = form.state.values
+        const hasContent = Object.values(values).some(
+          (val) => typeof val === 'string' && val.trim() !== '',
+        )
+        if (hasContent) {
+          window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(values))
+        } else {
+          window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+        }
+      } catch {
+        // Storage full or blocked (private mode) — skip autosave.
+      }
+    }, 400)
+    const subscription = form.store.subscribe(() => draftSave.schedule())
+
+    return () => {
+      draftSave.cancel()
+      subscription.unsubscribe()
+    }
+  }, [form])
 
   const getDocLabel = (doc: DocumentFieldName): string => {
     const label = DOCUMENT_LABELS[doc]
@@ -322,6 +470,7 @@ export function MerchantOnboardingForm({
     setDocumentErrors({})
     setSubmissionError(null)
     setSubmissionData(null)
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY)
     onSubmittedChange?.(false)
   }
 
@@ -381,13 +530,25 @@ export function MerchantOnboardingForm({
     )
   }
 
-  // ── Business-type specific docs ─────────────────────────────────────────
+  // ── Section nav model ───────────────────────────────────────────────────
 
-  const specificDocs = merchantType
-    ? MERCHANT_SPECIFIC_DOCUMENTS[
-        merchantType as keyof typeof MERCHANT_SPECIFIC_DOCUMENTS
-      ]
-    : null
+  const sectionCompletion = [
+    submitterComplete,
+    businessComplete,
+    classificationComplete,
+    financialComplete,
+    ownerComplete,
+    kinComplete,
+    documentsComplete,
+  ]
+  const navSections: OnboardingNavSection[] = FORM_SECTIONS.map(
+    ({ id, label, tone }, index) => ({
+      id,
+      label,
+      tone,
+      complete: sectionCompletion[index] ?? false,
+    }),
+  )
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -400,14 +561,13 @@ export function MerchantOnboardingForm({
       }}
       className="flex flex-col gap-6"
     >
+      <OnboardingSectionNav sections={navSections} />
+
       {/* Section 1: Submitter Information */}
-      <Card>
+      <Card id="submitter" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={Mail}
-              colorClass="bg-blue-500/10 text-blue-500"
-            />
+            <SectionIcon icon={Mail} tone="blue" />
 
             <div>
               <CardTitle>Submitter Information</CardTitle>
@@ -488,13 +648,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 2: Business Information */}
-      <Card>
+      <Card id="business" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={Building2}
-              colorClass="bg-violet-500/10 text-violet-500"
-            />
+            <SectionIcon icon={Building2} tone="violet" />
 
             <div>
               <CardTitle>Business Information</CardTitle>
@@ -789,13 +946,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 3: Business Classification */}
-      <Card>
+      <Card id="classification" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={Briefcase}
-              colorClass="bg-teal-500/10 text-teal-500"
-            />
+            <SectionIcon icon={Briefcase} tone="teal" />
 
             <div>
               <CardTitle>Business Classification</CardTitle>
@@ -918,13 +1072,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 4: Financial Information */}
-      <Card>
+      <Card id="financial" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={CreditCard}
-              colorClass="bg-green-500/10 text-green-500"
-            />
+            <SectionIcon icon={CreditCard} tone="green" />
 
             <div>
               <CardTitle>Financial Information</CardTitle>
@@ -1081,13 +1232,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 5: Director/CEO/Owner Information */}
-      <Card>
+      <Card id="owner" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={User}
-              colorClass="bg-amber-500/10 text-amber-500"
-            />
+            <SectionIcon icon={User} tone="amber" />
 
             <div>
               <CardTitle>Director/CEO/Owner Information</CardTitle>
@@ -1162,13 +1310,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 6: Next of Kin */}
-      <Card>
+      <Card id="kin" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={Users}
-              colorClass="bg-rose-500/10 text-rose-500"
-            />
+            <SectionIcon icon={Users} tone="rose" />
 
             <div>
               <CardTitle>Next of Kin</CardTitle>
@@ -1220,13 +1365,10 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 7: Documents */}
-      <Card>
+      <Card id="documents" className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <SectionIcon
-              icon={FileText}
-              colorClass="bg-orange-500/10 text-orange-500"
-            />
+            <SectionIcon icon={FileText} tone="orange" />
 
             <div>
               <CardTitle>Documents</CardTitle>
@@ -1352,7 +1494,7 @@ export function MerchantOnboardingForm({
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" size="lg" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
               {isSubmitting ? 'Submitting...' : 'Submit Application'}
             </Button>

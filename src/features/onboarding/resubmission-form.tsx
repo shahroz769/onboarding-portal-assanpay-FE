@@ -36,6 +36,8 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { SectionIcon } from '#/components/section-icon'
+import type { StatusTint } from '#/lib/status-styles'
 import {
   Combobox,
   ComboboxContent,
@@ -99,7 +101,7 @@ type SectionConfig = {
   title: string
   description: string
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
+  tone: StatusTint
 }
 
 type FieldConfig = {
@@ -128,49 +130,49 @@ const SECTION_CONFIGS: Record<SectionKey, SectionConfig> = {
     title: 'Submitter Information',
     description: 'Email address of the person submitting this form',
     icon: Mail,
-    colorClass: 'bg-blue-500/10 text-blue-500',
+    tone: 'blue',
   },
   owner: {
     key: 'owner',
     title: 'Director/CEO/Owner Information',
     description: 'Details of the Director, CEO, or owner',
     icon: User,
-    colorClass: 'bg-amber-500/10 text-amber-500',
+    tone: 'amber',
   },
   business: {
     key: 'business',
     title: 'Business Information',
     description: 'Basic business and contact details',
     icon: Building2,
-    colorClass: 'bg-violet-500/10 text-violet-500',
+    tone: 'violet',
   },
   classification: {
     key: 'classification',
     title: 'Business Classification',
     description: 'Business type and transaction estimates',
     icon: Briefcase,
-    colorClass: 'bg-teal-500/10 text-teal-500',
+    tone: 'teal',
   },
   financial: {
     key: 'financial',
     title: 'Financial Information',
     description: 'Bank account and settlement details',
     icon: CreditCard,
-    colorClass: 'bg-green-500/10 text-green-500',
+    tone: 'green',
   },
   nextOfKin: {
     key: 'nextOfKin',
     title: 'Next of Kin',
     description: 'Emergency contact relationship',
     icon: Users,
-    colorClass: 'bg-rose-500/10 text-rose-500',
+    tone: 'rose',
   },
   documents: {
     key: 'documents',
     title: 'Documents',
     description: 'Upload or remove the requested documents',
     icon: FileText,
-    colorClass: 'bg-orange-500/10 text-orange-500',
+    tone: 'orange',
   },
 }
 
@@ -289,22 +291,6 @@ const FIELD_CONFIGS: Partial<Record<string, FieldConfig>> = {
     section: 'nextOfKin',
     options: KIN_RELATIONS,
   },
-}
-
-function SectionIcon({
-  icon: Icon,
-  colorClass,
-}: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  colorClass: string
-}) {
-  return (
-    <div
-      className={`flex size-10 items-center justify-center rounded-lg ${colorClass}`}
-    >
-      <Icon className="size-5" />
-    </div>
-  )
 }
 
 function groupRejections(rejections: Array<ResubmissionRejection>) {
@@ -665,10 +651,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
         <Card key={section.key}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <SectionIcon
-                icon={section.icon}
-                colorClass={section.colorClass}
-              />
+              <SectionIcon icon={section.icon} tone={section.tone} />
 
               <div>
                 <CardTitle>{section.title}</CardTitle>

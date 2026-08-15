@@ -21,24 +21,13 @@ import {
   PRIORITY_LABELS,
   BUSINESS_SCOPE_LABELS,
 } from '#/schemas/merchants.schema'
+import {
+  CLICKABLE_BADGE_CLASSES,
+  merchantStatusBadgeClasses,
+  priorityBadgeClasses,
+} from '#/lib/status-styles'
+import { cn } from '#/lib/utils'
 import type { RoleType } from '#/types/auth'
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function getStatusBadgeClasses(status: string): string {
-  switch (status) {
-    case 'Pending':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-    case 'Testing':
-      return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300'
-    case 'Live':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-    case 'Terminated':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-    default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  }
-}
 
 // ─── Column Factory ─────────────────────────────────────────────────────────
 
@@ -166,7 +155,9 @@ export function createMerchantColumns({
       cell: (merchant) => {
         const display = MERCHANT_STATUS_DISPLAY[merchant.status]
         return (
-          <Badge className={getStatusBadgeClasses(display)}>{display}</Badge>
+          <Badge className={merchantStatusBadgeClasses(merchant.status)}>
+            {display}
+          </Badge>
         )
       },
       width: 120,
@@ -187,14 +178,10 @@ export function createMerchantColumns({
           <Badge
             variant="secondary"
             className={
-              [
-                merchant.priority === 'high'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-                  : '',
-                canEdit ? 'cursor-pointer transition-colors' : '',
-              ]
-                .filter(Boolean)
-                .join(' ') || undefined
+              cn(
+                priorityBadgeClasses(merchant.priority),
+                canEdit && CLICKABLE_BADGE_CLASSES,
+              ) || undefined
             }
             onClick={canEdit ? () => onPriorityClick(merchant) : undefined}
           >
