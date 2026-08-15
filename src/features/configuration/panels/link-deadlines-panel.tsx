@@ -8,13 +8,16 @@ import { Button } from '#/components/ui/button'
 
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
 
-import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -62,34 +65,34 @@ export function LinkDeadlinesPanel() {
       icon={LinkIcon}
       colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
       title="Link Deadlines"
-      description="Configure expiry and availability windows for secure links."
+      description="Configure expiry and availability windows for secure links. Leave a field blank for no expiry."
     >
       <FieldGroup>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {fields.map(([key, label]) => (
             <Field key={key} data-invalid={Boolean(validationErrors[key])}>
               <FieldLabel htmlFor={key}>{label}</FieldLabel>
-              <Input
-                id={key}
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                placeholder="No expiry"
-                value={value[key] ?? ''}
-                aria-invalid={Boolean(validationErrors[key])}
-                onChange={(event) => {
-                  const raw = event.target.value
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    [key]: raw === '' ? null : Number(raw),
-                  }))
-                }}
-              />
-
-              <FieldDescription>
-                Hours. Leave blank for no expiry.
-              </FieldDescription>
+              <InputGroup>
+                <InputGroupInput
+                  id={key}
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder="No expiry"
+                  value={value[key] ?? ''}
+                  aria-invalid={Boolean(validationErrors[key])}
+                  className="text-right tabular-nums"
+                  onChange={(event) => {
+                    const raw = event.target.value
+                    setForm((current) => ({
+                      ...(current ?? value),
+                      [key]: raw === '' ? null : Number(raw),
+                    }))
+                  }}
+                />
+                <InputGroupAddon align="inline-end">hours</InputGroupAddon>
+              </InputGroup>
               <FieldError>{validationErrors[key]}</FieldError>
             </Field>
           ))}

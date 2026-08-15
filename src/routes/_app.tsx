@@ -26,6 +26,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '#/components/ui/sidebar'
+import { Separator } from '#/components/ui/separator'
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
@@ -82,8 +83,12 @@ function AppLayout() {
       <NotificationsProvider />
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden bg-muted/30">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger />
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
@@ -129,15 +134,22 @@ function AppLayout() {
           {hidePageShell ? (
             <Outlet />
           ) : (
-            <div className="flex min-h-full shrink-0 flex-col rounded-xl">
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            <div className="flex min-h-full shrink-0 flex-col">
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-semibold tracking-tight">
+                    {title}
+                  </h1>
                   {subtitle && (
-                    <p className="text-muted-foreground">{subtitle}</p>
+                    <p className="mt-1 text-sm text-pretty text-muted-foreground">
+                      {subtitle}
+                    </p>
                   )}
                 </div>
-                <div id="page-header-actions" />
+                <div
+                  id="page-header-actions"
+                  className="flex shrink-0 items-center gap-2"
+                />
               </div>
               <Outlet />
             </div>

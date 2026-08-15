@@ -1,6 +1,8 @@
 import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
+import { ArrowUpRight } from 'lucide-react'
 
+import { cn } from '#/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import { Checkbox } from '#/components/ui/checkbox'
@@ -124,13 +126,9 @@ export function createUserColumns({
       id: 'username',
       header: 'Username',
       cell: (user) => (
-        <Link
-          to="/user-management/users/$userId"
-          params={{ userId: user.id }}
-          className="font-mono text-sm text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
-        >
+        <span className="font-mono text-xs text-muted-foreground">
           {user.username}
-        </Link>
+        </span>
       ),
       width: 130,
     },
@@ -146,7 +144,13 @@ export function createUserColumns({
       id: 'status',
       header: 'Status',
       cell: (user) => (
-        <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+        <Badge variant="outline" className="gap-1.5">
+          <span
+            className={cn(
+              'size-1.5 rounded-full',
+              user.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400',
+            )}
+          />
           {USER_STATUS_LABELS[user.status]}
         </Badge>
       ),
@@ -156,7 +160,13 @@ export function createUserColumns({
       id: 'passwordStatus',
       header: 'Password',
       cell: (user) => (
-        <Badge variant={user.hasSetPassword ? 'secondary' : 'outline'}>
+        <Badge variant="outline" className="gap-1.5">
+          <span
+            className={cn(
+              'size-1.5 rounded-full',
+              user.hasSetPassword ? 'bg-emerald-500' : 'bg-amber-500',
+            )}
+          />
           {user.hasSetPassword ? 'Set' : 'Not set'}
         </Badge>
       ),
@@ -185,12 +195,13 @@ export function createUserColumns({
             sortBy: 'createdAt',
             sortOrder: 'desc',
           }}
-          className="font-mono text-sm text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary tabular-nums hover:underline hover:decoration-dashed hover:underline-offset-4"
         >
-          View Cases
+          {user.ownedCasesCount}
+          <ArrowUpRight className="size-3.5 text-muted-foreground" />
         </Link>
       ),
-      width: 130,
+      width: 90,
     },
     {
       id: 'lastLoginAt',

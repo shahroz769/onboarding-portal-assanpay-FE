@@ -11,10 +11,11 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSet,
 } from '#/components/ui/field'
 
 import { Input } from '#/components/ui/input'
+
+import { Separator } from '#/components/ui/separator'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -59,10 +60,11 @@ export function MerchantPortalPanel() {
       description="Configure the merchant portal link and support contact details."
     >
       <FieldGroup>
-        <FieldSet>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium">Merchant portal</p>
           <Field data-invalid={Boolean(validationErrors.loginUrl)}>
             <FieldLabel htmlFor="merchant-portal-login-url">
-              Merchant portal login URL
+              Login URL
             </FieldLabel>
             <Input
               id="merchant-portal-login-url"
@@ -79,6 +81,12 @@ export function MerchantPortalPanel() {
             />
             <FieldError>{validationErrors.loginUrl}</FieldError>
           </Field>
+        </div>
+
+        <Separator />
+
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium">Support contacts</p>
           <Field data-invalid={Boolean(validationErrors.officeAddress)}>
             <FieldLabel htmlFor="merchant-portal-office-address">
               Office Address
@@ -143,7 +151,7 @@ export function MerchantPortalPanel() {
               <FieldError>{validationErrors.supportEmail}</FieldError>
             </Field>
           </div>
-        </FieldSet>
+        </div>
         <ConfigurationActionBar>
           <Button
             onClick={() => mutation.mutate(value)}

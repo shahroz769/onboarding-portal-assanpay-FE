@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Workflow } from 'lucide-react'
+import { ListOrdered, Pause, Play, Plus, Workflow } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import {
@@ -40,6 +40,13 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
+import { Switch } from '#/components/ui/switch'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import { cn } from '#/lib/utils'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import {
   isQueueRevisionConflict,
@@ -52,6 +59,9 @@ import {
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import type { QueueLifecycle, QueueWorkflowType } from '#/schemas/cases.schema'
 import { ConfigurationSectionCard } from './configuration-panel-shared'
+
+const STAGE_GRID_COLUMNS =
+  'md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_76px_132px_56px]'
 
 const WORKFLOW_OPTIONS: Array<{
   value: QueueWorkflowType
@@ -105,11 +115,6 @@ function lifecycleLabel(queue: {
   if (queue.lifecycle) return queue.lifecycle
   return queue.isActive === false ? 'inactive' : 'active'
 }
-function lifecycleBadgeVariant(lifecycle: string) {
-  if (lifecycle === 'active') return 'secondary' as const
-  if (lifecycle === 'draft') return 'outline' as const
-  return 'outline' as const
-}
 export function QueuesPanel() {
   const { data: queues = [], isPending } = useQuery(
     queuesQueryOptions({
@@ -140,7 +145,11 @@ export function QueuesPanel() {
       header: 'Workflow',
       width: 160,
       cell: (queue) => (
-        <span className="truncate font-mono text-xs">{queue.workflowType}</span>
+        <span className="truncate text-muted-foreground">
+          {WORKFLOW_OPTIONS.find(
+            (option) => option.value === queue.workflowType,
+          )?.label ?? queue.workflowType}
+        </span>
       ),
     },
     {
@@ -169,47 +178,59 @@ export function QueuesPanel() {
       cell: (queue) => {
         const lifecycle = lifecycleLabel(queue)
         return (
-          <Badge variant={lifecycleBadgeVariant(lifecycle)}>{lifecycle}</Badge>
+          <Badge variant="outline" className="gap-1.5 capitalize">
+            <span
+              className={cn(
+                'size-1.5 rounded-full',
+                lifecycle === 'active' && 'bg-emerald-500',
+                lifecycle === 'draft' && 'bg-amber-500',
+                lifecycle === 'inactive' && 'bg-zinc-400',
+              )}
+            />
+            {lifecycle}
+          </Badge>
         )
       },
     },
     {
       id: 'actions',
       header: <span className="block text-right">Actions</span>,
-      width: 280,
+      width: 200,
       cell: (queue) => {
         const lifecycle = lifecycleLabel(queue)
+        const nextLifecycle = lifecycle === 'active' ? 'inactive' : 'active'
         return (
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-1">
             <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={updateStatus.isPending || lifecycle === 'active'}
-              onClick={() =>
-                updateStatus.mutate({
-                  queueId: queue.id,
-                  lifecycle: 'active',
-                  revision: queue.revision,
-                })
-              }
-            >
-              Activate
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={updateStatus.isPending || lifecycle === 'inactive'}
-              onClick={() =>
-                updateStatus.mutate({
-                  queueId: queue.id,
-                  lifecycle: 'inactive',
-                  revision: queue.revision,
-                })
-              }
-            >
-              Deactivate
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  disabled={updateStatus.isPending}
+                  onClick={() =>
+                    updateStatus.mutate({
+                      queueId: queue.id,
+                      lifecycle: nextLifecycle,
+                      revision: queue.revision,
+                    })
+                  }
+                >
+                  {lifecycle === 'active' ? (
+                    <Pause className="size-4" />
+                  ) : (
+                    <Play className="size-4" />
+                  )}
+                  <span className="sr-only">
+                    {lifecycle === 'active' ? 'Deactivate' : 'Activate'}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {lifecycle === 'active' ? 'Deactivate' : 'Activate'}
+              </TooltipContent>
+            </Tooltip>
           </div>
         )
       },
@@ -450,12 +471,23 @@ function QueueEditorDialog({
           if (!nextOpen) setStageDraft(null)
         }}
       >
-        <DialogTrigger asChild>
-          <Button type="button" variant="outline" size="sm">
-            Stages
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+              >
+                <ListOrdered className="size-4" />
+                <span className="sr-only">Edit stages</span>
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Edit stages</TooltipContent>
+        </Tooltip>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit stages — {queueName}</DialogTitle>
             <DialogDescription>
@@ -488,14 +520,40 @@ function QueueEditorDialog({
                   </AlertDescription>
                 </Alert>
               )}
-              <div className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <div
+                  className={cn(
+                    'hidden gap-2 px-3 md:grid',
+                    STAGE_GRID_COLUMNS,
+                  )}
+                >
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Name
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Slug
+                  </span>
+                  <span className="text-right text-xs font-medium text-muted-foreground">
+                    Order
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Category
+                  </span>
+                  <span className="text-right text-xs font-medium text-muted-foreground">
+                    Active
+                  </span>
+                </div>
                 {stages.map((stage, index) => (
                   <div
                     key={stage.slug}
-                    className="grid gap-2 rounded-md border p-3 md:grid-cols-[1fr_1fr_90px_140px_auto]"
+                    className={cn(
+                      'grid gap-2 rounded-md border bg-background p-3 md:items-center',
+                      STAGE_GRID_COLUMNS,
+                    )}
                   >
                     <Input
                       value={stage.name}
+                      aria-label="Stage name"
                       onChange={(event) => {
                         const next = [...stages]
                         next[index] = {
@@ -508,6 +566,8 @@ function QueueEditorDialog({
                     />
                     <Input
                       value={stage.slug}
+                      aria-label="Stage slug"
+                      className="font-mono text-xs"
                       onChange={(event) => {
                         const next = [...stages]
                         next[index] = {
@@ -520,7 +580,12 @@ function QueueEditorDialog({
                     />
                     <Input
                       type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
                       value={stage.order}
+                      aria-label="Stage order"
+                      className="text-right tabular-nums"
                       onChange={(event) => {
                         const next = [...stages]
                         next[index] = {
@@ -541,7 +606,7 @@ function QueueEditorDialog({
                         setStageDraft(next)
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label="Stage category">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -552,21 +617,20 @@ function QueueEditorDialog({
                         <SelectItem value="closed">closed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const next = [...stages]
-                        next[index] = {
-                          ...stage,
-                          isActive: !stage.isActive,
-                        }
-                        setStageDraft(next)
-                      }}
-                    >
-                      {stage.isActive ? 'Active' : 'Inactive'}
-                    </Button>
+                    <div className="flex md:justify-end">
+                      <Switch
+                        checked={stage.isActive}
+                        aria-label={`${stage.name} is ${stage.isActive ? 'active' : 'inactive'}`}
+                        onCheckedChange={(checked) => {
+                          const next = [...stages]
+                          next[index] = {
+                            ...stage,
+                            isActive: checked,
+                          }
+                          setStageDraft(next)
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

@@ -28,11 +28,7 @@ import {
   ComboboxList,
 } from '#/components/ui/combobox'
 
-import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
-
 import { Input } from '#/components/ui/input'
-
-import { Separator } from '#/components/ui/separator'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -215,30 +211,30 @@ export function MethodListPanel({
           </Button>
         }
       >
-        <FieldGroup>
+        <div className="flex flex-col gap-4">
           {value.length > 0 ? (
-            value.map((method, index) => (
-              <Field
-                key={method.id}
-                data-motion={
-                  removingMethodIds.has(method.id)
-                    ? 'exiting'
-                    : enteringMethodIds.has(method.id)
-                      ? 'entering'
-                      : undefined
-                }
-                className="motion-list-item"
-                onTransitionEnd={(event) =>
-                  finishMethodTransition(method.id, event)
-                }
-              >
-                <FieldLabel htmlFor={`${method.id}-label`}>
-                  Method {index + 1}
-                </FieldLabel>
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="flex flex-col gap-2">
+              {value.map((method, index) => (
+                <div
+                  key={method.id}
+                  data-motion={
+                    removingMethodIds.has(method.id)
+                      ? 'exiting'
+                      : enteringMethodIds.has(method.id)
+                        ? 'entering'
+                        : undefined
+                  }
+                  className="motion-list-item flex items-center gap-2"
+                  onTransitionEnd={(event) =>
+                    finishMethodTransition(method.id, event)
+                  }
+                >
+                  <span className="w-6 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
+                    {index + 1}
+                  </span>
                   <Input
-                    id={`${method.id}-label`}
                     value={method.label}
+                    aria-label={`Method ${index + 1} name`}
                     onChange={(event) =>
                       updateMethod(method.id, event.target.value)
                     }
@@ -249,22 +245,26 @@ export function MethodListPanel({
                   />
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
+                    className="text-muted-foreground hover:text-destructive"
                     onClick={() => removeMethod(method.id)}
                     disabled={
                       mutation.isPending || removingMethodIds.has(method.id)
                     }
-                    aria-label="Remove method"
+                    aria-label={`Remove method ${index + 1}`}
                   >
                     <Trash2 />
                   </Button>
                 </div>
-              </Field>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-              {emptyMessage}
+            <div className="flex flex-col items-center gap-1 rounded-md border border-dashed py-8 text-center">
+              <p className="text-sm font-medium">{emptyMessage}</p>
+              <p className="text-xs text-muted-foreground">
+                Click &ldquo;{addLabel}&rdquo; to create one.
+              </p>
             </div>
           )}
           {formError ? (
@@ -273,7 +273,7 @@ export function MethodListPanel({
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
-        </FieldGroup>
+        </div>
       </ConfigurationSectionCard>
 
       <ConfigurationActionBar>
@@ -341,9 +341,8 @@ export function ConfigurationSectionCard({
 
 export function ConfigurationActionBar({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-4">
-      <Separator />
-      <div className="flex justify-end">{children}</div>
+    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 border-t bg-background/90 py-4 backdrop-blur-sm">
+      {children}
     </div>
   )
 }

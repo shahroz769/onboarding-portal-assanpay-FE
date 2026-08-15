@@ -31,6 +31,12 @@ import { Input } from '#/components/ui/input'
 
 import { Spinner } from '#/components/ui/spinner'
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+
 import { cn } from '#/lib/utils'
 
 import {
@@ -57,36 +63,11 @@ export function SubMerchantsPanel() {
       cell: (item) => <span className="truncate font-medium">{item.name}</span>,
     },
     {
-      id: 'draft',
-      header: 'Draft',
-      width: 280,
-      cell: (item) => (
-        <a
-          href={item.googleDriveWebViewLink}
-          target="_blank"
-          rel="noreferrer"
-          className="truncate text-primary underline-offset-2 hover:underline"
-        >
-          {item.originalName}
-        </a>
-      ),
-    },
-    {
       id: 'sellerCode',
       header: 'Seller Code',
       width: 180,
       cell: (item) => (
         <span className="truncate font-mono text-xs">{item.sellerCode}</span>
-      ),
-    },
-    {
-      id: 'folder',
-      header: 'Folder',
-      width: 240,
-      cell: (item) => (
-        <span className="truncate font-mono text-xs text-muted-foreground">
-          Sub-Merchants / {item.name}
-        </span>
       ),
     },
     {
@@ -102,19 +83,24 @@ export function SubMerchantsPanel() {
     {
       id: 'actions',
       header: <span className="block text-right">Actions</span>,
-      width: 160,
+      width: 80,
       cell: (item) => (
         <div className="flex justify-end">
-          <Button asChild variant="outline" size="sm">
-            <a
-              href={item.googleDriveWebViewLink}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink data-icon="inline-start" />
-              View draft
-            </a>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8" asChild>
+                <a
+                  href={item.googleDriveWebViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink className="size-4" />
+                  <span className="sr-only">View draft</span>
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View draft</TooltipContent>
+          </Tooltip>
         </div>
       ),
     },

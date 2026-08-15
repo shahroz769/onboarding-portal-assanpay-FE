@@ -15,8 +15,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSet,
 } from '#/components/ui/field'
 
 import { Spinner } from '#/components/ui/spinner'
@@ -82,12 +80,14 @@ export function EmailSendingModePanel() {
       description="Choose how case emails are sent from the portal."
     >
       <FieldGroup>
-        <FieldSet>
-          <FieldLegend>Email Sending Mode</FieldLegend>
-
-          <Field orientation="horizontal">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            orientation="horizontal"
+            className="items-start rounded-lg border p-4 transition-colors has-[:checked]:border-primary/40 has-[:checked]:bg-accent/40"
+          >
             <Checkbox
               id="email-mode-auto"
+              className="mt-0.5"
               checked={value.autoEnabled}
               onCheckedChange={(checked) => {
                 if (typeof checked === 'boolean') {
@@ -96,16 +96,22 @@ export function EmailSendingModePanel() {
               }}
             />
             <FieldContent>
-              <FieldLabel htmlFor="email-mode-auto">Auto (Resend)</FieldLabel>
+              <FieldLabel htmlFor="email-mode-auto" className="cursor-pointer">
+                Auto (Resend)
+              </FieldLabel>
               <FieldDescription>
                 Emails are sent automatically through Resend when triggered.
               </FieldDescription>
             </FieldContent>
           </Field>
 
-          <Field orientation="horizontal">
+          <Field
+            orientation="horizontal"
+            className="items-start rounded-lg border p-4 transition-colors has-[:checked]:border-primary/40 has-[:checked]:bg-accent/40"
+          >
             <Checkbox
               id="email-mode-manual"
+              className="mt-0.5"
               checked={value.manualEnabled}
               onCheckedChange={(checked) => {
                 if (typeof checked === 'boolean') {
@@ -114,7 +120,10 @@ export function EmailSendingModePanel() {
               }}
             />
             <FieldContent>
-              <FieldLabel htmlFor="email-mode-manual">
+              <FieldLabel
+                htmlFor="email-mode-manual"
+                className="cursor-pointer"
+              >
                 Manual (Gmail)
               </FieldLabel>
               <FieldDescription>
@@ -123,9 +132,9 @@ export function EmailSendingModePanel() {
               </FieldDescription>
             </FieldContent>
           </Field>
+        </div>
 
-          <FieldError>{bothDisabledError}</FieldError>
-        </FieldSet>
+        <FieldError>{bothDisabledError}</FieldError>
 
         <ConfigurationActionBar>
           <Button

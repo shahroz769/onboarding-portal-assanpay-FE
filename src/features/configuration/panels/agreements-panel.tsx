@@ -1,12 +1,15 @@
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { FileCheck2, FileText, FileUp } from 'lucide-react'
+import { FileCheck2, FileText, FileUp, Upload, X } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { Button } from '#/components/ui/button'
-import { Field, FieldError } from '#/components/ui/field'
-import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import {
   configurationQueryOptions,
   useUploadAgreementDraftMutation,
@@ -63,7 +66,7 @@ export function AgreementsPanel() {
     {
       id: 'upload',
       header: <span className="block text-right">Upload</span>,
-      width: 380,
+      width: 280,
       cell: (draft) => <AgreementDraftUploadCell draft={draft} />,
     },
   ]
@@ -89,11 +92,16 @@ export function AgreementsPanel() {
   )
 }
 function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
-  const inputId = useId()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadDraft = useUploadAgreementDraftMutation()
   const [file, setFile] = useState<File | null>(null)
   const fileError = getDraftFileError(file)
+  function clearSelection() {
+    setFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
   function handleUpload() {
     if (!file || fileError || uploadDraft.isPending) return
     uploadDraft.mutate(
@@ -102,44 +110,87 @@ function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
         file,
       },
       {
-        onSuccess: () => {
-          setFile(null)
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-          }
-        },
+        onSuccess: clearSelection,
       },
     )
   }
   return (
-    <div className="flex items-center justify-end gap-2">
-      <Field data-invalid={Boolean(fileError)} className="max-w-56">
-        <Input
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center justify-end gap-2">
+        <input
           ref={fileInputRef}
-          id={inputId}
           type="file"
           accept=".pdf,.doc,.docx"
-          aria-invalid={Boolean(fileError)}
+          className="sr-only"
+          tabIndex={-1}
+          aria-label={`Upload draft for ${draft.label}`}
           disabled={uploadDraft.isPending}
           onChange={(event) => {
             setFile(event.target.files?.item(0) ?? null)
           }}
         />
-        <FieldError>{fileError}</FieldError>
-      </Field>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={!file || Boolean(fileError) || uploadDraft.isPending}
-        onClick={handleUpload}
-      >
-        {uploadDraft.isPending ? (
-          <Spinner data-icon="inline-start" />
+        {file ? (
+          <>
+            <span className="flex min-w-0 max-w-48 items-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
+              <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate">{file.name}</span>
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  disabled={Boolean(fileError) || uploadDraft.isPending}
+                  onClick={handleUpload}
+                  aria-label="Upload draft"
+                >
+                  {uploadDraft.isPending ? <Spinner /> : <Upload />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {uploadDraft.isPending ? 'Uploading' : 'Upload draft'}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground"
+                  disabled={uploadDraft.isPending}
+                  onClick={clearSelection}
+                  aria-label="Clear selected file"
+                >
+                  <X />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear</TooltipContent>
+            </Tooltip>
+          </>
         ) : (
-          <FileUp data-icon="inline-start" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Select file"
+              >
+                <FileUp />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Select file</TooltipContent>
+          </Tooltip>
         )}
-        {uploadDraft.isPending ? 'Uploading' : 'Upload'}
-      </Button>
+      </div>
+      {fileError ? (
+        <p className="text-xs text-destructive">{fileError}</p>
+      ) : null}
     </div>
   )
 }

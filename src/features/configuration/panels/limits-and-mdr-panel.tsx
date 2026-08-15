@@ -15,7 +15,13 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 
-import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
+
+import { Separator } from '#/components/ui/separator'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -52,7 +58,10 @@ export function LimitsAndMdrPanel() {
   const [form, setForm] = useState<LimitsAndMdrSettings | null>(null)
   const value = form ?? data?.limitsAndMdr ?? null
   const validationErrors = value
-    ? getValidationErrors(limitsAndMdrSettingsSchema.safeParse(value))
+    ? {
+        ...getValidationErrors(limitsAndMdrSettingsSchema.safeParse(value)),
+        ...getRangeOrderErrors(value),
+      }
     : {}
   function update(path: string, nextValue: number) {
     const base = form ?? data?.limitsAndMdr
@@ -67,7 +76,7 @@ export function LimitsAndMdrPanel() {
   }
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <LimitSection
           icon={BadgeDollarSign}
           colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
@@ -88,14 +97,14 @@ export function LimitsAndMdrPanel() {
           errors={validationErrors}
           onChange={update}
         />
-        <RatesSection
-          icon={Wallet}
-          colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
-          value={value.rates}
-          errors={validationErrors}
-          onChange={update}
-        />
       </div>
+      <RatesSection
+        icon={Wallet}
+        colorClass="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+        value={value.rates}
+        errors={validationErrors}
+        onChange={update}
+      />
       <ConfigurationActionBar>
         <Button
           onClick={() => mutation.mutate(value)}
@@ -111,6 +120,22 @@ export function LimitsAndMdrPanel() {
       </ConfigurationActionBar>
     </div>
   )
+}
+
+function getRangeOrderErrors(value: LimitsAndMdrSettings) {
+  const errors: Record<string, string> = {}
+  for (const group of ['testing', 'live'] as const) {
+    const range = value[group]
+    if (range.collectionMin > range.collectionMax) {
+      errors[`${group}.collectionMax`] =
+        'Maximum must be greater than or equal to the minimum.'
+    }
+    if (range.disbursementMin > range.disbursementMax) {
+      errors[`${group}.disbursementMax`] =
+        'Maximum must be greater than or equal to the minimum.'
+    }
+  }
+  return errors
 }
 
 function LimitSection({
@@ -139,37 +164,74 @@ function LimitSection({
       title={title}
       description={description}
     >
-      <FieldGroup>
-        <AmountField
-          id={`${prefix}-collection-min`}
-          label="Collection Min"
-          value={value.collectionMin}
-          error={errors[`${prefix}.collectionMin`]}
-          onChange={(next) => onChange(`${prefix}.collectionMin`, next)}
+      <div className="flex flex-col gap-5">
+        <RangeGroup
+          label="Collection"
+          hint="Incoming payments from customers."
+          prefix={`${prefix}.collection`}
+          minValue={value.collectionMin}
+          maxValue={value.collectionMax}
+          errors={errors}
+          onChange={onChange}
         />
-        <AmountField
-          id={`${prefix}-collection-max`}
-          label="Collection Max"
-          value={value.collectionMax}
-          error={errors[`${prefix}.collectionMax`]}
-          onChange={(next) => onChange(`${prefix}.collectionMax`, next)}
+        <Separator />
+        <RangeGroup
+          label="Disbursement"
+          hint="Outgoing payouts to merchants."
+          prefix={`${prefix}.disbursement`}
+          minValue={value.disbursementMin}
+          maxValue={value.disbursementMax}
+          errors={errors}
+          onChange={onChange}
         />
-        <AmountField
-          id={`${prefix}-disbursement-min`}
-          label="Disbursement Min"
-          value={value.disbursementMin}
-          error={errors[`${prefix}.disbursementMin`]}
-          onChange={(next) => onChange(`${prefix}.disbursementMin`, next)}
-        />
-        <AmountField
-          id={`${prefix}-disbursement-max`}
-          label="Disbursement Max"
-          value={value.disbursementMax}
-          error={errors[`${prefix}.disbursementMax`]}
-          onChange={(next) => onChange(`${prefix}.disbursementMax`, next)}
-        />
-      </FieldGroup>
+      </div>
     </ConfigurationSectionCard>
+  )
+}
+
+function RangeGroup({
+  label,
+  hint,
+  prefix,
+  minValue,
+  maxValue,
+  errors,
+  onChange,
+}: {
+  label: string
+  hint: string
+  prefix: string
+  minValue: number
+  maxValue: number
+  errors: Record<string, string>
+  onChange: (path: string, value: number) => void
+}) {
+  const idPrefix = prefix.replaceAll('.', '-')
+  return (
+    <div className="flex flex-col gap-3">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <AmountField
+          id={`${idPrefix}-min`}
+          label="Minimum"
+          suffix="PKR"
+          value={minValue}
+          error={errors[`${prefix}Min`]}
+          onChange={(next) => onChange(`${prefix}Min`, next)}
+        />
+        <AmountField
+          id={`${idPrefix}-max`}
+          label="Maximum"
+          suffix="PKR"
+          value={maxValue}
+          error={errors[`${prefix}Max`]}
+          onChange={(next) => onChange(`${prefix}Max`, next)}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -191,26 +253,29 @@ function RatesSection({
       icon={icon}
       colorClass={colorClass}
       title="Commission Rates"
-      description="Global MDR and payout rates used by case emails and reviews."
+      description="Global MDR and payout rates used by case emails and reviews. All values are percentages."
     >
-      <FieldGroup>
+      <FieldGroup className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AmountField
           id="rate-ewallets"
           label="E-wallets / QR"
+          suffix="%"
           value={value.eWallets}
           error={errors['rates.eWallets']}
           onChange={(next) => onChange('rates.eWallets', next)}
         />
         <AmountField
           id="rate-card-default"
-          label="Card"
+          label="Card (default)"
+          suffix="%"
           value={value.cardDefault}
           error={errors['rates.cardDefault']}
           onChange={(next) => onChange('rates.cardDefault', next)}
         />
         <AmountField
           id="rate-card-shopify"
-          label="Card Shopify"
+          label="Card (Shopify)"
+          suffix="%"
           value={value.cardShopify}
           error={errors['rates.cardShopify']}
           onChange={(next) => onChange('rates.cardShopify', next)}
@@ -218,6 +283,7 @@ function RatesSection({
         <AmountField
           id="rate-payout"
           label="Bank Settlement"
+          suffix="%"
           value={value.payout}
           error={errors['rates.payout']}
           onChange={(next) => onChange('rates.payout', next)}
@@ -232,24 +298,30 @@ function AmountField({
   label,
   value,
   error,
+  suffix,
   onChange,
 }: {
   id: string
   label: string
   value: number
   error?: string
+  suffix: string
   onChange: (value: number) => void
 }) {
   return (
     <Field data-invalid={Boolean(error)}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Input
-        id={id}
-        {...numberInputProps}
-        value={value}
-        aria-invalid={Boolean(error)}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
+      <InputGroup>
+        <InputGroupInput
+          id={id}
+          {...numberInputProps}
+          value={value}
+          aria-invalid={Boolean(error)}
+          className="text-right tabular-nums"
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+        <InputGroupAddon align="inline-end">{suffix}</InputGroupAddon>
+      </InputGroup>
       <FieldError>{error}</FieldError>
     </Field>
   )

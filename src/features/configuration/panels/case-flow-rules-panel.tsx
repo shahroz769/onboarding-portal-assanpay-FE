@@ -575,7 +575,7 @@ function FlowRuleRow({
   onRemove: () => void
 }) {
   return (
-    <div className="group flex flex-col gap-3 rounded-md bg-muted/30 p-3 transition-colors sm:flex-row sm:items-center">
+    <div className="group flex flex-col gap-3 rounded-md border bg-background p-3 transition-colors hover:border-border/80 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center">{fields}</div>
       <div className="flex items-center justify-end gap-2 sm:gap-3">
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -584,7 +584,9 @@ function FlowRuleRow({
             onCheckedChange={onActiveChange}
             aria-label={isActive ? 'Deactivate rule' : 'Activate rule'}
           />
-          {isActive ? 'Active' : 'Inactive'}
+          <span className="inline-block w-12">
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
         </label>
         <Button
           type="button"

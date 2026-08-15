@@ -46,7 +46,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
               />
               <InfoBlock label="Case Number" value={data.case.caseNumber} />
               <InfoBlock
-                label="CASE OWNER"
+                label="Case Owner"
                 value={data.owner?.name ?? 'AP System'}
               />
               <InfoBlock label="Merchant Name" value={merchantName} />
