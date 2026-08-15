@@ -115,6 +115,7 @@ export const dashboardResponseSchema = z.object({
         closed: z.number(),
       }),
     ),
+    merchantsLive: z.array(z.object({ date: z.string(), count: z.number() })),
   }),
   portalMids: z.object({
     pendingLimits: z.array(pendingPortalMidLimitSchema),

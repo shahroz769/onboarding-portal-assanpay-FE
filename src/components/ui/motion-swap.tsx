@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode, TransitionEvent } from 'react'
 
 type MotionSwapItem = {
@@ -9,6 +9,12 @@ type MotionSwapItem = {
   animateIn: boolean
 }
 
+type MotionSwapState = {
+  motionKey: string
+  nextItemId: number
+  items: MotionSwapItem[]
+}
+
 export function MotionSwap({
   motionKey,
   children,
@@ -16,39 +22,45 @@ export function MotionSwap({
   motionKey: string
   children: ReactNode
 }) {
-  const latestChildrenRef = useRef(children)
-  const nextItemIdRef = useRef(1)
-  const [items, setItems] = useState<MotionSwapItem[]>(() => [
-    {
-      id: 0,
+  const [currentSwap, setSwap] = useState<MotionSwapState>(() => ({
+    motionKey,
+    nextItemId: 1,
+    items: [
+      {
+        id: 0,
+        motionKey,
+        content: children,
+        exiting: false,
+        animateIn: false,
+      },
+    ],
+  }))
+  let swap = currentSwap
+
+  if (swap.motionKey !== motionKey) {
+    const items: MotionSwapItem[] = []
+
+    for (const item of swap.items) {
+      if (!item.exiting) {
+        items.push({ ...item, exiting: true })
+      }
+    }
+
+    items.push({
+      id: swap.nextItemId,
       motionKey,
       content: children,
       exiting: false,
-      animateIn: false,
-    },
-  ])
-
-  latestChildrenRef.current = children
-
-  useEffect(() => {
-    setItems((current) => {
-      const activeItem = current.find((item) => !item.exiting)
-      if (activeItem?.motionKey === motionKey) return current
-
-      return [
-        ...current
-          .filter((item) => !item.exiting)
-          .map((item) => ({ ...item, exiting: true })),
-        {
-          id: nextItemIdRef.current++,
-          motionKey,
-          content: latestChildrenRef.current,
-          exiting: false,
-          animateIn: true,
-        },
-      ]
+      animateIn: true,
     })
-  }, [motionKey])
+
+    swap = {
+      motionKey,
+      nextItemId: swap.nextItemId + 1,
+      items,
+    }
+    setSwap(swap)
+  }
 
   function handleTransitionEnd(
     item: MotionSwapItem,
@@ -62,14 +74,15 @@ export function MotionSwap({
       return
     }
 
-    setItems((current) =>
-      current.filter((candidate) => candidate.id !== item.id),
-    )
+    setSwap((current) => ({
+      ...current,
+      items: current.items.filter((candidate) => candidate.id !== item.id),
+    }))
   }
 
   return (
     <div className="motion-swap">
-      {items.map((item) => (
+      {swap.items.map((item) => (
         <div
           key={item.id}
           aria-hidden={item.exiting || undefined}

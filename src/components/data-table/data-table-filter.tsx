@@ -98,6 +98,8 @@ export function DataTableFilter({
                 )}
               >
                 <div
+                  data-slot="data-table-filter-tick"
+                  data-selected={isSelected || undefined}
                   className={cn(
                     'flex size-4 shrink-0 items-center justify-center rounded-lg border border-primary',
                     isSelected

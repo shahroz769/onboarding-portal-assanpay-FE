@@ -144,6 +144,67 @@ body,
   }
 }
 
+/* Brand color rgb(74, 109, 101) for primary buttons only.
+   Scoped to data-variant="default" so links, badges, checkboxes, etc.
+   keep using the neutral --primary token. Unlayered on purpose so it
+   wins over the bg-primary / hover:bg-primary/90 utilities. */
+[data-slot='button'][data-variant='default'] {
+  background-color: rgb(74 109 101);
+  color: oklch(0.985 0 0);
+
+  &:hover:not(:disabled) {
+    background-color: rgb(64 94 87);
+  }
+}
+
+.dark [data-slot='button'][data-variant='default']:hover:not(:disabled) {
+  background-color: rgb(84 123 114);
+}
+
+/* Same brand color for checkbox ticks (checked / indeterminate). */
+[data-slot='checkbox'][data-state='checked'],
+[data-slot='checkbox'][data-state='indeterminate'] {
+  border-color: rgb(74 109 101);
+  background-color: rgb(74 109 101);
+  color: oklch(0.985 0 0);
+}
+
+/* Switch track when on. */
+[data-slot='switch'][data-state='checked'] {
+  background-color: rgb(74 109 101);
+}
+
+[data-slot='switch'][data-state='checked'] [data-slot='switch-thumb'] {
+  background-color: oklch(0.985 0 0);
+}
+
+/* Tick icons in select, combobox, dropdown menu, and command items. */
+[data-slot='select-item-indicator'] svg,
+[data-slot='combobox-item-indicator'] svg,
+[data-slot='dropdown-menu-checkbox-item'] > span:first-child svg,
+[data-slot='dropdown-menu-radio-item'] > span:first-child svg,
+[data-slot='command-item'] svg.lucide-check {
+  color: rgb(74 109 101);
+}
+
+.dark [data-slot='select-item-indicator'] svg,
+.dark [data-slot='combobox-item-indicator'] svg,
+.dark [data-slot='dropdown-menu-checkbox-item'] > span:first-child svg,
+.dark [data-slot='dropdown-menu-radio-item'] > span:first-child svg,
+.dark [data-slot='command-item'] svg.lucide-check {
+  color: rgb(106 174 159);
+}
+
+/* Data-table faceted filter tick boxes (e.g. merchants Priority filter). */
+[data-slot='data-table-filter-tick'] {
+  border-color: rgb(74 109 101);
+}
+
+[data-slot='data-table-filter-tick'][data-selected] {
+  background-color: rgb(74 109 101);
+  color: oklch(0.985 0 0);
+}
+
 /* Smooth dark mode transition via View Transitions API */
 ::view-transition-old(root),
 ::view-transition-new(root) {

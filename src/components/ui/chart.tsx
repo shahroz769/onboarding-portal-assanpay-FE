@@ -190,7 +190,12 @@ function ChartTooltipContent({
           if (item.type === 'none') return []
           const key = `${nameKey ?? item.name ?? item.dataKey ?? 'value'}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-          const indicatorColor = color ?? item.payload?.fill ?? item.color
+          const rawIndicatorColor = color ?? item.payload?.fill ?? item.color
+          const indicatorColor =
+            typeof rawIndicatorColor === 'string' &&
+            rawIndicatorColor.startsWith('url(')
+              ? `var(--color-${key})`
+              : rawIndicatorColor
 
           return [
             <div
@@ -302,7 +307,11 @@ function ChartLegendContent({
               <div
                 className="h-2 w-2 shrink-0 rounded-[2px]"
                 style={{
-                  backgroundColor: item.color,
+                  backgroundColor:
+                    typeof item.color === 'string' &&
+                    item.color.startsWith('url(')
+                      ? `var(--color-${key})`
+                      : item.color,
                 }}
               />
             )}
