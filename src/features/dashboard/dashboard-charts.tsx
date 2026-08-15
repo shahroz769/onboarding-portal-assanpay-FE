@@ -3,7 +3,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -98,40 +97,40 @@ function DailyCountBarChart({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-        <CardAction>
-          <div className="flex flex-col items-end gap-3">
-            <Tabs
-              value={granularity}
-              onValueChange={(value) => setGranularity(value as Granularity)}
-            >
-              <TabsList className="h-7">
-                <TabsTrigger value="daily" className="px-2.5 text-xs">
-                  Daily
-                </TabsTrigger>
-                <TabsTrigger value="weekly" className="px-2.5 text-xs">
-                  Weekly
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex items-start gap-5 text-right">
-              <HeaderStat label="Total" value={formatCount(total)} />
+      <CardHeader className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-1.5">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <div className="flex flex-col items-end gap-3">
+          <Tabs
+            value={granularity}
+            onValueChange={(value) => setGranularity(value as Granularity)}
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="daily" className="px-2.5 text-xs">
+                Daily
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="px-2.5 text-xs">
+                Weekly
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex items-start gap-5 text-right">
+            <HeaderStat label="Total" value={formatCount(total)} />
+            <HeaderStat
+              label={granularity === 'weekly' ? 'Weekly avg' : 'Daily avg'}
+              value={average.toFixed(1)}
+            />
+            {peak ? (
               <HeaderStat
-                label={granularity === 'weekly' ? 'Weekly avg' : 'Daily avg'}
-                value={average.toFixed(1)}
+                label="Peak"
+                value={formatCount(peak.count)}
+                hint={formatDay(peak.date)}
               />
-              {peak ? (
-                <HeaderStat
-                  label="Peak"
-                  value={formatCount(peak.count)}
-                  hint={formatDay(peak.date)}
-                />
-              ) : null}
-            </div>
+            ) : null}
           </div>
-        </CardAction>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={config} className="aspect-auto h-64 w-full">
