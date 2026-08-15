@@ -1,5 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
+import { useNavigate } from '@tanstack/react-router'
 import {
   CheckIcon,
   ChevronsUpDownIcon,
@@ -86,6 +87,14 @@ function SectionIcon({
   )
 }
 
+function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="text-destructive">
+      *
+    </span>
+  )
+}
+
 function QueueAccessSelect({
   label,
   queues,
@@ -120,9 +129,10 @@ function QueueAccessSelect({
     }
   }
 
+  const isPlaceholder = !isAllSelected && selectedQueues.length === 0
   const triggerLabel = isAllSelected
     ? 'All Queues'
-    : selectedQueues.length === 0
+    : isPlaceholder
       ? placeholder
       : selectedQueues.length === 1
         ? selectedQueues[0].name
@@ -137,7 +147,14 @@ function QueueAccessSelect({
           className="min-h-9 w-full min-w-0 justify-between"
           disabled={disabled}
         >
-          <span className="min-w-0 truncate text-left">{triggerLabel}</span>
+          <span
+            className={cn(
+              'min-w-0 truncate text-left',
+              isPlaceholder && 'font-normal text-muted-foreground',
+            )}
+          >
+            {triggerLabel}
+          </span>
           <ChevronsUpDownIcon data-icon="inline-end" />
         </Button>
       </PopoverTrigger>
@@ -256,6 +273,7 @@ export function UserForm({
   disabledReason?: string
 }) {
   const { user: currentUser } = useAuth()
+  const navigate = useNavigate()
   const queuesQuery = useQuery(queuesQueryOptions())
   const resetPasswordMutation = useSendUserResetPasswordMutation()
   const queues = queuesQuery.data ?? []
@@ -299,6 +317,7 @@ export function UserForm({
     form.store,
     (state) => state.values.workQueueIds,
   )
+  const isAgent = roleType === 'agent'
   const viewQueueIdSet = new Set(viewQueueIds)
   const visibleWorkQueues =
     queueViewScope === 'all'
@@ -321,7 +340,7 @@ export function UserForm({
         event.preventDefault()
         form.handleSubmit()
       }}
-      className="flex flex-1 flex-col gap-6"
+      className="flex w-full flex-1 flex-col gap-6"
     >
       {disabledReason ? (
         <Alert>
@@ -330,199 +349,141 @@ export function UserForm({
         </Alert>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <SectionIcon
-              icon={UserRoundIcon}
-              colorClass="bg-blue-500/10 text-blue-500"
-            />
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex min-w-0 items-center gap-3">
+              <SectionIcon
+                icon={UserRoundIcon}
+                colorClass="bg-blue-500/10 text-blue-500"
+              />
 
-            <div className="min-w-0">
-              <CardTitle>Employee Details</CardTitle>
-              <CardDescription>
-                Name, login identity, role, and employee status.
-              </CardDescription>
+              <div className="min-w-0">
+                <CardTitle>Employee Details</CardTitle>
+                <CardDescription>
+                  {mode === 'create'
+                    ? 'Basic identity, login, and role for the new employee.'
+                    : 'Name, login identity, role, and employee status.'}
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup className="grid gap-6 sm:grid-cols-2">
-            <form.Field name="name">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
-                      aria-invalid={isInvalid}
-                      disabled={disabled}
-                    />
-
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                )
-              }}
-            </form.Field>
-
-            <form.Field name="email">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                    <Input
-                      id={field.name}
-                      type="email"
-                      placeholder="name@assanpay.com"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
-                      aria-invalid={isInvalid}
-                      disabled={disabled || mode === 'edit'}
-                    />
-
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                )
-              }}
-            </form.Field>
-
-            <form.Field name="username">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Username</FieldLabel>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
-                      aria-invalid={isInvalid}
-                      disabled={disabled || mode === 'edit'}
-                    />
-
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                )
-              }}
-            </form.Field>
-
-            <form.Field name="gender">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel>Gender</FieldLabel>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(value) =>
-                        field.handleChange(value as UserFormValues['gender'])
-                      }
-                      disabled={disabled}
-                    >
-                      <SelectTrigger
-                        aria-invalid={isInvalid}
-                        className="w-full"
-                      >
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="male">
-                            {USER_GENDER_LABELS.male}
-                          </SelectItem>
-                          <SelectItem value="female">
-                            {USER_GENDER_LABELS.female}
-                          </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                )
-              }}
-            </form.Field>
-
-            <form.Field name="roleType">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel>Role</FieldLabel>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(value) => {
-                        const nextRole = value as UserFormValues['roleType']
-                        field.handleChange(nextRole)
-                        if (nextRole !== 'agent') {
-                          form.setFieldValue('queueViewScope', 'all')
-                          form.setFieldValue('viewQueueIds', [])
-                          form.setFieldValue('workQueueIds', [])
-                        }
-                      }}
-                      disabled={disabled || isRoleLocked}
-                    >
-                      <SelectTrigger
-                        aria-invalid={isInvalid}
-                        className="w-full"
-                      >
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {roleOptions.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {USER_ROLE_LABELS[role]}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                )
-              }}
-            </form.Field>
-
-            {mode === 'edit' ? (
-              <form.Field name="status">
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="grid gap-6 sm:grid-cols-2">
+              <form.Field name="name">
                 {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel>Status</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>
+                        Name <RequiredMark />
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        value={field.state.value}
+                        autoComplete="off"
+                        autoFocus={mode === 'create'}
+                        placeholder="e.g. Ayesha Khan"
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                        disabled={disabled}
+                      />
+
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+
+              <form.Field name="email">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Email <RequiredMark />
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="email"
+                        placeholder="name@assanpay.com"
+                        autoComplete="off"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                        disabled={disabled || mode === 'edit'}
+                      />
+
+                      {mode === 'edit' ? (
+                        <FieldDescription>
+                          Email cannot be changed after the account is created.
+                        </FieldDescription>
+                      ) : null}
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+
+              <form.Field name="username">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Username <RequiredMark />
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        value={field.state.value}
+                        autoComplete="off"
+                        placeholder="e.g. ayesha.khan"
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                        disabled={disabled || mode === 'edit'}
+                      />
+
+                      {mode === 'edit' ? (
+                        <FieldDescription>
+                          Username cannot be changed after the account is
+                          created.
+                        </FieldDescription>
+                      ) : null}
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+
+              <form.Field name="gender">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel>Gender</FieldLabel>
                       <Select
                         value={field.state.value}
                         onValueChange={(value) =>
-                          field.handleChange(value as UserFormValues['status'])
+                          field.handleChange(value as UserFormValues['gender'])
                         }
                         disabled={disabled}
                       >
@@ -530,15 +491,15 @@ export function UserForm({
                           aria-invalid={isInvalid}
                           className="w-full"
                         >
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="active">
-                              {USER_STATUS_LABELS.active}
+                            <SelectItem value="male">
+                              {USER_GENDER_LABELS.male}
                             </SelectItem>
-                            <SelectItem value="inactive">
-                              {USER_STATUS_LABELS.inactive}
+                            <SelectItem value="female">
+                              {USER_GENDER_LABELS.female}
                             </SelectItem>
                           </SelectGroup>
                         </SelectContent>
@@ -550,12 +511,102 @@ export function UserForm({
                   )
                 }}
               </form.Field>
-            ) : null}
-          </FieldGroup>
-        </CardContent>
-      </Card>
 
-      {roleType === 'agent' ? (
+              <form.Field name="roleType">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel>Role</FieldLabel>
+                      <Select
+                        value={field.state.value}
+                        onValueChange={(value) => {
+                          const nextRole = value as UserFormValues['roleType']
+                          field.handleChange(nextRole)
+                          if (nextRole !== 'agent') {
+                            form.setFieldValue('queueViewScope', 'all')
+                            form.setFieldValue('viewQueueIds', [])
+                            form.setFieldValue('workQueueIds', [])
+                          }
+                        }}
+                        disabled={disabled || isRoleLocked}
+                      >
+                        <SelectTrigger
+                          aria-invalid={isInvalid}
+                          className="w-full"
+                        >
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {roleOptions.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {USER_ROLE_LABELS[role]}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <FieldDescription>
+                        {field.state.value === 'agent'
+                          ? 'Agents only see cases from their assigned queues.'
+                          : 'Full access to every queue, no assignment needed.'}
+                      </FieldDescription>
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+
+              {mode === 'edit' ? (
+                <form.Field name="status">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel>Status</FieldLabel>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(value) =>
+                            field.handleChange(
+                              value as UserFormValues['status'],
+                            )
+                          }
+                          disabled={disabled}
+                        >
+                          <SelectTrigger
+                            aria-invalid={isInvalid}
+                            className="w-full"
+                          >
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="active">
+                                {USER_STATUS_LABELS.active}
+                              </SelectItem>
+                              <SelectItem value="inactive">
+                                {USER_STATUS_LABELS.inactive}
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        {isInvalid ? (
+                          <FieldError errors={field.state.meta.errors} />
+                        ) : null}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+              ) : null}
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex min-w-0 items-center gap-3">
@@ -567,14 +618,15 @@ export function UserForm({
               <div className="min-w-0">
                 <CardTitle>Queue Access</CardTitle>
                 <CardDescription>
-                  View access controls visible queues; working access controls
-                  ownership.
+                  {isAgent
+                    ? 'Choose which case queues this agent can view, and which of those they can take ownership from.'
+                    : 'Queue assignments only apply to agents. This role has access to every queue.'}
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <FieldGroup className="grid gap-6 lg:grid-cols-2">
+            <FieldGroup className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
               <div className="min-w-0">
                 <form.Field name="viewQueueIds">
                   {(field) => {
@@ -604,11 +656,15 @@ export function UserForm({
                             )
                           }}
                           placeholder="Select view queues"
-                          disabled={disabled || queuesQuery.isLoading}
+                          disabled={
+                            disabled || !isAgent || queuesQuery.isLoading
+                          }
                         />
 
                         <FieldDescription>
-                          Agents can only see cases in queues they can view.
+                          {isAgent
+                            ? 'Agents can only see cases in queues they can view.'
+                            : 'This role can view every queue.'}
                         </FieldDescription>
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />
@@ -632,7 +688,8 @@ export function UserForm({
                           queues={visibleWorkQueues}
                           selectedIds={field.state.value}
                           isAllSelected={
-                            queueViewScope === 'all' && isAllWorkQueuesSelected
+                            queueViewScope === 'all' &&
+                            (!isAgent || isAllWorkQueuesSelected)
                           }
                           onChangeSelectedIds={field.handleChange}
                           placeholder="Select working queues"
@@ -642,14 +699,16 @@ export function UserForm({
                           }
                           disabled={
                             disabled ||
+                            !isAgent ||
                             (queueViewScope === 'selected' &&
                               viewQueueIds.length === 0)
                           }
                         />
 
                         <FieldDescription>
-                          Only these queues can be taken into ownership by this
-                          agent.
+                          {isAgent
+                            ? 'Only these queues can be taken into ownership by this agent.'
+                            : 'This role can take ownership from every queue.'}
                         </FieldDescription>
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />
@@ -662,31 +721,35 @@ export function UserForm({
             </FieldGroup>
           </CardContent>
         </Card>
-      ) : null}
+      </div>
 
-      <div className="mt-auto flex flex-wrap justify-end gap-3">
-        {mode === 'edit' && user && currentUser?.roleType === 'super_admin' ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => resetPasswordMutation.mutate(user.id)}
-            disabled={disabled || resetPasswordMutation.isPending}
-          >
-            {resetPasswordMutation.isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <RotateCcwIcon data-icon="inline-start" />
-            )}
-            Reset Password
-          </Button>
-        ) : null}
+      <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center justify-end gap-3 border-t bg-background/90 py-4 backdrop-blur-sm">
+        <div className="mr-auto flex items-center gap-3">
+          {mode === 'edit' &&
+          user &&
+          currentUser?.roleType === 'super_admin' ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => resetPasswordMutation.mutate(user.id)}
+              disabled={disabled || resetPasswordMutation.isPending}
+            >
+              {resetPasswordMutation.isPending ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <RotateCcwIcon data-icon="inline-start" />
+              )}
+              Reset Password
+            </Button>
+          ) : null}
+        </div>
         <Button
           type="button"
-          variant="outline"
-          onClick={() => form.reset()}
+          variant="ghost"
+          onClick={() => void navigate({ to: '/user-management/all-users' })}
           disabled={disabled}
         >
-          Reset
+          Cancel
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
@@ -709,53 +772,55 @@ export function UserForm({
 
 export function UserFormSkeleton() {
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <Skeleton className="size-10 rounded-lg" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-72 max-w-full" />
+    <div className="flex w-full flex-1 flex-col gap-6">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex min-w-0 items-center gap-3">
+              <Skeleton className="size-10 rounded-lg" />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-72 max-w-full" />
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup className="grid gap-6 sm:grid-cols-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Field key={index}>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </Field>
-            ))}
-          </FieldGroup>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="grid gap-6 sm:grid-cols-2">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Field key={index}>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-9 w-full" />
+                </Field>
+              ))}
+            </FieldGroup>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex min-w-0 items-center gap-3">
-            <Skeleton className="size-10 rounded-lg" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-80 max-w-full" />
+        <Card>
+          <CardHeader>
+            <div className="flex min-w-0 items-center gap-3">
+              <Skeleton className="size-10 rounded-lg" />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-80 max-w-full" />
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup className="grid gap-6 lg:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <Field key={index}>
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-9 w-full" />
-                <Skeleton className="h-4 w-64 max-w-full" />
-              </Field>
-            ))}
-          </FieldGroup>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="grid gap-6 lg:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, index) => (
+                <Field key={index}>
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-4 w-64 max-w-full" />
+                </Field>
+              ))}
+            </FieldGroup>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="mt-auto flex justify-end gap-3">
+      <div className="mt-auto flex justify-end gap-3 border-t py-4">
         <Skeleton className="h-9 w-20 rounded-md" />
         <Skeleton className="h-9 w-28 rounded-md" />
       </div>

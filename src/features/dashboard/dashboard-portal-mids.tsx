@@ -178,7 +178,8 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                             {item.merchantName}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {item.subMerchantName ?? 'Sub-merchant not selected'}
+                            {item.subMerchantName ??
+                              'Sub-merchant not selected'}
                           </span>
                         </div>
                       </TableCell>
@@ -222,8 +223,8 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             <ShieldCheck />
             <AlertTitle>Super Admin or Admin required</AlertTitle>
             <AlertDescription>
-              Only Super Admins and Admins can mark portal MID limits as
-              applied or pre-applied.
+              Only Super Admins and Admins can mark portal MID limits as applied
+              or pre-applied.
             </AlertDescription>
           </Alert>
         ) : null}
