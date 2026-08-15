@@ -44,6 +44,14 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/features/auth/auth-client'
 import { useApplyPortalMidLimits } from '#/hooks/use-dashboard-query'
@@ -120,109 +128,105 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle>Portal MIDs awaiting limits</CardTitle>
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <CardTitle>Portal MIDs awaiting limits</CardTitle>
+              <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
+                {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
+                {pending.length}
+              </Badge>
+            </div>
             <CardDescription>
               Successful MID Creation cases pending Portal MID and internal MID
               limits.
             </CardDescription>
           </div>
-          <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
-            {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
-            {pending.length}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setAppliedOpen(true)}>
+              <Eye data-icon="inline-start" />
+              Applied Previously
+            </Button>
+            <Button onClick={() => handleOpenChange(true)} disabled={!canApply}>
+              <ShieldCheck data-icon="inline-start" />
+              Apply Limits
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {pending.length > 0 ? (
-          <>
+          <div className="overflow-hidden rounded-md border">
             <ScrollArea className="max-h-72">
-              <div className="flex flex-col gap-2 pr-3">
-                {pending.map((item) => (
-                  <div
-                    key={`${item.caseId}-${item.midKind}-${item.portalMid}`}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">{item.merchantName}</p>
-                      <p className="text-muted-foreground">
-                        {item.subMerchantName ?? 'Sub-merchant not selected'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {item.midKind === 'internal'
-                          ? 'Portal MID (Internal)'
-                          : 'Portal MID'}
-                      </Badge>
-                      <span className="font-mono font-semibold">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="pl-4">Merchant</TableHead>
+                    <TableHead>MID type</TableHead>
+                    <TableHead className="pr-4 text-right">
+                      Portal MID
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pending.map((item) => (
+                    <TableRow
+                      key={`${item.caseId}-${item.midKind}-${item.portalMid}`}
+                    >
+                      <TableCell className="pl-4 whitespace-normal">
+                        <div className="flex flex-col leading-tight">
+                          <span className="font-medium">
+                            {item.merchantName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {item.subMerchantName ?? 'Sub-merchant not selected'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.midKind === 'internal'
+                              ? 'secondary'
+                              : 'outline'
+                          }
+                        >
+                          {item.midKind === 'internal'
+                            ? 'Internal'
+                            : 'Standard'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="pr-4 text-right font-mono font-medium tabular-nums">
                         {item.portalMid}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </ScrollArea>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={() => setAppliedOpen(true)}>
-                <Eye data-icon="inline-start" />
-                Applied Previously
-              </Button>
-              <Button
-                onClick={() => handleOpenChange(true)}
-                disabled={!canApply}
-              >
-                <ShieldCheck data-icon="inline-start" />
-                Apply Limits
-              </Button>
-            </div>
-            {!canApply ? (
-              <Alert variant="warning">
-                <ShieldCheck />
-                <AlertTitle>Super Admin or Admin required</AlertTitle>
-                <AlertDescription>
-                  Only Super Admins and Admins can mark portal MID limits as
-                  applied.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-          </>
+          </div>
         ) : (
-          <>
-            <Alert variant="success">
-              <CheckCircle2 />
-              <AlertTitle>All eligible portal MIDs are complete</AlertTitle>
-              <AlertDescription>
-                There are no successful MID Creation cases waiting for testing
-                or internal limit application. You can still pre-apply limits
-                for MIDs before onboarding.
-              </AlertDescription>
-            </Alert>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={() => setAppliedOpen(true)}>
-                <Eye data-icon="inline-start" />
-                Applied Previously
-              </Button>
-              <Button
-                onClick={() => handleOpenChange(true)}
-                disabled={!canApply}
-              >
-                <ShieldCheck data-icon="inline-start" />
-                Apply Limits
-              </Button>
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+              <CheckCircle2 className="size-5" />
             </div>
-            {!canApply ? (
-              <Alert variant="warning">
-                <ShieldCheck />
-                <AlertTitle>Super Admin or Admin required</AlertTitle>
-                <AlertDescription>
-                  Only Super Admins and Admins can mark portal MID limits as
-                  applied or pre-applied.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-          </>
+            <p className="font-medium">All eligible portal MIDs are complete</p>
+            <p className="max-w-md text-sm text-pretty text-muted-foreground">
+              No successful MID Creation cases are waiting for testing or limit
+              application. You can still pre-apply limits for MIDs before
+              onboarding.
+            </p>
+          </div>
         )}
+        {!canApply ? (
+          <Alert variant="warning">
+            <ShieldCheck />
+            <AlertTitle>Super Admin or Admin required</AlertTitle>
+            <AlertDescription>
+              Only Super Admins and Admins can mark portal MID limits as
+              applied or pre-applied.
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </CardContent>
 
       <Dialog open={appliedOpen} onOpenChange={setAppliedOpen}>
