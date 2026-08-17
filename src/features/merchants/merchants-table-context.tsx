@@ -230,7 +230,11 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       setPriorityTarget({ type: 'single', merchant }),
     onTerminateClick: (merchant) =>
       setTerminateTarget({ type: 'single', merchant }),
-    onDeleteClick: setDeleteTarget,
+    onDeleteClick: (merchant) => {
+      if (merchant.status === 'terminated') {
+        setDeleteTarget(merchant)
+      }
+    },
   })
 
   const commaToSet = (value: string | undefined) =>
@@ -295,7 +299,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   }
 
   const confirmDelete = (confirmation: string) => {
-    if (!deleteTarget) return
+    if (!deleteTarget || deleteTarget.status !== 'terminated') return
 
     const merchantId = deleteTarget.id
     permanentlyDeleteMerchant.mutate(

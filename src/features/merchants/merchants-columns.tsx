@@ -264,7 +264,7 @@ export function createMerchantColumns({
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
-          {canTerminate ? (
+          {canTerminate && merchant.status === 'terminated' ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -277,7 +277,9 @@ export function createMerchantColumns({
                   <span className="sr-only">Delete permanently</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Delete permanently</TooltipContent>
+              <TooltipContent>
+                Delete terminated merchant permanently
+              </TooltipContent>
             </Tooltip>
           ) : null}
         </div>
