@@ -31,6 +31,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
 interface AgreementUploadFormProps {
@@ -38,7 +39,6 @@ interface AgreementUploadFormProps {
   context: AgreementUploadContext
 }
 
-const MAX_AGREEMENT_BYTES = 1024 * 1024
 const ACCEPTED_AGREEMENT_EXTENSIONS = ['.pdf', '.doc', '.docx'] as const
 const ACCEPTED_AGREEMENT_TYPES = new Set([
   'application/pdf',
@@ -53,8 +53,8 @@ function formatFileSize(bytes: number) {
 }
 
 function validateAgreement(file: File) {
-  if (file.size > MAX_AGREEMENT_BYTES) {
-    return `Agreement must be 1 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return `Agreement must be 10 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
   }
 
   const extension = file.name.toLowerCase().match(/\.[^.]+$/)?.[0] ?? ''
@@ -203,7 +203,7 @@ export function AgreementUploadForm({
         <CardHeader>
           <CardTitle>Upload signed agreement</CardTitle>
           <CardDescription>
-            Accepted formats: PDF, DOC, DOCX. Maximum file size is 1 MB.
+            Accepted formats: PDF, DOC, DOCX. Maximum file size is 10 MB.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -311,7 +311,7 @@ function AgreementUploadField({
               {file ? file.name : 'Drop signed agreement here'}
             </p>
             <p className="text-sm text-muted-foreground">
-              {file ? formatFileSize(file.size) : 'PDF, DOC, DOCX (max 1MB)'}
+              {file ? formatFileSize(file.size) : 'PDF, DOC, DOCX (max 10MB)'}
             </p>
           </div>
           <Button

@@ -32,11 +32,11 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveWordpressWebsiteCase } from '#/hooks/use-case-detail-query'
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
 import type { QueueRendererProps } from '../queue-registry'
 
-const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024
 const SCREENSHOT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 const formSchema = z.object({
@@ -66,7 +66,7 @@ function validateScreenshot(file: File) {
     return 'Screenshots must be JPG, PNG, or WEBP files.'
   }
 
-  if (file.size > MAX_SCREENSHOT_BYTES) {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
     return 'Each screenshot must be 10 MB or smaller.'
   }
 

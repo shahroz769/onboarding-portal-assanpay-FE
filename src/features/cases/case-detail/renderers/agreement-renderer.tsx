@@ -50,13 +50,13 @@ import {
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 import { MERCHANT_TYPES } from '#/schemas/merchant-onboarding.schema'
 
 import type { QueueRendererProps } from '../queue-registry'
 
-const MAX_AGREEMENT_BYTES = 1024 * 1024
 const ACCEPTED_AGREEMENT_EXTENSIONS = ['.pdf', '.doc', '.docx'] as const
 const ACCEPTED_AGREEMENT_TYPES = new Set([
   'application/pdf',
@@ -89,8 +89,8 @@ function getFileExtension(fileName: string) {
 }
 
 function validateAgreement(file: File) {
-  if (file.size > MAX_AGREEMENT_BYTES) {
-    return `Agreement must be 1 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return `Agreement must be 10 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
   }
 
   if (
@@ -668,7 +668,7 @@ function AgreementUpload({
               {isUploading ? 'Uploading agreement' : 'Drop agreement here'}
             </p>
             <p className="text-sm text-muted-foreground">
-              PDF, DOC, DOCX (max 1MB)
+              PDF, DOC, DOCX (max 10MB)
             </p>
           </div>
           <Button

@@ -6,8 +6,8 @@ import { Button } from '#/components/ui/button'
 import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
-  MAX_FILE_SIZE,
 } from '#/schemas/merchant-onboarding.schema'
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
 type DocumentUploadFieldProps = {
@@ -27,7 +27,7 @@ function formatFileSize(bytes: number): string {
 }
 
 function validateFile(file: File): string | null {
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
     return `File exceeds 10 MB limit (${formatFileSize(file.size)}).`
   }
 

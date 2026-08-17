@@ -1,4 +1,5 @@
-const MAX_DRAFT_BYTES = 5 * 1024 * 1024
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
+
 const DRAFT_EXTENSIONS = new Set(['.pdf', '.doc', '.docx'])
 
 export function getValidationErrors(
@@ -29,8 +30,8 @@ export function hasValidationErrors(errors: Record<string, string>) {
 
 export function getDraftFileError(file: File | null) {
   if (!file) return null
-  if (file.size > MAX_DRAFT_BYTES) {
-    return 'Draft file must be 5 MB or smaller.'
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return 'Draft file must be 10 MB or smaller.'
   }
   const dotIndex = file.name.lastIndexOf('.')
   const extension = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : ''

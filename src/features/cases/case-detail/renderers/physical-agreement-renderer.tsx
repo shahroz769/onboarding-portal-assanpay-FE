@@ -29,11 +29,11 @@ import {
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { useUploadPhysicalAgreementCopy } from '#/hooks/use-case-detail-query'
+import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
 import type { QueueRendererProps } from '../queue-registry'
 
-const MAX_PHYSICAL_AGREEMENT_BYTES = 10 * 1024 * 1024
 const ACCEPTED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'] as const
 const ACCEPTED_MIME_TYPES = new Set([
   'application/pdf',
@@ -53,7 +53,7 @@ function getFileExtension(fileName: string) {
 }
 
 function validatePhysicalAgreement(file: File) {
-  if (file.size > MAX_PHYSICAL_AGREEMENT_BYTES) {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
     return `File must be 10 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
   }
 

@@ -384,7 +384,7 @@ function DraftFileDropzone({
             <div>
               <p className="text-sm font-semibold">Drop draft form here</p>
               <p className="text-xs text-muted-foreground">
-                PDF, DOC, DOCX (max 5 MB)
+                PDF, DOC, DOCX (max 10 MB)
               </p>
             </div>
             <Button
