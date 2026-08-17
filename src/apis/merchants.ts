@@ -95,6 +95,19 @@ export async function terminateMerchant(merchantId: string, reason: string) {
   return response.data
 }
 
+export async function permanentlyDeleteMerchant(
+  merchantId: string,
+  confirmation: string,
+) {
+  const response = await apiClient.delete<{
+    id: string
+    deletedStorageObjectCount: number
+  }>(`/api/merchants/${merchantId}/permanent`, {
+    data: { confirmation },
+  })
+  return response.data
+}
+
 // ─── Bulk Terminate ─────────────────────────────────────────────────────────
 
 export async function bulkTerminateMerchants(ids: string[], reason: string) {

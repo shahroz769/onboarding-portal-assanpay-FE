@@ -8,6 +8,7 @@ import {
   merchantsInfiniteQueryOptions,
   useBulkPriorityMutation,
   useBulkTerminateMutation,
+  usePermanentlyDeleteMerchantMutation,
   useTerminateMerchantMutation,
   useUpdatePriorityMutation,
 } from '#/hooks/use-merchants-query'
@@ -36,8 +37,10 @@ interface MerchantsTableState {
   isFetchingNextPage: boolean
   priorityTarget: MerchantPriorityTarget | null
   terminateTarget: TerminateTarget | null
+  deleteTarget: MerchantListItem | null
   isPriorityPending: boolean
   isTerminatePending: boolean
+  isDeletePending: boolean
   isBulkPriorityPending: boolean
 }
 
@@ -49,8 +52,10 @@ interface MerchantsTableActions {
   openBulkPriorityDialog: () => void
   openTerminateDialog: (target: TerminateTarget) => void
   closeTerminateDialog: () => void
+  closeDeleteDialog: () => void
   submitPriority: (priority: Priority, note?: string) => void
   confirmTerminate: (reason: string) => void
+  confirmDelete: (confirmation: string) => void
 }
 
 interface MerchantsTableMeta {
@@ -160,6 +165,9 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     useState<MerchantPriorityTarget | null>(null)
   const [terminateTarget, setTerminateTarget] =
     useState<TerminateTarget | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<MerchantListItem | null>(
+    null,
+  )
   const queryFilters: MerchantFilters = {
     ...filters,
     status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
@@ -181,6 +189,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const updatePriority = useUpdatePriorityMutation()
   const terminateMerchant = useTerminateMerchantMutation()
   const bulkTerminate = useBulkTerminateMutation()
+  const permanentlyDeleteMerchant = usePermanentlyDeleteMerchantMutation()
   const bulkPriority = useBulkPriorityMutation()
 
   const flatData = data?.pages.flatMap((page) => page.merchants) ?? []
@@ -221,6 +230,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       setPriorityTarget({ type: 'single', merchant }),
     onTerminateClick: (merchant) =>
       setTerminateTarget({ type: 'single', merchant }),
+    onDeleteClick: setDeleteTarget,
   })
 
   const commaToSet = (value: string | undefined) =>
@@ -284,6 +294,25 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const confirmDelete = (confirmation: string) => {
+    if (!deleteTarget) return
+
+    const merchantId = deleteTarget.id
+    permanentlyDeleteMerchant.mutate(
+      { merchantId, confirmation },
+      {
+        onSuccess: () => {
+          setDeleteTarget(null)
+          setSelectedIdSet((selected) => {
+            const next = new Set(selected)
+            next.delete(merchantId)
+            return next
+          })
+        },
+      },
+    )
+  }
+
   const handleFetchNextPage = () => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
@@ -301,8 +330,10 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     isFetchingNextPage,
     priorityTarget,
     terminateTarget,
+    deleteTarget,
     isPriorityPending: updatePriority.isPending,
     isTerminatePending: terminateMerchant.isPending || bulkTerminate.isPending,
+    isDeletePending: permanentlyDeleteMerchant.isPending,
     isBulkPriorityPending: bulkPriority.isPending,
   }
 
@@ -320,8 +351,10 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       }),
     openTerminateDialog: setTerminateTarget,
     closeTerminateDialog: () => setTerminateTarget(null),
+    closeDeleteDialog: () => setDeleteTarget(null),
     submitPriority,
     confirmTerminate,
+    confirmDelete,
   }
 
   const metaValue: MerchantsTableMeta = {

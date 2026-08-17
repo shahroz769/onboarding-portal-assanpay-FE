@@ -28,6 +28,7 @@ import {
 } from './merchants-table-context'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
+import { MerchantDeleteDialog } from './merchant-delete-dialog'
 
 // ─── Filter Option Configs ──────────────────────────────────────────────────
 
@@ -189,7 +190,7 @@ function Grid() {
 function Dialogs() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
-  const { priorityTarget, terminateTarget } = state
+  const { deleteTarget, priorityTarget, terminateTarget } = state
 
   return (
     <>
@@ -213,6 +214,17 @@ function Dialogs() {
           }}
           onConfirm={actions.confirmTerminate}
           isPending={state.isTerminatePending}
+        />
+      ) : null}
+      {deleteTarget ? (
+        <MerchantDeleteDialog
+          merchant={deleteTarget}
+          open
+          onOpenChange={(open) => {
+            if (!open) actions.closeDeleteDialog()
+          }}
+          onConfirm={actions.confirmDelete}
+          isPending={state.isDeletePending}
         />
       ) : null}
     </>

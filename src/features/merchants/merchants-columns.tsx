@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BanIcon, EyeIcon } from 'lucide-react'
+import { BanIcon, EyeIcon, Trash2Icon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
@@ -42,6 +42,7 @@ interface CreateColumnsOptions {
   onSelectAll: (selected: boolean) => void
   onPriorityClick: (merchant: MerchantListItem) => void
   onTerminateClick: (merchant: MerchantListItem) => void
+  onDeleteClick: (merchant: MerchantListItem) => void
 }
 
 function getSortDirection(
@@ -64,6 +65,7 @@ export function createMerchantColumns({
   onSelectAll,
   onPriorityClick,
   onTerminateClick,
+  onDeleteClick,
 }: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
   const canEdit = userRole === 'super_admin' || userRole === 'admin'
   const canTerminate = userRole === 'super_admin'
@@ -262,9 +264,25 @@ export function createMerchantColumns({
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
+          {canTerminate ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDeleteClick(merchant)}
+                >
+                  <Trash2Icon />
+                  <span className="sr-only">Delete permanently</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete permanently</TooltipContent>
+            </Tooltip>
+          ) : null}
         </div>
       ),
-      width: 100,
+      width: 140,
     },
   ]
 }

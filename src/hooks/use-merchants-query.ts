@@ -15,6 +15,7 @@ import {
   fetchMerchantDetail,
   fetchMerchants,
   bulkTerminateMerchants,
+  permanentlyDeleteMerchant,
   resetMerchantLimitsMdr,
   terminateMerchant,
   updateMerchantLimitsMdr,
@@ -241,6 +242,30 @@ export function useTerminateMerchantMutation() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
+    },
+  })
+}
+
+export function usePermanentlyDeleteMerchantMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      merchantId,
+      confirmation,
+    }: {
+      merchantId: string
+      confirmation: string
+    }) => permanentlyDeleteMerchant(merchantId, confirmation),
+    onSuccess: ({ id }) => {
+      queryClient.removeQueries({ queryKey: merchantDetailKey(id) })
+      toast.success('Merchant and all associated data deleted.')
+      queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
+    },
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to permanently delete merchant.'),
+      )
     },
   })
 }
