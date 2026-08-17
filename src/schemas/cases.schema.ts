@@ -40,6 +40,20 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   awaiting_client: 'Awaiting Client',
 }
 
+export const CASE_FILTER_STATUSES = [
+  ...CASE_STATUSES,
+  'unsuccessful',
+] as const
+
+export type CaseFilterStatus = (typeof CASE_FILTER_STATUSES)[number]
+
+export const CASE_FILTER_STATUS_LABELS: Record<CaseFilterStatus, string> = {
+  ...CASE_STATUS_LABELS,
+  unsuccessful: 'Unsuccessful',
+}
+
+export const DEFAULT_CASE_STATUS_FILTER = CASE_STATUSES.join(',')
+
 export const CASE_SORTABLE_COLUMNS = [
   'caseNumber',
   'status',
@@ -142,7 +156,7 @@ export const caseRouteSearchSchema = z.object({
   search: z.string().optional().transform(normalizeOptionalString),
   queueId: z.string().optional().transform(normalizeOptionalString),
   ownerId: z.string().optional().transform(normalizeOptionalString),
-  status: createCsvEnumFilterSchema(CASE_STATUSES),
+  status: createCsvEnumFilterSchema(CASE_FILTER_STATUSES),
   sortBy: z.enum(CASE_SORTABLE_COLUMNS).catch('createdAt').default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).catch('desc').default('desc'),
 })

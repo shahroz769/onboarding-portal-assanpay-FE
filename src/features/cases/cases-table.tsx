@@ -20,8 +20,8 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import type { CaseRouteSearch, CaseStatus } from '#/schemas/cases.schema'
-import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
+import type { CaseFilterStatus, CaseRouteSearch } from '#/schemas/cases.schema'
+import { CASE_FILTER_STATUS_LABELS } from '#/schemas/cases.schema'
 import { useHydrated } from '#/hooks/use-hydrated'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { CasePriorityDialog } from './case-priority-dialog'
@@ -37,11 +37,14 @@ const CASE_STATUS_FILTER_ORDER = [
   'working',
   'awaiting_client',
   'pending',
+  'qc',
+  'error',
   'closed',
-] as const satisfies ReadonlyArray<CaseStatus>
+  'unsuccessful',
+] as const satisfies ReadonlyArray<CaseFilterStatus>
 
 const statusFilterOptions = CASE_STATUS_FILTER_ORDER.map((status) => ({
-  label: CASE_STATUS_LABELS[status],
+  label: CASE_FILTER_STATUS_LABELS[status],
   value: status,
 }))
 

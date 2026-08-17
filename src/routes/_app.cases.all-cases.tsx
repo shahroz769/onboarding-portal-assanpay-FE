@@ -8,7 +8,10 @@ import {
   queuesQueryOptions,
 } from '#/hooks/use-cases-query'
 import { usersQueryOptions } from '#/hooks/use-users-query'
-import { caseRouteSearchSchema } from '#/schemas/cases.schema'
+import {
+  DEFAULT_CASE_STATUS_FILTER,
+  caseRouteSearchSchema,
+} from '#/schemas/cases.schema'
 
 export const Route = createFileRoute('/_app/cases/all-cases')({
   staticData: {
@@ -20,7 +23,7 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
     search: search.search,
     queueId: search.queueId,
     ownerId: search.ownerId,
-    status: search.status,
+    status: search.status ?? DEFAULT_CASE_STATUS_FILTER,
     sortBy: search.sortBy,
     sortOrder: search.sortOrder,
   }),
@@ -44,10 +47,14 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
 function RouteComponent() {
   const search = Route.useSearch()
   const { setFilter, setFilters } = useCasesSearchActions('/cases/all-cases')
+  const filters = {
+    ...search,
+    status: search.status ?? DEFAULT_CASE_STATUS_FILTER,
+  }
 
   return (
     <CasesTableComposed
-      filters={search}
+      filters={filters}
       setFilter={setFilter}
       setFilters={setFilters}
     />
