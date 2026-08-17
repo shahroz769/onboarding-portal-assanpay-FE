@@ -226,8 +226,11 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     allIds,
     onSelectRow: handleSelectRow,
     onSelectAll: handleSelectAll,
-    onPriorityClick: (merchant) =>
-      setPriorityTarget({ type: 'single', merchant }),
+    onPriorityClick: (merchant) => {
+      if (merchant.status !== 'terminated') {
+        setPriorityTarget({ type: 'single', merchant })
+      }
+    },
     onTerminateClick: (merchant) =>
       setTerminateTarget({ type: 'single', merchant }),
     onDeleteClick: (merchant) => {
@@ -245,6 +248,13 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
   const submitPriority = (priority: Priority, note?: string) => {
     if (!priorityTarget) {
+      return
+    }
+
+    if (
+      priorityTarget.type === 'single' &&
+      priorityTarget.merchant.status === 'terminated'
+    ) {
       return
     }
 
@@ -344,15 +354,26 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const actionsValue: MerchantsTableActions = {
     setFilter,
     fetchNextPage: handleFetchNextPage,
-    openPriorityDialog: (merchant) =>
-      setPriorityTarget({ type: 'single', merchant }),
+    openPriorityDialog: (merchant) => {
+      if (merchant.status !== 'terminated') {
+        setPriorityTarget({ type: 'single', merchant })
+      }
+    },
     closePriorityDialog: () => setPriorityTarget(null),
-    openBulkPriorityDialog: () =>
+    openBulkPriorityDialog: () => {
+      const ids = selectedIds.filter((id) => {
+        const merchant = flatData.find((item) => item.id === id)
+        return merchant?.status !== 'terminated'
+      })
+
+      if (ids.length === 0) return
+
       setPriorityTarget({
         type: 'bulk',
-        ids: selectedIds,
+        ids,
         initialPriority: 'normal',
-      }),
+      })
+    },
     openTerminateDialog: setTerminateTarget,
     closeTerminateDialog: () => setTerminateTarget(null),
     closeDeleteDialog: () => setDeleteTarget(null),

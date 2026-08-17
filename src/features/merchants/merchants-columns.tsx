@@ -176,16 +176,22 @@ export function createMerchantColumns({
         />
       ),
       cell: (merchant) => {
+        const canEditMerchantPriority =
+          canEdit && merchant.status !== 'terminated'
         const priorityBadge = (
           <Badge
             variant="secondary"
             className={
               cn(
                 priorityBadgeClasses(merchant.priority),
-                canEdit && CLICKABLE_BADGE_CLASSES,
+                canEditMerchantPriority && CLICKABLE_BADGE_CLASSES,
               ) || undefined
             }
-            onClick={canEdit ? () => onPriorityClick(merchant) : undefined}
+            onClick={
+              canEditMerchantPriority
+                ? () => onPriorityClick(merchant)
+                : undefined
+            }
           >
             {PRIORITY_LABELS[merchant.priority]}
           </Badge>

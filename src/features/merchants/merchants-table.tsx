@@ -116,6 +116,10 @@ function BulkActions() {
   const canEditPriority =
     state.userRole === 'super_admin' || state.userRole === 'admin'
   const canTerminate = state.userRole === 'super_admin'
+  const prioritizableIds = state.selectedIds.filter((id) => {
+    const merchant = state.flatData.find((item) => item.id === id)
+    return merchant?.status !== 'terminated'
+  })
   const terminatableIds = state.selectedIds.filter((id) => {
     const merchant = state.flatData.find((item) => item.id === id)
     return merchant?.status !== 'terminated'
@@ -126,7 +130,7 @@ function BulkActions() {
       selectedCount={state.selectedIds.length}
       visibleCount={state.flatData.length}
     >
-      {canEditPriority && (
+      {canEditPriority && prioritizableIds.length > 0 && (
         <Button
           variant="outline"
           size="sm"
@@ -134,7 +138,7 @@ function BulkActions() {
           disabled={state.isBulkPriorityPending}
         >
           <AlertTriangleIcon data-icon="inline-start" />
-          Set Priority
+          Set Priority ({prioritizableIds.length})
         </Button>
       )}
       {canTerminate && terminatableIds.length > 0 && (
