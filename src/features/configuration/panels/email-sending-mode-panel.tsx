@@ -20,7 +20,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 
 import {
-  configurationQueryOptions,
+  emailSendingModeQueryOptions,
   useUpdateEmailSendingModeMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -36,10 +36,10 @@ import {
 
 // ─── Email Sending Mode ───────────────────────────────────────────────────────
 export function EmailSendingModePanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(emailSendingModeQueryOptions())
   const mutation = useUpdateEmailSendingModeMutation()
   const [form, setForm] = useState<EmailSendingMode | null>(null)
-  const value = form ?? data?.emailSendingMode ?? null
+  const value = form ?? data ?? null
   const validationResult = value
     ? emailSendingModeSchema.safeParse(value)
     : null
@@ -51,7 +51,7 @@ export function EmailSendingModePanel() {
   function setMode(field: keyof EmailSendingMode, checked: boolean) {
     setForm((prev) => {
       const current = prev ??
-        data?.emailSendingMode ?? {
+        data ?? {
           autoEnabled: true,
           manualEnabled: true,
         }

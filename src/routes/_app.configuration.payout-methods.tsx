@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { PayoutMethodsPanel } from '#/features/configuration/panels/payout-methods-panel'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { payoutMethodsQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/payout-methods')({
   staticData: {
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_app/configuration/payout-methods')({
     subtitle: 'Manage payout methods available in MID Creation.',
   },
   loader: async ({ context }) => {
-    void context.queryClient.prefetchQuery(configurationQueryOptions())
+    void context.queryClient.prefetchQuery(payoutMethodsQueryOptions())
   },
   pendingMs: 0,
   pendingComponent: ConfigurationPanelSkeleton,

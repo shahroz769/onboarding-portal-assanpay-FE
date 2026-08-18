@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { EmailSendingModePanel } from '#/features/configuration/panels/email-sending-mode-panel'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { emailSendingModeQueryOptions } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/email-sending')({
   staticData: {
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_app/configuration/email-sending')({
     subtitle: 'Manage automatic and manual email modes.',
   },
   loader: async ({ context }) => {
-    void context.queryClient.prefetchQuery(configurationQueryOptions())
+    void context.queryClient.prefetchQuery(emailSendingModeQueryOptions())
   },
   pendingMs: 0,
   pendingComponent: ConfigurationPanelSkeleton,

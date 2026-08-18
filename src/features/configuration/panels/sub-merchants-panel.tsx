@@ -41,7 +41,7 @@ import {
 import { cn } from '#/lib/utils'
 
 import {
-  configurationQueryOptions,
+  subMerchantDraftsQueryOptions,
   useCreateSubMerchantDraftMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -50,10 +50,10 @@ import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
-  type SubMerchant = NonNullable<typeof data>['subMerchants'][number]
+  const { data, isPending } = useQuery(subMerchantDraftsQueryOptions())
+  type SubMerchant = NonNullable<typeof data>[number]
   const existingNames = new Set(
-    (data?.subMerchants ?? []).map((item) => item.name.trim().toLowerCase()),
+    (data ?? []).map((item) => item.name.trim().toLowerCase()),
   )
 
   const columns: DataTableColumnDef<SubMerchant>[] = [
@@ -117,7 +117,7 @@ export function SubMerchantsPanel() {
     >
       <DataTable
         columns={columns}
-        data={data?.subMerchants ?? []}
+        data={data ?? []}
         getRowId={(item) => item.id}
         isLoading={isPending}
         emptyContent={

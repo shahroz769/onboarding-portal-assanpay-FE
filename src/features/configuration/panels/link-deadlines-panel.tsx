@@ -22,7 +22,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 
 import {
-  configurationQueryOptions,
+  linkDeadlinesQueryOptions,
   useUpdateLinkDeadlinesMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -42,10 +42,10 @@ import {
 
 // ─── Link Deadlines ─────────────────────────────────────────────────────────
 export function LinkDeadlinesPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(linkDeadlinesQueryOptions())
   const mutation = useUpdateLinkDeadlinesMutation()
   const [form, setForm] = useState<LinkDeadlineSettings | null>(null)
-  const value = form ?? data?.linkDeadlines ?? null
+  const value = form ?? data ?? null
   const validationErrors = value
     ? getValidationErrors(linkDeadlineSettingsSchema.safeParse(value))
     : {}

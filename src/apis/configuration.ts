@@ -2,16 +2,25 @@ import { apiClient } from '#/lib/api-client'
 import type {
   CaseFlowConfiguration,
   ConfigurationOverview,
+  AgreementDraft,
   EmailSendingMode,
   LimitsAndMdrSettings,
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
   SubMerchantOption,
+  SubMerchantDraft,
 } from '#/schemas/configuration.schema'
 import {
   caseFlowConfigurationSchema,
   configurationOverviewSchema,
+  agreementDraftSchema,
+  emailSendingModeSchema,
+  limitsAndMdrSettingsSchema,
+  linkDeadlineSettingsSchema,
+  merchantPortalSettingsSchema,
+  paymentMethodSettingsSchema,
+  subMerchantDraftSchema,
   subMerchantOptionsSchema,
 } from '#/schemas/configuration.schema'
 
@@ -23,6 +32,48 @@ export async function fetchConfiguration(): Promise<ConfigurationOverview> {
 export async function fetchSubMerchantOptions(): Promise<SubMerchantOption[]> {
   const response = await apiClient.get('/api/configuration/sub-merchants')
   return subMerchantOptionsSchema.parse(response.data)
+}
+
+export async function fetchLimitsAndMdr(): Promise<LimitsAndMdrSettings> {
+  const response = await apiClient.get('/api/configuration/limits-and-mdr')
+  return limitsAndMdrSettingsSchema.parse(response.data)
+}
+
+export async function fetchPaymentMethods(): Promise<PaymentMethodSettings> {
+  const response = await apiClient.get('/api/configuration/payment-methods')
+  return paymentMethodSettingsSchema.parse(response.data)
+}
+
+export async function fetchPayoutMethods(): Promise<PaymentMethodSettings> {
+  const response = await apiClient.get('/api/configuration/payout-methods')
+  return paymentMethodSettingsSchema.parse(response.data)
+}
+
+export async function fetchAgreementDrafts(): Promise<AgreementDraft[]> {
+  const response = await apiClient.get('/api/configuration/agreements')
+  return agreementDraftSchema.array().parse(response.data)
+}
+
+export async function fetchSubMerchantDrafts(): Promise<SubMerchantDraft[]> {
+  const response = await apiClient.get(
+    '/api/configuration/sub-merchants/drafts',
+  )
+  return subMerchantDraftSchema.array().parse(response.data)
+}
+
+export async function fetchMerchantPortal(): Promise<MerchantPortalSettings> {
+  const response = await apiClient.get('/api/configuration/merchant-portal')
+  return merchantPortalSettingsSchema.parse(response.data)
+}
+
+export async function fetchLinkDeadlines(): Promise<LinkDeadlineSettings> {
+  const response = await apiClient.get('/api/configuration/link-deadlines')
+  return linkDeadlineSettingsSchema.parse(response.data)
+}
+
+export async function fetchEmailSendingMode(): Promise<EmailSendingMode> {
+  const response = await apiClient.get('/api/configuration/email-sending-mode')
+  return emailSendingModeSchema.parse(response.data)
 }
 
 export async function updateLimitsAndMdr(input: LimitsAndMdrSettings) {

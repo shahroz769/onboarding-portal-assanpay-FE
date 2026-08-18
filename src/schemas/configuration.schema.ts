@@ -212,6 +212,8 @@ export type MerchantPortalSettings = z.infer<
 >
 export type PaymentMethodSettings = z.infer<typeof paymentMethodSettingsSchema>
 export type PaymentMethod = PaymentMethodSettings[number]
+export type AgreementDraft = z.infer<typeof agreementDraftSchema>
+export type SubMerchantDraft = z.infer<typeof subMerchantDraftSchema>
 export type ConfigurationOverview = z.infer<typeof configurationOverviewSchema>
 export type SubMerchantOption = z.infer<typeof subMerchantOptionSchema>
 export type CaseFlowConfiguration = z.infer<typeof caseFlowConfigurationSchema>

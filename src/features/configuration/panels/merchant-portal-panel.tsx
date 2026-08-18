@@ -22,7 +22,7 @@ import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 
 import {
-  configurationQueryOptions,
+  merchantPortalQueryOptions,
   useUpdateMerchantPortalMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -42,10 +42,10 @@ import {
 
 // ─── Merchant Portal ───────────────────────────────────────────────────────
 export function MerchantPortalPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(merchantPortalQueryOptions())
   const mutation = useUpdateMerchantPortalMutation()
   const [form, setForm] = useState<MerchantPortalSettings | null>(null)
-  const value = form ?? data?.merchantPortal ?? null
+  const value = form ?? data ?? null
   const validationErrors = value
     ? getValidationErrors(merchantPortalSettingsSchema.safeParse(value))
     : {}

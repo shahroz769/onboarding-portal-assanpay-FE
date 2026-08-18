@@ -11,18 +11,16 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import {
-  configurationQueryOptions,
+  agreementDraftsQueryOptions,
   useUploadAgreementDraftMutation,
 } from '#/hooks/use-configuration-query'
-import type { ConfigurationOverview } from '#/schemas/configuration.schema'
+import type { AgreementDraft } from '#/schemas/configuration.schema'
 import { ConfigurationSectionCard } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
 
-type AgreementDraft = ConfigurationOverview['agreementDrafts'][number]
-
 // ─── Agreements ─────────────────────────────────────────────────────────────
 export function AgreementsPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(agreementDraftsQueryOptions())
   const columns: DataTableColumnDef<AgreementDraft>[] = [
     {
       id: 'businessType',
@@ -79,7 +77,7 @@ export function AgreementsPanel() {
     >
       <DataTable
         columns={columns}
-        data={data?.agreementDrafts ?? []}
+        data={data ?? []}
         getRowId={(draft) => draft.businessType}
         isLoading={isPending}
         emptyContent={

@@ -9,9 +9,17 @@ import { toast } from 'sonner'
 import {
   createQueue,
   createSubMerchantDraft,
+  fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
   fetchConfiguration,
+  fetchEmailSendingMode,
+  fetchLimitsAndMdr,
+  fetchLinkDeadlines,
+  fetchMerchantPortal,
+  fetchPaymentMethods,
+  fetchPayoutMethods,
   fetchQueueDetail,
+  fetchSubMerchantDrafts,
   fetchSubMerchantOptions,
   updateCaseFlowConfiguration,
   updateEmailSendingMode,
@@ -40,6 +48,38 @@ export const CONFIGURATION_KEY = ['configuration'] as const
 export const SUB_MERCHANT_OPTIONS_KEY = [
   ...CONFIGURATION_KEY,
   'sub-merchants',
+] as const
+export const LIMITS_AND_MDR_KEY = [
+  ...CONFIGURATION_KEY,
+  'limits-and-mdr',
+] as const
+export const PAYMENT_METHODS_KEY = [
+  ...CONFIGURATION_KEY,
+  'payment-methods',
+] as const
+export const PAYOUT_METHODS_KEY = [
+  ...CONFIGURATION_KEY,
+  'payout-methods',
+] as const
+export const AGREEMENT_DRAFTS_KEY = [
+  ...CONFIGURATION_KEY,
+  'agreements',
+] as const
+export const SUB_MERCHANT_DRAFTS_KEY = [
+  ...CONFIGURATION_KEY,
+  'sub-merchant-drafts',
+] as const
+export const MERCHANT_PORTAL_KEY = [
+  ...CONFIGURATION_KEY,
+  'merchant-portal',
+] as const
+export const LINK_DEADLINES_KEY = [
+  ...CONFIGURATION_KEY,
+  'link-deadlines',
+] as const
+export const EMAIL_SENDING_MODE_KEY = [
+  ...CONFIGURATION_KEY,
+  'email-sending-mode',
 ] as const
 export const CASE_FLOW_CONFIGURATION_KEY = [
   'configuration',
@@ -71,6 +111,70 @@ export function subMerchantOptionsQueryOptions() {
   return queryOptions({
     queryKey: SUB_MERCHANT_OPTIONS_KEY,
     queryFn: fetchSubMerchantOptions,
+    staleTime: 60_000,
+  })
+}
+
+export function limitsAndMdrQueryOptions() {
+  return queryOptions({
+    queryKey: LIMITS_AND_MDR_KEY,
+    queryFn: fetchLimitsAndMdr,
+    staleTime: 60_000,
+  })
+}
+
+export function paymentMethodsQueryOptions() {
+  return queryOptions({
+    queryKey: PAYMENT_METHODS_KEY,
+    queryFn: fetchPaymentMethods,
+    staleTime: 60_000,
+  })
+}
+
+export function payoutMethodsQueryOptions() {
+  return queryOptions({
+    queryKey: PAYOUT_METHODS_KEY,
+    queryFn: fetchPayoutMethods,
+    staleTime: 60_000,
+  })
+}
+
+export function agreementDraftsQueryOptions() {
+  return queryOptions({
+    queryKey: AGREEMENT_DRAFTS_KEY,
+    queryFn: fetchAgreementDrafts,
+    staleTime: 60_000,
+  })
+}
+
+export function subMerchantDraftsQueryOptions() {
+  return queryOptions({
+    queryKey: SUB_MERCHANT_DRAFTS_KEY,
+    queryFn: fetchSubMerchantDrafts,
+    staleTime: 60_000,
+  })
+}
+
+export function merchantPortalQueryOptions() {
+  return queryOptions({
+    queryKey: MERCHANT_PORTAL_KEY,
+    queryFn: fetchMerchantPortal,
+    staleTime: 60_000,
+  })
+}
+
+export function linkDeadlinesQueryOptions() {
+  return queryOptions({
+    queryKey: LINK_DEADLINES_KEY,
+    queryFn: fetchLinkDeadlines,
+    staleTime: 60_000,
+  })
+}
+
+export function emailSendingModeQueryOptions() {
+  return queryOptions({
+    queryKey: EMAIL_SENDING_MODE_KEY,
+    queryFn: fetchEmailSendingMode,
     staleTime: 60_000,
   })
 }
@@ -262,7 +366,9 @@ export function useCreateQueueMutation() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY }),
         queryClient.invalidateQueries({ queryKey: QUEUES_KEY }),
-        queryClient.invalidateQueries({ queryKey: CASE_FLOW_CONFIGURATION_KEY }),
+        queryClient.invalidateQueries({
+          queryKey: CASE_FLOW_CONFIGURATION_KEY,
+        }),
       ])
     },
     onError: (error) => {
@@ -283,7 +389,9 @@ export function useUpdateQueueMutation() {
         queryClient.invalidateQueries({
           queryKey: ['queue-detail', variables.queueId],
         }),
-        queryClient.invalidateQueries({ queryKey: CASE_FLOW_CONFIGURATION_KEY }),
+        queryClient.invalidateQueries({
+          queryKey: CASE_FLOW_CONFIGURATION_KEY,
+        }),
       ])
     },
     onError: (error) => {
@@ -314,4 +422,3 @@ export function isQueueRevisionConflict(error: unknown) {
     typeof data.revision === 'number'
   )
 }
-

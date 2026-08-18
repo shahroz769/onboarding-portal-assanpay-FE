@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Wallet } from 'lucide-react'
 
 import {
-  configurationQueryOptions,
+  paymentMethodsQueryOptions,
   useUpdatePaymentMethodsMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -11,11 +11,11 @@ import { MethodListPanel } from './configuration-panel-shared'
 
 // ─── Payment Methods ────────────────────────────────────────────────────────
 export function PaymentMethodsPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(paymentMethodsQueryOptions())
   const mutation = useUpdatePaymentMethodsMutation()
   return (
     <MethodListPanel
-      data={data?.paymentMethods ?? null}
+      data={data ?? null}
       isPending={isPending}
       mutation={mutation}
       icon={Wallet}

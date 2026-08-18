@@ -26,7 +26,7 @@ import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 
 import {
-  configurationQueryOptions,
+  limitsAndMdrQueryOptions,
   useUpdateLimitsAndMdrMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -54,10 +54,10 @@ const numberInputProps = {
 
 // ─── Limits & MDR ───────────────────────────────────────────────────────────
 export function LimitsAndMdrPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(limitsAndMdrQueryOptions())
   const mutation = useUpdateLimitsAndMdrMutation()
   const [form, setForm] = useState<LimitsAndMdrSettings | null>(null)
-  const value = form ?? data?.limitsAndMdr ?? null
+  const value = form ?? data ?? null
   const validationErrors = value
     ? {
         ...getValidationErrors(limitsAndMdrSettingsSchema.safeParse(value)),
@@ -65,7 +65,7 @@ export function LimitsAndMdrPanel() {
       }
     : {}
   function update(path: string, nextValue: number) {
-    const base = form ?? data?.limitsAndMdr
+    const base = form ?? data
     if (!base) return
     const next = structuredClone(base)
     const [group, key] = path.split('.') as [keyof LimitsAndMdrSettings, string]

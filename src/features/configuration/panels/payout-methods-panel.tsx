@@ -3,18 +3,18 @@ import { useQuery } from '@tanstack/react-query'
 import { Send } from 'lucide-react'
 
 import {
-  configurationQueryOptions,
+  payoutMethodsQueryOptions,
   useUpdatePayoutMethodsMutation,
 } from '#/hooks/use-configuration-query'
 
 import { MethodListPanel } from './configuration-panel-shared'
 
 export function PayoutMethodsPanel() {
-  const { data, isPending } = useQuery(configurationQueryOptions())
+  const { data, isPending } = useQuery(payoutMethodsQueryOptions())
   const mutation = useUpdatePayoutMethodsMutation()
   return (
     <MethodListPanel
-      data={data?.payoutMethods ?? null}
+      data={data ?? null}
       isPending={isPending}
       mutation={mutation}
       icon={Send}
