@@ -75,10 +75,10 @@ export function OnboardingSectionNav({
   const progress = Math.round((completedCount / sections.length) * 100)
 
   return (
-    <div className="sticky top-4 z-20 rounded-xl border bg-background px-2 pt-2 pb-2.5 shadow-sm">
+    <div className="sticky top-0 z-20 rounded-xl border bg-background px-2 pt-2 pb-2.5 shadow-sm">
       <nav
         aria-label="Form sections"
-        className="flex items-stretch gap-1 overflow-x-auto"
+        className="scroll-fade-x scroll-fade-4 flex items-stretch gap-1 overflow-x-auto"
       >
         {sections.map((section, index) => {
           const isActive = section.id === activeId
@@ -116,7 +116,9 @@ export function OnboardingSectionNav({
                   index + 1
                 )}
               </span>
-              {section.label}
+              <span className={cn(isActive && !section.complete && 'shimmer')}>
+                {section.label}
+              </span>
             </button>
           )
         })}
