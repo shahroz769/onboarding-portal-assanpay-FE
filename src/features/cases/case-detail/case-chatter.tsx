@@ -1,5 +1,5 @@
 import { useDeferredValue, useLayoutEffect, useRef, useState } from 'react'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import {
   CornerDownRight,
   MessageSquareMore,
@@ -36,7 +36,7 @@ import {
   caseCommentsQueryOptions,
   useCreateComment,
 } from '#/hooks/use-case-detail-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import type { CaseComment } from '#/schemas/cases.schema'
 
 interface CaseChatterProps {
@@ -250,7 +250,7 @@ export function CaseChatter({
   embedded = false,
 }: CaseChatterProps) {
   const { data: comments } = useSuspenseQuery(caseCommentsQueryOptions(caseId))
-  const { data: users } = useSuspenseQuery(usersQueryOptions())
+  const { data: users = [] } = useQuery(userDirectoryQueryOptions())
   const createComment = useCreateComment(caseId)
 
   const [content, setContent] = useState('')
@@ -332,8 +332,7 @@ export function CaseChatter({
 
     return (
       candidate.name.toLowerCase().includes(mentionQuery) ||
-      candidate.username.toLowerCase().includes(mentionQuery) ||
-      candidate.email.toLowerCase().includes(mentionQuery)
+      candidate.username.toLowerCase().includes(mentionQuery)
     )
   })
   const mentionResults = mentionCandidates.slice(0, 8)

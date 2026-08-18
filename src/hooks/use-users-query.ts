@@ -10,6 +10,7 @@ import {
   bulkSendUserResetPasswords,
   bulkUpdateUserStatus,
   createUser,
+  fetchUserDirectory,
   fetchUser,
   fetchUsers,
   sendUserResetPassword,
@@ -20,6 +21,7 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export const USERS_KEY = ['users'] as const
 export const USER_KEY = ['user'] as const
+export const USER_DIRECTORY_KEY = ['users', 'directory'] as const
 const EMPTY_USER_FILTERS: Partial<UserRouteSearch> = {}
 
 export function usersQueryOptions(
@@ -29,6 +31,14 @@ export function usersQueryOptions(
     queryKey: [...USERS_KEY, 'list', filters],
     queryFn: () => fetchUsers(filters),
     placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+}
+
+export function userDirectoryQueryOptions() {
+  return queryOptions({
+    queryKey: USER_DIRECTORY_KEY,
+    queryFn: fetchUserDirectory,
     staleTime: 30_000,
   })
 }

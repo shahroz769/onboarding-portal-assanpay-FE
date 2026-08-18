@@ -56,7 +56,7 @@ import type {
   EmailRecipientType,
 } from '#/schemas/cases.schema'
 import { CASES_KEY } from './use-cases-query'
-import { usersQueryOptions } from './use-users-query'
+import { userDirectoryQueryOptions } from './use-users-query'
 
 export const CASE_DETAIL_KEY = ['case-detail'] as const
 export const CASE_COMMENTS_KEY = ['case-comments'] as const
@@ -101,7 +101,7 @@ export async function preloadCaseDetailPageQueries(
     import('#/features/cases/case-detail/queue-registry')
   void queryClient.prefetchQuery(caseCommentsQueryOptions(caseId))
   void queryClient.prefetchQuery(caseHistoryQueryOptions(caseId))
-  void queryClient.prefetchQuery(usersQueryOptions())
+  void queryClient.prefetchQuery(userDirectoryQueryOptions())
 
   const detail = await detailPromise
   const { preloadQueueRenderer } = await queueRegistryPromise

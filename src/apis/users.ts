@@ -1,6 +1,7 @@
 import { apiClient } from '#/lib/api-client'
 import type {
   UserFormValues,
+  UserDirectoryItem,
   UserListItem,
   UserRouteSearch,
 } from '#/schemas/users.schema'
@@ -9,12 +10,23 @@ interface UsersResponse {
   users: UserListItem[]
 }
 
+interface UserDirectoryResponse {
+  users: UserDirectoryItem[]
+}
+
 export async function fetchUsers(
   params: Partial<UserRouteSearch> = {},
 ): Promise<UserListItem[]> {
   const response = await apiClient.get<UsersResponse>('/api/users', {
     params,
   })
+  return response.data.users
+}
+
+export async function fetchUserDirectory(): Promise<UserDirectoryItem[]> {
+  const response = await apiClient.get<UserDirectoryResponse>(
+    '/api/users/directory',
+  )
   return response.data.users
 }
 

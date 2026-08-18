@@ -1,6 +1,6 @@
 work on both frontend and backend
 do not run builds on frontend and backend unless specified
-C:\Users\shahr\Desktop\Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
+C:\Users\OFFICE\Downloads\Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 
 <!-- intent-skills:start -->
 

@@ -94,6 +94,8 @@ const userListItemSchema = z.object({
 
 export type UserListItem = z.infer<typeof userListItemSchema>
 
+export type UserDirectoryItem = Pick<UserListItem, 'id' | 'name' | 'username'>
+
 const queueAccessSchema = z
   .object({
     queueViewScope: z.enum(queueViewScopes),
