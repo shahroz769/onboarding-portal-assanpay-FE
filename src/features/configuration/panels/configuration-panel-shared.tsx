@@ -29,6 +29,7 @@ import {
 } from '#/components/ui/combobox'
 
 import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -39,10 +40,9 @@ import type { StatusTint } from '#/lib/status-styles'
 
 import type {
   CaseFlowConfiguration,
-  PaymentMethodSettings,
+  PayoutMethodSettings,
 } from '#/schemas/configuration.schema'
 
-import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
 import { getValidationErrors } from './configuration-panel-utils'
 
 export type QueueOption = Pick<
@@ -101,7 +101,9 @@ export function QueueSelect({
   )
 }
 
-export function MethodListPanel({
+type MethodSettings = PayoutMethodSettings
+
+export function MethodListPanel<T extends MethodSettings>({
   data,
   isPending,
   mutation,
@@ -112,12 +114,16 @@ export function MethodListPanel({
   addLabel,
   saveLabel,
   emptyMessage,
+  schema,
+  createMethod,
+  renderMethodDetails,
+  methodNameLabel = 'Method name',
 }: {
-  data: PaymentMethodSettings | null
+  data: T | null
   isPending: boolean
   mutation: {
     isPending: boolean
-    mutate: (value: PaymentMethodSettings) => void
+    mutate: (value: T) => void
   }
   icon: ComponentType<SVGProps<SVGSVGElement>>
   tone?: StatusTint
@@ -126,8 +132,24 @@ export function MethodListPanel({
   addLabel: string
   saveLabel: string
   emptyMessage: string
+  schema: {
+    safeParse: (value: unknown) =>
+      | { success: true }
+      | {
+          success: false
+          error: { issues: Array<{ path: PropertyKey[]; message: string }> }
+        }
+  }
+  createMethod: (id: string) => T[number]
+  methodNameLabel?: string
+  renderMethodDetails?: (input: {
+    method: T[number]
+    index: number
+    disabled: boolean
+    update: (method: T[number]) => void
+  }) => ReactNode
 }) {
-  const [form, setForm] = useState<PaymentMethodSettings | null>(null)
+  const [form, setForm] = useState<T | null>(null)
   const [enteringMethodIds, setEnteringMethodIds] = useState<Set<string>>(
     () => new Set(),
   )
@@ -136,19 +158,28 @@ export function MethodListPanel({
   )
   const value = form ?? data ?? null
   const validationErrors = value
-    ? getValidationErrors(paymentMethodSettingsSchema.safeParse(value))
+    ? getValidationErrors(schema.safeParse(value))
     : {}
-  const formError = validationErrors.paymentMethods
+  const formError = Object.values(validationErrors)[0]
   function updateMethod(id: string, label: string) {
-    setForm((current) =>
-      (current ?? data ?? []).map((method) =>
-        method.id === id ? { ...method, label } : method,
-      ),
+    setForm(
+      (current) =>
+        (current ?? data ?? []).map((method) =>
+          method.id === id ? { ...method, label } : method,
+        ) as T,
+    )
+  }
+  function replaceMethod(method: T[number]) {
+    setForm(
+      (current) =>
+        (current ?? data ?? []).map((item) =>
+          item.id === method.id ? method : item,
+        ) as T,
     )
   }
   function addMethod() {
     const id = createMethodId()
-    setForm((current) => [...(current ?? data ?? []), { id, label: '' }])
+    setForm((current) => [...(current ?? data ?? []), createMethod(id)] as T)
     setEnteringMethodIds((current) => new Set(current).add(id))
   }
   function removeMethod(id: string) {
@@ -166,8 +197,9 @@ export function MethodListPanel({
     }
 
     if (removingMethodIds.has(id)) {
-      setForm((current) =>
-        (current ?? data ?? []).filter((method) => method.id !== id),
+      setForm(
+        (current) =>
+          (current ?? data ?? []).filter((method) => method.id !== id) as T,
       )
       setRemovingMethodIds((current) => {
         const next = new Set(current)
@@ -225,7 +257,7 @@ export function MethodListPanel({
                         ? 'entering'
                         : undefined
                   }
-                  className="motion-list-item flex items-center gap-2"
+                  className="motion-list-item grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[1.5rem_minmax(0,1fr)_auto]"
                   onTransitionEnd={(event) =>
                     finishMethodTransition(method.id, event)
                   }
@@ -233,17 +265,22 @@ export function MethodListPanel({
                   <span className="w-6 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
                     {index + 1}
                   </span>
-                  <Input
-                    value={method.label}
-                    aria-label={`Method ${index + 1} name`}
-                    onChange={(event) =>
-                      updateMethod(method.id, event.target.value)
-                    }
-                    disabled={
-                      mutation.isPending || removingMethodIds.has(method.id)
-                    }
-                    placeholder="Method name"
-                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor={`method-name-${method.id}`}>
+                      {methodNameLabel}
+                    </Label>
+                    <Input
+                      id={`method-name-${method.id}`}
+                      value={method.label}
+                      onChange={(event) =>
+                        updateMethod(method.id, event.target.value)
+                      }
+                      disabled={
+                        mutation.isPending || removingMethodIds.has(method.id)
+                      }
+                      placeholder={`Enter ${methodNameLabel.toLowerCase()}`}
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -257,6 +294,18 @@ export function MethodListPanel({
                   >
                     <Trash2 />
                   </Button>
+                  {renderMethodDetails ? (
+                    <div className="sm:col-start-2 sm:col-end-4">
+                      {renderMethodDetails({
+                        method,
+                        index,
+                        disabled:
+                          mutation.isPending ||
+                          removingMethodIds.has(method.id),
+                        update: replaceMethod,
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -270,7 +319,7 @@ export function MethodListPanel({
           )}
           {formError ? (
             <Alert variant="destructive">
-              <AlertTitle>Method names need attention</AlertTitle>
+              <AlertTitle>Payment method details need attention</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -284,7 +333,7 @@ export function MethodListPanel({
               value.flatMap((method) => {
                 const label = method.label.trim()
                 return label ? [{ ...method, label }] : []
-              }),
+              }) as T,
             )
           }
           disabled={

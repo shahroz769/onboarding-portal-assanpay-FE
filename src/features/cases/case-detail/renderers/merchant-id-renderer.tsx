@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
 import {
-  CreditCard,
   CheckCircle2,
   Globe,
   Info,
@@ -26,7 +25,6 @@ import {
 import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -45,7 +43,10 @@ import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
-import type { PaymentMethodSettings } from '#/schemas/configuration.schema'
+import type {
+  PaymentMethodSettings,
+  PayoutMethodSettings,
+} from '#/schemas/configuration.schema'
 import { MERCHANT_PORTAL_ROLES } from '#/schemas/cases.schema'
 import type { MerchantPortalRole } from '#/schemas/cases.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
@@ -53,6 +54,7 @@ import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 import type { QueueRendererProps } from '../queue-registry'
 
 const DEFAULT_METHODS: PaymentMethodSettings = []
+const DEFAULT_PAYOUT_METHODS: PayoutMethodSettings = []
 const DEFAULT_MERCHANT_PORTAL_ROLE: MerchantPortalRole = 'merchant_admin'
 const ROLE_PAYOUT_METHOD_LABELS: Record<MerchantPortalRole, string> = {
   merchant_admin: 'Bank Settlement',
@@ -122,7 +124,7 @@ const midDetailsSchema = z.object({
 })
 
 type MidDetailsForm = z.infer<typeof midDetailsSchema> & {
-  payoutMethods: PaymentMethodSettings
+  payoutMethods: PayoutMethodSettings
 }
 
 type FieldErrors = Partial<Record<keyof MidDetailsForm, string>>
@@ -198,7 +200,6 @@ export default function MerchantIdRenderer({
   const internalBusinessName = `${businessName} (INTERNAL)`
   const initialEmail = savedEmail ?? merchantEmail
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
-  const isShopify = websiteCmsValue === 'shopify'
   const midConfiguration = caseDetail.midConfiguration
   if (!midConfiguration) {
     throw new Error('MID configuration is missing from the case details.')
@@ -208,16 +209,12 @@ export default function MerchantIdRenderer({
   const configuredPayoutMethods = midConfiguration.payoutMethods
   const availablePaymentMethods = mergeMethods(
     configuredPaymentMethods,
-    formSafeMethods(savedPaymentMethods),
+    savedPaymentMethods ?? DEFAULT_METHODS,
   )
   const availablePayoutMethods = mergeMethods(
     configuredPayoutMethods,
-    formSafeMethods(savedPayoutMethods),
+    savedPayoutMethods ?? DEFAULT_PAYOUT_METHODS,
   )
-  const cardRate = isShopify
-    ? `${limitsAndMdr.rates.cardShopify}%`
-    : `${limitsAndMdr.rates.cardDefault}%`
-  const eWalletRate = `${limitsAndMdr.rates.eWallets}%`
   const payoutRate = `${limitsAndMdr.rates.payout}%`
 
   const [form, setForm] = useState<MidDetailsForm>({
@@ -271,6 +268,18 @@ export default function MerchantIdRenderer({
       ? mergeMethods(currentMethods, [method])
       : currentMethods.filter((item) => item.id !== method.id)
     updateField(field, nextMethods)
+  }
+
+  function updatePaymentMethodCommission(
+    methodId: string,
+    commissionRate: number,
+  ) {
+    updateField(
+      'paymentMethods',
+      form.paymentMethods.map((method) =>
+        method.id === methodId ? { ...method, commissionRate } : method,
+      ),
+    )
   }
 
   function updateMerchantRole(role: MerchantPortalRole) {
@@ -399,29 +408,16 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <CardTitle>Rates</CardTitle>
+          <CardTitle>Payout Rate</CardTitle>
           <CardDescription>
-            Standard MID rates applied to this merchant. Card rate adjusts for
-            Shopify integrations.
+            Standard payout commission applied to this merchant.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            <RateGroup
-              icon={<Wallet className="size-4" />}
-              title="Payin Rates"
-              rows={[
-                { label: 'E-Wallets & QR', value: eWalletRate },
-                {
-                  label: isShopify ? 'Card (Shopify)' : 'Card',
-                  value: cardRate,
-                  highlight: true,
-                },
-              ]}
-            />
+          <div className="max-w-xl">
             <RateGroup
               icon={<Send className="size-4" />}
-              title="Payout Rates"
+              title="Payout Commission"
               rows={[{ label: 'Disbursement', value: payoutRate }]}
             />
           </div>
@@ -484,7 +480,8 @@ export default function MerchantIdRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Payment Methods</CardTitle>
               <CardDescription>
-                Collection methods configured for this merchant.
+                Select collection methods and adjust their default commissions
+                for this merchant.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -501,9 +498,11 @@ export default function MerchantIdRenderer({
             disabled={!canEdit || saveMidCreationDetails.isPending}
             empty="No payment methods configured."
             error={errors.paymentMethods}
+            showCommission
             onToggle={(method, checked) =>
               toggleMethod('paymentMethods', method, checked)
             }
+            onCommissionChange={updatePaymentMethodCommission}
           />
         </CardContent>
       </Card>
@@ -804,9 +803,6 @@ function RateGroup({
             className="flex items-center justify-between py-2 text-sm"
           >
             <span className="flex items-center gap-2 text-muted-foreground">
-              {row.label === 'Card' || row.label.startsWith('Card') ? (
-                <CreditCard className="size-3.5" />
-              ) : null}
               {row.label}
             </span>
             <span
@@ -824,22 +820,26 @@ function RateGroup({
   )
 }
 
-function MethodList({
+function MethodList<T extends PaymentMethodSettings | PayoutMethodSettings>({
   idPrefix,
   availableMethods,
   selectedMethods,
   disabled,
   empty,
   error,
+  showCommission = false,
   onToggle,
+  onCommissionChange,
 }: {
   idPrefix: string
-  availableMethods: PaymentMethodSettings
-  selectedMethods: PaymentMethodSettings
+  availableMethods: T
+  selectedMethods: T
   disabled: boolean
   empty: string
   error?: string
-  onToggle: (method: PaymentMethodSettings[number], checked: boolean) => void
+  showCommission?: boolean
+  onToggle: (method: T[number], checked: boolean) => void
+  onCommissionChange?: (methodId: string, commissionRate: number) => void
 }) {
   if (availableMethods.length === 0) {
     return (
@@ -856,31 +856,70 @@ function MethodList({
       <FieldGroup className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {availableMethods.map((method) => {
           const checked = selectedIds.has(method.id)
+          const selectedMethod = selectedMethods.find(
+            (selected) => selected.id === method.id,
+          )
+          const commissionRate = getMethodCommissionRate(
+            selectedMethod ?? method,
+          )
           const checkboxId = `${idPrefix}-${method.id}`
+          const commissionId = `${checkboxId}-commission`
           return (
             <Field
               key={method.id}
-              orientation="horizontal"
               data-disabled={disabled ? true : undefined}
               className={cn(
-                'rounded-md border bg-muted/20 px-3 py-2',
+                'rounded-md border bg-muted/20 p-3',
                 checked && 'border-primary bg-primary/5',
               )}
             >
-              <Checkbox
-                id={checkboxId}
-                checked={checked}
-                disabled={disabled}
-                aria-invalid={Boolean(error)}
-                onCheckedChange={(nextChecked) => {
-                  if (typeof nextChecked === 'boolean') {
-                    onToggle(method, nextChecked)
-                  }
-                }}
-              />
-              <FieldLabel htmlFor={checkboxId} className="font-medium">
-                {method.label}
-              </FieldLabel>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={checkboxId}
+                  checked={checked}
+                  disabled={disabled}
+                  aria-invalid={Boolean(error)}
+                  onCheckedChange={(nextChecked) => {
+                    if (typeof nextChecked === 'boolean') {
+                      onToggle(method, nextChecked)
+                    }
+                  }}
+                />
+                <FieldLabel htmlFor={checkboxId} className="font-medium">
+                  {method.label}
+                </FieldLabel>
+              </div>
+              {showCommission && commissionRate !== null ? (
+                <div className="flex flex-col gap-1.5 pl-6">
+                  <FieldLabel
+                    htmlFor={commissionId}
+                    className="text-xs text-muted-foreground"
+                  >
+                    Commission (%)
+                  </FieldLabel>
+                  <Input
+                    id={commissionId}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.01}
+                    inputMode="decimal"
+                    value={
+                      Number.isFinite(commissionRate) ? commissionRate : ''
+                    }
+                    disabled={disabled || !checked}
+                    aria-invalid={Boolean(error)}
+                    onChange={(event) =>
+                      onCommissionChange?.(
+                        method.id,
+                        event.target.value === ''
+                          ? Number.NaN
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </div>
+              ) : null}
             </Field>
           )
         })}
@@ -890,17 +929,22 @@ function MethodList({
   )
 }
 
-function formSafeMethods(methods: PaymentMethodSettings | null) {
-  return methods ?? DEFAULT_METHODS
-}
-
 function normalizeMethodLabel(value: string) {
   return value.trim().toLowerCase()
 }
 
+function getMethodCommissionRate(
+  method: PaymentMethodSettings[number] | PayoutMethodSettings[number],
+): number | null {
+  if ('commissionRate' in method && typeof method.commissionRate === 'number') {
+    return method.commissionRate
+  }
+  return null
+}
+
 function resolveRolePayoutMethods(
   role: MerchantPortalRole,
-  methods: PaymentMethodSettings,
+  methods: PayoutMethodSettings,
 ) {
   const expectedLabel = ROLE_PAYOUT_METHOD_LABELS[role]
   const normalizedExpectedLabel = normalizeMethodLabel(expectedLabel)
@@ -909,10 +953,10 @@ function resolveRolePayoutMethods(
   )
 }
 
-function mergeMethods(
-  currentMethods: PaymentMethodSettings,
-  nextMethods: PaymentMethodSettings,
-) {
+function mergeMethods<T extends PaymentMethodSettings | PayoutMethodSettings>(
+  currentMethods: T,
+  nextMethods: T,
+): T {
   const merged = [...currentMethods]
   const seen = new Set(merged.map((method) => method.id))
   for (const method of nextMethods) {
@@ -921,5 +965,5 @@ function mergeMethods(
       seen.add(method.id)
     }
   }
-  return merged
+  return merged as T
 }

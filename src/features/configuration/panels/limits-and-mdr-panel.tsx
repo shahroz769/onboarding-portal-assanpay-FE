@@ -8,12 +8,7 @@ import { BadgeDollarSign, Rocket, Save, Wallet } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 
 import {
   InputGroup,
@@ -21,16 +16,18 @@ import {
   InputGroupInput,
 } from '#/components/ui/input-group'
 
-import { Separator } from '#/components/ui/separator'
-
 import { Spinner } from '#/components/ui/spinner'
 
 import {
   limitsAndMdrQueryOptions,
+  paymentMethodsQueryOptions,
   useUpdateLimitsAndMdrMutation,
 } from '#/hooks/use-configuration-query'
 
-import type { LimitsAndMdrSettings } from '#/schemas/configuration.schema'
+import type {
+  LimitsAndMdrSettings,
+  PaymentMethodSettings,
+} from '#/schemas/configuration.schema'
 import type { StatusTint } from '#/lib/status-styles'
 
 import { limitsAndMdrSettingsSchema } from '#/schemas/configuration.schema'
@@ -55,6 +52,7 @@ const numberInputProps = {
 // ─── Limits & MDR ───────────────────────────────────────────────────────────
 export function LimitsAndMdrPanel() {
   const { data, isPending } = useQuery(limitsAndMdrQueryOptions())
+  const paymentMethodsQuery = useQuery(paymentMethodsQueryOptions())
   const mutation = useUpdateLimitsAndMdrMutation()
   const [form, setForm] = useState<LimitsAndMdrSettings | null>(null)
   const value = form ?? data ?? null
@@ -72,7 +70,7 @@ export function LimitsAndMdrPanel() {
     ;(next[group] as Record<string, number>)[key] = nextValue
     setForm(next)
   }
-  if (isPending || !value) {
+  if (isPending || paymentMethodsQuery.isPending || !value) {
     return <PanelLoading />
   }
   return (
@@ -103,6 +101,7 @@ export function LimitsAndMdrPanel() {
         icon={Wallet}
         tone="sky"
         value={value.rates}
+        paymentMethods={paymentMethodsQuery.data ?? []}
         errors={validationErrors}
         onChange={update}
       />
@@ -127,10 +126,6 @@ function getRangeOrderErrors(value: LimitsAndMdrSettings) {
   const errors: Record<string, string> = {}
   for (const group of ['testing', 'live'] as const) {
     const range = value[group]
-    if (range.collectionMin > range.collectionMax) {
-      errors[`${group}.collectionMax`] =
-        'Maximum must be greater than or equal to the minimum.'
-    }
     if (range.disbursementMin > range.disbursementMax) {
       errors[`${group}.disbursementMax`] =
         'Maximum must be greater than or equal to the minimum.'
@@ -166,16 +161,6 @@ function LimitSection({
       description={description}
     >
       <div className="flex flex-col gap-5">
-        <RangeGroup
-          label="Collection"
-          hint="Incoming payments from customers."
-          prefix={`${prefix}.collection`}
-          minValue={value.collectionMin}
-          maxValue={value.collectionMax}
-          errors={errors}
-          onChange={onChange}
-        />
-        <Separator />
         <RangeGroup
           label="Disbursement"
           hint="Outgoing payouts to merchants."
@@ -240,12 +225,14 @@ function RatesSection({
   icon,
   tone,
   value,
+  paymentMethods,
   errors,
   onChange,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
   tone?: StatusTint
   value: LimitsAndMdrSettings['rates']
+  paymentMethods: PaymentMethodSettings
   errors: Record<string, string>
   onChange: (path: string, value: number) => void
 }) {
@@ -253,44 +240,82 @@ function RatesSection({
     <ConfigurationSectionCard
       icon={icon}
       tone={tone}
-      title="Commission Rates"
-      description="Global MDR and payout rates used by case emails and reviews. All values are percentages."
+      title="Payment Method Limits & Commission"
+      description="Testing limits, live limits, and collection commission configured for each payment method."
     >
-      <FieldGroup className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AmountField
-          id="rate-ewallets"
-          label="E-wallets / QR"
-          suffix="%"
-          value={value.eWallets}
-          error={errors['rates.eWallets']}
-          onChange={(next) => onChange('rates.eWallets', next)}
-        />
-        <AmountField
-          id="rate-card-default"
-          label="Card (default)"
-          suffix="%"
-          value={value.cardDefault}
-          error={errors['rates.cardDefault']}
-          onChange={(next) => onChange('rates.cardDefault', next)}
-        />
-        <AmountField
-          id="rate-card-shopify"
-          label="Card (Shopify)"
-          suffix="%"
-          value={value.cardShopify}
-          error={errors['rates.cardShopify']}
-          onChange={(next) => onChange('rates.cardShopify', next)}
-        />
-        <AmountField
-          id="rate-payout"
-          label="Bank Settlement"
-          suffix="%"
-          value={value.payout}
-          error={errors['rates.payout']}
-          onChange={(next) => onChange('rates.payout', next)}
-        />
-      </FieldGroup>
+      <div className="flex flex-col gap-5">
+        {paymentMethods.length > 0 ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {paymentMethods.map((method) => (
+              <div
+                key={method.id}
+                className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{method.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Collection payment method
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-background px-3 py-2 text-right ring-1 ring-border">
+                    <p className="text-xs text-muted-foreground">Commission</p>
+                    <p className="font-semibold tabular-nums">
+                      {method.commissionRate}%
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <MethodLimitSummary
+                    label="Testing limits"
+                    min={method.testing.min}
+                    max={method.testing.max}
+                  />
+                  <MethodLimitSummary
+                    label="Live limits"
+                    min={method.live.min}
+                    max={method.live.max}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No collection payment methods configured.
+          </div>
+        )}
+        <div className="border-t pt-5 sm:max-w-sm">
+          <AmountField
+            id="rate-payout"
+            label="Bank Settlement commission"
+            suffix="%"
+            value={value.payout}
+            error={errors['rates.payout']}
+            onChange={(next) => onChange('rates.payout', next)}
+          />
+        </div>
+      </div>
     </ConfigurationSectionCard>
+  )
+}
+
+function MethodLimitSummary({
+  label,
+  min,
+  max,
+}: {
+  label: string
+  min: number
+  max: number
+}) {
+  return (
+    <div className="rounded-md bg-background p-3 ring-1 ring-border">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 font-medium tabular-nums">
+        PKR {min.toLocaleString()} – {max.toLocaleString()}
+      </p>
+    </div>
   )
 }
 

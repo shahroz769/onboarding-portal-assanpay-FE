@@ -22,6 +22,7 @@ import type {
   MerchantDetailResponse,
   MerchantLimitsMdr,
 } from '#/schemas/merchants.schema'
+import { MerchantPaymentMethodDetails } from './merchant-payment-method-details'
 
 type MerchantLimitsMdrTabProps = {
   detail: MerchantDetailResponse
@@ -42,25 +43,17 @@ const LIMIT_FIELDS: {
   key: keyof MerchantLimitsMdr['testing']
   label: string
 }[] = [
-  { key: 'collectionMin', label: 'Collection minimum' },
-  { key: 'collectionMax', label: 'Collection maximum' },
   { key: 'disbursementMin', label: 'Disbursement minimum' },
   { key: 'disbursementMax', label: 'Disbursement maximum' },
 ]
 
 const RATE_FIELDS: { key: RateKey; label: string }[] = [
-  { key: 'eWallets', label: 'E-Wallets (%)' },
-  { key: 'cardDefault', label: 'Card — Default (%)' },
-  { key: 'cardShopify', label: 'Card — Shopify (%)' },
   { key: 'payout', label: 'Payout (%)' },
 ]
 
 function validate(form: MerchantLimitsMdr) {
   const errors: Record<string, string> = {}
   for (const group of ['testing', 'live'] as const) {
-    if (form[group].collectionMax < form[group].collectionMin) {
-      errors[`${group}.collectionMax`] = 'Max must be ≥ min.'
-    }
     if (form[group].disbursementMax < form[group].disbursementMin) {
       errors[`${group}.disbursementMax`] = 'Max must be ≥ min.'
     }
@@ -114,6 +107,19 @@ export function MerchantLimitsMdrTab({
 
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Collection Payment Methods</CardTitle>
+          <CardDescription>
+            Method-wise testing limits, live limits, and commission rates saved
+            for this merchant.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MerchantPaymentMethodDetails methods={detail.paymentMethods} />
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <LimitSection
           title="Testing Limits"

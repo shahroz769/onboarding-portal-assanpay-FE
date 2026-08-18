@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   limitsAndMdrSettingsSchema,
   paymentMethodSettingsSchema,
+  payoutMethodSettingsSchema,
 } from './configuration.schema'
 import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
@@ -43,10 +44,7 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   awaiting_client: 'Awaiting Client',
 }
 
-export const CASE_FILTER_STATUSES = [
-  ...CASE_STATUSES,
-  'unsuccessful',
-] as const
+export const CASE_FILTER_STATUSES = [...CASE_STATUSES, 'unsuccessful'] as const
 
 export type CaseFilterStatus = (typeof CASE_FILTER_STATUSES)[number]
 
@@ -377,7 +375,7 @@ const caseDetailSchema = z.object({
       merchantRole: z.enum(MERCHANT_PORTAL_ROLES).nullable().optional(),
       credentialsReady: z.boolean().optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
-      payoutMethods: paymentMethodSettingsSchema.nullable().optional(),
+      payoutMethods: payoutMethodSettingsSchema.nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -385,7 +383,7 @@ const caseDetailSchema = z.object({
     .object({
       limitsAndMdr: limitsAndMdrSettingsSchema,
       paymentMethods: paymentMethodSettingsSchema,
-      payoutMethods: paymentMethodSettingsSchema,
+      payoutMethods: payoutMethodSettingsSchema,
     })
     .nullable()
     .optional(),
@@ -569,7 +567,7 @@ export type SaveMidCreationDetailsResponse = {
   internalBranchCode: string
   merchantRole: MerchantPortalRole
   paymentMethods: z.infer<typeof paymentMethodSettingsSchema>
-  payoutMethods: z.infer<typeof paymentMethodSettingsSchema>
+  payoutMethods: z.infer<typeof payoutMethodSettingsSchema>
   savedAt: string
 }
 

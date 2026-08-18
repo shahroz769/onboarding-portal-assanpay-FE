@@ -2,15 +2,21 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { LimitsAndMdrPanel } from '#/features/configuration/panels/limits-and-mdr-panel'
-import { limitsAndMdrQueryOptions } from '#/hooks/use-configuration-query'
+import {
+  limitsAndMdrQueryOptions,
+  paymentMethodsQueryOptions,
+} from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/limits-and-mdr')({
   staticData: {
     title: 'Limits and MDR',
-    subtitle: 'Manage transaction limits and MDR rates.',
+    subtitle: 'Review transaction limits and method-wise commission rates.',
   },
   loader: async ({ context }) => {
-    void context.queryClient.prefetchQuery(limitsAndMdrQueryOptions())
+    await Promise.all([
+      context.queryClient.prefetchQuery(limitsAndMdrQueryOptions()),
+      context.queryClient.prefetchQuery(paymentMethodsQueryOptions()),
+    ])
   },
   pendingMs: 0,
   pendingComponent: ConfigurationPanelSkeleton,

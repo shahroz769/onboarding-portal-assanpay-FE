@@ -1,5 +1,8 @@
 import { z } from 'zod'
-import { paymentMethodSettingsSchema } from './configuration.schema'
+import {
+  paymentMethodSettingsSchema,
+  payoutMethodSettingsSchema,
+} from './configuration.schema'
 
 // ─── Enum Constants with Labels ─────────────────────────────────────────────
 
@@ -276,7 +279,7 @@ const merchantDetailResponseSchema = z.object({
     isOverridden: z.boolean(),
   }),
   paymentMethods: paymentMethodSettingsSchema,
-  payoutMethods: paymentMethodSettingsSchema,
+  payoutMethods: payoutMethodSettingsSchema,
 })
 
 export type MerchantDetailResponse = z.infer<

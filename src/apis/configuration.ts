@@ -8,6 +8,7 @@ import type {
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
+  PayoutMethodSettings,
   SubMerchantOption,
   SubMerchantDraft,
 } from '#/schemas/configuration.schema'
@@ -20,6 +21,7 @@ import {
   linkDeadlineSettingsSchema,
   merchantPortalSettingsSchema,
   paymentMethodSettingsSchema,
+  payoutMethodSettingsSchema,
   subMerchantDraftSchema,
   subMerchantOptionsSchema,
 } from '#/schemas/configuration.schema'
@@ -44,9 +46,9 @@ export async function fetchPaymentMethods(): Promise<PaymentMethodSettings> {
   return paymentMethodSettingsSchema.parse(response.data)
 }
 
-export async function fetchPayoutMethods(): Promise<PaymentMethodSettings> {
+export async function fetchPayoutMethods(): Promise<PayoutMethodSettings> {
   const response = await apiClient.get('/api/configuration/payout-methods')
-  return paymentMethodSettingsSchema.parse(response.data)
+  return payoutMethodSettingsSchema.parse(response.data)
 }
 
 export async function fetchAgreementDrafts(): Promise<AgreementDraft[]> {
@@ -105,7 +107,7 @@ export async function updateMerchantPortal(input: MerchantPortalSettings) {
     '/api/configuration/merchant-portal',
     input,
   )
-  return response.data
+  return merchantPortalSettingsSchema.parse(response.data)
 }
 
 export async function updatePaymentMethods(input: PaymentMethodSettings) {
@@ -116,7 +118,7 @@ export async function updatePaymentMethods(input: PaymentMethodSettings) {
   return response.data
 }
 
-export async function updatePayoutMethods(input: PaymentMethodSettings) {
+export async function updatePayoutMethods(input: PayoutMethodSettings) {
   const response = await apiClient.put(
     '/api/configuration/payout-methods',
     input,

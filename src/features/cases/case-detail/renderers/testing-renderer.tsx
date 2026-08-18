@@ -54,6 +54,7 @@ export default function TestingRenderer({
     manualEnabled: true,
   }
   const limits = configurationQuery.data?.limitsAndMdr.testing
+  const paymentMethods = caseDetail.testing?.paymentMethods ?? []
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
   const credentialsReady = Boolean(caseDetail.testing?.credentialsReady)
@@ -147,10 +148,13 @@ export default function TestingRenderer({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <LimitBlock
-              label="Collection"
-              value={`${limits?.collectionMin ?? 10}-${limits?.collectionMax ?? 100}`}
-            />
+            {paymentMethods.map((method) => (
+              <LimitBlock
+                key={method.id}
+                label={`${method.label} collection`}
+                value={`${method.testing.min.toLocaleString()}-${method.testing.max.toLocaleString()}`}
+              />
+            ))}
             <LimitBlock
               label="Disbursement"
               value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}

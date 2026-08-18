@@ -41,6 +41,7 @@ import type {
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
+  PayoutMethodSettings,
 } from '#/schemas/configuration.schema'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
@@ -235,13 +236,17 @@ export function useUpdateMerchantPortalMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: MerchantPortalSettings) => updateMerchantPortal(input),
-    onSuccess: async () => {
-      toast.success('Merchant portal settings saved.')
+    onSuccess: async (savedSettings) => {
+      queryClient.setQueryData(MERCHANT_PORTAL_KEY, savedSettings)
+      toast.success('Merchant integration settings saved.')
       await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
     },
     onError: (error) => {
       toast.error(
-        getApiErrorMessage(error, 'Failed to save merchant portal settings.'),
+        getApiErrorMessage(
+          error,
+          'Failed to save merchant integration settings.',
+        ),
       )
     },
   })
@@ -264,7 +269,7 @@ export function useUpdatePaymentMethodsMutation() {
 export function useUpdatePayoutMethodsMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: PaymentMethodSettings) => updatePayoutMethods(input),
+    mutationFn: (input: PayoutMethodSettings) => updatePayoutMethods(input),
     onSuccess: async () => {
       toast.success('Payout methods saved.')
       await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })

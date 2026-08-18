@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import { Save, Send } from 'lucide-react'
+import { Save, Server } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 
@@ -54,10 +54,10 @@ export function MerchantPortalPanel() {
   }
   return (
     <ConfigurationSectionCard
-      icon={Send}
+      icon={Server}
       tone="sky"
-      title="Merchant Portal & Support"
-      description="Configure the merchant portal link and support contact details."
+      title="Merchant Integration Settings"
+      description="Configure merchant portal, server integration, and support details."
     >
       <FieldGroup>
         <div className="flex flex-col gap-3">
@@ -81,6 +81,56 @@ export function MerchantPortalPanel() {
             />
             <FieldError>{validationErrors.loginUrl}</FieldError>
           </Field>
+        </div>
+
+        <Separator />
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="text-sm font-medium">Custom website integration</p>
+            <p className="text-sm text-muted-foreground">
+              Included in credential emails for custom website merchants only.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field data-invalid={Boolean(validationErrors.serverBaseUrl)}>
+              <FieldLabel htmlFor="merchant-server-base-url">
+                Server Base URL
+              </FieldLabel>
+              <Input
+                id="merchant-server-base-url"
+                type="url"
+                value={value.serverBaseUrl}
+                placeholder="https://api.example.com"
+                aria-invalid={Boolean(validationErrors.serverBaseUrl)}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    serverBaseUrl: event.target.value,
+                  }))
+                }}
+              />
+              <FieldError>{validationErrors.serverBaseUrl}</FieldError>
+            </Field>
+            <Field data-invalid={Boolean(validationErrors.serverCallbackIp)}>
+              <FieldLabel htmlFor="merchant-server-callback-ip">
+                Server Callback IP
+              </FieldLabel>
+              <Input
+                id="merchant-server-callback-ip"
+                value={value.serverCallbackIp}
+                placeholder="203.0.113.10"
+                aria-invalid={Boolean(validationErrors.serverCallbackIp)}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    serverCallbackIp: event.target.value,
+                  }))
+                }}
+              />
+              <FieldError>{validationErrors.serverCallbackIp}</FieldError>
+            </Field>
+          </div>
         </div>
 
         <Separator />
@@ -154,7 +204,11 @@ export function MerchantPortalPanel() {
         </div>
         <ConfigurationActionBar>
           <Button
-            onClick={() => mutation.mutate(value)}
+            onClick={() =>
+              mutation.mutate(value, {
+                onSuccess: (savedSettings) => setForm(savedSettings),
+              })
+            }
             disabled={
               mutation.isPending || hasValidationErrors(validationErrors)
             }
@@ -164,7 +218,7 @@ export function MerchantPortalPanel() {
             ) : (
               <Save data-icon="inline-start" />
             )}
-            Save portal settings
+            Save integration settings
           </Button>
         </ConfigurationActionBar>
       </FieldGroup>

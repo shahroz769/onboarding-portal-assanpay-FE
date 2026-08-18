@@ -75,6 +75,7 @@ export default function LiveRenderer({
     manualEnabled: true,
   }
   const limits = configurationQuery.data?.limitsAndMdr.live
+  const paymentMethods = caseDetail.testing?.paymentMethods ?? []
   const merchantPortalUrl =
     configurationQuery.data?.merchantPortal.loginUrl ??
     'https://merchant.assanpay.com/login'
@@ -117,6 +118,7 @@ export default function LiveRenderer({
     merchantName,
     merchantPortalUrl,
     liveLimits: limits,
+    paymentMethods,
   })
 
   const selectedEmail =
@@ -175,10 +177,13 @@ export default function LiveRenderer({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <LimitBlock
-              label="Collection"
-              value={`${limits?.collectionMin ?? 100}-${limits?.collectionMax ?? 50000}`}
-            />
+            {paymentMethods.map((method) => (
+              <LimitBlock
+                key={method.id}
+                label={`${method.label} collection`}
+                value={`${method.live.min.toLocaleString()}-${method.live.max.toLocaleString()}`}
+              />
+            ))}
 
             <LimitBlock
               label="Disbursement"
@@ -424,6 +429,7 @@ function buildEmailPreview({
   merchantName,
   merchantPortalUrl,
   liveLimits,
+  paymentMethods,
 }: {
   merchantName: string
   merchantPortalUrl: string
@@ -433,6 +439,11 @@ function buildEmailPreview({
     disbursementMin: number
     disbursementMax: number
   }
+  paymentMethods: NonNullable<
+    QueueRendererProps['caseDetail']['testing']
+  >['paymentMethods'] extends infer T
+    ? NonNullable<T>
+    : never
 }) {
   const subject = `AssanPay account is live for ${merchantName}`
   const body = `AssanPay account is live for ${merchantName}
@@ -442,7 +453,7 @@ Congratulations, ${merchantName}. Your AssanPay merchant account is live now and
 Merchant Portal Link: ${merchantPortalUrl}
 
 Live Limits Per Transaction
-- Collection: PKR ${liveLimits?.collectionMin ?? 100}-${liveLimits?.collectionMax ?? 50000}
+${paymentMethods.map((method) => `- ${method.label} collection: PKR ${method.live.min.toLocaleString()}-${method.live.max.toLocaleString()}`).join('\n')}
 - Disbursement: PKR ${liveLimits?.disbursementMin ?? 1000}-${liveLimits?.disbursementMax ?? 50000}
 
 You can use the merchant portal to monitor live activity and manage your AssanPay merchant account.

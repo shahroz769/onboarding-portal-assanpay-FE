@@ -8,6 +8,7 @@ import {
 } from '#/hooks/use-configuration-query'
 
 import { MethodListPanel } from './configuration-panel-shared'
+import { payoutMethodSettingsSchema } from '#/schemas/configuration.schema'
 
 export function PayoutMethodsPanel() {
   const { data, isPending } = useQuery(payoutMethodsQueryOptions())
@@ -24,6 +25,9 @@ export function PayoutMethodsPanel() {
       addLabel="Add payout method"
       saveLabel="Save payout methods"
       emptyMessage="No payout methods configured."
+      methodNameLabel="Payout method name"
+      schema={payoutMethodSettingsSchema}
+      createMethod={(id) => ({ id, label: '' })}
     />
   )
 }

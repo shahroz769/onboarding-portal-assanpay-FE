@@ -16,6 +16,7 @@ import type { StatusTint } from '#/lib/status-styles'
 import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
 
 import { formatNumber, isCaseOpen } from './merchant-detail-helpers'
+import { MerchantPaymentMethodDetails } from './merchant-payment-method-details'
 
 type MerchantOverviewTabProps = {
   detail: MerchantDetailResponse
@@ -134,40 +135,16 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
         }`}
       >
         <RateRow
-          label="Collection range"
-          value={`${formatNumber(activeRates.collectionMin)} – ${formatNumber(activeRates.collectionMax)}`}
-        />
-        <RateRow
           label="Disbursement range"
           value={`${formatNumber(activeRates.disbursementMin)} – ${formatNumber(activeRates.disbursementMax)}`}
-        />
-        <RateRow
-          label="E-wallets MDR"
-          value={`${limitsAndMdr.effective.rates.eWallets}%`}
-        />
-        <RateRow
-          label="Card (default) MDR"
-          value={`${limitsAndMdr.effective.rates.cardDefault}%`}
-        />
-        <RateRow
-          label="Card (Shopify) MDR"
-          value={`${limitsAndMdr.effective.rates.cardShopify}%`}
         />
         <RateRow
           label="Payout MDR"
           value={`${limitsAndMdr.effective.rates.payout}%`}
         />
-      </ProfileSection>
-
-      <ProfileSection
-        icon={Wallet}
-        tone="violet"
-        title="Payment Methods"
-        description="Collection methods saved from MID Creation."
-      >
-        <MethodList
+        <MerchantPaymentMethodDetails
           methods={detail.paymentMethods}
-          empty="No payment methods configured."
+          className="sm:col-span-2 lg:col-span-3"
         />
       </ProfileSection>
 
@@ -241,7 +218,7 @@ function MethodList({
   methods,
   empty,
 }: {
-  methods: MerchantDetailResponse['paymentMethods']
+  methods: MerchantDetailResponse['payoutMethods']
   empty: string
 }) {
   if (methods.length === 0) return <span className="text-sm">{empty}</span>
