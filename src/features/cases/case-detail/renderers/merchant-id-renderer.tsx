@@ -138,6 +138,14 @@ function getMerchantString(
   return null
 }
 
+function getMerchantNumber(
+  merchant: Record<string, unknown>,
+  key: string,
+): number | null {
+  const value = merchant[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
 function getWebsitePlatformLabel(value: string | null): string {
   if (!value) return 'Not provided'
   const match = WEBSITE_CMS_OPTIONS.find((option) => option.value === value)
@@ -171,6 +179,7 @@ export default function MerchantIdRenderer({
 
   const merchant = caseDetail.merchant
   const merchantId = getMerchantString(merchant, 'id') ?? undefined
+  const merchantNumber = getMerchantNumber(merchant, 'merchantNumber')
   const saveMidCreationDetails = useSaveMidCreationDetails(caseId, merchantId)
   const websiteCmsValue = getMerchantString(merchant, 'websiteCms')
   const businessWebsite = getMerchantString(merchant, 'businessWebsite')
@@ -328,6 +337,10 @@ export default function MerchantIdRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
+            <Field>
+              <FieldLabel>Onboarding Portal ID</FieldLabel>
+              <ReadonlyValue>{merchantNumber ?? 'Not provided'}</ReadonlyValue>
+            </Field>
             <Field>
               <FieldLabel>Website Platform / CMS</FieldLabel>
               <ReadonlyValue>{platformLabel}</ReadonlyValue>
