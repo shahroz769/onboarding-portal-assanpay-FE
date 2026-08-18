@@ -621,7 +621,7 @@ function CommentThread({
         <div className="relative ml-3 flex min-w-0 flex-col gap-3 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
           {replies.map((reply) => (
             <div key={reply.id} className="relative min-w-0">
-              <div className="absolute -left-[21px] top-5 hidden h-px w-4 bg-border sm:block" />
+              <div className="absolute -left-5.25 top-5 hidden h-px w-4 bg-border sm:block" />
               <CommentCard comment={reply} onReply={onReply} nested />
             </div>
           ))}
@@ -669,7 +669,7 @@ function CommentCard({
               {formatDateTime(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-3 break-words whitespace-pre-wrap text-sm leading-6 text-foreground/90 [overflow-wrap:anywhere]">
+          <p className="mt-3 wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-foreground/90">
             {renderCommentText(comment.content)}
           </p>
           {onReply ? (

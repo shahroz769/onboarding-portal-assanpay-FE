@@ -186,7 +186,7 @@ export default function MerchantIdRenderer({
   const ownerName = toUppercaseDisplay(
     getMerchantString(merchant, 'ownerFullName'),
   )
-  const internalBusinessName = `(INTERNAL) ${businessName}`
+  const internalBusinessName = `${businessName} (INTERNAL)`
   const initialEmail = savedEmail ?? merchantEmail
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
@@ -353,38 +353,36 @@ export default function MerchantIdRenderer({
         </CardContent>
       </Card>
 
-      {isCaseOwner ? (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-col gap-1">
-                <CardTitle>Financial Information</CardTitle>
-                <CardDescription>
-                  Settlement bank account details submitted by the merchant.
-                </CardDescription>
-              </div>
-              <Badge variant="secondary">
-                <Landmark />
-                Owner only
-              </Badge>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <CardTitle>Financial Information</CardTitle>
+              <CardDescription>
+                Settlement bank account details submitted by the merchant.
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <Field>
-                <FieldLabel>Bank Name</FieldLabel>
-                <ReadonlyValue>{bankName ?? 'Not provided'}</ReadonlyValue>
-              </Field>
-              <Field>
-                <FieldLabel>Account Number / IBAN</FieldLabel>
-                <ReadonlyValue>
-                  {accountNumberIban ?? 'Not provided'}
-                </ReadonlyValue>
-              </Field>
-            </FieldGroup>
-          </CardContent>
-        </Card>
-      ) : null}
+            <Badge variant="secondary">
+              <Landmark />
+              Settlement account
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Bank Name</FieldLabel>
+              <ReadonlyValue>{bankName ?? 'Not provided'}</ReadonlyValue>
+            </Field>
+            <Field>
+              <FieldLabel>Account Number / IBAN</FieldLabel>
+              <ReadonlyValue>
+                {accountNumberIban ?? 'Not provided'}
+              </ReadonlyValue>
+            </Field>
+          </FieldGroup>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -674,10 +672,6 @@ export default function MerchantIdRenderer({
                     readOnly
                     aria-invalid={Boolean(errors.internalEmail)}
                   />
-                  <FieldDescription>
-                    Generated from the normal MID email by adding
-                    &quot;internal&quot; immediately before @.
-                  </FieldDescription>
                   <FieldError>{errors.internalEmail}</FieldError>
                 </Field>
                 <Field data-invalid={Boolean(errors.internalPortalMid)}>
