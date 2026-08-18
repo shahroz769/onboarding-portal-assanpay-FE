@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CreditCard,
   CheckCircle2,
@@ -44,7 +43,6 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
 import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
 import type { PaymentMethodSettings } from '#/schemas/configuration.schema'
@@ -151,7 +149,6 @@ export default function MerchantIdRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const { data: configuration } = useSuspenseQuery(configurationQueryOptions())
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
@@ -193,9 +190,13 @@ export default function MerchantIdRenderer({
   const initialEmail = savedEmail ?? merchantEmail
   const platformLabel = getWebsitePlatformLabel(websiteCmsValue)
   const isShopify = websiteCmsValue === 'shopify'
-  const limitsAndMdr = configuration.limitsAndMdr
-  const configuredPaymentMethods = configuration.paymentMethods
-  const configuredPayoutMethods = configuration.payoutMethods
+  const midConfiguration = caseDetail.midConfiguration
+  if (!midConfiguration) {
+    throw new Error('MID configuration is missing from the case details.')
+  }
+  const limitsAndMdr = midConfiguration.limitsAndMdr
+  const configuredPaymentMethods = midConfiguration.paymentMethods
+  const configuredPayoutMethods = midConfiguration.payoutMethods
   const availablePaymentMethods = mergeMethods(
     configuredPaymentMethods,
     formSafeMethods(savedPaymentMethods),

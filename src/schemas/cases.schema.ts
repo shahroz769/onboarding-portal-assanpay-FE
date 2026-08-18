@@ -1,5 +1,8 @@
 import { z } from 'zod'
-import { paymentMethodSettingsSchema } from './configuration.schema'
+import {
+  limitsAndMdrSettingsSchema,
+  paymentMethodSettingsSchema,
+} from './configuration.schema'
 import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
 export {
@@ -375,6 +378,14 @@ const caseDetailSchema = z.object({
       credentialsReady: z.boolean().optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
       payoutMethods: paymentMethodSettingsSchema.nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  midConfiguration: z
+    .object({
+      limitsAndMdr: limitsAndMdrSettingsSchema,
+      paymentMethods: paymentMethodSettingsSchema,
+      payoutMethods: paymentMethodSettingsSchema,
     })
     .nullable()
     .optional(),
