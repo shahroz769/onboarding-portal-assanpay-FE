@@ -4,7 +4,9 @@ import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import { BadgeDollarSign, Rocket, Save, Wallet } from 'lucide-react'
+import { BadgeDollarSign, ListChecks, Rocket, Save, Wallet } from 'lucide-react'
+
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 
 import { Button } from '#/components/ui/button'
 
@@ -21,14 +23,17 @@ import { Spinner } from '#/components/ui/spinner'
 import {
   limitsAndMdrQueryOptions,
   paymentMethodsQueryOptions,
+  payoutMethodsQueryOptions,
   useUpdateLimitsAndMdrMutation,
 } from '#/hooks/use-configuration-query'
 
 import type {
   LimitsAndMdrSettings,
   PaymentMethodSettings,
+  PayoutMethodSettings,
 } from '#/schemas/configuration.schema'
 import type { StatusTint } from '#/lib/status-styles'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import { limitsAndMdrSettingsSchema } from '#/schemas/configuration.schema'
 
@@ -51,8 +56,9 @@ const numberInputProps = {
 
 // ─── Limits & MDR ───────────────────────────────────────────────────────────
 export function LimitsAndMdrPanel() {
-  const { data, isPending } = useQuery(limitsAndMdrQueryOptions())
+  const { data, isPending, error } = useQuery(limitsAndMdrQueryOptions())
   const paymentMethodsQuery = useQuery(paymentMethodsQueryOptions())
+  const payoutMethodsQuery = useQuery(payoutMethodsQueryOptions())
   const mutation = useUpdateLimitsAndMdrMutation()
   const [form, setForm] = useState<LimitsAndMdrSettings | null>(null)
   const value = form ?? data ?? null
@@ -70,7 +76,27 @@ export function LimitsAndMdrPanel() {
     ;(next[group] as Record<string, number>)[key] = nextValue
     setForm(next)
   }
-  if (isPending || paymentMethodsQuery.isPending || !value) {
+  const queryError =
+    error ?? paymentMethodsQuery.error ?? payoutMethodsQuery.error
+  if (queryError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Limits & MDR could not be loaded</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessage(
+            queryError,
+            'Failed to load limits and commission rates.',
+          )}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+  if (
+    isPending ||
+    paymentMethodsQuery.isPending ||
+    payoutMethodsQuery.isPending ||
+    !value
+  ) {
     return <PanelLoading />
   }
   return (
@@ -97,13 +123,18 @@ export function LimitsAndMdrPanel() {
           onChange={update}
         />
       </div>
-      <RatesSection
+      <CommissionRatesSection
         icon={Wallet}
         tone="sky"
         value={value.rates}
-        paymentMethods={paymentMethodsQuery.data ?? []}
         errors={validationErrors}
         onChange={update}
+      />
+      <MethodPricingSection
+        icon={ListChecks}
+        tone="violet"
+        paymentMethods={paymentMethodsQuery.data ?? []}
+        payoutMethods={payoutMethodsQuery.data ?? []}
       />
       <ConfigurationActionBar>
         <Button
@@ -126,6 +157,10 @@ function getRangeOrderErrors(value: LimitsAndMdrSettings) {
   const errors: Record<string, string> = {}
   for (const group of ['testing', 'live'] as const) {
     const range = value[group]
+    if (range.collectionMin > range.collectionMax) {
+      errors[`${group}.collectionMax`] =
+        'Maximum must be greater than or equal to the minimum.'
+    }
     if (range.disbursementMin > range.disbursementMax) {
       errors[`${group}.disbursementMax`] =
         'Maximum must be greater than or equal to the minimum.'
@@ -161,6 +196,16 @@ function LimitSection({
       description={description}
     >
       <div className="flex flex-col gap-5">
+        <RangeGroup
+          label="Collection"
+          hint="Incoming payments collected from customers."
+          prefix={`${prefix}.collection`}
+          minValue={value.collectionMin}
+          maxValue={value.collectionMax}
+          errors={errors}
+          onChange={onChange}
+        />
+        <div className="border-t" />
         <RangeGroup
           label="Disbursement"
           hint="Outgoing payouts to merchants."
@@ -221,18 +266,16 @@ function RangeGroup({
   )
 }
 
-function RatesSection({
+function CommissionRatesSection({
   icon,
   tone,
   value,
-  paymentMethods,
   errors,
   onChange,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
   tone?: StatusTint
   value: LimitsAndMdrSettings['rates']
-  paymentMethods: PaymentMethodSettings
   errors: Record<string, string>
   onChange: (path: string, value: number) => void
 }) {
@@ -240,63 +283,144 @@ function RatesSection({
     <ConfigurationSectionCard
       icon={icon}
       tone={tone}
-      title="Payment Method Limits & Commission"
-      description="Testing limits, live limits, and collection commission configured for each payment method."
+      title="Default Commission Rates"
+      description="Fallback rates used when a method-specific commission is not available."
     >
-      <div className="flex flex-col gap-5">
-        {paymentMethods.length > 0 ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{method.label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Collection payment method
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-background px-3 py-2 text-right ring-1 ring-border">
-                    <p className="text-xs text-muted-foreground">Commission</p>
-                    <p className="font-semibold tabular-nums">
-                      {method.commissionRate}%
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <MethodLimitSummary
-                    label="Testing limits"
-                    min={method.testing.min}
-                    max={method.testing.max}
-                  />
-                  <MethodLimitSummary
-                    label="Live limits"
-                    min={method.live.min}
-                    max={method.live.max}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No collection payment methods configured.
-          </div>
-        )}
-        <div className="border-t pt-5 sm:max-w-sm">
-          <AmountField
-            id="rate-payout"
-            label="Bank Settlement commission"
-            suffix="%"
-            value={value.payout}
-            error={errors['rates.payout']}
-            onChange={(next) => onChange('rates.payout', next)}
-          />
-        </div>
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <AmountField
+          id="rate-e-wallets"
+          label="E-wallets & QR"
+          suffix="%"
+          value={value.eWallets}
+          error={errors['rates.eWallets']}
+          onChange={(next) => onChange('rates.eWallets', next)}
+        />
+        <AmountField
+          id="rate-card-default"
+          label="Card · default"
+          suffix="%"
+          value={value.cardDefault}
+          error={errors['rates.cardDefault']}
+          onChange={(next) => onChange('rates.cardDefault', next)}
+        />
+        <AmountField
+          id="rate-card-shopify"
+          label="Card · Shopify"
+          suffix="%"
+          value={value.cardShopify}
+          error={errors['rates.cardShopify']}
+          onChange={(next) => onChange('rates.cardShopify', next)}
+        />
+        <AmountField
+          id="rate-payout"
+          label="Payout · default"
+          suffix="%"
+          value={value.payout}
+          error={errors['rates.payout']}
+          onChange={(next) => onChange('rates.payout', next)}
+        />
       </div>
     </ConfigurationSectionCard>
+  )
+}
+
+function MethodPricingSection({
+  icon,
+  tone,
+  paymentMethods,
+  payoutMethods,
+}: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  tone?: StatusTint
+  paymentMethods: PaymentMethodSettings
+  payoutMethods: PayoutMethodSettings
+}) {
+  return (
+    <ConfigurationSectionCard
+      icon={icon}
+      tone={tone}
+      title="Method-specific Pricing"
+      description="Commission and transaction limits configured on each collection and payout method."
+    >
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <MethodGroup
+          eyebrow="Collection"
+          title="Payment methods"
+          methods={paymentMethods}
+          empty="No collection payment methods configured."
+        />
+        <MethodGroup
+          eyebrow="Disbursement"
+          title="Payout methods"
+          methods={payoutMethods}
+          empty="No payout methods configured."
+        />
+      </div>
+    </ConfigurationSectionCard>
+  )
+}
+
+function MethodGroup({
+  eyebrow,
+  title,
+  methods,
+  empty,
+}: {
+  eyebrow: string
+  title: string
+  methods: PaymentMethodSettings | PayoutMethodSettings
+  empty: string
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="border-b pb-3">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          {eyebrow}
+        </p>
+        <h3 className="mt-1 text-base font-semibold">{title}</h3>
+      </div>
+      {methods.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {methods.map((method) => (
+            <MethodPricingCard key={method.id} method={method} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+          {empty}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function MethodPricingCard({
+  method,
+}: {
+  method: PaymentMethodSettings[number] | PayoutMethodSettings[number]
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <p className="font-semibold">{method.label}</p>
+        <div className="rounded-md bg-background px-3 py-2 text-right ring-1 ring-border">
+          <p className="text-xs text-muted-foreground">Commission</p>
+          <p className="font-semibold tabular-nums">{method.commissionRate}%</p>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <MethodLimitSummary
+          label="Testing limits"
+          min={method.testing.min}
+          max={method.testing.max}
+        />
+        <MethodLimitSummary
+          label="Live limits"
+          min={method.live.min}
+          max={method.live.max}
+        />
+      </div>
+    </div>
   )
 }
 

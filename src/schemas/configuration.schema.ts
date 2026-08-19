@@ -205,6 +205,7 @@ const collectionMethodLimitSchema = z
 
 function uniqueMethodSettingsSchema<T extends z.ZodType<{ label: string }>>(
   methodSchema: T,
+  fieldName: 'paymentMethods' | 'payoutMethods',
 ) {
   return z
     .array(methodSchema)
@@ -217,7 +218,7 @@ function uniqueMethodSettingsSchema<T extends z.ZodType<{ label: string }>>(
           ctx.addIssue({
             code: 'custom',
             message: 'Method names must be unique.',
-            path: ['paymentMethods'],
+            path: [fieldName],
           })
           return
         }
@@ -232,10 +233,17 @@ export const paymentMethodSettingsSchema = uniqueMethodSettingsSchema(
     live: collectionMethodLimitSchema,
     commissionRate: z.coerce.number().min(0).max(100),
   }),
+  'paymentMethods',
 )
 
-export const payoutMethodSettingsSchema =
-  uniqueMethodSettingsSchema(methodIdentitySchema)
+export const payoutMethodSettingsSchema = uniqueMethodSettingsSchema(
+  methodIdentitySchema.extend({
+    testing: collectionMethodLimitSchema,
+    live: collectionMethodLimitSchema,
+    commissionRate: z.coerce.number().min(0).max(100),
+  }),
+  'payoutMethods',
+)
 
 export const configurationOverviewSchema = z.object({
   limitsAndMdr: limitsAndMdrSettingsSchema,

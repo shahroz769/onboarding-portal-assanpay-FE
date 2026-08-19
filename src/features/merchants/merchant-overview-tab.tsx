@@ -154,9 +154,10 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
         title="Payout Methods"
         description="Payout methods saved from MID Creation."
       >
-        <MethodList
+        <MerchantPaymentMethodDetails
           methods={detail.payoutMethods}
-          empty="No payout methods configured."
+          kind="payout"
+          className="sm:col-span-2 lg:col-span-3"
         />
       </ProfileSection>
     </div>
@@ -211,27 +212,5 @@ function RateRow({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium tabular-nums">{value}</span>
     </div>
-  )
-}
-
-function MethodList({
-  methods,
-  empty,
-}: {
-  methods: MerchantDetailResponse['payoutMethods']
-  empty: string
-}) {
-  if (methods.length === 0) return <span className="text-sm">{empty}</span>
-  return (
-    <>
-      {methods.map((method) => (
-        <div
-          key={method.id}
-          className="rounded-md border bg-muted/20 p-3 text-sm font-medium"
-        >
-          {method.label}
-        </div>
-      ))}
-    </>
   )
 }

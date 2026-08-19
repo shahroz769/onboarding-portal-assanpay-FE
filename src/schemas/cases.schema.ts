@@ -552,6 +552,7 @@ const saveMidCreationDetailsInputSchema = z.object({
     1,
     'Select at least one payment method.',
   ),
+  payoutMethods: payoutMethodSettingsSchema.min(1, 'Select a payout method.'),
 })
 
 export type SaveMidCreationDetailsInput = z.infer<

@@ -55,6 +55,7 @@ export default function TestingRenderer({
   }
   const limits = configurationQuery.data?.limitsAndMdr.testing
   const paymentMethods = caseDetail.testing?.paymentMethods ?? []
+  const payoutMethods = caseDetail.testing?.payoutMethods ?? []
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
   const credentialsReady = Boolean(caseDetail.testing?.credentialsReady)
@@ -155,10 +156,20 @@ export default function TestingRenderer({
                 value={`${method.testing.min.toLocaleString()}-${method.testing.max.toLocaleString()}`}
               />
             ))}
-            <LimitBlock
-              label="Disbursement"
-              value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}
-            />
+            {payoutMethods.length > 0 ? (
+              payoutMethods.map((method) => (
+                <LimitBlock
+                  key={method.id}
+                  label={`${method.label} payout`}
+                  value={`${method.testing.min.toLocaleString()}-${method.testing.max.toLocaleString()}`}
+                />
+              ))
+            ) : (
+              <LimitBlock
+                label="Disbursement"
+                value={`${limits?.disbursementMin ?? 1000}-${limits?.disbursementMax ?? 50000}`}
+              />
+            )}
           </div>
 
           {limitsAppliedAt ? (

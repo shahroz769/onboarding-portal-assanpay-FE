@@ -42,7 +42,10 @@ import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveMidCreationDetails } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
-import { paymentMethodSettingsSchema } from '#/schemas/configuration.schema'
+import {
+  paymentMethodSettingsSchema,
+  payoutMethodSettingsSchema,
+} from '#/schemas/configuration.schema'
 import type {
   PaymentMethodSettings,
   PayoutMethodSettings,
@@ -121,11 +124,10 @@ const midDetailsSchema = z.object({
     1,
     'Select at least one payment method.',
   ),
+  payoutMethods: payoutMethodSettingsSchema.min(1, 'Select a payout method.'),
 })
 
-type MidDetailsForm = z.infer<typeof midDetailsSchema> & {
-  payoutMethods: PayoutMethodSettings
-}
+type MidDetailsForm = z.infer<typeof midDetailsSchema>
 
 type FieldErrors = Partial<Record<keyof MidDetailsForm, string>>
 
@@ -282,6 +284,18 @@ export default function MerchantIdRenderer({
     )
   }
 
+  function updatePayoutMethodCommission(
+    methodId: string,
+    commissionRate: number,
+  ) {
+    updateField(
+      'payoutMethods',
+      form.payoutMethods.map((method) =>
+        method.id === methodId ? { ...method, commissionRate } : method,
+      ),
+    )
+  }
+
   function updateMerchantRole(role: MerchantPortalRole) {
     setForm((prev) => ({
       ...prev,
@@ -301,7 +315,14 @@ export default function MerchantIdRenderer({
     const payoutMethods = resolveRolePayoutMethods(
       form.merchantRole,
       availablePayoutMethods,
-    )
+    ).map((method) => {
+      const selectedMethod = form.payoutMethods.find(
+        (selected) => selected.id === method.id,
+      )
+      return selectedMethod
+        ? { ...method, commissionRate: selectedMethod.commissionRate }
+        : method
+    })
     if (payoutMethods.length === 0) {
       setErrors((prev) => ({
         ...prev,
@@ -310,7 +331,7 @@ export default function MerchantIdRenderer({
       return
     }
 
-    const result = midDetailsSchema.safeParse(form)
+    const result = midDetailsSchema.safeParse({ ...form, payoutMethods })
     if (!result.success) {
       const nextErrors: FieldErrors = {}
       for (const issue of result.error.issues) {
@@ -513,8 +534,8 @@ export default function MerchantIdRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Payout Methods</CardTitle>
               <CardDescription>
-                Payout method is auto-selected from the merchant role. Manual
-                changes are disabled.
+                Payout method is auto-selected from the merchant role. Adjust
+                its default commission for this merchant.
               </CardDescription>
             </div>
             <Badge variant="secondary">
@@ -528,10 +549,13 @@ export default function MerchantIdRenderer({
             idPrefix="mid-payout-method"
             availableMethods={availablePayoutMethods}
             selectedMethods={form.payoutMethods}
-            disabled
+            disabled={!canEdit || saveMidCreationDetails.isPending}
+            selectionDisabled
             empty="No payout methods configured."
             error={errors.payoutMethods}
+            showCommission
             onToggle={() => undefined}
+            onCommissionChange={updatePayoutMethodCommission}
           />
         </CardContent>
       </Card>
@@ -828,6 +852,7 @@ function MethodList<T extends PaymentMethodSettings | PayoutMethodSettings>({
   empty,
   error,
   showCommission = false,
+  selectionDisabled = false,
   onToggle,
   onCommissionChange,
 }: {
@@ -838,6 +863,7 @@ function MethodList<T extends PaymentMethodSettings | PayoutMethodSettings>({
   empty: string
   error?: string
   showCommission?: boolean
+  selectionDisabled?: boolean
   onToggle: (method: T[number], checked: boolean) => void
   onCommissionChange?: (methodId: string, commissionRate: number) => void
 }) {
@@ -877,7 +903,7 @@ function MethodList<T extends PaymentMethodSettings | PayoutMethodSettings>({
                 <Checkbox
                   id={checkboxId}
                   checked={checked}
-                  disabled={disabled}
+                  disabled={disabled || selectionDisabled}
                   aria-invalid={Boolean(error)}
                   onCheckedChange={(nextChecked) => {
                     if (typeof nextChecked === 'boolean') {

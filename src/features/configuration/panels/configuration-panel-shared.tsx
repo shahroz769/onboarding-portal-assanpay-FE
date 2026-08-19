@@ -37,6 +37,7 @@ import { ConfigurationPanelSkeleton } from '../configuration-route-skeleton'
 
 import { SectionIcon } from '#/components/section-icon'
 import type { StatusTint } from '#/lib/status-styles'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import type {
   CaseFlowConfiguration,
@@ -106,6 +107,7 @@ type MethodSettings = PayoutMethodSettings
 export function MethodListPanel<T extends MethodSettings>({
   data,
   isPending,
+  queryError,
   mutation,
   icon,
   tone,
@@ -121,6 +123,7 @@ export function MethodListPanel<T extends MethodSettings>({
 }: {
   data: T | null
   isPending: boolean
+  queryError?: unknown
   mutation: {
     isPending: boolean
     mutate: (value: T) => void
@@ -221,6 +224,19 @@ export function MethodListPanel<T extends MethodSettings>({
         return next
       })
     }
+  }
+  if (queryError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>{title} could not be loaded</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessage(
+            queryError,
+            `Failed to load ${title.toLowerCase()}.`,
+          )}
+        </AlertDescription>
+      </Alert>
+    )
   }
   if (isPending || !value) {
     return <PanelLoading />

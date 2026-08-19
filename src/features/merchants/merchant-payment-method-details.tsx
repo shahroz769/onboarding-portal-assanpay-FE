@@ -4,9 +4,13 @@ import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
 export function MerchantPaymentMethodDetails({
   methods,
   className,
+  kind = 'collection',
 }: {
-  methods: MerchantDetailResponse['paymentMethods']
+  methods:
+    | MerchantDetailResponse['paymentMethods']
+    | MerchantDetailResponse['payoutMethods']
   className?: string
+  kind?: 'collection' | 'payout'
 }) {
   if (methods.length === 0) {
     return (
@@ -16,7 +20,8 @@ export function MerchantPaymentMethodDetails({
           className,
         )}
       >
-        No collection payment methods configured.
+        No {kind === 'collection' ? 'collection payment' : 'payout'} methods
+        configured.
       </div>
     )
   }
@@ -32,7 +37,9 @@ export function MerchantPaymentMethodDetails({
             <div>
               <p className="font-semibold">{method.label}</p>
               <p className="text-xs text-muted-foreground">
-                Collection payment method
+                {kind === 'collection'
+                  ? 'Collection payment method'
+                  : 'Payout method'}
               </p>
             </div>
             <div className="rounded-md bg-background px-3 py-2 text-right ring-1 ring-border">

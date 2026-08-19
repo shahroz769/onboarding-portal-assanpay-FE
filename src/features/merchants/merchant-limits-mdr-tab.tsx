@@ -120,6 +120,22 @@ export function MerchantLimitsMdrTab({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Payout Methods</CardTitle>
+          <CardDescription>
+            Method-wise testing limits, live limits, and commission rates saved
+            for this merchant.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MerchantPaymentMethodDetails
+            methods={detail.payoutMethods}
+            kind="payout"
+          />
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <LimitSection
           title="Testing Limits"
