@@ -3,15 +3,19 @@ import { Copy, Check, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '#/components/ui/button'
-import type { EmailPreviewResult } from '#/apis/cases'
+import type { AgreementEmailPreviewResult } from '#/apis/cases'
 
 interface ManualEmailPanelProps {
-  preview: EmailPreviewResult
+  preview: AgreementEmailPreviewResult
   onConfirm: (file: File) => void
   isPending: boolean
 }
 
-export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailPanelProps) {
+export function ManualEmailPanel({
+  preview,
+  onConfirm,
+  isPending,
+}: ManualEmailPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [copiedSubject, setCopiedSubject] = useState(false)
@@ -26,7 +30,9 @@ export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailP
         setCopiedBody(true)
         setTimeout(() => setCopiedBody(false), 2000)
       }
-      toast.success(`${type === 'subject' ? 'Subject' : 'Body'} copied to clipboard`)
+      toast.success(
+        `${type === 'subject' ? 'Subject' : 'Body'} copied to clipboard`,
+      )
     })
   }
 
@@ -46,20 +52,27 @@ export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailP
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">To:</span> {preview.recipient}
+        <span className="font-medium text-foreground">To:</span>{' '}
+        {preview.recipient}
       </div>
 
       {/* Subject */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Subject</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Subject
+          </p>
           <Button
             size="sm"
             variant="ghost"
             className="h-6 px-2 text-xs gap-1"
             onClick={() => copyToClipboard(preview.subject, 'subject')}
           >
-            {copiedSubject ? <Check className="size-3" /> : <Copy className="size-3" />}
+            {copiedSubject ? (
+              <Check className="size-3" />
+            ) : (
+              <Copy className="size-3" />
+            )}
             {copiedSubject ? 'Copied' : 'Copy'}
           </Button>
         </div>
@@ -71,14 +84,20 @@ export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailP
       {/* Body */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Body</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Body
+          </p>
           <Button
             size="sm"
             variant="ghost"
             className="h-6 px-2 text-xs gap-1"
             onClick={() => copyToClipboard(preview.body, 'body')}
           >
-            {copiedBody ? <Check className="size-3" /> : <Copy className="size-3" />}
+            {copiedBody ? (
+              <Check className="size-3" />
+            ) : (
+              <Copy className="size-3" />
+            )}
             {copiedBody ? 'Copied' : 'Copy'}
           </Button>
         </div>
@@ -93,7 +112,8 @@ export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailP
           Screenshot proof
         </p>
         <p className="text-xs text-muted-foreground">
-          After sending the email in Gmail, attach a screenshot of the sent email. This is required to advance the case.
+          After sending the email in Gmail, attach a screenshot of the sent
+          email. This is required to advance the case.
         </p>
         <div className="flex items-center gap-2">
           <input
@@ -113,7 +133,9 @@ export function ManualEmailPanel({ preview, onConfirm, isPending }: ManualEmailP
             {selectedFile ? 'Change file' : 'Attach screenshot'}
           </Button>
           {selectedFile ? (
-            <span className="text-sm text-muted-foreground truncate max-w-48">{selectedFile.name}</span>
+            <span className="text-sm text-muted-foreground truncate max-w-48">
+              {selectedFile.name}
+            </span>
           ) : null}
         </div>
       </div>

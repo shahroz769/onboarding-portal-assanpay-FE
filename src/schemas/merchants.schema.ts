@@ -258,12 +258,10 @@ const merchantDetailResponseSchema = z.object({
   documents: z.array(merchantDocumentSchema),
   agreements: z
     .object({
-      clientSignedAgreement: merchantAgreementFileSchema.nullable(),
-      physicalAgreement: merchantAgreementFileSchema.nullable(),
+      receivedSignedAgreement: merchantAgreementFileSchema.nullable(),
     })
     .default({
-      clientSignedAgreement: null,
-      physicalAgreement: null,
+      receivedSignedAgreement: null,
     }),
   cases: z.array(merchantCaseSchema),
   timeline: z.array(merchantTimelineEventSchema),

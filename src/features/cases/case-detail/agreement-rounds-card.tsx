@@ -140,7 +140,7 @@ function buildAgreementRounds(history: Array<CaseHistory>) {
       continue
     }
 
-    if (entry.action === 'agreement_client_submitted') {
+    if (entry.action === 'agreement_received_uploaded') {
       const target =
         [...rounds]
           .reverse()
@@ -183,7 +183,7 @@ export function AgreementRoundsCard({ caseId }: AgreementRoundsCardProps) {
           <div className="min-w-0 flex-1">
             <CardTitle className="text-sm">Agreement rounds</CardTitle>
             <CardDescription className="mt-1">
-              Final agreement emails and client submissions for this case.
+              Final agreement emails and signed copies received by the office.
             </CardDescription>
           </div>
           <CardAction className="static row-auto col-auto">
@@ -297,7 +297,7 @@ function RoundStatusBadge({ round }: { round: AgreementRound }) {
   }
 
   if (round.sentEntry) {
-    return <Badge variant="outline">Awaiting client</Badge>
+    return <Badge variant="outline">Awaiting delivery</Badge>
   }
 
   return <Badge variant="outline">Uploaded</Badge>
@@ -345,16 +345,14 @@ function AgreementRoundDetails({ round }: { round: AgreementRound }) {
       {round.submittedEntry ? (
         <DetailBlock
           icon={CheckCircle2}
-          label={
-            submittedAt ? `Client submitted ${submittedAt}` : 'Client submitted'
-          }
-          title={round.submittedFileName ?? 'Submitted agreement'}
+          label={submittedAt ? `Received ${submittedAt}` : 'Received'}
+          title={round.submittedFileName ?? 'Received agreement'}
         >
           {round.submittedFileUrl ? (
             <Button asChild variant="outline" size="xs">
               <a href={round.submittedFileUrl} target="_blank" rel="noreferrer">
                 <ExternalLink data-icon="inline-start" />
-                Open submitted file
+                Open received file
               </a>
             </Button>
           ) : null}
@@ -396,8 +394,8 @@ function DetailBlock({
 
 function getRoundStateLabel(round: AgreementRound) {
   if (round.emailFailed) return 'Email failed'
-  if (round.submittedEntry) return 'Submitted'
-  if (round.sentEntry) return 'Awaiting client'
+  if (round.submittedEntry) return 'Received'
+  if (round.sentEntry) return 'Awaiting delivery'
   return 'Uploaded'
 }
 const AGREEMENT_ROUND_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {

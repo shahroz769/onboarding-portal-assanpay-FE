@@ -3,10 +3,10 @@ import { Check, Copy, ExternalLink, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '#/components/ui/button'
-import type { EmailPreviewResult } from '#/apis/cases'
+import type { AgreementEmailPreviewResult } from '#/apis/cases'
 
 interface WhatsAppMessagePanelProps {
-  preview: EmailPreviewResult
+  preview: AgreementEmailPreviewResult
   phoneNumber: string | null | undefined
   onConfirm: (file: File) => void
   isPending: boolean

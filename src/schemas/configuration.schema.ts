@@ -186,6 +186,17 @@ export const merchantPortalSettingsSchema = z.object({
       },
     )
     .default(''),
+  legalEmail: z
+    .string()
+    .trim()
+    .max(320)
+    .refine(
+      (value) => value === '' || emailAddressSchema.safeParse(value).success,
+      {
+        message: 'Enter a valid legal email.',
+      },
+    )
+    .default(''),
 })
 
 const methodIdentitySchema = z.object({

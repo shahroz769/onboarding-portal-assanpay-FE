@@ -277,22 +277,16 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
             <div>
               <CardTitle>Agreements</CardTitle>
               <CardDescription>
-                Client signed and scanned physical agreement files.
+                Signed physical agreement received by the office.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <AgreementRow
-            title="Client signed agreement"
-            emptyText="Client signed agreement has not been uploaded yet."
-            file={agreements.clientSignedAgreement}
-          />
-          <Separator />
-          <AgreementRow
-            title="Physical agreement scanned"
-            emptyText="Physical agreement scan has not been uploaded yet."
-            file={agreements.physicalAgreement}
+            title="Received signed agreement"
+            emptyText="The signed physical agreement has not been received yet."
+            file={agreements.receivedSignedAgreement}
           />
         </CardContent>
       </Card>

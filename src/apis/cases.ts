@@ -276,7 +276,7 @@ export async function uploadAgreementFinalAgreement({
   return response.data
 }
 
-export async function uploadPhysicalAgreementCopy({
+export async function uploadReceivedAgreement({
   caseId,
   file,
 }: {
@@ -287,7 +287,7 @@ export async function uploadPhysicalAgreementCopy({
   formData.append('file', file)
 
   const response = await apiClient.post(
-    `/api/cases/${caseId}/physical-agreement/scanned-copy`,
+    `/api/cases/${caseId}/agreement/received-copy`,
     formData,
     {
       headers: {
@@ -342,6 +342,11 @@ export interface EmailPreviewResult {
   goLiveAvailableAt?: string
 }
 
+export type AgreementEmailPreviewResult = Pick<
+  EmailPreviewResult,
+  'recipient' | 'subject' | 'body'
+>
+
 export interface ManualEmailConfirmResult {
   status: 'sent'
   fileId: string
@@ -389,8 +394,8 @@ export async function confirmResubmissionEmailManual({
 export async function fetchAgreementEmailPreview(
   caseId: string,
   input: { remarks?: string | null } & EmailRecipientSelection,
-): Promise<EmailPreviewResult> {
-  const response = await apiClient.post<EmailPreviewResult>(
+): Promise<AgreementEmailPreviewResult> {
+  const response = await apiClient.post<AgreementEmailPreviewResult>(
     `/api/cases/${caseId}/agreement/send-mail/preview`,
     input,
   )
@@ -399,14 +404,12 @@ export async function fetchAgreementEmailPreview(
 
 export async function confirmAgreementEmailManual({
   caseId,
-  tokenId,
   remarks,
   file,
   channel,
   recipientEmailType,
 }: {
   caseId: string
-  tokenId: string
   remarks?: string | null
   file: File
   channel?: ManualCommunicationChannel
@@ -414,7 +417,6 @@ export async function confirmAgreementEmailManual({
 }): Promise<ManualEmailConfirmResult> {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('tokenId', tokenId)
   if (remarks) formData.append('remarks', remarks)
   if (channel) formData.append('channel', channel)
   formData.append('recipientEmailType', recipientEmailType)

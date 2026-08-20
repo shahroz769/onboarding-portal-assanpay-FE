@@ -52,7 +52,6 @@ export function LinkDeadlinesPanel() {
   const fields = [
     ['passwordResetHours', 'Password reset'],
     ['newPasswordSetHours', 'New password set'],
-    ['agreementLinkHours', 'Agreement link'],
     ['documentsReviewResubmissionHours', 'Documents review resubmission'],
     ['goLiveAvailabilityHours', 'Go Live availability'],
   ] as const

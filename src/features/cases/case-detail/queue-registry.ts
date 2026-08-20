@@ -19,7 +19,6 @@ const registry: Record<QueueWorkflowType, QueueRendererLoader> = {
   testing: () => import('./renderers/testing-renderer'),
   wordpress: () => import('./renderers/wordpress-website-renderer'),
   card: () => import('./renderers/dialogpay-card-renderer'),
-  physical_agreement: () => import('./renderers/physical-agreement-renderer'),
   live: () => import('./renderers/live-renderer'),
   generic: () => import('./renderers/generic-renderer'),
 }
@@ -33,7 +32,6 @@ const legacySlugWorkflowMap: Record<string, QueueWorkflowType> = {
   testing: 'testing',
   'wordpress-website': 'wordpress',
   'dialogpay-card': 'card',
-  'physical-agreement': 'physical_agreement',
   live: 'live',
 }
 
@@ -45,7 +43,6 @@ const QUEUE_WORKFLOW_TYPE_SET = new Set<string>([
   'testing',
   'wordpress',
   'card',
-  'physical_agreement',
   'live',
   'sub_merchant_form',
 ])

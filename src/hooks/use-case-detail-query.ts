@@ -23,7 +23,7 @@ import {
   sendForResubmission,
   takeOwnership,
   uploadAgreementFinalAgreement,
-  uploadPhysicalAgreementCopy,
+  uploadReceivedAgreement,
   uploadSubMerchantEmailProof,
   uploadSubMerchantFinalForm,
   fetchResubmissionEmailPreview,
@@ -233,20 +233,20 @@ export function useSaveFieldReviews(caseId: string) {
   })
 }
 
-export function useUploadPhysicalAgreementCopy(caseId: string) {
+export function useUploadReceivedAgreement(caseId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (file: File) => uploadPhysicalAgreementCopy({ caseId, file }),
+    mutationFn: (file: File) => uploadReceivedAgreement({ caseId, file }),
     onSuccess: () => {
-      toast.success('Physical agreement copy uploaded')
+      toast.success('Received Agreement uploaded')
       queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
       queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
     onError: (error: unknown) => {
       toast.error(
-        getApiErrorMessage(error, 'Failed to upload physical agreement copy'),
+        getApiErrorMessage(error, 'Failed to upload received Agreement'),
       )
     },
   })
@@ -508,7 +508,6 @@ export function useConfirmAgreementEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: {
-      tokenId: string
       remarks?: string | null
       file: File
       channel?: ManualCommunicationChannel

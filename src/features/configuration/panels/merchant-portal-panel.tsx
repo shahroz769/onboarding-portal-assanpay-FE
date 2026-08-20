@@ -200,6 +200,25 @@ export function MerchantPortalPanel() {
               />
               <FieldError>{validationErrors.supportEmail}</FieldError>
             </Field>
+            <Field data-invalid={Boolean(validationErrors.legalEmail)}>
+              <FieldLabel htmlFor="merchant-portal-legal-email">
+                Legal Email
+              </FieldLabel>
+              <Input
+                id="merchant-portal-legal-email"
+                type="email"
+                value={value.legalEmail}
+                placeholder="legal@example.com"
+                aria-invalid={Boolean(validationErrors.legalEmail)}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...(current ?? value),
+                    legalEmail: event.target.value,
+                  }))
+                }}
+              />
+              <FieldError>{validationErrors.legalEmail}</FieldError>
+            </Field>
           </div>
         </div>
         <ConfigurationActionBar>

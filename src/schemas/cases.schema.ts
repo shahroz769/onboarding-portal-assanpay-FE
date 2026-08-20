@@ -322,7 +322,7 @@ const caseDetailSchema = z.object({
           createdAt: z.string(),
         })
         .nullable(),
-      clientAgreement: z
+      receivedAgreement: z
         .object({
           id: z.string(),
           originalName: z.string(),
@@ -333,18 +333,6 @@ const caseDetailSchema = z.object({
           createdAt: z.string(),
         })
         .nullable(),
-    })
-    .nullable()
-    .optional(),
-  physicalAgreement: z
-    .object({
-      id: z.string(),
-      originalName: z.string(),
-      mimeType: z.string(),
-      sizeBytes: z.number(),
-      googleDriveWebViewLink: z.string(),
-      googleDriveDownloadLink: z.string().nullable(),
-      createdAt: z.string(),
     })
     .nullable()
     .optional(),
@@ -536,7 +524,6 @@ export type SelectSubMerchantFormInput = z.infer<
 export type AgreementEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
-  tokenExpiresAt: string | null
   error?: string
 }
 

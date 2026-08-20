@@ -10,7 +10,6 @@ export const QUEUE_WORKFLOW_TYPES = [
   'testing',
   'wordpress',
   'card',
-  'physical_agreement',
   'live',
   'sub_merchant_form',
 ] as const

@@ -97,10 +97,6 @@ const WORKFLOW_OPTIONS: Array<{
     label: 'Card',
   },
   {
-    value: 'physical_agreement',
-    label: 'Physical agreement',
-  },
-  {
     value: 'live',
     label: 'Live',
   },

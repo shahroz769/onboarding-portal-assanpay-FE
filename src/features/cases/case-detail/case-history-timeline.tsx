@@ -148,13 +148,6 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
   },
-  case_created_from_mid_go_live_email: {
-    label: 'Physical Agreement case created',
-    icon: FileText,
-    iconClassName: 'text-sky-700 dark:text-sky-300',
-    iconWrapperClassName:
-      'border-sky-200 bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60',
-  },
   case_created_from_documents_review: {
     label: 'Case created',
     icon: FileText,
@@ -246,13 +239,6 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
   },
-  physical_agreement_uploaded: {
-    label: 'Physical Agreement uploaded',
-    icon: Upload,
-    iconClassName: 'text-violet-700 dark:text-violet-300',
-    iconWrapperClassName:
-      'border-violet-200 bg-violet-100 dark:border-violet-800 dark:bg-violet-950/60',
-  },
   agreement_email_sent: {
     label: 'Agreement email sent',
     icon: MailCheck,
@@ -281,8 +267,8 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
-  agreement_client_submitted: {
-    label: 'Client agreement submitted',
+  agreement_received_uploaded: {
+    label: 'Received Agreement uploaded',
     icon: CheckCircle2,
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     iconWrapperClassName:
@@ -728,7 +714,7 @@ function formatDetails(
   }
 
   if (
-    action === 'agreement_client_submitted' &&
+    action === 'agreement_received_uploaded' &&
     typeof details.fileName === 'string'
   ) {
     parts.push(`Submitted ${details.fileName}`)

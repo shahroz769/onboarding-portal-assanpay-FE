@@ -65,9 +65,7 @@ function getPrimaryActionCopy(
     isTestingHistoryPending: boolean
     isAgreementCase: boolean
     hasAgreementFinal: boolean
-    hasAgreementClientSubmission: boolean
-    isPhysicalAgreementCase: boolean
-    hasPhysicalAgreementCopy: boolean
+    hasReceivedAgreement: boolean
   },
 ) {
   const status = caseDetail.case.status
@@ -91,6 +89,16 @@ function getPrimaryActionCopy(
     }
   }
 
+  if (options.isAgreementCase && status === 'awaiting_client') {
+    return {
+      title: 'Awaiting signed agreement',
+      description:
+        'The agreement and delivery instructions were sent. Upload the scanned signed copy when it arrives at the office.',
+      actionLabel: null,
+      actionKind: 'agreement' as const,
+    }
+  }
+
   if (status === 'awaiting_client') {
     return {
       title: 'Awaiting client',
@@ -104,12 +112,12 @@ function getPrimaryActionCopy(
   if (
     options.isAgreementCase &&
     status === 'working' &&
-    options.hasAgreementClientSubmission
+    options.hasReceivedAgreement
   ) {
     return {
-      title: 'Client agreement submitted',
+      title: 'Signed agreement received',
       description:
-        'Review the submitted agreement. If it is correct, close this case successfully.',
+        'The scanned signed agreement is saved. You can now close this case successfully.',
       actionLabel: 'Mark as successful',
       actionKind: 'mark-successful' as const,
     }
@@ -195,26 +203,6 @@ function getPrimaryActionCopy(
         'Merchant portal credentials were sent. You can now close this case successfully.',
       actionLabel: 'Mark as successful',
       actionKind: 'mark-successful' as const,
-    }
-  }
-
-  if (options.isPhysicalAgreementCase && status === 'working') {
-    if (options.hasPhysicalAgreementCopy) {
-      return {
-        title: 'Physical agreement uploaded',
-        description:
-          'The scanned signed agreement copy is saved. You can now close this case successfully.',
-        actionLabel: 'Mark as successful',
-        actionKind: 'mark-successful' as const,
-      }
-    }
-
-    return {
-      title: 'Physical agreement required',
-      description:
-        'Upload the scanned signed agreement copy in the case workspace before closing this case successfully.',
-      actionLabel: null,
-      actionKind: 'physical-agreement' as const,
     }
   }
 
@@ -325,7 +313,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isMidCreationCase = workflowType === 'mid'
   const isTestingCase = workflowType === 'testing'
   const isAgreementCase = workflowType === 'agreement'
-  const isPhysicalAgreementCase = workflowType === 'physical_agreement'
   const reviewSummary = isDocumentReviewCase
     ? (documentsReviewDraft?.reviewSummary ??
       getDocumentsReviewSummary(caseDetail))
@@ -350,11 +337,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     isTestingHistoryPending: isTestingCase && caseHistoryQuery.isPending,
     isAgreementCase,
     hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
-    hasAgreementClientSubmission: Boolean(
-      caseDetail.agreement?.clientAgreement,
-    ),
-    isPhysicalAgreementCase,
-    hasPhysicalAgreementCopy: Boolean(caseDetail.physicalAgreement),
+    hasReceivedAgreement: Boolean(caseDetail.agreement?.receivedAgreement),
   })
   const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
@@ -370,8 +353,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'sub-merchant-form' &&
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'testing' &&
-    primaryAction.actionKind !== 'agreement' &&
-    primaryAction.actionKind !== 'physical-agreement'
+    primaryAction.actionKind !== 'agreement'
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const primaryButtonPending =
@@ -551,13 +533,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                   : primaryAction.actionKind === 'testing'
                                     ? 'Complete testing limits and send credentials by auto Resend, manual Gmail, or WhatsApp in the case workspace.'
                                     : primaryAction.actionKind === 'agreement'
-                                      ? 'Complete the Agreement upload and mail workflow in the case workspace.'
-                                      : primaryAction.actionKind ===
-                                          'physical-agreement'
-                                        ? 'Upload the scanned signed agreement copy in the case workspace before closing this case.'
-                                        : isCaseOwner
-                                          ? 'When everything checks out, close this case successfully.'
-                                          : 'Only the current case owner can complete this case.'}
+                                      ? 'Complete the Agreement email and received-copy workflow in the case workspace.'
+                                      : isCaseOwner
+                                        ? 'When everything checks out, close this case successfully.'
+                                        : 'Only the current case owner can complete this case.'}
                       </p>
                       {showPrimaryActionButton ? (
                         <Button

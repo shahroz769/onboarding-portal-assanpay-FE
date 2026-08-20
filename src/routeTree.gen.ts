@@ -25,7 +25,6 @@ import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configu
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
 import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
 import { Route as OnboardingFormGoLiveTokenRouteImport } from './routes/onboarding-form.go-live.$token'
-import { Route as OnboardingFormAgreementTokenRouteImport } from './routes/onboarding-form.agreement.$token'
 import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
 import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
 import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
@@ -125,12 +124,6 @@ const OnboardingFormGoLiveTokenRoute =
   OnboardingFormGoLiveTokenRouteImport.update({
     id: '/go-live/$token',
     path: '/go-live/$token',
-    getParentRoute: () => OnboardingFormRoute,
-  } as any)
-const OnboardingFormAgreementTokenRoute =
-  OnboardingFormAgreementTokenRouteImport.update({
-    id: '/agreement/$token',
-    path: '/agreement/$token',
     getParentRoute: () => OnboardingFormRoute,
   } as any)
 const AppUserManagementUserCreationRoute =
@@ -270,7 +263,6 @@ export interface FileRoutesByFullPath {
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
-  '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases/': typeof AppCasesIndexRoute
@@ -302,7 +294,6 @@ export interface FileRoutesByTo {
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
-  '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases': typeof AppCasesIndexRoute
@@ -341,7 +332,6 @@ export interface FileRoutesById {
   '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
   '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
-  '/onboarding-form/agreement/$token': typeof OnboardingFormAgreementTokenRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/_app/cases/': typeof AppCasesIndexRoute
@@ -380,7 +370,6 @@ export interface FileRouteTypes {
     | '/merchants/$merchantId'
     | '/user-management/all-users'
     | '/user-management/user-creation'
-    | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/cases/'
@@ -412,7 +401,6 @@ export interface FileRouteTypes {
     | '/merchants/$merchantId'
     | '/user-management/all-users'
     | '/user-management/user-creation'
-    | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/cases'
@@ -450,7 +438,6 @@ export interface FileRouteTypes {
     | '/_app/merchants/$merchantId'
     | '/_app/user-management/all-users'
     | '/_app/user-management/user-creation'
-    | '/onboarding-form/agreement/$token'
     | '/onboarding-form/go-live/$token'
     | '/onboarding-form/resubmit/$token'
     | '/_app/cases/'
@@ -579,13 +566,6 @@ declare module '@tanstack/react-router' {
       path: '/go-live/$token'
       fullPath: '/onboarding-form/go-live/$token'
       preLoaderRoute: typeof OnboardingFormGoLiveTokenRouteImport
-      parentRoute: typeof OnboardingFormRoute
-    }
-    '/onboarding-form/agreement/$token': {
-      id: '/onboarding-form/agreement/$token'
-      path: '/agreement/$token'
-      fullPath: '/onboarding-form/agreement/$token'
-      preLoaderRoute: typeof OnboardingFormAgreementTokenRouteImport
       parentRoute: typeof OnboardingFormRoute
     }
     '/_app/user-management/user-creation': {
@@ -828,14 +808,12 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface OnboardingFormRouteChildren {
   OnboardingFormIndexRoute: typeof OnboardingFormIndexRoute
-  OnboardingFormAgreementTokenRoute: typeof OnboardingFormAgreementTokenRoute
   OnboardingFormGoLiveTokenRoute: typeof OnboardingFormGoLiveTokenRoute
   OnboardingFormResubmitTokenRoute: typeof OnboardingFormResubmitTokenRoute
 }
 
 const OnboardingFormRouteChildren: OnboardingFormRouteChildren = {
   OnboardingFormIndexRoute: OnboardingFormIndexRoute,
-  OnboardingFormAgreementTokenRoute: OnboardingFormAgreementTokenRoute,
   OnboardingFormGoLiveTokenRoute: OnboardingFormGoLiveTokenRoute,
   OnboardingFormResubmitTokenRoute: OnboardingFormResubmitTokenRoute,
 }

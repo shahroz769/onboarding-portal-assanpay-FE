@@ -7,7 +7,6 @@ import {
   MailCheck,
   Upload,
 } from 'lucide-react'
-import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -45,11 +44,12 @@ import { useAuth } from '#/features/auth/auth-client'
 import {
   useSendAgreementEmail,
   useUploadAgreementFinalAgreement,
+  useUploadReceivedAgreement,
   useFetchAgreementEmailPreview,
   useConfirmAgreementEmailManual,
 } from '#/hooks/use-case-detail-query'
 import { configurationQueryOptions } from '#/hooks/use-configuration-query'
-import type { EmailPreviewResult } from '#/apis/cases'
+import type { AgreementEmailPreviewResult } from '#/apis/cases'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
@@ -63,18 +63,25 @@ const ACCEPTED_AGREEMENT_TYPES = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
-const clientAgreementReviewSchema = z.object({
-  remarks: z.string().trim().min(1, 'Remarks are required for resubmission.'),
-})
-
-type AgreementReviewContext = 'final' | 'client'
+const ACCEPTED_RECEIVED_EXTENSIONS = [
+  '.pdf',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+] as const
+const ACCEPTED_RECEIVED_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+])
 
 type AgreementReviewState = {
   open: boolean
-  context: AgreementReviewContext
   remarks: string
   remarksError: string | null
-  preview: EmailPreviewResult | null
+  preview: AgreementEmailPreviewResult | null
   recipientEmailType: EmailRecipientType
 }
 
@@ -88,32 +95,38 @@ function getFileExtension(fileName: string) {
   return fileName.toLowerCase().match(/\.[^.]+$/)?.[0] ?? ''
 }
 
-function validateAgreement(file: File) {
+function validateAgreement(file: File, mode: 'final' | 'received') {
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return `Agreement must be 10 MB or smaller. Selected file is ${formatFileSize(file.size)}.`
   }
 
-  if (
-    !ACCEPTED_AGREEMENT_EXTENSIONS.includes(
-      getFileExtension(
-        file.name,
-      ) as (typeof ACCEPTED_AGREEMENT_EXTENSIONS)[number],
-    ) ||
-    !ACCEPTED_AGREEMENT_TYPES.has(file.type)
-  ) {
-    return 'Agreement must be a PDF, DOC, or DOCX file.'
+  const isAccepted =
+    mode === 'final'
+      ? ACCEPTED_AGREEMENT_EXTENSIONS.includes(
+          getFileExtension(
+            file.name,
+          ) as (typeof ACCEPTED_AGREEMENT_EXTENSIONS)[number],
+        ) && ACCEPTED_AGREEMENT_TYPES.has(file.type)
+      : ACCEPTED_RECEIVED_EXTENSIONS.includes(
+          getFileExtension(
+            file.name,
+          ) as (typeof ACCEPTED_RECEIVED_EXTENSIONS)[number],
+        ) && ACCEPTED_RECEIVED_TYPES.has(file.type)
+
+  if (!isAccepted) {
+    return mode === 'final'
+      ? 'Agreement must be a PDF, DOC, or DOCX file.'
+      : 'Received agreement must be a PDF, JPG, PNG, or WebP file.'
   }
 
   return null
 }
 
 function buildAgreementWhatsappBody(body: string) {
-  return body
-    .replace(
-      /Please review and sign the agreement for (.+?) using the secure link below:/,
-      'Please sign and upload the agreement for $1 using the secure link below:',
-    )
-    .replace(/\n\nIf you have any questions, please reply to this email\./, '')
+  return body.replace(
+    /\n\nIf you have any questions, please reply to this email\./,
+    '',
+  )
 }
 
 export default function AgreementRenderer({
@@ -123,12 +136,12 @@ export default function AgreementRenderer({
   const { user } = useAuth()
   const { data: config } = useQuery(configurationQueryOptions())
   const uploadFinalAgreement = useUploadAgreementFinalAgreement(caseId)
+  const uploadReceivedAgreement = useUploadReceivedAgreement(caseId)
   const sendAgreement = useSendAgreementEmail(caseId)
   const fetchPreview = useFetchAgreementEmailPreview(caseId)
   const confirmManual = useConfirmAgreementEmailManual(caseId)
   const [review, setReview] = useState<AgreementReviewState>({
     open: false,
-    context: 'final',
     remarks: '',
     remarksError: null,
     preview: null,
@@ -136,7 +149,6 @@ export default function AgreementRenderer({
   })
   const {
     open: reviewOpen,
-    context: reviewContext,
     remarks,
     remarksError,
     preview,
@@ -175,17 +187,17 @@ export default function AgreementRenderer({
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
   const isWorking = caseDetail.case.status === 'working'
+  const isAwaitingClient = caseDetail.case.status === 'awaiting_client'
   const canEdit = isCaseOwner && isWorking
-  const hasClientAgreement = Boolean(agreement?.clientAgreement)
+  const hasReceivedAgreement = Boolean(agreement?.receivedAgreement)
   const canReviewFinal =
-    canEdit && Boolean(agreement?.finalAgreement) && !hasClientAgreement
-  const canReviewClient = canEdit && hasClientAgreement
+    canEdit && Boolean(agreement?.finalAgreement) && !hasReceivedAgreement
+  const canUploadReceived = isCaseOwner && isAwaitingClient
 
-  function openReview(context: AgreementReviewContext) {
+  function openReview() {
     setReview((current) => ({
       ...current,
       open: true,
-      context,
       remarks: '',
       remarksError: null,
       preview: null,
@@ -194,18 +206,6 @@ export default function AgreementRenderer({
 
   async function handleAutoSend() {
     const trimmedRemarks = remarks.trim()
-    if (reviewContext === 'client') {
-      const result = clientAgreementReviewSchema.safeParse({
-        remarks: trimmedRemarks,
-      })
-      if (!result.success) {
-        setReview((current) => ({
-          ...current,
-          remarksError: result.error.issues[0]?.message ?? 'Remarks required.',
-        }))
-        return
-      }
-    }
     await sendAgreement.mutateAsync({
       remarks: trimmedRemarks || null,
       recipientEmailType,
@@ -215,18 +215,6 @@ export default function AgreementRenderer({
 
   async function handleLoadPreview() {
     const trimmedRemarks = remarks.trim()
-    if (reviewContext === 'client') {
-      const result = clientAgreementReviewSchema.safeParse({
-        remarks: trimmedRemarks,
-      })
-      if (!result.success) {
-        setReview((current) => ({
-          ...current,
-          remarksError: result.error.issues[0]?.message ?? 'Remarks required.',
-        }))
-        return
-      }
-    }
     setReview((current) => ({ ...current, remarksError: null }))
     const data = await fetchPreview.mutateAsync({
       remarks: trimmedRemarks || null,
@@ -242,7 +230,6 @@ export default function AgreementRenderer({
     if (!preview) return
     const trimmedRemarks = remarks.trim()
     await confirmManual.mutateAsync({
-      tokenId: preview.tokenId,
       remarks: trimmedRemarks || null,
       file,
       channel,
@@ -268,12 +255,12 @@ export default function AgreementRenderer({
             {caseDetail.case.status === 'awaiting_client' ? (
               <Badge variant="secondary">
                 <MailCheck />
-                Awaiting client
+                Awaiting signed copy
               </Badge>
-            ) : agreement?.clientAgreement ? (
+            ) : agreement?.receivedAgreement ? (
               <Badge variant="secondary">
                 <CheckCircle2 />
-                Client submitted
+                Received
               </Badge>
             ) : agreement?.finalAgreement ? (
               <Badge variant="secondary">
@@ -326,13 +313,14 @@ export default function AgreementRenderer({
             <Field data-disabled={!canEdit}>
               <FieldLabel>Final Agreement</FieldLabel>
               <AgreementUpload
+                mode="final"
                 disabled={!canEdit}
                 isUploading={uploadFinalAgreement.isPending}
                 onUpload={(file) => uploadFinalAgreement.mutate({ file })}
               />
 
               <FieldDescription>
-                Upload one completed PDF, DOC, or DOCX file. Maximum size is 1
+                Upload one completed PDF, DOC, or DOCX file. Maximum size is 10
                 MB.
               </FieldDescription>
             </Field>
@@ -343,11 +331,11 @@ export default function AgreementRenderer({
       {agreement?.finalAgreement ? (
         <AgreementFileCard
           title="Final Agreement"
-          description="This agreement will be sent to the client through a secure upload link."
+          description="The Google Drive link for this agreement will be emailed to the client."
           file={agreement.finalAgreement}
           action={
             canReviewFinal ? (
-              <Button onClick={() => openReview('final')}>
+              <Button onClick={openReview}>
                 <MailCheck data-icon="inline-start" />
                 Review
               </Button>
@@ -356,20 +344,33 @@ export default function AgreementRenderer({
         />
       ) : null}
 
-      {agreement?.clientAgreement ? (
+      {agreement?.receivedAgreement ? (
         <AgreementFileCard
-          title="Client Submitted Agreement"
-          description="Review the signed agreement submitted by the client."
-          file={agreement.clientAgreement}
-          action={
-            canReviewClient ? (
-              <Button onClick={() => openReview('client')}>
-                <MailCheck data-icon="inline-start" />
-                Review
-              </Button>
-            ) : null
-          }
+          title="Received Signed Agreement"
+          description="Scanned copy of the signed physical agreement received by the office."
+          file={agreement.receivedAgreement}
         />
+      ) : null}
+
+      {canUploadReceived ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Received Agreement</CardTitle>
+            <CardDescription>
+              Once the signed physical agreement arrives at the office, scan it
+              and upload the complete copy here. The case will return to Working
+              and can then be closed successfully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AgreementUpload
+              mode="received"
+              disabled={!canUploadReceived}
+              isUploading={uploadReceivedAgreement.isPending}
+              onUpload={(file) => uploadReceivedAgreement.mutate(file)}
+            />
+          </CardContent>
+        </Card>
       ) : null}
 
       {!canEdit && isWorking ? (
@@ -378,7 +379,7 @@ export default function AgreementRenderer({
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
             Only the current case owner can upload the final agreement and send
-            the client upload link.
+            it to the client.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -389,15 +390,10 @@ export default function AgreementRenderer({
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {reviewContext === 'client'
-                ? 'Review Client Agreement'
-                : 'Review Agreement'}
-            </DialogTitle>
+            <DialogTitle>Review Agreement</DialogTitle>
             <DialogDescription>
-              {reviewContext === 'client'
-                ? 'Add remarks explaining why the submitted agreement needs to be corrected, then send a fresh secure upload link.'
-                : 'Confirm the final agreement and send a secure upload link to the client.'}
+              Confirm the final agreement and send its Google Drive link with
+              printing, signing and delivery instructions.
             </DialogDescription>
           </DialogHeader>
 
@@ -434,11 +430,7 @@ export default function AgreementRenderer({
                     preview: null,
                   }))
                 }}
-                placeholder={
-                  reviewContext === 'client'
-                    ? 'Required. Explain what the client must correct.'
-                    : 'Optional message for the client.'
-                }
+                placeholder="Optional message for the client."
                 className="min-h-28"
               />
 
@@ -582,10 +574,12 @@ function AgreementFileCard({
 }
 
 function AgreementUpload({
+  mode,
   disabled,
   isUploading,
   onUpload,
 }: {
+  mode: 'final' | 'received'
   disabled: boolean
   isUploading: boolean
   onUpload: (file: File) => void
@@ -600,7 +594,7 @@ function AgreementUpload({
   function handleFile(file: File | undefined) {
     if (!file || disabled || isUploading) return
 
-    const validationError = validateAgreement(file)
+    const validationError = validateAgreement(file, mode)
     if (validationError) {
       setError(validationError)
       return
@@ -665,10 +659,16 @@ function AgreementUpload({
           </div>
           <div>
             <p className="font-semibold">
-              {isUploading ? 'Uploading agreement' : 'Drop agreement here'}
+              {isUploading
+                ? 'Uploading agreement'
+                : mode === 'final'
+                  ? 'Drop final agreement here'
+                  : 'Drop received scan here'}
             </p>
             <p className="text-sm text-muted-foreground">
-              PDF, DOC, DOCX (max 10MB)
+              {mode === 'final'
+                ? 'PDF, DOC, DOCX (max 10MB)'
+                : 'PDF, JPG, PNG, WebP (max 10MB)'}
             </p>
           </div>
           <Button
@@ -692,7 +692,11 @@ function AgreementUpload({
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
         tabIndex={-1}
-        accept={ACCEPTED_AGREEMENT_EXTENSIONS.join(',')}
+        accept={
+          mode === 'final'
+            ? ACCEPTED_AGREEMENT_EXTENSIONS.join(',')
+            : ACCEPTED_RECEIVED_EXTENSIONS.join(',')
+        }
         className="sr-only"
         type="file"
         disabled={disabled || isUploading}

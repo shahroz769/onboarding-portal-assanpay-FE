@@ -259,7 +259,6 @@ export async function createQueue(input: {
     | 'testing'
     | 'wordpress'
     | 'card'
-    | 'physical_agreement'
     | 'live'
     | 'sub_merchant_form'
   lifecycle?: 'draft' | 'inactive'
