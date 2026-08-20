@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
@@ -7,8 +8,10 @@ import {
   midGoLiveContextQueryOptions,
   useActivateMidGoLiveMutation,
 } from '#/apis/merchant-onboarding'
+import type { MidGoLiveContext } from '#/apis/merchant-onboarding'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
 import {
   Card,
   CardContent,
@@ -47,6 +50,7 @@ function MidGoLiveRoute() {
 function MidGoLiveContent({ token }: { token: string }) {
   const query = useQuery(midGoLiveContextQueryOptions(token))
   const activate = useActivateMidGoLiveMutation(token)
+  const [testedMethodKeys, setTestedMethodKeys] = useState<string[]>([])
 
   if (query.isPending) {
     return (
@@ -67,6 +71,19 @@ function MidGoLiveContent({ token }: { token: string }) {
   const status = activationData ? 'started' : data.status
   const availableAt = formatDateTime(data.availableAt)
   const availabilityLabel = formatAvailabilityHours(data.availableInHours)
+  const selectedMethodKeys = new Set(testedMethodKeys)
+  const allMethodsTested =
+    data.testingMethods.length > 0 &&
+    data.testingMethods.every((method) => selectedMethodKeys.has(method.key))
+
+  function setMethodTested(methodKey: string, checked: boolean) {
+    setTestedMethodKeys((current) => {
+      if (checked) {
+        return current.includes(methodKey) ? current : [...current, methodKey]
+      }
+      return current.filter((key) => key !== methodKey)
+    })
+  }
 
   return (
     <Card>
@@ -109,10 +126,49 @@ function MidGoLiveContent({ token }: { token: string }) {
           )}
         </MotionSwap>
 
+        {status !== 'started' ? (
+          <section className="flex flex-col gap-4 rounded-lg border p-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold">Confirm completed testing</h2>
+              <p className="text-sm text-muted-foreground">
+                Perform low-amount tests and select every enabled method below.
+                You can go live only after all collection and disbursement
+                methods have been tested.
+              </p>
+            </div>
+
+            <TestingMethodGroup
+              title="Collection methods"
+              methods={data.testingMethods.filter(
+                (method) => method.type === 'collection',
+              )}
+              selectedMethodKeys={selectedMethodKeys}
+              disabled={status !== 'ready' || activate.isPending}
+              onCheckedChange={setMethodTested}
+            />
+            <TestingMethodGroup
+              title="Disbursement methods"
+              methods={data.testingMethods.filter(
+                (method) => method.type === 'disbursement',
+              )}
+              selectedMethodKeys={selectedMethodKeys}
+              disabled={status !== 'ready' || activate.isPending}
+              onCheckedChange={setMethodTested}
+            />
+
+            <p className="text-sm text-muted-foreground">
+              After testing, withdraw your balance. Settlement is T+2 and is
+              processed at 12:00 AM after each 48-hour period.
+            </p>
+          </section>
+        ) : null}
+
         <div className="flex justify-end">
           <Button
-            onClick={() => activate.mutate()}
-            disabled={status !== 'ready' || activate.isPending}
+            onClick={() => activate.mutate(testedMethodKeys)}
+            disabled={
+              status !== 'ready' || !allMethodsTested || activate.isPending
+            }
           >
             {activate.isPending ? (
               <Spinner data-icon="inline-start" />
@@ -126,6 +182,45 @@ function MidGoLiveContent({ token }: { token: string }) {
         {activate.error ? <ActivationError error={activate.error} /> : null}
       </CardContent>
     </Card>
+  )
+}
+
+type TestingMethod = MidGoLiveContext['testingMethods'][number]
+
+function TestingMethodGroup({
+  title,
+  methods,
+  selectedMethodKeys,
+  disabled,
+  onCheckedChange,
+}: {
+  title: string
+  methods: TestingMethod[]
+  selectedMethodKeys: Set<string>
+  disabled: boolean
+  onCheckedChange: (methodKey: string, checked: boolean) => void
+}) {
+  if (methods.length === 0) return null
+
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-medium">{title}</legend>
+      {methods.map((method) => (
+        <label
+          key={method.key}
+          className="flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm has-disabled:cursor-not-allowed has-disabled:opacity-60 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5"
+        >
+          <Checkbox
+            checked={selectedMethodKeys.has(method.key)}
+            disabled={disabled}
+            onCheckedChange={(checked) =>
+              onCheckedChange(method.key, checked === true)
+            }
+          />
+          <span>{method.label}</span>
+        </label>
+      ))}
+    </fieldset>
   )
 }
 

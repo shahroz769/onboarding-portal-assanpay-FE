@@ -181,6 +181,11 @@ export type MidGoLiveContext = {
   availableAt: string
   availableInHours: number
   liveCaseNumber: string | null
+  testingMethods: Array<{
+    key: string
+    label: string
+    type: 'collection' | 'disbursement'
+  }>
 }
 
 export async function fetchMidGoLiveContext(
@@ -212,9 +217,11 @@ export type MidGoLiveActivationResponse = {
 
 export async function activateMidGoLive(
   token: string,
+  testedMethodKeys: string[],
 ): Promise<MidGoLiveActivationResponse> {
   const { data } = await apiClient.post<MidGoLiveActivationResponse>(
     `/api/public/mid-go-live/${token}`,
+    { testedMethodKeys },
   )
   return data
 }
@@ -224,7 +231,8 @@ export function useActivateMidGoLiveMutation(token: string) {
 
   return useMutation({
     mutationKey: ['mid-go-live', 'activate', token] as const,
-    mutationFn: () => activateMidGoLive(token),
+    mutationFn: (testedMethodKeys: string[]) =>
+      activateMidGoLive(token, testedMethodKeys),
     retry: false,
     onSuccess: () =>
       queryClient.invalidateQueries({

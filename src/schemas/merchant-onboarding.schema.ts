@@ -29,7 +29,7 @@ export const KIN_RELATIONS = [
   { value: 'father', label: 'Father' },
   { value: 'brother', label: 'Brother' },
   { value: 'sister', label: 'Sister' },
-  { value: 'wife', label: 'Wife' },
+  { value: 'spouse', label: 'Spouse' },
   { value: 'son', label: 'Son' },
   { value: 'daughter', label: 'Daughter' },
 ] as const
