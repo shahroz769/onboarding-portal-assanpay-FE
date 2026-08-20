@@ -220,7 +220,7 @@ export default function TestingRenderer({
               </AlertTitle>
               <AlertDescription>
                 {credentialsReady
-                  ? 'Merchant portal credentials were saved in the MID Creation case. They are hidden in Testing and can be delivered by auto Resend, manual Gmail, or WhatsApp.'
+                  ? 'Merchant portal credentials can be delivered by auto Resend, manual Gmail, or WhatsApp.'
                   : 'Save the portal MID and email in the MID Creation case before sending this mail.'}
               </AlertDescription>
             </Alert>
