@@ -190,8 +190,9 @@ export default function AgreementRenderer({
   const isAwaitingClient = caseDetail.case.status === 'awaiting_client'
   const canEdit = isCaseOwner && isWorking
   const hasReceivedAgreement = Boolean(agreement?.receivedAgreement)
+  const canUploadFinal = canEdit && agreement?.emailStatus !== 'sent'
   const canReviewFinal =
-    canEdit && Boolean(agreement?.finalAgreement) && !hasReceivedAgreement
+    canUploadFinal && Boolean(agreement?.finalAgreement) && !hasReceivedAgreement
   const canUploadReceived = isCaseOwner && isAwaitingClient
 
   function openReview() {
@@ -310,18 +311,21 @@ export default function AgreementRenderer({
               </Field>
             ) : null}
 
-            <Field data-disabled={!canEdit}>
+            <Field data-disabled={!canUploadFinal}>
               <FieldLabel>Final Agreement</FieldLabel>
               <AgreementUpload
                 mode="final"
-                disabled={!canEdit}
+                disabled={!canUploadFinal}
                 isUploading={uploadFinalAgreement.isPending}
                 onUpload={(file) => uploadFinalAgreement.mutate({ file })}
               />
 
               <FieldDescription>
-                Upload one completed PDF, DOC, or DOCX file. Maximum size is 10
-                MB.
+                {agreement?.emailStatus === 'sent'
+                  ? 'The Final Agreement cannot be replaced after the email has been sent.'
+                  : agreement?.finalAgreement
+                    ? 'Upload a new PDF, DOC, or DOCX file to replace the current Final Agreement before sending the email.'
+                    : 'Upload one completed PDF, DOC, or DOCX file. Maximum size is 10 MB.'}
               </FieldDescription>
             </Field>
           </FieldGroup>
