@@ -9,10 +9,8 @@ import {
 
 import { MethodListPanel } from './configuration-panel-shared'
 import { payoutMethodSettingsSchema } from '#/schemas/configuration.schema'
-import {
-  createEmptyConfiguredMethod,
-  MethodConfigurationFields,
-} from './method-configuration-fields'
+import { createEmptyConfiguredMethod } from './configuration-panel-utils'
+import { MethodConfigurationFields } from './method-configuration-fields'
 
 export function PayoutMethodsPanel() {
   const { data, isPending, error } = useQuery(payoutMethodsQueryOptions())

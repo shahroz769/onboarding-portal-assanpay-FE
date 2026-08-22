@@ -10,10 +10,8 @@ import {
 } from '#/hooks/use-configuration-query'
 
 import { MethodListPanel } from './configuration-panel-shared'
-import {
-  createEmptyConfiguredMethod,
-  MethodConfigurationFields,
-} from './method-configuration-fields'
+import { createEmptyConfiguredMethod } from './configuration-panel-utils'
+import { MethodConfigurationFields } from './method-configuration-fields'
 
 // ─── Payment Methods ────────────────────────────────────────────────────────
 export function PaymentMethodsPanel() {

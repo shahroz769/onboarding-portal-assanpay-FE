@@ -2,16 +2,6 @@ import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import type { PaymentMethod } from '#/schemas/configuration.schema'
 
-export function createEmptyConfiguredMethod(id: string): PaymentMethod {
-  return {
-    id,
-    label: '',
-    testing: { min: Number.NaN, max: Number.NaN },
-    live: { min: Number.NaN, max: Number.NaN },
-    commissionRate: Number.NaN,
-  }
-}
-
 export function MethodConfigurationFields({
   method,
   index,
