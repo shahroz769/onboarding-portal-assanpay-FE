@@ -10,6 +10,7 @@ export const Route = createFileRoute('/_app/user-management/all-users')({
   staticData: {
     title: 'All Users',
     subtitle: 'Manage employee status, access, and owned cases.',
+    fitViewport: true,
   },
   validateSearch: userRouteSearchSchema,
   loaderDeps: ({ search }) => ({

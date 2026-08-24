@@ -27,6 +27,7 @@ import {
   SidebarTrigger,
 } from '#/components/ui/sidebar'
 import { Separator } from '#/components/ui/separator'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
@@ -62,12 +63,14 @@ function AppLayout() {
         title?: string
         subtitle?: string
         hidePageShell?: boolean
+        fitViewport?: boolean
       }
     | undefined
   const title = staticData?.title ?? ''
   const subtitle = staticData?.subtitle
   const hidePageShell =
     isCaseDetailRoute || (staticData?.hidePageShell ?? false)
+  const fitViewport = staticData?.fitViewport ?? false
   const caseDetailMatch = matches.find(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
@@ -130,12 +133,22 @@ function AppLayout() {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-6">
+        <div
+          className={cn(
+            'flex min-h-0 flex-1 flex-col p-4 md:p-6',
+            fitViewport ? 'overflow-hidden' : 'overflow-y-auto',
+          )}
+        >
           {hidePageShell ? (
             <Outlet />
           ) : (
-            <div className="flex min-h-full shrink-0 flex-col">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+            <div
+              className={cn(
+                'flex min-h-0 flex-col',
+                fitViewport ? 'flex-1' : 'min-h-full shrink-0',
+              )}
+            >
+              <div className="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3">
                 <div className="min-w-0">
                   <h1 className="text-2xl font-semibold tracking-tight">
                     {title}

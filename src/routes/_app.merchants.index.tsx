@@ -12,6 +12,7 @@ export const Route = createFileRoute('/_app/merchants/')({
   staticData: {
     title: 'Merchants',
     subtitle: 'Manage and track merchant onboarding progress.',
+    fitViewport: true,
   },
   validateSearch: merchantRouteSearchSchema,
   loaderDeps: ({ search }) => ({

@@ -191,7 +191,7 @@ export function DataTable<TData>({
     return (
       <div
         className={cn(
-          'view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border',
+          'view-transition-none flex h-full min-h-0 flex-col overflow-auto rounded-md border',
           className,
         )}
       >

@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_app/cases/my-closed-cases')({
   staticData: {
     title: 'My Closed Cases',
     subtitle: 'Cases you owned that have already reached a terminal stage.',
+    fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
   loaderDeps: ({ search }) => ({

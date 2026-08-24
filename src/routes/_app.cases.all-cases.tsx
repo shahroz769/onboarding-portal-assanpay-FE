@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
   staticData: {
     title: 'All Cases',
     subtitle: 'Review and manage all onboarding cases.',
+    fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
   loaderDeps: ({ search }) => ({

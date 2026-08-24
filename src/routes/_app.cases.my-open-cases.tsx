@@ -20,6 +20,7 @@ export const Route = createFileRoute('/_app/cases/my-open-cases')({
   staticData: {
     title: 'My Open Cases',
     subtitle: 'Cases you currently own that are still in progress.',
+    fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
   loaderDeps: ({ search }) => ({
