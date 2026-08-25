@@ -9,46 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingFormRouteImport } from './routes/onboarding-form'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
-import { Route as OnboardingFormIndexRouteImport } from './routes/onboarding-form.index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingFormRouteImport } from './routes/onboarding-form'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as SetPasswordTokenRouteImport } from './routes/set-password.$token'
-import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
-import { Route as AppMerchantsRouteImport } from './routes/_app.merchants'
-import { Route as AppConfigurationRouteImport } from './routes/_app.configuration'
 import { Route as AppCasesRouteImport } from './routes/_app.cases'
-import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
-import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.index'
-import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configuration.index'
+import { Route as AppConfigurationRouteImport } from './routes/_app.configuration'
+import { Route as AppMerchantsRouteImport } from './routes/_app.merchants'
+import { Route as AppUserManagementRouteImport } from './routes/_app.user-management'
+import { Route as OnboardingFormIndexRouteImport } from './routes/onboarding-form.index'
+import { Route as SetPasswordTokenRouteImport } from './routes/set-password.$token'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
-import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
-import { Route as OnboardingFormGoLiveTokenRouteImport } from './routes/onboarding-form.go-live.$token'
-import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
-import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
-import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
-import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.configuration.sub-merchants'
-import { Route as AppConfigurationQueuesRouteImport } from './routes/_app.configuration.queues'
-import { Route as AppConfigurationPayoutMethodsRouteImport } from './routes/_app.configuration.payout-methods'
-import { Route as AppConfigurationPaymentMethodsRouteImport } from './routes/_app.configuration.payment-methods'
-import { Route as AppConfigurationMerchantPortalRouteImport } from './routes/_app.configuration.merchant-portal'
-import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
-import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
-import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.configuration.email-sending'
-import { Route as AppConfigurationCaseTriggeringRouteImport } from './routes/_app.configuration.case-triggering'
-import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
-import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
-import { Route as AppCasesWorkQueueCasesRouteImport } from './routes/_app.cases.work-queue-cases'
-import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
-import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
-import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
+import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
+import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
+import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
+import { Route as AppCasesWorkQueueCasesRouteImport } from './routes/_app.cases.work-queue-cases'
+import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configuration.index'
+import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
+import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
+import { Route as AppConfigurationCaseTriggeringRouteImport } from './routes/_app.configuration.case-triggering'
+import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.configuration.email-sending'
+import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
+import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
+import { Route as AppConfigurationMerchantPortalRouteImport } from './routes/_app.configuration.merchant-portal'
+import { Route as AppConfigurationPaymentMethodsRouteImport } from './routes/_app.configuration.payment-methods'
+import { Route as AppConfigurationPayoutMethodsRouteImport } from './routes/_app.configuration.payout-methods'
+import { Route as AppConfigurationQueuesRouteImport } from './routes/_app.configuration.queues'
+import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.configuration.sub-merchants'
+import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.index'
+import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
+import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
+import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
+import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
+import { Route as OnboardingFormGoLiveTokenRouteImport } from './routes/onboarding-form.go-live.$token'
+import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
 import { Route as AppUserManagementUsersUserIdRouteImport } from './routes/_app.user-management.users.$userId'
 
-const OnboardingFormRoute = OnboardingFormRouteImport.update({
-  id: '/onboarding-form',
-  path: '/onboarding-form',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -56,38 +55,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const OnboardingFormRoute = OnboardingFormRouteImport.update({
+  id: '/onboarding-form',
+  path: '/onboarding-form',
   getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingFormIndexRoute = OnboardingFormIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => OnboardingFormRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
-const SetPasswordTokenRoute = SetPasswordTokenRouteImport.update({
-  id: '/set-password/$token',
-  path: '/set-password/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppUserManagementRoute = AppUserManagementRouteImport.update({
-  id: '/user-management',
-  path: '/user-management',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMerchantsRoute = AppMerchantsRouteImport.update({
-  id: '/merchants',
-  path: '/merchants',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppConfigurationRoute = AppConfigurationRouteImport.update({
-  id: '/configuration',
-  path: '/configuration',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCasesRoute = AppCasesRouteImport.update({
@@ -95,106 +70,70 @@ const AppCasesRoute = AppCasesRouteImport.update({
   path: '/cases',
   getParentRoute: () => AppRoute,
 } as any)
-const AppUserManagementIndexRoute = AppUserManagementIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppUserManagementRoute,
+const AppConfigurationRoute = AppConfigurationRouteImport.update({
+  id: '/configuration',
+  path: '/configuration',
+  getParentRoute: () => AppRoute,
 } as any)
-const AppMerchantsIndexRoute = AppMerchantsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppMerchantsRoute,
+const AppMerchantsRoute = AppMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => AppRoute,
 } as any)
-const AppConfigurationIndexRoute = AppConfigurationIndexRouteImport.update({
+const AppUserManagementRoute = AppUserManagementRouteImport.update({
+  id: '/user-management',
+  path: '/user-management',
+  getParentRoute: () => AppRoute,
+} as any)
+const OnboardingFormIndexRoute = OnboardingFormIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppConfigurationRoute,
+  getParentRoute: () => OnboardingFormRoute,
+} as any)
+const SetPasswordTokenRoute = SetPasswordTokenRouteImport.update({
+  id: '/set-password/$token',
+  path: '/set-password/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppCasesRoute,
 } as any)
-const OnboardingFormResubmitTokenRoute =
-  OnboardingFormResubmitTokenRouteImport.update({
-    id: '/resubmit/$token',
-    path: '/resubmit/$token',
-    getParentRoute: () => OnboardingFormRoute,
-  } as any)
-const OnboardingFormGoLiveTokenRoute =
-  OnboardingFormGoLiveTokenRouteImport.update({
-    id: '/go-live/$token',
-    path: '/go-live/$token',
-    getParentRoute: () => OnboardingFormRoute,
-  } as any)
-const AppUserManagementUserCreationRoute =
-  AppUserManagementUserCreationRouteImport.update({
-    id: '/user-creation',
-    path: '/user-creation',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
-const AppUserManagementAllUsersRoute =
-  AppUserManagementAllUsersRouteImport.update({
-    id: '/all-users',
-    path: '/all-users',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
-const AppMerchantsMerchantIdRoute = AppMerchantsMerchantIdRouteImport.update({
-  id: '/$merchantId',
-  path: '/$merchantId',
-  getParentRoute: () => AppMerchantsRoute,
+const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => AppCasesRoute,
 } as any)
-const AppConfigurationSubMerchantsRoute =
-  AppConfigurationSubMerchantsRouteImport.update({
-    id: '/sub-merchants',
-    path: '/sub-merchants',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationQueuesRoute = AppConfigurationQueuesRouteImport.update({
-  id: '/queues',
-  path: '/queues',
+const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
+  id: '/all-cases',
+  path: '/all-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
+const AppCasesMyClosedCasesRoute = AppCasesMyClosedCasesRouteImport.update({
+  id: '/my-closed-cases',
+  path: '/my-closed-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
+const AppCasesMyOpenCasesRoute = AppCasesMyOpenCasesRouteImport.update({
+  id: '/my-open-cases',
+  path: '/my-open-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
+const AppCasesWorkQueueCasesRoute = AppCasesWorkQueueCasesRouteImport.update({
+  id: '/work-queue-cases',
+  path: '/work-queue-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
+const AppConfigurationIndexRoute = AppConfigurationIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => AppConfigurationRoute,
 } as any)
-const AppConfigurationPayoutMethodsRoute =
-  AppConfigurationPayoutMethodsRouteImport.update({
-    id: '/payout-methods',
-    path: '/payout-methods',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationPaymentMethodsRoute =
-  AppConfigurationPaymentMethodsRouteImport.update({
-    id: '/payment-methods',
-    path: '/payment-methods',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationMerchantPortalRoute =
-  AppConfigurationMerchantPortalRouteImport.update({
-    id: '/merchant-portal',
-    path: '/merchant-portal',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationLinkDeadlinesRoute =
-  AppConfigurationLinkDeadlinesRouteImport.update({
-    id: '/link-deadlines',
-    path: '/link-deadlines',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationLimitsAndMdrRoute =
-  AppConfigurationLimitsAndMdrRouteImport.update({
-    id: '/limits-and-mdr',
-    path: '/limits-and-mdr',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationEmailSendingRoute =
-  AppConfigurationEmailSendingRouteImport.update({
-    id: '/email-sending',
-    path: '/email-sending',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationCaseTriggeringRoute =
-  AppConfigurationCaseTriggeringRouteImport.update({
-    id: '/case-triggering',
-    path: '/case-triggering',
+const AppConfigurationAgreementsRoute =
+  AppConfigurationAgreementsRouteImport.update({
+    id: '/agreements',
+    path: '/agreements',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
 const AppConfigurationCaseFlowRulesRoute =
@@ -203,37 +142,98 @@ const AppConfigurationCaseFlowRulesRoute =
     path: '/case-flow-rules',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
-const AppConfigurationAgreementsRoute =
-  AppConfigurationAgreementsRouteImport.update({
-    id: '/agreements',
-    path: '/agreements',
+const AppConfigurationCaseTriggeringRoute =
+  AppConfigurationCaseTriggeringRouteImport.update({
+    id: '/case-triggering',
+    path: '/case-triggering',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
-const AppCasesWorkQueueCasesRoute = AppCasesWorkQueueCasesRouteImport.update({
-  id: '/work-queue-cases',
-  path: '/work-queue-cases',
-  getParentRoute: () => AppCasesRoute,
+const AppConfigurationEmailSendingRoute =
+  AppConfigurationEmailSendingRouteImport.update({
+    id: '/email-sending',
+    path: '/email-sending',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationLimitsAndMdrRoute =
+  AppConfigurationLimitsAndMdrRouteImport.update({
+    id: '/limits-and-mdr',
+    path: '/limits-and-mdr',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationLinkDeadlinesRoute =
+  AppConfigurationLinkDeadlinesRouteImport.update({
+    id: '/link-deadlines',
+    path: '/link-deadlines',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationMerchantPortalRoute =
+  AppConfigurationMerchantPortalRouteImport.update({
+    id: '/merchant-portal',
+    path: '/merchant-portal',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationPaymentMethodsRoute =
+  AppConfigurationPaymentMethodsRouteImport.update({
+    id: '/payment-methods',
+    path: '/payment-methods',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationPayoutMethodsRoute =
+  AppConfigurationPayoutMethodsRouteImport.update({
+    id: '/payout-methods',
+    path: '/payout-methods',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationQueuesRoute = AppConfigurationQueuesRouteImport.update({
+  id: '/queues',
+  path: '/queues',
+  getParentRoute: () => AppConfigurationRoute,
 } as any)
-const AppCasesMyOpenCasesRoute = AppCasesMyOpenCasesRouteImport.update({
-  id: '/my-open-cases',
-  path: '/my-open-cases',
-  getParentRoute: () => AppCasesRoute,
+const AppConfigurationSubMerchantsRoute =
+  AppConfigurationSubMerchantsRouteImport.update({
+    id: '/sub-merchants',
+    path: '/sub-merchants',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppMerchantsIndexRoute = AppMerchantsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppMerchantsRoute,
 } as any)
-const AppCasesMyClosedCasesRoute = AppCasesMyClosedCasesRouteImport.update({
-  id: '/my-closed-cases',
-  path: '/my-closed-cases',
-  getParentRoute: () => AppCasesRoute,
+const AppMerchantsMerchantIdRoute = AppMerchantsMerchantIdRouteImport.update({
+  id: '/$merchantId',
+  path: '/$merchantId',
+  getParentRoute: () => AppMerchantsRoute,
 } as any)
-const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
-  id: '/all-cases',
-  path: '/all-cases',
-  getParentRoute: () => AppCasesRoute,
+const AppUserManagementIndexRoute = AppUserManagementIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppUserManagementRoute,
 } as any)
-const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => AppCasesRoute,
-} as any)
+const AppUserManagementAllUsersRoute =
+  AppUserManagementAllUsersRouteImport.update({
+    id: '/all-users',
+    path: '/all-users',
+    getParentRoute: () => AppUserManagementRoute,
+  } as any)
+const AppUserManagementUserCreationRoute =
+  AppUserManagementUserCreationRouteImport.update({
+    id: '/user-creation',
+    path: '/user-creation',
+    getParentRoute: () => AppUserManagementRoute,
+  } as any)
+const OnboardingFormGoLiveTokenRoute =
+  OnboardingFormGoLiveTokenRouteImport.update({
+    id: '/go-live/$token',
+    path: '/go-live/$token',
+    getParentRoute: () => OnboardingFormRoute,
+  } as any)
+const OnboardingFormResubmitTokenRoute =
+  OnboardingFormResubmitTokenRouteImport.update({
+    id: '/resubmit/$token',
+    path: '/resubmit/$token',
+    getParentRoute: () => OnboardingFormRoute,
+  } as any)
 const AppUserManagementUsersUserIdRoute =
   AppUserManagementUsersUserIdRouteImport.update({
     id: '/users/$userId',
@@ -468,11 +468,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding-form': {
-      id: '/onboarding-form'
-      path: '/onboarding-form'
-      fullPath: '/onboarding-form'
-      preLoaderRoute: typeof OnboardingFormRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -482,53 +482,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
+    '/onboarding-form': {
+      id: '/onboarding-form'
+      path: '/onboarding-form'
+      fullPath: '/onboarding-form'
+      preLoaderRoute: typeof OnboardingFormRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/onboarding-form/': {
-      id: '/onboarding-form/'
-      path: '/'
-      fullPath: '/onboarding-form/'
-      preLoaderRoute: typeof OnboardingFormIndexRouteImport
-      parentRoute: typeof OnboardingFormRoute
     }
     '/_app/': {
       id: '/_app/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/set-password/$token': {
-      id: '/set-password/$token'
-      path: '/set-password/$token'
-      fullPath: '/set-password/$token'
-      preLoaderRoute: typeof SetPasswordTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/user-management': {
-      id: '/_app/user-management'
-      path: '/user-management'
-      fullPath: '/user-management'
-      preLoaderRoute: typeof AppUserManagementRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/merchants': {
-      id: '/_app/merchants'
-      path: '/merchants'
-      fullPath: '/merchants'
-      preLoaderRoute: typeof AppMerchantsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/configuration': {
-      id: '/_app/configuration'
-      path: '/configuration'
-      fullPath: '/configuration'
-      preLoaderRoute: typeof AppConfigurationRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/cases': {
@@ -538,26 +503,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/user-management/': {
-      id: '/_app/user-management/'
-      path: '/'
-      fullPath: '/user-management/'
-      preLoaderRoute: typeof AppUserManagementIndexRouteImport
-      parentRoute: typeof AppUserManagementRoute
+    '/_app/configuration': {
+      id: '/_app/configuration'
+      path: '/configuration'
+      fullPath: '/configuration'
+      preLoaderRoute: typeof AppConfigurationRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_app/merchants/': {
-      id: '/_app/merchants/'
-      path: '/'
-      fullPath: '/merchants/'
-      preLoaderRoute: typeof AppMerchantsIndexRouteImport
-      parentRoute: typeof AppMerchantsRoute
+    '/_app/merchants': {
+      id: '/_app/merchants'
+      path: '/merchants'
+      fullPath: '/merchants'
+      preLoaderRoute: typeof AppMerchantsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_app/configuration/': {
-      id: '/_app/configuration/'
+    '/_app/user-management': {
+      id: '/_app/user-management'
+      path: '/user-management'
+      fullPath: '/user-management'
+      preLoaderRoute: typeof AppUserManagementRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/onboarding-form/': {
+      id: '/onboarding-form/'
       path: '/'
-      fullPath: '/configuration/'
-      preLoaderRoute: typeof AppConfigurationIndexRouteImport
-      parentRoute: typeof AppConfigurationRoute
+      fullPath: '/onboarding-form/'
+      preLoaderRoute: typeof OnboardingFormIndexRouteImport
+      parentRoute: typeof OnboardingFormRoute
+    }
+    '/set-password/$token': {
+      id: '/set-password/$token'
+      path: '/set-password/$token'
+      fullPath: '/set-password/$token'
+      preLoaderRoute: typeof SetPasswordTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/cases/': {
       id: '/_app/cases/'
@@ -566,137 +545,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesIndexRouteImport
       parentRoute: typeof AppCasesRoute
     }
-    '/onboarding-form/resubmit/$token': {
-      id: '/onboarding-form/resubmit/$token'
-      path: '/resubmit/$token'
-      fullPath: '/onboarding-form/resubmit/$token'
-      preLoaderRoute: typeof OnboardingFormResubmitTokenRouteImport
-      parentRoute: typeof OnboardingFormRoute
-    }
-    '/onboarding-form/go-live/$token': {
-      id: '/onboarding-form/go-live/$token'
-      path: '/go-live/$token'
-      fullPath: '/onboarding-form/go-live/$token'
-      preLoaderRoute: typeof OnboardingFormGoLiveTokenRouteImport
-      parentRoute: typeof OnboardingFormRoute
-    }
-    '/_app/user-management/user-creation': {
-      id: '/_app/user-management/user-creation'
-      path: '/user-creation'
-      fullPath: '/user-management/user-creation'
-      preLoaderRoute: typeof AppUserManagementUserCreationRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
-    '/_app/user-management/all-users': {
-      id: '/_app/user-management/all-users'
-      path: '/all-users'
-      fullPath: '/user-management/all-users'
-      preLoaderRoute: typeof AppUserManagementAllUsersRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
-    '/_app/merchants/$merchantId': {
-      id: '/_app/merchants/$merchantId'
-      path: '/$merchantId'
-      fullPath: '/merchants/$merchantId'
-      preLoaderRoute: typeof AppMerchantsMerchantIdRouteImport
-      parentRoute: typeof AppMerchantsRoute
-    }
-    '/_app/configuration/sub-merchants': {
-      id: '/_app/configuration/sub-merchants'
-      path: '/sub-merchants'
-      fullPath: '/configuration/sub-merchants'
-      preLoaderRoute: typeof AppConfigurationSubMerchantsRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/queues': {
-      id: '/_app/configuration/queues'
-      path: '/queues'
-      fullPath: '/configuration/queues'
-      preLoaderRoute: typeof AppConfigurationQueuesRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/payout-methods': {
-      id: '/_app/configuration/payout-methods'
-      path: '/payout-methods'
-      fullPath: '/configuration/payout-methods'
-      preLoaderRoute: typeof AppConfigurationPayoutMethodsRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/payment-methods': {
-      id: '/_app/configuration/payment-methods'
-      path: '/payment-methods'
-      fullPath: '/configuration/payment-methods'
-      preLoaderRoute: typeof AppConfigurationPaymentMethodsRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/merchant-portal': {
-      id: '/_app/configuration/merchant-portal'
-      path: '/merchant-portal'
-      fullPath: '/configuration/merchant-portal'
-      preLoaderRoute: typeof AppConfigurationMerchantPortalRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/link-deadlines': {
-      id: '/_app/configuration/link-deadlines'
-      path: '/link-deadlines'
-      fullPath: '/configuration/link-deadlines'
-      preLoaderRoute: typeof AppConfigurationLinkDeadlinesRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/limits-and-mdr': {
-      id: '/_app/configuration/limits-and-mdr'
-      path: '/limits-and-mdr'
-      fullPath: '/configuration/limits-and-mdr'
-      preLoaderRoute: typeof AppConfigurationLimitsAndMdrRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/email-sending': {
-      id: '/_app/configuration/email-sending'
-      path: '/email-sending'
-      fullPath: '/configuration/email-sending'
-      preLoaderRoute: typeof AppConfigurationEmailSendingRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/case-triggering': {
-      id: '/_app/configuration/case-triggering'
-      path: '/case-triggering'
-      fullPath: '/configuration/case-triggering'
-      preLoaderRoute: typeof AppConfigurationCaseTriggeringRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/case-flow-rules': {
-      id: '/_app/configuration/case-flow-rules'
-      path: '/case-flow-rules'
-      fullPath: '/configuration/case-flow-rules'
-      preLoaderRoute: typeof AppConfigurationCaseFlowRulesRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/agreements': {
-      id: '/_app/configuration/agreements'
-      path: '/agreements'
-      fullPath: '/configuration/agreements'
-      preLoaderRoute: typeof AppConfigurationAgreementsRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/cases/work-queue-cases': {
-      id: '/_app/cases/work-queue-cases'
-      path: '/work-queue-cases'
-      fullPath: '/cases/work-queue-cases'
-      preLoaderRoute: typeof AppCasesWorkQueueCasesRouteImport
-      parentRoute: typeof AppCasesRoute
-    }
-    '/_app/cases/my-open-cases': {
-      id: '/_app/cases/my-open-cases'
-      path: '/my-open-cases'
-      fullPath: '/cases/my-open-cases'
-      preLoaderRoute: typeof AppCasesMyOpenCasesRouteImport
-      parentRoute: typeof AppCasesRoute
-    }
-    '/_app/cases/my-closed-cases': {
-      id: '/_app/cases/my-closed-cases'
-      path: '/my-closed-cases'
-      fullPath: '/cases/my-closed-cases'
-      preLoaderRoute: typeof AppCasesMyClosedCasesRouteImport
+    '/_app/cases/$caseId': {
+      id: '/_app/cases/$caseId'
+      path: '/$caseId'
+      fullPath: '/cases/$caseId'
+      preLoaderRoute: typeof AppCasesCaseIdRouteImport
       parentRoute: typeof AppCasesRoute
     }
     '/_app/cases/all-cases': {
@@ -706,12 +559,159 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesAllCasesRouteImport
       parentRoute: typeof AppCasesRoute
     }
-    '/_app/cases/$caseId': {
-      id: '/_app/cases/$caseId'
-      path: '/$caseId'
-      fullPath: '/cases/$caseId'
-      preLoaderRoute: typeof AppCasesCaseIdRouteImport
+    '/_app/cases/my-closed-cases': {
+      id: '/_app/cases/my-closed-cases'
+      path: '/my-closed-cases'
+      fullPath: '/cases/my-closed-cases'
+      preLoaderRoute: typeof AppCasesMyClosedCasesRouteImport
       parentRoute: typeof AppCasesRoute
+    }
+    '/_app/cases/my-open-cases': {
+      id: '/_app/cases/my-open-cases'
+      path: '/my-open-cases'
+      fullPath: '/cases/my-open-cases'
+      preLoaderRoute: typeof AppCasesMyOpenCasesRouteImport
+      parentRoute: typeof AppCasesRoute
+    }
+    '/_app/cases/work-queue-cases': {
+      id: '/_app/cases/work-queue-cases'
+      path: '/work-queue-cases'
+      fullPath: '/cases/work-queue-cases'
+      preLoaderRoute: typeof AppCasesWorkQueueCasesRouteImport
+      parentRoute: typeof AppCasesRoute
+    }
+    '/_app/configuration/': {
+      id: '/_app/configuration/'
+      path: '/'
+      fullPath: '/configuration/'
+      preLoaderRoute: typeof AppConfigurationIndexRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/agreements': {
+      id: '/_app/configuration/agreements'
+      path: '/agreements'
+      fullPath: '/configuration/agreements'
+      preLoaderRoute: typeof AppConfigurationAgreementsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/case-flow-rules': {
+      id: '/_app/configuration/case-flow-rules'
+      path: '/case-flow-rules'
+      fullPath: '/configuration/case-flow-rules'
+      preLoaderRoute: typeof AppConfigurationCaseFlowRulesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/case-triggering': {
+      id: '/_app/configuration/case-triggering'
+      path: '/case-triggering'
+      fullPath: '/configuration/case-triggering'
+      preLoaderRoute: typeof AppConfigurationCaseTriggeringRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/email-sending': {
+      id: '/_app/configuration/email-sending'
+      path: '/email-sending'
+      fullPath: '/configuration/email-sending'
+      preLoaderRoute: typeof AppConfigurationEmailSendingRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/limits-and-mdr': {
+      id: '/_app/configuration/limits-and-mdr'
+      path: '/limits-and-mdr'
+      fullPath: '/configuration/limits-and-mdr'
+      preLoaderRoute: typeof AppConfigurationLimitsAndMdrRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/link-deadlines': {
+      id: '/_app/configuration/link-deadlines'
+      path: '/link-deadlines'
+      fullPath: '/configuration/link-deadlines'
+      preLoaderRoute: typeof AppConfigurationLinkDeadlinesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/merchant-portal': {
+      id: '/_app/configuration/merchant-portal'
+      path: '/merchant-portal'
+      fullPath: '/configuration/merchant-portal'
+      preLoaderRoute: typeof AppConfigurationMerchantPortalRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/payment-methods': {
+      id: '/_app/configuration/payment-methods'
+      path: '/payment-methods'
+      fullPath: '/configuration/payment-methods'
+      preLoaderRoute: typeof AppConfigurationPaymentMethodsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/payout-methods': {
+      id: '/_app/configuration/payout-methods'
+      path: '/payout-methods'
+      fullPath: '/configuration/payout-methods'
+      preLoaderRoute: typeof AppConfigurationPayoutMethodsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/queues': {
+      id: '/_app/configuration/queues'
+      path: '/queues'
+      fullPath: '/configuration/queues'
+      preLoaderRoute: typeof AppConfigurationQueuesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/sub-merchants': {
+      id: '/_app/configuration/sub-merchants'
+      path: '/sub-merchants'
+      fullPath: '/configuration/sub-merchants'
+      preLoaderRoute: typeof AppConfigurationSubMerchantsRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/merchants/': {
+      id: '/_app/merchants/'
+      path: '/'
+      fullPath: '/merchants/'
+      preLoaderRoute: typeof AppMerchantsIndexRouteImport
+      parentRoute: typeof AppMerchantsRoute
+    }
+    '/_app/merchants/$merchantId': {
+      id: '/_app/merchants/$merchantId'
+      path: '/$merchantId'
+      fullPath: '/merchants/$merchantId'
+      preLoaderRoute: typeof AppMerchantsMerchantIdRouteImport
+      parentRoute: typeof AppMerchantsRoute
+    }
+    '/_app/user-management/': {
+      id: '/_app/user-management/'
+      path: '/'
+      fullPath: '/user-management/'
+      preLoaderRoute: typeof AppUserManagementIndexRouteImport
+      parentRoute: typeof AppUserManagementRoute
+    }
+    '/_app/user-management/all-users': {
+      id: '/_app/user-management/all-users'
+      path: '/all-users'
+      fullPath: '/user-management/all-users'
+      preLoaderRoute: typeof AppUserManagementAllUsersRouteImport
+      parentRoute: typeof AppUserManagementRoute
+    }
+    '/_app/user-management/user-creation': {
+      id: '/_app/user-management/user-creation'
+      path: '/user-creation'
+      fullPath: '/user-management/user-creation'
+      preLoaderRoute: typeof AppUserManagementUserCreationRouteImport
+      parentRoute: typeof AppUserManagementRoute
+    }
+    '/onboarding-form/go-live/$token': {
+      id: '/onboarding-form/go-live/$token'
+      path: '/go-live/$token'
+      fullPath: '/onboarding-form/go-live/$token'
+      preLoaderRoute: typeof OnboardingFormGoLiveTokenRouteImport
+      parentRoute: typeof OnboardingFormRoute
+    }
+    '/onboarding-form/resubmit/$token': {
+      id: '/onboarding-form/resubmit/$token'
+      path: '/resubmit/$token'
+      fullPath: '/onboarding-form/resubmit/$token'
+      preLoaderRoute: typeof OnboardingFormResubmitTokenRouteImport
+      parentRoute: typeof OnboardingFormRoute
     }
     '/_app/user-management/users/$userId': {
       id: '/_app/user-management/users/$userId'

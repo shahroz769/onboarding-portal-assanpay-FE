@@ -8,6 +8,7 @@
   ],
 
   "compilerOptions": {
+    "rootDir": ".",
     "target": "ES2022",
     "jsx": "react-jsx",
     "module": "ESNext",
@@ -16,7 +17,7 @@
       "@/*": ["./src/*"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["node", "react", "react-dom", "vite/client"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",

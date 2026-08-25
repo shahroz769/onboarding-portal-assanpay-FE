@@ -2,10 +2,8 @@ import {
   Outlet,
   Link,
   createFileRoute,
-  useRouter,
   useRouterState,
 } from '@tanstack/react-router'
-import { useStore } from '@tanstack/react-store'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
@@ -42,14 +40,9 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
-  const router = useRouter()
-  const currentMatches = useRouterState({
+  const matches = useRouterState({
     select: (state) => state.matches,
   })
-  const pendingMatches = useStore(router.stores.pendingMatches)
-  const isLoading = useStore(router.stores.isLoading)
-  const matches =
-    isLoading && pendingMatches.length > 0 ? pendingMatches : currentMatches
   const isCaseDetailRoute = matches.some(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
