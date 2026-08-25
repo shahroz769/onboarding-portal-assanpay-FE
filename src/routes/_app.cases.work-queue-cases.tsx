@@ -20,13 +20,6 @@ export const Route = createFileRoute('/_app/cases/work-queue-cases')({
     fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
-  beforeLoad: ({ context }) => {
-    const user = context.auth.getSnapshot().user
-
-    if (user?.roleType !== 'agent' || user.workQueueIds.length === 0) {
-      throw redirect({ to: '/cases/all-cases' })
-    }
-  },
   loaderDeps: ({ search }) => ({
     search: search.search,
     queueId: search.queueId,
@@ -35,6 +28,13 @@ export const Route = createFileRoute('/_app/cases/work-queue-cases')({
     sortBy: search.sortBy,
     sortOrder: search.sortOrder,
   }),
+  beforeLoad: ({ context }) => {
+    const user = context.auth.getSnapshot().user
+
+    if (user?.roleType !== 'agent' || user.workQueueIds.length === 0) {
+      throw redirect({ to: '/cases/all-cases' })
+    }
+  },
   pendingMs: 0,
   pendingComponent: CasesRoutePending,
   loader: async ({ context, deps }) => {
