@@ -281,6 +281,7 @@ interface CasesTableComposedProps {
   setFilters: (partialFilters: Partial<CaseRouteSearch>) => void
   hideOwnerFilter?: boolean
   hideStatusFilter?: boolean
+  queueAccess?: 'view' | 'work'
 }
 
 export function CasesTableComposed({
@@ -289,6 +290,7 @@ export function CasesTableComposed({
   setFilters,
   hideOwnerFilter = false,
   hideStatusFilter = false,
+  queueAccess = 'view',
 }: CasesTableComposedProps) {
   return (
     <CasesTable.Provider
@@ -297,6 +299,7 @@ export function CasesTableComposed({
       setFilters={setFilters}
       hideOwnerFilter={hideOwnerFilter}
       hideStatusFilter={hideStatusFilter}
+      queueAccess={queueAccess}
     >
       <CasesTable.QueueSelector />
       <TooltipProvider>

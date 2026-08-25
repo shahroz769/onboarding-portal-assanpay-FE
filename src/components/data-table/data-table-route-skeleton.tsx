@@ -1,4 +1,5 @@
 import { Skeleton } from '#/components/ui/skeleton'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import {
   Table,
   TableBody,
@@ -58,38 +59,54 @@ export function DataTableRouteSkeleton({
       <div className="shrink-0" />
 
       <div className="min-h-0 flex-1">
-        <div className="view-transition-none h-full overflow-auto rounded-md border bg-background">
-          <Table className="table-fixed">
-            <TableHeader className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_var(--border)]">
-              <TableRow>
-                {resolvedColumns.map((column, columnIndex) => (
-                  <TableHead
-                    key={columnIndex}
-                    style={column.grow ? undefined : { width: column.width }}
-                  >
-                    {column.header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: rowCount }).map((_, rowIndex) => (
-                <TableRow
-                  key={rowIndex}
-                  className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
-                >
-                  {resolvedColumns.map((column, cellIndex) => (
-                    <TableCell key={cellIndex} className="h-12 py-0">
-                      <CellSkeleton column={column} rowIndex={rowIndex} />
-                    </TableCell>
+        <div className="view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background">
+          <div className="shrink-0 overflow-hidden shadow-[0_1px_0_0_var(--border)]">
+            <Table className="table-fixed">
+              <SkeletonColumnGroup columns={resolvedColumns} />
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  {resolvedColumns.map((column, columnIndex) => (
+                    <TableHead key={columnIndex}>{column.header}</TableHead>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+            </Table>
+          </div>
+          <ScrollArea className="min-h-0 flex-1">
+            <Table className="table-fixed">
+              <SkeletonColumnGroup columns={resolvedColumns} />
+              <TableBody>
+                {Array.from({ length: rowCount }).map((_, rowIndex) => (
+                  <TableRow
+                    key={rowIndex}
+                    className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
+                  >
+                    {resolvedColumns.map((column, cellIndex) => (
+                      <TableCell key={cellIndex} className="h-12 py-0">
+                        <CellSkeleton column={column} rowIndex={rowIndex} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </div>
       </div>
     </div>
+  )
+}
+
+function SkeletonColumnGroup({ columns }: { columns: SkeletonColumn[] }) {
+  return (
+    <colgroup>
+      {columns.map((column, index) => (
+        <col
+          key={index}
+          style={column.grow ? undefined : { width: column.width }}
+        />
+      ))}
+    </colgroup>
   )
 }
 

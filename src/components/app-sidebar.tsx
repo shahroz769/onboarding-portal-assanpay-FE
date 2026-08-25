@@ -24,7 +24,10 @@ const teams = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
 
-  const navItems = getFilteredNavItems(user?.roleType ?? 'agent')
+  const navItems = getFilteredNavItems(
+    user?.roleType ?? 'agent',
+    Boolean(user?.workQueueIds.length),
+  )
 
   const sidebarUser = {
     name: user?.name ?? 'User',

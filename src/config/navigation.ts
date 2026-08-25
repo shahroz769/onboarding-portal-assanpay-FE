@@ -13,6 +13,7 @@ export type NavSubItem = {
   title: string
   url: string
   roles?: RoleType[]
+  requiresWorkAccess?: boolean
 }
 
 export type NavItem = {
@@ -43,6 +44,12 @@ const navItems: NavItem[] = [
       {
         title: 'All Cases',
         url: '/cases/all-cases',
+      },
+      {
+        title: 'Work Queue Cases',
+        url: '/cases/work-queue-cases',
+        roles: ['agent'],
+        requiresWorkAccess: true,
       },
       {
         title: 'My Open Cases',
@@ -79,13 +86,18 @@ const navItems: NavItem[] = [
   },
 ]
 
-export function getFilteredNavItems(roleType: RoleType): NavItem[] {
+export function getFilteredNavItems(
+  roleType: RoleType,
+  hasWorkingAccess = false,
+): NavItem[] {
   return navItems
     .filter((item) => !item.roles || item.roles.includes(roleType))
     .map((item) => {
       if (!item.items) return item
       const filteredSubItems = item.items.filter(
-        (sub) => !sub.roles || sub.roles.includes(roleType),
+        (sub) =>
+          (!sub.roles || sub.roles.includes(roleType)) &&
+          (!sub.requiresWorkAccess || hasWorkingAccess),
       )
       return { ...item, items: filteredSubItems }
     })

@@ -10,12 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { EmptyState } from '#/components/empty-state'
-
-const stickyHeaderClassName =
-  'sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_var(--border)]'
 
 // ─── Column Definition ──────────────────────────────────────────────────────
 
@@ -117,7 +115,8 @@ export function DataTable<TData>({
   className,
 }: DataTableProps<TData>) {
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!onScrollEnd || !sentinelRef.current) return
@@ -130,7 +129,7 @@ export function DataTable<TData>({
         }
       },
       {
-        root: scrollContainerRef.current,
+        root: viewportRef.current,
         rootMargin: '200px',
       },
     )
@@ -139,50 +138,76 @@ export function DataTable<TData>({
     return () => observer.disconnect()
   }, [onScrollEnd, hasMore, isFetchingMore])
 
-  const headerRow = (
-    <TableRow>
+  // The header lives outside the scroll area so the scrollbar never covers it;
+  // keep it aligned with the body during horizontal scrolling.
+  const syncHeaderScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (headerRef.current) {
+      headerRef.current.scrollLeft = event.currentTarget.scrollLeft
+    }
+  }
+
+  // Shared colgroup keeps the fixed-layout header and body tables aligned.
+  const columnGroup = (
+    <colgroup>
       {columns.map((col) => (
-        <TableHead
+        <col
           key={col.id}
           style={col.width ? { width: col.width } : undefined}
-        >
-          {col.header}
-        </TableHead>
+        />
       ))}
-    </TableRow>
+    </colgroup>
+  )
+
+  const tableHeader = (
+    <div
+      ref={headerRef}
+      className="shrink-0 overflow-hidden shadow-[0_1px_0_0_var(--border)]"
+    >
+      <Table className="table-fixed">
+        {columnGroup}
+        <TableHeader className="bg-muted">
+          <TableRow>
+            {columns.map((col) => (
+              <TableHead key={col.id}>{col.header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+      </Table>
+    </div>
   )
 
   if (isLoading) {
     return (
       <div
         className={cn(
-          'view-transition-none h-full overflow-auto rounded-md border bg-background',
+          'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background',
           className,
         )}
       >
-        <Table className="table-fixed">
-          <TableHeader className={stickyHeaderClassName}>
-            {headerRow}
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 10 }).map((_, rowIndex) => (
-              <TableRow
-                key={rowIndex}
-                className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.id} className="h-12 py-0">
-                    <DataTableCellSkeleton
-                      columnId={column.id}
-                      width={column.width}
-                      rowIndex={rowIndex}
-                    />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {tableHeader}
+        <ScrollArea className="min-h-0 flex-1" onScroll={syncHeaderScroll}>
+          <Table className="table-fixed">
+            {columnGroup}
+            <TableBody>
+              {Array.from({ length: 10 }).map((_, rowIndex) => (
+                <TableRow
+                  key={rowIndex}
+                  className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.id} className="h-12 py-0">
+                      <DataTableCellSkeleton
+                        columnId={column.id}
+                        width={column.width}
+                        rowIndex={rowIndex}
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollArea>
       </div>
     )
   }
@@ -191,16 +216,12 @@ export function DataTable<TData>({
     return (
       <div
         className={cn(
-          'view-transition-none flex h-full min-h-0 flex-col overflow-auto rounded-md border',
+          'view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background',
           className,
         )}
       >
-        <Table className="table-fixed">
-          <TableHeader className={stickyHeaderClassName}>
-            {headerRow}
-          </TableHeader>
-        </Table>
-        <div className="flex min-h-0 flex-1 items-center justify-center bg-background">
+        {tableHeader}
+        <div className="flex min-h-0 flex-1 items-center justify-center">
           {emptyContent ?? (
             <EmptyState
               icon={SearchX}
@@ -215,48 +236,60 @@ export function DataTable<TData>({
 
   return (
     <div
-      ref={scrollContainerRef}
       className={cn(
-        'view-transition-none h-full overflow-auto rounded-md border bg-background',
+        'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background',
         className,
       )}
     >
-      <Table className="table-fixed">
-        <TableHeader className={stickyHeaderClassName}>{headerRow}</TableHeader>
-        <TableBody>
-          {data.map((item) => {
-            const rowId = getRowId(item)
-            const isSelected = selectedIds?.has(rowId) ?? false
-            return (
-              <TableRow
-                key={rowId}
-                data-state={isSelected ? 'selected' : undefined}
-                className={cn(
-                  'h-12 content-visibility-auto contain-intrinsic-size-auto-48px',
-                  isSelected && 'bg-muted/50',
-                )}
-              >
-                {columns.map((col) => (
-                  <TableCell key={col.id} className="h-12 py-0">
-                    {col.cell(item)}
-                  </TableCell>
-                ))}
+      {tableHeader}
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportRef={viewportRef}
+        onScroll={syncHeaderScroll}
+      >
+        <Table className="table-fixed">
+          {columnGroup}
+          <TableBody>
+            {data.map((item) => {
+              const rowId = getRowId(item)
+              const isSelected = selectedIds?.has(rowId) ?? false
+              return (
+                <TableRow
+                  key={rowId}
+                  data-state={isSelected ? 'selected' : undefined}
+                  className={cn(
+                    'h-12 content-visibility-auto contain-intrinsic-size-auto-48px',
+                    isSelected && 'bg-muted/50',
+                  )}
+                >
+                  {columns.map((col) => (
+                    <TableCell key={col.id} className="h-12 py-0">
+                      {col.cell(item)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )
+            })}
+            {isFetchingMore && (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="py-4 text-center">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Spinner className="size-4" />
+                    Loading more...
+                  </div>
+                </TableCell>
               </TableRow>
-            )
-          })}
-          {isFetchingMore && (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="py-4 text-center">
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Spinner className="size-4" />
-                  Loading more...
-                </div>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      {onScrollEnd && <div ref={sentinelRef} className="h-px" />}
+            )}
+            {onScrollEnd && (
+              <TableRow className="border-0 hover:bg-transparent">
+                <TableCell colSpan={columns.length} className="h-px p-0">
+                  <div ref={sentinelRef} className="h-px" />
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </div>
   )
 }

@@ -11,6 +11,7 @@ export type User = {
   roleType: RoleType
   status: 'active' | 'inactive'
   queueViewScope: 'all' | 'selected'
+  workQueueIds: string[]
   createdByUserId: string | null
   lastLoginAt: string | null
   createdAt: string

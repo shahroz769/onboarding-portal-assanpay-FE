@@ -39,6 +39,7 @@ import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.
 import { Route as AppConfigurationCaseTriggeringRouteImport } from './routes/_app.configuration.case-triggering'
 import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
 import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
+import { Route as AppCasesWorkQueueCasesRouteImport } from './routes/_app.cases.work-queue-cases'
 import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
 import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
@@ -208,6 +209,11 @@ const AppConfigurationAgreementsRoute =
     path: '/agreements',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
+const AppCasesWorkQueueCasesRoute = AppCasesWorkQueueCasesRouteImport.update({
+  id: '/work-queue-cases',
+  path: '/work-queue-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
 const AppCasesMyOpenCasesRoute = AppCasesMyOpenCasesRouteImport.update({
   id: '/my-open-cases',
   path: '/my-open-cases',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
   '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/cases/all-cases': typeof AppCasesAllCasesRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
   '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
+  '/_app/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/_app/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/_app/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
   '/_app/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
+    | '/cases/work-queue-cases'
     | '/configuration/agreements'
     | '/configuration/case-flow-rules'
     | '/configuration/case-triggering'
@@ -387,6 +397,7 @@ export interface FileRouteTypes {
     | '/cases/all-cases'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
+    | '/cases/work-queue-cases'
     | '/configuration/agreements'
     | '/configuration/case-flow-rules'
     | '/configuration/case-triggering'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/_app/cases/all-cases'
     | '/_app/cases/my-closed-cases'
     | '/_app/cases/my-open-cases'
+    | '/_app/cases/work-queue-cases'
     | '/_app/configuration/agreements'
     | '/_app/configuration/case-flow-rules'
     | '/_app/configuration/case-triggering'
@@ -666,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfigurationAgreementsRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
+    '/_app/cases/work-queue-cases': {
+      id: '/_app/cases/work-queue-cases'
+      path: '/work-queue-cases'
+      fullPath: '/cases/work-queue-cases'
+      preLoaderRoute: typeof AppCasesWorkQueueCasesRouteImport
+      parentRoute: typeof AppCasesRoute
+    }
     '/_app/cases/my-open-cases': {
       id: '/_app/cases/my-open-cases'
       path: '/my-open-cases'
@@ -709,6 +728,7 @@ interface AppCasesRouteChildren {
   AppCasesAllCasesRoute: typeof AppCasesAllCasesRoute
   AppCasesMyClosedCasesRoute: typeof AppCasesMyClosedCasesRoute
   AppCasesMyOpenCasesRoute: typeof AppCasesMyOpenCasesRoute
+  AppCasesWorkQueueCasesRoute: typeof AppCasesWorkQueueCasesRoute
   AppCasesIndexRoute: typeof AppCasesIndexRoute
 }
 
@@ -717,6 +737,7 @@ const AppCasesRouteChildren: AppCasesRouteChildren = {
   AppCasesAllCasesRoute: AppCasesAllCasesRoute,
   AppCasesMyClosedCasesRoute: AppCasesMyClosedCasesRoute,
   AppCasesMyOpenCasesRoute: AppCasesMyOpenCasesRoute,
+  AppCasesWorkQueueCasesRoute: AppCasesWorkQueueCasesRoute,
   AppCasesIndexRoute: AppCasesIndexRoute,
 }
 

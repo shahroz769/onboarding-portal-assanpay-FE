@@ -71,6 +71,7 @@ type CasesTableProviderProps = {
   setFilters: (partialFilters: Partial<CaseRouteSearch>) => void
   hideOwnerFilter?: boolean
   hideStatusFilter?: boolean
+  queueAccess?: 'view' | 'work'
 }
 
 const CasesTableStateContext = createContext<CasesTableState | null>(null)
@@ -106,6 +107,7 @@ function CasesTableProviderState({
   setFilters,
   hideOwnerFilter = false,
   hideStatusFilter = false,
+  queueAccess = 'view',
 }: CasesTableProviderProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -145,6 +147,7 @@ function CasesTableProviderState({
   } = useInfiniteQuery(
     casesInfiniteQueryOptions({
       ...filters,
+      queueAccess,
       createdAtFrom: undefined,
       createdAtTo: undefined,
     }),
@@ -152,8 +155,14 @@ function CasesTableProviderState({
 
   const isTableLoading = isLoading || (isFetching && !isFetchingNextPage)
 
-  const { data: queues = [], isLoading: isQueuesLoading } =
+  const { data: availableQueues = [], isLoading: isQueuesLoading } =
     useQuery(queuesQueryOptions())
+
+  const workQueueIds = new Set(user?.workQueueIds ?? [])
+  const queues =
+    queueAccess === 'work'
+      ? availableQueues.filter((queue) => workQueueIds.has(queue.id))
+      : availableQueues
 
   const { data: caseUsers = [], isLoading: isUsersLoading } =
     useQuery(usersQueryOptions())

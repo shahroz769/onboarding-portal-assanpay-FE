@@ -165,6 +165,7 @@ export const caseRouteSearchSchema = z.object({
 export type CaseRouteSearch = z.infer<typeof caseRouteSearchSchema>
 
 const caseFiltersSchema = caseRouteSearchSchema.extend({
+  queueAccess: z.enum(['view', 'work']).optional(),
   createdAtFrom: z.string().optional().transform(normalizeOptionalString),
   createdAtTo: z.string().optional().transform(normalizeOptionalString),
 })
