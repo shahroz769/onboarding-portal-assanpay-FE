@@ -77,7 +77,7 @@ function AppLayout() {
   const caseDetail = caseDetailMatch?.loaderData as
     | {
         case?: { caseNumber?: string }
-        queue?: { name?: string }
+        queue?: { id?: string; name?: string }
       }
     | undefined
 
@@ -109,9 +109,14 @@ function AppLayout() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <span className="text-sm text-muted-foreground">
-                      {caseDetail?.queue?.name ?? 'Queue'}
-                    </span>
+                    <BreadcrumbLink asChild>
+                      <Link
+                        to="/cases/all-cases"
+                        search={{ queueId: caseDetail?.queue?.id }}
+                      >
+                        {caseDetail?.queue?.name ?? 'Queue'}
+                      </Link>
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
