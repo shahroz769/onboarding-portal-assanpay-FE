@@ -42,7 +42,11 @@ import {
   useMarkLiveLimitsApplied,
   useSendLiveEmail,
 } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import {
+  emailSendingModeQueryOptions,
+  limitsAndMdrQueryOptions,
+  merchantPortalQueryOptions,
+} from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 
@@ -64,22 +68,23 @@ export default function LiveRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const configurationQuery = useQuery(configurationQueryOptions())
+  const emailModeQuery = useQuery(emailSendingModeQueryOptions())
+  const limitsQuery = useQuery(limitsAndMdrQueryOptions())
+  const merchantPortalQuery = useQuery(merchantPortalQueryOptions())
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
   const markLimitsApplied = useMarkLiveLimitsApplied(caseId)
   const sendLiveEmail = useSendLiveEmail(caseId)
   const fetchPreview = useFetchLiveEmailPreview(caseId)
   const confirmManual = useConfirmLiveEmailManual(caseId)
-  const emailMode = configurationQuery.data?.emailSendingMode ?? {
+  const emailMode = emailModeQuery.data ?? {
     autoEnabled: true,
     manualEnabled: true,
   }
-  const limits = configurationQuery.data?.limitsAndMdr.live
+  const limits = limitsQuery.data?.live
   const paymentMethods = caseDetail.testing?.paymentMethods ?? []
   const payoutMethods = caseDetail.testing?.payoutMethods ?? []
   const merchantPortalUrl =
-    configurationQuery.data?.merchantPortal.loginUrl ??
-    'https://merchant.assanpay.com/login'
+    merchantPortalQuery.data?.loginUrl ?? 'https://merchant.assanpay.com/login'
   const limitsAppliedAt = caseDetail.live?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.live?.limitsAppliedBy?.name ?? null
   const isCaseOwner = Boolean(

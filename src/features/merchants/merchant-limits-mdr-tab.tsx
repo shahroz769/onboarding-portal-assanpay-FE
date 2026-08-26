@@ -19,13 +19,13 @@ import {
   useUpdateMerchantLimitsMdrMutation,
 } from '#/hooks/use-merchants-query'
 import type {
-  MerchantDetailResponse,
   MerchantLimitsMdr,
+  MerchantLimitsResponse,
 } from '#/schemas/merchants.schema'
 import { MerchantPaymentMethodDetails } from './merchant-payment-method-details'
 
 type MerchantLimitsMdrTabProps = {
-  detail: MerchantDetailResponse
+  detail: MerchantLimitsResponse
   canEdit: boolean
 }
 

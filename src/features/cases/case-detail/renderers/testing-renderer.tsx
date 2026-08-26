@@ -33,7 +33,10 @@ import {
   useFetchMidCreationEmailPreview,
   useSendMidCreationEmail,
 } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import {
+  emailSendingModeQueryOptions,
+  limitsAndMdrQueryOptions,
+} from '#/hooks/use-configuration-query'
 import type { EmailPreviewResult } from '#/apis/cases'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 
@@ -44,16 +47,17 @@ export default function TestingRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const configurationQuery = useQuery(configurationQueryOptions())
+  const emailModeQuery = useQuery(emailSendingModeQueryOptions())
+  const limitsQuery = useQuery(limitsAndMdrQueryOptions())
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
   const sendCredentialsEmail = useSendMidCreationEmail(caseId)
   const fetchPreview = useFetchMidCreationEmailPreview(caseId)
   const confirmManual = useConfirmMidCreationEmailManual(caseId)
-  const emailMode = configurationQuery.data?.emailSendingMode ?? {
+  const emailMode = emailModeQuery.data ?? {
     autoEnabled: true,
     manualEnabled: true,
   }
-  const limits = configurationQuery.data?.limitsAndMdr.testing
+  const limits = limitsQuery.data?.testing
   const paymentMethods = caseDetail.testing?.paymentMethods ?? []
   const payoutMethods = caseDetail.testing?.payoutMethods ?? []
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null

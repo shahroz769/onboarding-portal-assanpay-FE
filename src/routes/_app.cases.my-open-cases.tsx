@@ -8,7 +8,7 @@ import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
 } from '#/hooks/use-cases-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter(
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_app/cases/my-open-cases')({
   pendingComponent: CasesRoutePending,
   loader: async ({ context, deps }) => {
     void context.queryClient.prefetchQuery(queuesQueryOptions())
-    void context.queryClient.prefetchQuery(usersQueryOptions())
+    void context.queryClient.prefetchQuery(userDirectoryQueryOptions())
 
     const userId = context.auth.getSnapshot().user?.id
 

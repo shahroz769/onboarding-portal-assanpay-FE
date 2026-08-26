@@ -14,6 +14,7 @@ interface SubscribeOptions {
   onOpen?: () => void
   onError?: (err: unknown) => void
   onInvalidEvent?: () => void
+  onVisible?: () => void
 }
 
 /**
@@ -182,12 +183,11 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   function handleVisibilityChange() {
     if (stopped) return
     if (document.visibilityState === 'visible') {
-      // Force reconnect to pick up missed events
       paused = false
       attempts = 0
+      options.onVisible?.()
       void connect()
     } else {
-      // Pause: abort the current stream; we'll reconnect on visibility
       paused = true
       abortController?.abort()
     }

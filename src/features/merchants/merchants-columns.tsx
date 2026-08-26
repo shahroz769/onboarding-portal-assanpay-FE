@@ -244,7 +244,7 @@ export function createMerchantColumns({
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="size-8" asChild>
                 <Link
-                  to="/merchants/$merchantId"
+                  to="/merchants/$merchantId/overview"
                   params={{ merchantId: merchant.id }}
                 >
                   <EyeIcon className="size-4" />

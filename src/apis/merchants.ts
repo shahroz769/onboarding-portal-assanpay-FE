@@ -1,9 +1,13 @@
 import { apiClient } from '#/lib/api-client'
 import type {
-  MerchantDetailResponse,
   MerchantFilters,
+  MerchantFormResponse,
+  MerchantHeader,
+  MerchantHistoryResponse,
   MerchantLimitsMdr,
+  MerchantLimitsResponse,
   MerchantListResponse,
+  MerchantOverviewResponse,
   Priority,
 } from '#/schemas/merchants.schema'
 
@@ -33,11 +37,47 @@ export async function fetchMerchants(
 
 // ─── Merchant Detail ────────────────────────────────────────────────────────
 
-export async function fetchMerchantDetail(
+export async function fetchMerchantHeader(
   merchantId: string,
-): Promise<MerchantDetailResponse> {
-  const response = await apiClient.get<MerchantDetailResponse>(
+): Promise<MerchantHeader> {
+  const response = await apiClient.get<MerchantHeader>(
     `/api/merchants/${merchantId}`,
+  )
+  return response.data
+}
+
+export async function fetchMerchantOverview(
+  merchantId: string,
+): Promise<MerchantOverviewResponse> {
+  const response = await apiClient.get<MerchantOverviewResponse>(
+    `/api/merchants/${merchantId}/overview`,
+  )
+  return response.data
+}
+
+export async function fetchMerchantForm(
+  merchantId: string,
+): Promise<MerchantFormResponse> {
+  const response = await apiClient.get<MerchantFormResponse>(
+    `/api/merchants/${merchantId}/form`,
+  )
+  return response.data
+}
+
+export async function fetchMerchantLimits(
+  merchantId: string,
+): Promise<MerchantLimitsResponse> {
+  const response = await apiClient.get<MerchantLimitsResponse>(
+    `/api/merchants/${merchantId}/limits-mdr`,
+  )
+  return response.data
+}
+
+export async function fetchMerchantHistory(
+  merchantId: string,
+): Promise<MerchantHistoryResponse> {
+  const response = await apiClient.get<MerchantHistoryResponse>(
+    `/api/merchants/${merchantId}/history`,
   )
   return response.data
 }

@@ -5,6 +5,7 @@ import { LimitsAndMdrPanel } from '#/features/configuration/panels/limits-and-md
 import {
   limitsAndMdrQueryOptions,
   paymentMethodsQueryOptions,
+  payoutMethodsQueryOptions,
 } from '#/hooks/use-configuration-query'
 
 export const Route = createFileRoute('/_app/configuration/limits-and-mdr')({
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_app/configuration/limits-and-mdr')({
     await Promise.all([
       context.queryClient.prefetchQuery(limitsAndMdrQueryOptions()),
       context.queryClient.prefetchQuery(paymentMethodsQueryOptions()),
+      context.queryClient.prefetchQuery(payoutMethodsQueryOptions()),
     ])
   },
   pendingMs: 0,

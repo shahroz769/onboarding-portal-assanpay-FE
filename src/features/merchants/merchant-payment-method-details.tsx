@@ -1,5 +1,5 @@
 import { cn } from '#/lib/utils'
-import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
+import type { MerchantOverviewResponse } from '#/schemas/merchants.schema'
 
 export function MerchantPaymentMethodDetails({
   methods,
@@ -7,8 +7,8 @@ export function MerchantPaymentMethodDetails({
   kind = 'collection',
 }: {
   methods:
-    | MerchantDetailResponse['paymentMethods']
-    | MerchantDetailResponse['payoutMethods']
+    | MerchantOverviewResponse['paymentMethods']
+    | MerchantOverviewResponse['payoutMethods']
   className?: string
   kind?: 'collection' | 'payout'
 }) {

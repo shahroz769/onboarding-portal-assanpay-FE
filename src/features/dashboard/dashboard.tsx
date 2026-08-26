@@ -6,7 +6,7 @@ import {
   dashboardQueryOptions,
 } from '#/hooks/use-dashboard-query'
 import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
-import { useHydrated } from '#/hooks/use-hydrated'
+import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import { DashboardCharts } from './dashboard-charts'
 import { DashboardFilterBar } from './dashboard-filter-bar'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
@@ -51,10 +51,7 @@ export function Dashboard({ search, onChange }: DashboardProps) {
 }
 
 function FilterBarPortal({ children }: { children: React.ReactNode }) {
-  const hydrated = useHydrated()
-  const target = hydrated
-    ? document.getElementById('page-header-actions')
-    : null
+  const target = usePageHeaderActions()
 
   if (!target) return null
   return createPortal(children, target)

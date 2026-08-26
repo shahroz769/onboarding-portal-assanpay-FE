@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { cn } from '#/lib/utils'
-import { useHydrated } from '#/hooks/use-hydrated'
 import {
   DASHBOARD_RANGE_LABELS,
   DASHBOARD_RANGES,
@@ -46,8 +45,7 @@ export function DashboardFilterBar({
   onRefresh,
   isFetching,
 }: DashboardFilterBarProps) {
-  const hydrated = useHydrated()
-  const today = hydrated ? new Date() : undefined
+  const today = new Date()
 
   return (
     <div className="flex flex-wrap items-center gap-2">

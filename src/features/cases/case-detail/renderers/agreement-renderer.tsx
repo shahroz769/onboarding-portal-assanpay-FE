@@ -48,7 +48,7 @@ import {
   useFetchAgreementEmailPreview,
   useConfirmAgreementEmailManual,
 } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { emailSendingModeQueryOptions } from '#/hooks/use-configuration-query'
 import type { AgreementEmailPreviewResult } from '#/apis/cases'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
@@ -134,7 +134,7 @@ export default function AgreementRenderer({
   caseId,
 }: QueueRendererProps) {
   const { user } = useAuth()
-  const { data: config } = useQuery(configurationQueryOptions())
+  const { data: emailModeSettings } = useQuery(emailSendingModeQueryOptions())
   const uploadFinalAgreement = useUploadAgreementFinalAgreement(caseId)
   const uploadReceivedAgreement = useUploadReceivedAgreement(caseId)
   const sendAgreement = useSendAgreementEmail(caseId)
@@ -161,7 +161,7 @@ export default function AgreementRenderer({
       }
     : null
 
-  const emailMode = config?.emailSendingMode ?? {
+  const emailMode = emailModeSettings ?? {
     autoEnabled: true,
     manualEnabled: true,
   }

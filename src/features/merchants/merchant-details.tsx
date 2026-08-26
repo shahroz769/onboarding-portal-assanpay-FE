@@ -1,167 +1,147 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link, Outlet } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { FileText, History, LayoutGrid, Wallet } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
-import { useAuth } from '#/features/auth/auth-client'
-import { merchantDetailQueryOptions } from '#/hooks/use-merchants-query'
+import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
+import type { MerchantHeader } from '#/schemas/merchants.schema'
 
-import { MerchantFormTab } from './merchant-form-tab'
-import { MerchantHistoryTab } from './merchant-history-tab'
-import { MerchantLimitsMdrTab } from './merchant-limits-mdr-tab'
-import { MerchantOverviewTab } from './merchant-overview-tab'
+export const MERCHANT_DETAIL_TABS = [
+  {
+    to: '/merchants/$merchantId/overview',
+    label: 'Overview',
+    icon: LayoutGrid,
+  },
+  {
+    to: '/merchants/$merchantId/form',
+    label: 'Form and Agreement',
+    icon: FileText,
+  },
+  {
+    to: '/merchants/$merchantId/limits',
+    label: 'MDR & Limits',
+    icon: Wallet,
+  },
+  {
+    to: '/merchants/$merchantId/history',
+    label: 'History',
+    icon: History,
+  },
+] as const
 
-type MerchantDetailsProps = {
+const merchantDetailTabClassName =
+  "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+
+type MerchantDetailsLayoutProps = {
   merchantId: string
 }
 
-export function MerchantDetails({ merchantId }: MerchantDetailsProps) {
-  const { data: detail, isPending } = useQuery(
-    merchantDetailQueryOptions(merchantId),
+export function MerchantDetailsLayout({
+  merchantId,
+}: MerchantDetailsLayoutProps) {
+  const { data: header, error, isError } = useQuery(
+    merchantHeaderQueryOptions(merchantId),
   )
-  const { user } = useAuth()
-  const canEdit = user?.roleType === 'super_admin' || user?.roleType === 'admin'
 
-  if (isPending || !detail) {
-    return <MerchantDetailsSkeleton />
+  if (isError && !header) {
+    throw error
   }
 
-  const { merchant } = detail
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
-              {merchant.businessName.slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  {merchant.businessName}
-                </h2>
-                <Badge
-                  variant="secondary"
-                  className={merchantStatusBadgeClasses(merchant.status)}
-                >
-                  {merchant.status.charAt(0).toUpperCase() +
-                    merchant.status.slice(1)}
-                </Badge>
-                {merchant.priority === 'high' ? (
-                  <Badge variant="default">High priority</Badge>
-                ) : null}
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-mono">#{merchant.merchantNumber}</span> ·{' '}
-                {merchant.ownerFullName} · Joined{' '}
-                {format(new Date(merchant.submittedAt), 'dd MMM yyyy')}
-              </p>
-            </div>
-          </div>
-        </div>
+      {header ? (
+        <MerchantDetailsHeader header={header} />
+      ) : (
+        <MerchantDetailsHeaderSkeleton />
+      )}
+      <div className="flex flex-col gap-6">
+        <nav
+          aria-label="Merchant sections"
+          className="grid h-auto w-full grid-cols-2 rounded-lg bg-muted p-[3px] text-muted-foreground sm:inline-flex sm:w-fit"
+        >
+          {MERCHANT_DETAIL_TABS.map((tab) => (
+            <Link
+              key={tab.to}
+              to={tab.to}
+              params={{ merchantId }}
+              activeOptions={{ exact: true }}
+              className={merchantDetailTabClassName}
+              activeProps={{
+                className: 'bg-background font-medium text-foreground shadow-sm',
+              }}
+            >
+              <tab.icon />
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+        <Outlet />
       </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="gap-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 sm:inline-flex sm:w-fit">
-          <TabsTrigger value="overview">
-            <LayoutGrid />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="form">
-            <FileText />
-            Form and Agreement
-          </TabsTrigger>
-          <TabsTrigger value="limits">
-            <Wallet />
-            MDR &amp; Limits
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <History />
-            History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <MerchantOverviewTab detail={detail} />
-        </TabsContent>
-        <TabsContent value="form">
-          <MerchantFormTab detail={detail} />
-        </TabsContent>
-        <TabsContent value="limits">
-          <MerchantLimitsMdrTab detail={detail} canEdit={canEdit} />
-        </TabsContent>
-        <TabsContent value="history">
-          <MerchantHistoryTab detail={detail} />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
 
-export function MerchantDetailsSkeleton() {
+function MerchantDetailsHeader({ header }: { header: MerchantHeader }) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Skeleton className="size-14 rounded-xl" />
-            <div className="flex min-w-0 flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-5 w-20 rounded-md" />
-                <Skeleton className="h-5 w-24 rounded-md" />
-              </div>
-              <Skeleton className="h-4 w-80 max-w-full" />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
+            {header.businessName.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                {header.businessName}
+              </h2>
+              <Badge
+                variant="secondary"
+                className={merchantStatusBadgeClasses(header.status)}
+              >
+                {header.status.charAt(0).toUpperCase() +
+                  header.status.slice(1)}
+              </Badge>
+              {header.priority === 'high' ? (
+                <Badge variant="default">High priority</Badge>
+              ) : null}
             </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <span className="font-mono">#{header.merchantNumber}</span> ·{' '}
+              {header.ownerFullName} · Joined{' '}
+              {format(new Date(header.submittedAt), 'dd MMM yyyy')}
+            </p>
           </div>
         </div>
       </div>
-
-      <Tabs defaultValue="overview" className="gap-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 sm:inline-flex sm:w-fit">
-          <TabsTrigger value="overview">
-            <LayoutGrid />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="form">
-            <FileText />
-            Form and Agreement
-          </TabsTrigger>
-          <TabsTrigger value="limits">
-            <Wallet />
-            MDR &amp; Limits
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <History />
-            History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <MerchantOverviewSkeleton />
-        </TabsContent>
-        <TabsContent value="form">
-          <MerchantFormSkeleton />
-        </TabsContent>
-        <TabsContent value="limits">
-          <MerchantLimitsSkeleton />
-        </TabsContent>
-        <TabsContent value="history">
-          <MerchantHistorySkeleton />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
 
-function MerchantOverviewSkeleton() {
+function MerchantDetailsHeaderSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-14 rounded-xl" />
+          <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-5 w-20 rounded-md" />
+              <Skeleton className="h-5 w-24 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-80 max-w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function MerchantOverviewSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -175,7 +155,7 @@ function MerchantOverviewSkeleton() {
   )
 }
 
-function MerchantFormSkeleton() {
+export function MerchantFormSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -211,7 +191,7 @@ function MerchantFormSkeleton() {
   )
 }
 
-function MerchantLimitsSkeleton() {
+export function MerchantLimitsSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 lg:grid-cols-3">
@@ -227,7 +207,7 @@ function MerchantLimitsSkeleton() {
   )
 }
 
-function MerchantHistorySkeleton() {
+export function MerchantHistorySkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <Card>

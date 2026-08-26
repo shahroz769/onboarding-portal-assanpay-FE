@@ -57,6 +57,11 @@ import type {
 } from '#/schemas/cases.schema'
 import { CASES_KEY } from './use-cases-query'
 import { userDirectoryQueryOptions } from './use-users-query'
+import {
+  emailSendingModeQueryOptions,
+  limitsAndMdrQueryOptions,
+  merchantPortalQueryOptions,
+} from './use-configuration-query'
 
 export const CASE_DETAIL_KEY = ['case-detail'] as const
 export const CASE_COMMENTS_KEY = ['case-comments'] as const
@@ -104,10 +109,33 @@ export async function preloadCaseDetailPageQueries(
   void queryClient.prefetchQuery(userDirectoryQueryOptions())
 
   const detail = await detailPromise
+  prefetchCaseWorkflowConfiguration(queryClient, detail.queue.workflowType)
   const { preloadQueueRenderer } = await queueRegistryPromise
   await preloadQueueRenderer(detail.queue.workflowType)
 
   return detail
+}
+
+function prefetchCaseWorkflowConfiguration(
+  queryClient: QueryClient,
+  workflowType: string,
+) {
+  if (
+    workflowType === 'testing' ||
+    workflowType === 'live' ||
+    workflowType === 'agreement' ||
+    workflowType === 'document_review'
+  ) {
+    void queryClient.prefetchQuery(emailSendingModeQueryOptions())
+  }
+
+  if (workflowType === 'testing' || workflowType === 'live') {
+    void queryClient.prefetchQuery(limitsAndMdrQueryOptions())
+  }
+
+  if (workflowType === 'live') {
+    void queryClient.prefetchQuery(merchantPortalQueryOptions())
+  }
 }
 
 export function invalidateCaseWorkflowQueries(

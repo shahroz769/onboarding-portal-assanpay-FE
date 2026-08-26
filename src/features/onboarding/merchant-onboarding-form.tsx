@@ -86,6 +86,70 @@ import { SubmissionSuccess } from './submission-success'
 // ── Sections & draft autosave ───────────────────────────────────────────────
 
 const DRAFT_STORAGE_KEY = 'assanpay:merchant-onboarding-draft'
+const DRAFT_STORAGE_VERSION = 1
+
+type VersionedOnboardingDraft = {
+  v: number
+  values: Record<string, string>
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function pickPersistedDraftValues(
+  values: MerchantOnboardingFormValues,
+): Record<string, string> {
+  const persisted: Record<string, string> = {}
+
+  for (const [key, val] of Object.entries(values)) {
+    if (typeof val === 'string' && val.trim() !== '') {
+      persisted[key] = val
+    }
+  }
+
+  return persisted
+}
+
+function readOnboardingDraftValues(): Record<string, string> | null {
+  const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+  if (!raw) return null
+
+  const parsed: unknown = JSON.parse(raw)
+  if (!isRecord(parsed)) return null
+
+  if (parsed.v === DRAFT_STORAGE_VERSION && isRecord(parsed.values)) {
+    return Object.fromEntries(
+      Object.entries(parsed.values).filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      ),
+    )
+  }
+
+  if (typeof parsed.v === 'number') {
+    return null
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed).filter(
+      (entry): entry is [string, string] => typeof entry[1] === 'string',
+    ),
+  )
+}
+
+function writeOnboardingDraftValues(values: MerchantOnboardingFormValues) {
+  const persisted = pickPersistedDraftValues(values)
+  if (Object.keys(persisted).length === 0) {
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+    return
+  }
+
+  const payload: VersionedOnboardingDraft = {
+    v: DRAFT_STORAGE_VERSION,
+    values: persisted,
+  }
+  window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload))
+}
 
 function createDebouncedTask(task: () => void, delay: number) {
   let timeout: ReturnType<typeof setTimeout> | undefined
@@ -376,13 +440,11 @@ export function MerchantOnboardingForm({
     if (didRestoreDraftRef.current) return
     didRestoreDraftRef.current = true
     try {
-      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY)
-      if (!raw) return
-      const draft: unknown = JSON.parse(raw)
-      if (!draft || typeof draft !== 'object') return
+      const draftValues = readOnboardingDraftValues()
+      if (!draftValues) return
       let restoredCount = 0
-      for (const [key, val] of Object.entries(draft)) {
-        if (typeof val === 'string' && val !== '' && key in form.state.values) {
+      for (const [key, val] of Object.entries(draftValues)) {
+        if (val !== '' && key in form.state.values) {
           form.setFieldValue(key as keyof MerchantOnboardingFormValues, val)
           restoredCount += 1
         }
@@ -400,15 +462,7 @@ export function MerchantOnboardingForm({
   useEffect(() => {
     const draftSave = createDebouncedTask(() => {
       try {
-        const values = form.state.values
-        const hasContent = Object.values(values).some(
-          (val) => typeof val === 'string' && val.trim() !== '',
-        )
-        if (hasContent) {
-          window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(values))
-        } else {
-          window.localStorage.removeItem(DRAFT_STORAGE_KEY)
-        }
+        writeOnboardingDraftValues(form.state.values)
       } catch {
         // Storage full or blocked (private mode) — skip autosave.
       }

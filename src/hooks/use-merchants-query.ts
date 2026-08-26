@@ -3,16 +3,25 @@ import {
   keepPreviousData,
   queryOptions,
   useMutation,
+  useQuery,
   useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+  type UseQueryOptions,
 } from '@tanstack/react-query'
-import type { InfiniteData } from '@tanstack/react-query'
+import { notFound } from '@tanstack/react-router'
+import { AxiosError } from 'axios'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import {
   bulkUpdatePriority,
-  fetchMerchantDetail,
+  fetchMerchantForm,
+  fetchMerchantHeader,
+  fetchMerchantHistory,
+  fetchMerchantLimits,
+  fetchMerchantOverview,
   fetchMerchants,
   bulkTerminateMerchants,
   permanentlyDeleteMerchant,
@@ -78,12 +87,78 @@ export function merchantDetailKey(merchantId: string) {
   return [...MERCHANTS_KEY, 'detail', merchantId] as const
 }
 
-export function merchantDetailQueryOptions(merchantId: string) {
+export function merchantHeaderQueryOptions(merchantId: string) {
   return queryOptions({
-    queryKey: merchantDetailKey(merchantId),
-    queryFn: () => fetchMerchantDetail(merchantId),
+    queryKey: [...merchantDetailKey(merchantId), 'header'] as const,
+    queryFn: () => fetchMerchantHeader(merchantId),
     staleTime: 30_000,
   })
+}
+
+export function merchantOverviewQueryOptions(merchantId: string) {
+  return queryOptions({
+    queryKey: [...merchantDetailKey(merchantId), 'overview'] as const,
+    queryFn: () => fetchMerchantOverview(merchantId),
+    staleTime: 30_000,
+  })
+}
+
+export function merchantFormQueryOptions(merchantId: string) {
+  return queryOptions({
+    queryKey: [...merchantDetailKey(merchantId), 'form'] as const,
+    queryFn: () => fetchMerchantForm(merchantId),
+    staleTime: 30_000,
+  })
+}
+
+export function merchantLimitsQueryOptions(merchantId: string) {
+  return queryOptions({
+    queryKey: [...merchantDetailKey(merchantId), 'limits'] as const,
+    queryFn: () => fetchMerchantLimits(merchantId),
+    staleTime: 30_000,
+  })
+}
+
+export function merchantHistoryQueryOptions(merchantId: string) {
+  return queryOptions({
+    queryKey: [...merchantDetailKey(merchantId), 'history'] as const,
+    queryFn: () => fetchMerchantHistory(merchantId),
+    staleTime: 30_000,
+  })
+}
+
+export async function ensureMerchantQuery<T>(
+  queryClient: QueryClient,
+  options: {
+    queryKey: readonly unknown[]
+    queryFn: () => Promise<T>
+  },
+) {
+  try {
+    return await queryClient.ensureQueryData(options)
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.status === 404) {
+      throw notFound()
+    }
+
+    throw error
+  }
+}
+
+export function useLoadedMerchantSection<T>(
+  options: UseQueryOptions<T, Error, T, readonly unknown[]>,
+) {
+  const { data, error, isError, isPending } = useQuery(options)
+
+  if (isError && !data) {
+    throw error
+  }
+
+  if (isPending || !data) {
+    return null
+  }
+
+  return data
 }
 
 export function useUpdateMerchantLimitsMdrMutation(merchantId: string) {

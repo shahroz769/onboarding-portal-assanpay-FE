@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Outlet,
   Link,
@@ -25,6 +26,7 @@ import {
   SidebarTrigger,
 } from '#/components/ui/sidebar'
 import { Separator } from '#/components/ui/separator'
+import { PageHeaderActionsContext } from '#/hooks/use-page-header-actions'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app')({
@@ -40,6 +42,8 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
+  const [headerActionsEl, setHeaderActionsEl] =
+    useState<HTMLDivElement | null>(null)
   const matches = useRouterState({
     select: (state) => state.matches,
   })
@@ -140,30 +144,33 @@ function AppLayout() {
           {hidePageShell ? (
             <Outlet />
           ) : (
-            <div
-              className={cn(
-                'flex min-h-0 flex-col',
-                fitViewport ? 'flex-1' : 'min-h-full shrink-0',
-              )}
-            >
-              <div className="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3">
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-semibold tracking-tight">
-                    {title}
-                  </h1>
-                  {subtitle && (
-                    <p className="mt-1 text-sm text-pretty text-muted-foreground">
-                      {subtitle}
-                    </p>
-                  )}
+            <PageHeaderActionsContext.Provider value={headerActionsEl}>
+              <div
+                className={cn(
+                  'flex min-h-0 flex-col',
+                  fitViewport ? 'flex-1' : 'min-h-full shrink-0',
+                )}
+              >
+                <div className="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3">
+                  <div className="min-w-0">
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <p className="mt-1 text-sm text-pretty text-muted-foreground">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                  <div
+                    ref={setHeaderActionsEl}
+                    id="page-header-actions"
+                    className="flex shrink-0 items-center gap-2"
+                  />
                 </div>
-                <div
-                  id="page-header-actions"
-                  className="flex shrink-0 items-center gap-2"
-                />
+                <Outlet />
               </div>
-              <Outlet />
-            </div>
+            </PageHeaderActionsContext.Provider>
           )}
         </div>
       </SidebarInset>

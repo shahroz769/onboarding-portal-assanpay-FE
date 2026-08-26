@@ -13,13 +13,13 @@ import {
 import { SectionIcon } from '#/components/section-icon'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
-import type { MerchantDetailResponse } from '#/schemas/merchants.schema'
+import type { MerchantOverviewResponse } from '#/schemas/merchants.schema'
 
-import { formatNumber, isCaseOpen } from './merchant-detail-helpers'
+import { formatNumber } from './merchant-detail-helpers'
 import { MerchantPaymentMethodDetails } from './merchant-payment-method-details'
 
 type MerchantOverviewTabProps = {
-  detail: MerchantDetailResponse
+  detail: MerchantOverviewResponse
 }
 
 function formatDate(value: string | null, withTime = false) {
@@ -31,14 +31,7 @@ function formatDate(value: string | null, withTime = false) {
 }
 
 export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
-  const { merchant, cases, milestones, limitsAndMdr } = detail
-
-  const openCases = cases.filter((c) => isCaseOpen(c.status, c.stageCategory))
-  const workingCases = cases.filter((c) => c.status === 'working')
-  const closedCases = cases.filter(
-    (c) => !isCaseOpen(c.status, c.stageCategory),
-  )
-  const breachedCases = openCases.filter((c) => c.slaBreached)
+  const { merchant, caseCounts, milestones, limitsAndMdr } = detail
 
   const activeRates =
     merchant.status === 'live'
@@ -117,11 +110,11 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
         title="Cases"
         description="Workflow case counts and current SLA signal."
       >
-        <Detail label="Total cases" value={cases.length} />
-        <Detail label="Open" value={openCases.length} />
-        <Detail label="Working" value={workingCases.length} />
-        <Detail label="Closed" value={closedCases.length} />
-        <Detail label="SLA breached" value={breachedCases.length} />
+        <Detail label="Total cases" value={caseCounts.total} />
+        <Detail label="Open" value={caseCounts.open} />
+        <Detail label="Working" value={caseCounts.working} />
+        <Detail label="Closed" value={caseCounts.closed} />
+        <Detail label="SLA breached" value={caseCounts.slaBreached} />
       </ProfileSection>
 
       <ProfileSection

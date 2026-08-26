@@ -24,7 +24,7 @@ import {
   useFetchResubmissionEmailPreview,
   useConfirmResubmissionEmailManual,
 } from '#/hooks/use-case-detail-query'
-import { configurationQueryOptions } from '#/hooks/use-configuration-query'
+import { emailSendingModeQueryOptions } from '#/hooks/use-configuration-query'
 import type { CaseDetail, EmailRecipientType } from '#/schemas/cases.schema'
 import type { EmailPreviewResult } from '#/apis/cases'
 import { resolveQueueWorkflowType } from './queue-registry'
@@ -49,7 +49,10 @@ export function DocumentsReviewSummaryModal({
   reviewSummary,
 }: DocumentsReviewSummaryModalProps) {
   const { user } = useAuth()
-  const { data: config } = useQuery(configurationQueryOptions())
+  const { data: emailModeSettings } = useQuery({
+    ...emailSendingModeQueryOptions(),
+    enabled: open,
+  })
   const sendForResubmission = useSendForResubmission(caseId)
   const fetchPreview = useFetchResubmissionEmailPreview(caseId)
   const confirmManual = useConfirmResubmissionEmailManual(caseId)
@@ -58,7 +61,7 @@ export function DocumentsReviewSummaryModal({
   const [recipientEmailType, setRecipientEmailType] =
     useState<EmailRecipientType>('submitter')
 
-  const emailMode = config?.emailSendingMode ?? {
+  const emailMode = emailModeSettings ?? {
     autoEnabled: true,
     manualEnabled: true,
   }

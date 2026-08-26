@@ -34,7 +34,7 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { TooltipProvider } from '#/components/ui/tooltip'
-import { useHydrated } from '#/hooks/use-hydrated'
+import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import {
   usersQueryOptions,
   useBulkSendUserResetPasswordsMutation,
@@ -60,10 +60,7 @@ const statusFilterOptions = userStatuses.map((status) => ({
 }))
 
 function CreateUserHeaderAction() {
-  const hydrated = useHydrated()
-  const portalTarget = hydrated
-    ? document.getElementById('page-header-actions')
-    : null
+  const portalTarget = usePageHeaderActions()
 
   if (!portalTarget) return null
 

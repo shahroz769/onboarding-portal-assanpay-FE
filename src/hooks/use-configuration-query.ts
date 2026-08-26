@@ -11,7 +11,6 @@ import {
   createSubMerchantDraft,
   fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
-  fetchConfiguration,
   fetchEmailSendingMode,
   fetchLimitsAndMdr,
   fetchLinkDeadlines,
@@ -98,14 +97,6 @@ export function isCaseFlowRevisionConflict(error: unknown) {
     'revision' in data &&
     typeof data.revision === 'number'
   )
-}
-
-export function configurationQueryOptions() {
-  return queryOptions({
-    queryKey: CONFIGURATION_KEY,
-    queryFn: fetchConfiguration,
-    staleTime: 60_000,
-  })
 }
 
 export function subMerchantOptionsQueryOptions() {

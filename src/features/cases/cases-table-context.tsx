@@ -12,7 +12,7 @@ import {
   queuesQueryOptions,
   useBulkAssignCasesMutation,
 } from '#/hooks/use-cases-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
@@ -21,7 +21,8 @@ import type {
   CaseSortableColumn,
   Queue,
 } from '#/schemas/cases.schema'
-import type { RoleType, User } from '#/types/auth'
+import type { UserDirectoryItem } from '#/schemas/users.schema'
+import type { RoleType } from '#/types/auth'
 import { createCaseColumns } from './cases-columns'
 
 interface CasesTableState {
@@ -37,7 +38,7 @@ interface CasesTableState {
   isFetchingNextPage: boolean
   queues: Queue[]
   isQueuesLoading: boolean
-  users: User[]
+  users: UserDirectoryItem[]
   isUsersLoading: boolean
   bulkAssignOwnerId: string | null
   isBulkAssignPending: boolean
@@ -164,8 +165,9 @@ function CasesTableProviderState({
       ? availableQueues.filter((queue) => workQueueIds.has(queue.id))
       : availableQueues
 
-  const { data: caseUsers = [], isLoading: isUsersLoading } =
-    useQuery(usersQueryOptions())
+  const { data: caseUsers = [], isLoading: isUsersLoading } = useQuery(
+    userDirectoryQueryOptions(),
+  )
 
   const bulkAssign = useBulkAssignCasesMutation()
 

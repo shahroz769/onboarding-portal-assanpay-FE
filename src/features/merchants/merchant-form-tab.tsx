@@ -25,8 +25,8 @@ import { cn } from '#/lib/utils'
 import type { StatusTint } from '#/lib/status-styles'
 import type {
   MerchantAgreementFile,
-  MerchantDetailResponse,
   MerchantDocument,
+  MerchantFormResponse,
 } from '#/schemas/merchants.schema'
 
 import {
@@ -39,7 +39,7 @@ import {
 } from './merchant-detail-helpers'
 
 type MerchantFormTabProps = {
-  detail: MerchantDetailResponse
+  detail: MerchantFormResponse
 }
 
 type DocumentFileView = {
@@ -111,8 +111,7 @@ function ReadField({
 }
 
 export function MerchantFormTab({ detail }: MerchantFormTabProps) {
-  const { agreements, documents, merchant } = detail
-  const documentReviewApproved = isDocumentReviewApproved(detail)
+  const { agreements, documentReviewApproved, documents, merchant } = detail
   const documentSubmissionGroup = getCurrentDocumentSubmissionGroup(
     documents,
     documentReviewApproved,
@@ -427,19 +426,6 @@ function getCurrentDocumentSubmissionGroup(
       googleDriveWebViewLink: doc.googleDriveWebViewLink,
     })),
   }
-}
-
-function isDocumentReviewApproved(detail: MerchantDetailResponse) {
-  return detail.cases.some(
-    (caseItem) =>
-      normalizeCaseName(caseItem.queueName) === 'documents review' &&
-      normalizeCaseName(caseItem.status) === 'closed' &&
-      normalizeCaseName(caseItem.closeOutcome) === 'successful',
-  )
-}
-
-function normalizeCaseName(value: string | null) {
-  return (value ?? '').trim().toLowerCase().replace(/[-_]+/g, ' ')
 }
 
 function formatFileSize(sizeBytes: number) {

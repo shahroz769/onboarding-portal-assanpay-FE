@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from 'react'
+import { Activity, Suspense, useRef, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -48,6 +48,28 @@ const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
 interface CaseSidePanelProps {
   caseDetail: CaseDetail
   caseId: string
+}
+
+type SidePanelTab = 'resolution' | 'chatter' | 'history'
+
+function KeepAliveTabBody({
+  visited,
+  active,
+  fallback,
+  children,
+}: {
+  visited: boolean
+  active: boolean
+  fallback: ReactNode
+  children: ReactNode
+}) {
+  if (!visited) return null
+
+  return (
+    <Activity mode={active ? 'visible' : 'hidden'}>
+      <Suspense fallback={fallback}>{children}</Suspense>
+    </Activity>
+  )
 }
 
 function getPrimaryActionCopy(
@@ -301,6 +323,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('resolution')
+  const [visitedChatter, setVisitedChatter] = useState(false)
+  const [visitedHistory, setVisitedHistory] = useState(false)
   const [actionInFlight, setActionInFlight] = useState<
     'primary' | 'unsuccessful' | null
   >(null)
@@ -463,7 +488,18 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     <Card className="min-h-128 w-full min-w-0 max-w-full gap-4 overflow-hidden py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
       <CardContent className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 px-4 py-0">
         <Tabs
-          defaultValue="resolution"
+          value={sidePanelTab}
+          onValueChange={(value) => {
+            if (value === 'chatter') setVisitedChatter(true)
+            if (value === 'history') setVisitedHistory(true)
+            if (
+              value === 'resolution' ||
+              value === 'chatter' ||
+              value === 'history'
+            ) {
+              setSidePanelTab(value)
+            }
+          }}
           className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden"
         >
           <TabsList className="grid w-full min-w-0 grid-cols-3">
@@ -679,20 +715,30 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="chatter"
+            forceMount={visitedChatter}
             className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
           >
-            <Suspense fallback={<ChatterTabSkeleton />}>
+            <KeepAliveTabBody
+              visited={visitedChatter}
+              active={sidePanelTab === 'chatter'}
+              fallback={<ChatterTabSkeleton />}
+            >
               <CaseChatter caseId={caseId} canPost embedded />
-            </Suspense>
+            </KeepAliveTabBody>
           </TabsContent>
 
           <TabsContent
             value="history"
+            forceMount={visitedHistory}
             className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
           >
-            <Suspense fallback={<HistoryTabSkeleton />}>
+            <KeepAliveTabBody
+              visited={visitedHistory}
+              active={sidePanelTab === 'history'}
+              fallback={<HistoryTabSkeleton />}
+            >
               <CaseHistoryTimeline caseId={caseId} embedded />
-            </Suspense>
+            </KeepAliveTabBody>
           </TabsContent>
         </Tabs>
       </CardContent>

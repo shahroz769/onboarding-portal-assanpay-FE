@@ -2,6 +2,7 @@ import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
 
+import { DefaultRouteError } from '#/components/default-route-error'
 import { getContext } from './integrations/tanstack-query/root-provider'
 
 export function getRouter() {
@@ -13,6 +14,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: DefaultRouteError,
     Wrap: ({ children }) => (
       <QueryClientProvider client={context.queryClient}>
         {children}

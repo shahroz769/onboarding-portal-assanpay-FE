@@ -26,7 +26,7 @@ import { showNotificationToast } from './notification-toast'
  * - Opens an SSE connection to receive live notifications for the current user.
  * - Pushes incoming events into the TanStack Query cache.
  * - Fires a Sonner toast for each live event.
- * - On window focus, refreshes the unread count to catch any drops.
+ * - On tab visible, reconnects SSE and refreshes notification/case caches.
  */
 export function NotificationsProvider() {
   const auth = useAuth()
@@ -40,6 +40,16 @@ export function NotificationsProvider() {
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_KEY }),
+    ])
+  })
+
+  const syncVisibleTab = useEffectEvent(() => {
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_KEY }),
+      queryClient.invalidateQueries({ queryKey: CASE_DETAIL_KEY }),
+      queryClient.invalidateQueries({ queryKey: CASE_HISTORY_KEY }),
+      queryClient.invalidateQueries({ queryKey: CASES_KEY }),
     ])
   })
 
@@ -74,6 +84,7 @@ export function NotificationsProvider() {
       onEvent: handleNotification,
       onOpen: syncNotificationsFromServer,
       onInvalidEvent: syncNotificationsFromServer,
+      onVisible: syncVisibleTab,
       onError: (err) => {
         console.warn('[notifications] SSE error', err)
       },
@@ -83,34 +94,6 @@ export function NotificationsProvider() {
       stop()
     }
   }, [router, userId])
-
-  // Refresh unread count when tab becomes visible (covers SSE downtime)
-  useEffect(() => {
-    if (!userId) return
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        void Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: NOTIFICATIONS_KEY,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: NOTIFICATIONS_UNREAD_KEY,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: CASE_DETAIL_KEY,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: CASE_HISTORY_KEY,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: CASES_KEY,
-          }),
-        ])
-      }
-    }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [userId, queryClient])
 
   return null
 }

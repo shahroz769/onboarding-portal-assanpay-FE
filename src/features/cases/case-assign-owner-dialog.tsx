@@ -30,7 +30,7 @@ import {
 } from '#/components/ui/popover'
 import { Spinner } from '#/components/ui/spinner'
 import { useAssignCaseMutation } from '#/hooks/use-cases-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 
 interface CaseAssignOwnerDialogProps {
   open: boolean
@@ -52,7 +52,7 @@ export function CaseAssignOwnerDialog({
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
-  const { data: users = [] } = useQuery(usersQueryOptions())
+  const { data: users = [] } = useQuery(userDirectoryQueryOptions())
   const assignMutation = useAssignCaseMutation()
   const resetAssignMutation = assignMutation.reset
 

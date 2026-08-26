@@ -167,6 +167,18 @@ export const merchantDetailRecordSchema = z.object({
 
 export type MerchantDetailRecord = z.infer<typeof merchantDetailRecordSchema>
 
+export const merchantHeaderSchema = z.object({
+  id: z.string(),
+  merchantNumber: z.number(),
+  businessName: z.string(),
+  status: z.enum(MERCHANT_STATUSES),
+  priority: z.enum(PRIORITIES),
+  ownerFullName: z.string(),
+  submittedAt: z.string(),
+})
+
+export type MerchantHeader = z.infer<typeof merchantHeaderSchema>
+
 export const merchantDocumentSchema = z.object({
   id: z.string(),
   documentType: z.string(),
@@ -251,10 +263,52 @@ export const merchantLimitsMdrSchema = z.object({
 
 export type MerchantLimitsMdr = z.infer<typeof merchantLimitsMdrSchema>
 
-const merchantDetailResponseSchema = z.object({
-  merchant: merchantDetailRecordSchema.extend({
-    limitsMdrOverride: merchantLimitsMdrSchema.nullable(),
+const merchantMilestonesSchema = z.object({
+  formFilledAt: z.string().nullable(),
+  testStartedAt: z.string().nullable(),
+  liveAt: z.string().nullable(),
+})
+
+const merchantLimitsAndMdrSchema = z.object({
+  effective: merchantLimitsMdrSchema,
+  override: merchantLimitsMdrSchema.nullable(),
+  global: merchantLimitsMdrSchema,
+  isOverridden: z.boolean(),
+})
+
+export const merchantOverviewResponseSchema = z.object({
+  merchant: z.object({
+    id: z.string(),
+    businessName: z.string(),
+    ownerFullName: z.string(),
+    status: z.enum(MERCHANT_STATUSES),
+    priority: z.enum(PRIORITIES),
+    businessScope: z.enum(BUSINESS_SCOPES),
+    currency: z.string(),
+    updatedAt: z.string(),
   }),
+  milestones: merchantMilestonesSchema,
+  caseCounts: z.object({
+    total: z.number(),
+    open: z.number(),
+    working: z.number(),
+    closed: z.number(),
+    slaBreached: z.number(),
+  }),
+  limitsAndMdr: z.object({
+    effective: merchantLimitsMdrSchema,
+    isOverridden: z.boolean(),
+  }),
+  paymentMethods: paymentMethodSettingsSchema,
+  payoutMethods: payoutMethodSettingsSchema,
+})
+
+export type MerchantOverviewResponse = z.infer<
+  typeof merchantOverviewResponseSchema
+>
+
+export const merchantFormResponseSchema = z.object({
+  merchant: merchantDetailRecordSchema,
   documents: z.array(merchantDocumentSchema),
   agreements: z
     .object({
@@ -263,23 +317,32 @@ const merchantDetailResponseSchema = z.object({
     .default({
       receivedSignedAgreement: null,
     }),
-  cases: z.array(merchantCaseSchema),
-  timeline: z.array(merchantTimelineEventSchema),
-  milestones: z.object({
-    formFilledAt: z.string().nullable(),
-    testStartedAt: z.string().nullable(),
-    liveAt: z.string().nullable(),
+  documentReviewApproved: z.boolean(),
+})
+
+export type MerchantFormResponse = z.infer<typeof merchantFormResponseSchema>
+
+export const merchantLimitsResponseSchema = z.object({
+  merchant: z.object({
+    id: z.string(),
+    status: z.enum(MERCHANT_STATUSES),
   }),
-  limitsAndMdr: z.object({
-    effective: merchantLimitsMdrSchema,
-    override: merchantLimitsMdrSchema.nullable(),
-    global: merchantLimitsMdrSchema,
-    isOverridden: z.boolean(),
-  }),
+  limitsAndMdr: merchantLimitsAndMdrSchema,
   paymentMethods: paymentMethodSettingsSchema,
   payoutMethods: payoutMethodSettingsSchema,
 })
 
-export type MerchantDetailResponse = z.infer<
-  typeof merchantDetailResponseSchema
+export type MerchantLimitsResponse = z.infer<typeof merchantLimitsResponseSchema>
+
+export const merchantHistoryResponseSchema = z.object({
+  merchant: z.object({
+    submitterEmail: z.string(),
+  }),
+  milestones: merchantMilestonesSchema,
+  cases: z.array(merchantCaseSchema),
+  timeline: z.array(merchantTimelineEventSchema),
+})
+
+export type MerchantHistoryResponse = z.infer<
+  typeof merchantHistoryResponseSchema
 >

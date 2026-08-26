@@ -44,6 +44,11 @@ import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.use
 import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
 import { Route as OnboardingFormGoLiveTokenRouteImport } from './routes/onboarding-form.go-live.$token'
 import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
+import { Route as AppMerchantsMerchantIdIndexRouteImport } from './routes/_app.merchants.$merchantId.index'
+import { Route as AppMerchantsMerchantIdFormRouteImport } from './routes/_app.merchants.$merchantId.form'
+import { Route as AppMerchantsMerchantIdHistoryRouteImport } from './routes/_app.merchants.$merchantId.history'
+import { Route as AppMerchantsMerchantIdLimitsRouteImport } from './routes/_app.merchants.$merchantId.limits'
+import { Route as AppMerchantsMerchantIdOverviewRouteImport } from './routes/_app.merchants.$merchantId.overview'
 import { Route as AppUserManagementUsersUserIdRouteImport } from './routes/_app.user-management.users.$userId'
 
 const AppRoute = AppRouteImport.update({
@@ -234,6 +239,36 @@ const OnboardingFormResubmitTokenRoute =
     path: '/resubmit/$token',
     getParentRoute: () => OnboardingFormRoute,
   } as any)
+const AppMerchantsMerchantIdIndexRoute =
+  AppMerchantsMerchantIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppMerchantsMerchantIdRoute,
+  } as any)
+const AppMerchantsMerchantIdFormRoute =
+  AppMerchantsMerchantIdFormRouteImport.update({
+    id: '/form',
+    path: '/form',
+    getParentRoute: () => AppMerchantsMerchantIdRoute,
+  } as any)
+const AppMerchantsMerchantIdHistoryRoute =
+  AppMerchantsMerchantIdHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AppMerchantsMerchantIdRoute,
+  } as any)
+const AppMerchantsMerchantIdLimitsRoute =
+  AppMerchantsMerchantIdLimitsRouteImport.update({
+    id: '/limits',
+    path: '/limits',
+    getParentRoute: () => AppMerchantsMerchantIdRoute,
+  } as any)
+const AppMerchantsMerchantIdOverviewRoute =
+  AppMerchantsMerchantIdOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => AppMerchantsMerchantIdRoute,
+  } as any)
 const AppUserManagementUsersUserIdRoute =
   AppUserManagementUsersUserIdRouteImport.update({
     id: '/users/$userId',
@@ -267,7 +302,7 @@ export interface FileRoutesByFullPath {
   '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
-  '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
+  '/merchants/$merchantId': typeof AppMerchantsMerchantIdRouteWithChildren
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
@@ -276,7 +311,12 @@ export interface FileRoutesByFullPath {
   '/configuration/': typeof AppConfigurationIndexRoute
   '/merchants/': typeof AppMerchantsIndexRoute
   '/user-management/': typeof AppUserManagementIndexRoute
+  '/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
+  '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
+  '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
+  '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
   '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
+  '/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -299,7 +339,6 @@ export interface FileRoutesByTo {
   '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
-  '/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
   '/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
@@ -308,7 +347,12 @@ export interface FileRoutesByTo {
   '/configuration': typeof AppConfigurationIndexRoute
   '/merchants': typeof AppMerchantsIndexRoute
   '/user-management': typeof AppUserManagementIndexRoute
+  '/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
+  '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
+  '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
+  '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
   '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
+  '/merchants/$merchantId': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -338,7 +382,7 @@ export interface FileRoutesById {
   '/_app/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/_app/configuration/queues': typeof AppConfigurationQueuesRoute
   '/_app/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
-  '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRoute
+  '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRouteWithChildren
   '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
   '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/go-live/$token': typeof OnboardingFormGoLiveTokenRoute
@@ -347,7 +391,12 @@ export interface FileRoutesById {
   '/_app/configuration/': typeof AppConfigurationIndexRoute
   '/_app/merchants/': typeof AppMerchantsIndexRoute
   '/_app/user-management/': typeof AppUserManagementIndexRoute
+  '/_app/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
+  '/_app/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
+  '/_app/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
+  '/_app/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
   '/_app/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
+  '/_app/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -386,7 +435,12 @@ export interface FileRouteTypes {
     | '/configuration/'
     | '/merchants/'
     | '/user-management/'
+    | '/merchants/$merchantId/form'
+    | '/merchants/$merchantId/history'
+    | '/merchants/$merchantId/limits'
+    | '/merchants/$merchantId/overview'
     | '/user-management/users/$userId'
+    | '/merchants/$merchantId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -409,7 +463,6 @@ export interface FileRouteTypes {
     | '/configuration/payout-methods'
     | '/configuration/queues'
     | '/configuration/sub-merchants'
-    | '/merchants/$merchantId'
     | '/user-management/all-users'
     | '/user-management/user-creation'
     | '/onboarding-form/go-live/$token'
@@ -418,7 +471,12 @@ export interface FileRouteTypes {
     | '/configuration'
     | '/merchants'
     | '/user-management'
+    | '/merchants/$merchantId/form'
+    | '/merchants/$merchantId/history'
+    | '/merchants/$merchantId/limits'
+    | '/merchants/$merchantId/overview'
     | '/user-management/users/$userId'
+    | '/merchants/$merchantId'
   id:
     | '__root__'
     | '/_app'
@@ -456,7 +514,12 @@ export interface FileRouteTypes {
     | '/_app/configuration/'
     | '/_app/merchants/'
     | '/_app/user-management/'
+    | '/_app/merchants/$merchantId/form'
+    | '/_app/merchants/$merchantId/history'
+    | '/_app/merchants/$merchantId/limits'
+    | '/_app/merchants/$merchantId/overview'
     | '/_app/user-management/users/$userId'
+    | '/_app/merchants/$merchantId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -713,6 +776,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingFormResubmitTokenRouteImport
       parentRoute: typeof OnboardingFormRoute
     }
+    '/_app/merchants/$merchantId/': {
+      id: '/_app/merchants/$merchantId/'
+      path: '/'
+      fullPath: '/merchants/$merchantId/'
+      preLoaderRoute: typeof AppMerchantsMerchantIdIndexRouteImport
+      parentRoute: typeof AppMerchantsMerchantIdRoute
+    }
+    '/_app/merchants/$merchantId/form': {
+      id: '/_app/merchants/$merchantId/form'
+      path: '/form'
+      fullPath: '/merchants/$merchantId/form'
+      preLoaderRoute: typeof AppMerchantsMerchantIdFormRouteImport
+      parentRoute: typeof AppMerchantsMerchantIdRoute
+    }
+    '/_app/merchants/$merchantId/history': {
+      id: '/_app/merchants/$merchantId/history'
+      path: '/history'
+      fullPath: '/merchants/$merchantId/history'
+      preLoaderRoute: typeof AppMerchantsMerchantIdHistoryRouteImport
+      parentRoute: typeof AppMerchantsMerchantIdRoute
+    }
+    '/_app/merchants/$merchantId/limits': {
+      id: '/_app/merchants/$merchantId/limits'
+      path: '/limits'
+      fullPath: '/merchants/$merchantId/limits'
+      preLoaderRoute: typeof AppMerchantsMerchantIdLimitsRouteImport
+      parentRoute: typeof AppMerchantsMerchantIdRoute
+    }
+    '/_app/merchants/$merchantId/overview': {
+      id: '/_app/merchants/$merchantId/overview'
+      path: '/overview'
+      fullPath: '/merchants/$merchantId/overview'
+      preLoaderRoute: typeof AppMerchantsMerchantIdOverviewRouteImport
+      parentRoute: typeof AppMerchantsMerchantIdRoute
+    }
     '/_app/user-management/users/$userId': {
       id: '/_app/user-management/users/$userId'
       path: '/users/$userId'
@@ -778,13 +876,35 @@ const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
 const AppConfigurationRouteWithChildren =
   AppConfigurationRoute._addFileChildren(AppConfigurationRouteChildren)
 
+interface AppMerchantsMerchantIdRouteChildren {
+  AppMerchantsMerchantIdFormRoute: typeof AppMerchantsMerchantIdFormRoute
+  AppMerchantsMerchantIdHistoryRoute: typeof AppMerchantsMerchantIdHistoryRoute
+  AppMerchantsMerchantIdLimitsRoute: typeof AppMerchantsMerchantIdLimitsRoute
+  AppMerchantsMerchantIdOverviewRoute: typeof AppMerchantsMerchantIdOverviewRoute
+  AppMerchantsMerchantIdIndexRoute: typeof AppMerchantsMerchantIdIndexRoute
+}
+
+const AppMerchantsMerchantIdRouteChildren: AppMerchantsMerchantIdRouteChildren =
+  {
+    AppMerchantsMerchantIdFormRoute: AppMerchantsMerchantIdFormRoute,
+    AppMerchantsMerchantIdHistoryRoute: AppMerchantsMerchantIdHistoryRoute,
+    AppMerchantsMerchantIdLimitsRoute: AppMerchantsMerchantIdLimitsRoute,
+    AppMerchantsMerchantIdOverviewRoute: AppMerchantsMerchantIdOverviewRoute,
+    AppMerchantsMerchantIdIndexRoute: AppMerchantsMerchantIdIndexRoute,
+  }
+
+const AppMerchantsMerchantIdRouteWithChildren =
+  AppMerchantsMerchantIdRoute._addFileChildren(
+    AppMerchantsMerchantIdRouteChildren,
+  )
+
 interface AppMerchantsRouteChildren {
-  AppMerchantsMerchantIdRoute: typeof AppMerchantsMerchantIdRoute
+  AppMerchantsMerchantIdRoute: typeof AppMerchantsMerchantIdRouteWithChildren
   AppMerchantsIndexRoute: typeof AppMerchantsIndexRoute
 }
 
 const AppMerchantsRouteChildren: AppMerchantsRouteChildren = {
-  AppMerchantsMerchantIdRoute: AppMerchantsMerchantIdRoute,
+  AppMerchantsMerchantIdRoute: AppMerchantsMerchantIdRouteWithChildren,
   AppMerchantsIndexRoute: AppMerchantsIndexRoute,
 }
 

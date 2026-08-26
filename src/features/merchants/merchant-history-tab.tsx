@@ -24,7 +24,7 @@ import { cn } from '#/lib/utils'
 import type { StatusTint } from '#/lib/status-styles'
 import type {
   MerchantCase,
-  MerchantDetailResponse,
+  MerchantHistoryResponse,
   MerchantTimelineEvent,
 } from '#/schemas/merchants.schema'
 import {
@@ -34,7 +34,7 @@ import {
 } from './merchant-detail-helpers'
 
 type MerchantHistoryTabProps = {
-  detail: MerchantDetailResponse
+  detail: MerchantHistoryResponse
 }
 type HistoryTone = 'amber' | 'sky' | 'emerald' | 'violet' | 'red' | 'muted'
 type HistoryItem = {

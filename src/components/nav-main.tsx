@@ -20,6 +20,16 @@ import {
 } from '#/components/ui/sidebar'
 
 const NAV_MENU_STATE_STORAGE_KEY = 'app-sidebar-collapsible-state'
+const NAV_MENU_STATE_STORAGE_VERSION = 1
+
+type VersionedNavMenuState = {
+  v: number
+  values: Record<string, boolean>
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
 
 function readStoredNavMenuState(): Record<string, boolean> {
   if (typeof window === 'undefined') {
@@ -31,9 +41,19 @@ function readStoredNavMenuState(): Record<string, boolean> {
     if (!rawValue) return {}
 
     const parsed: unknown = JSON.parse(rawValue)
-    if (typeof parsed !== 'object' || parsed === null) return {}
+    if (!isRecord(parsed)) return {}
+
+    const values =
+      parsed.v === NAV_MENU_STATE_STORAGE_VERSION && isRecord(parsed.values)
+        ? parsed.values
+        : typeof parsed.v === 'number'
+          ? null
+          : parsed
+
+    if (!values) return {}
+
     return Object.fromEntries(
-      Object.entries(parsed).filter(
+      Object.entries(values).filter(
         (entry): entry is [string, boolean] => typeof entry[1] === 'boolean',
       ),
     )
@@ -47,10 +67,18 @@ function writeStoredNavMenuState(nextState: Record<string, boolean>) {
     return
   }
 
-  window.localStorage.setItem(
-    NAV_MENU_STATE_STORAGE_KEY,
-    JSON.stringify(nextState),
-  )
+  try {
+    const payload: VersionedNavMenuState = {
+      v: NAV_MENU_STATE_STORAGE_VERSION,
+      values: nextState,
+    }
+    window.localStorage.setItem(
+      NAV_MENU_STATE_STORAGE_KEY,
+      JSON.stringify(payload),
+    )
+  } catch {
+    // Storage full or blocked (private mode) — skip persist.
+  }
 }
 
 function NavItem({

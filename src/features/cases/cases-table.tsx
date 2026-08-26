@@ -22,7 +22,7 @@ import {
 } from '#/components/data-table'
 import type { CaseFilterStatus, CaseRouteSearch } from '#/schemas/cases.schema'
 import { CASE_FILTER_STATUS_LABELS } from '#/schemas/cases.schema'
-import { useHydrated } from '#/hooks/use-hydrated'
+import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { CasePriorityDialog } from './case-priority-dialog'
 import {
@@ -52,10 +52,7 @@ function QueueSelector() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const { filters } = state
-  const hydrated = useHydrated()
-  const portalTarget = hydrated
-    ? document.getElementById('page-header-actions')
-    : null
+  const portalTarget = usePageHeaderActions()
 
   const content = (
     <Select

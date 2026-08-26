@@ -8,7 +8,7 @@ import {
   casesInfiniteQueryOptions,
   queuesQueryOptions,
 } from '#/hooks/use-cases-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const CLOSED_CASES_STATUS_FILTER = ['closed', 'error', 'unsuccessful'].join(',')
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_app/cases/my-closed-cases')({
   pendingComponent: CasesRoutePending,
   loader: async ({ context, deps }) => {
     void context.queryClient.prefetchQuery(queuesQueryOptions())
-    void context.queryClient.prefetchQuery(usersQueryOptions())
+    void context.queryClient.prefetchQuery(userDirectoryQueryOptions())
 
     const userId = context.auth.getSnapshot().user?.id
 
