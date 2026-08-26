@@ -329,28 +329,28 @@ export function CaseTriggeringSkeleton() {
   )
 }
 
-export function CaseFlowRulesSkeleton() {
+export function WorkflowBuilderSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <Card key={index}>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 xl:flex-row">
+        <div className="relative h-[62vh] min-h-[480px] min-w-0 flex-1 overflow-hidden rounded-lg border bg-muted/20">
+          <Skeleton className="absolute top-6 left-6 h-[76px] w-[208px] rounded-lg" />
+          <Skeleton className="absolute top-24 left-[38%] h-[76px] w-[236px] rounded-lg" />
+          <Skeleton className="absolute top-48 left-[38%] h-[76px] w-[236px] rounded-lg" />
+          <Skeleton className="absolute top-36 right-[8%] h-[76px] w-[236px] rounded-lg" />
+        </div>
+        <Card className="shrink-0 xl:w-[320px]">
           <CardHeader>
-            <SectionHeaderSkeleton action />
+            <SectionHeaderSkeleton titleWidth="w-36" descriptionWidth="w-52" />
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {Array.from({ length: 2 }).map((_, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-              >
-                <Skeleton className="h-9 w-full" />
-                <Skeleton className="h-9 w-full" />
-                <Skeleton className="size-9 rounded-md" />
-              </div>
-            ))}
+          <CardContent className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-28 w-full" />
           </CardContent>
         </Card>
-      ))}
+      </div>
       <ActionBarSkeleton />
     </div>
   )
