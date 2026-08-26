@@ -18,9 +18,10 @@ export const Route = createFileRoute('/_app/merchants/$merchantId')({
     hidePageShell: true,
   },
   loader: ({ context, params }) =>
-    ensureMerchantQuery(
-      context.queryClient,
-      merchantHeaderQueryOptions(params.merchantId),
+    ensureMerchantQuery(() =>
+      context.queryClient.ensureQueryData(
+        merchantHeaderQueryOptions(params.merchantId),
+      ),
     ),
   errorComponent: MerchantDetailsError,
   notFoundComponent: MerchantDetailsNotFound,

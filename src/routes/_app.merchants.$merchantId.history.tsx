@@ -10,9 +10,10 @@ import {
 
 export const Route = createFileRoute('/_app/merchants/$merchantId/history')({
   loader: ({ context, params }) =>
-    ensureMerchantQuery(
-      context.queryClient,
-      merchantHistoryQueryOptions(params.merchantId),
+    ensureMerchantQuery(() =>
+      context.queryClient.ensureQueryData(
+        merchantHistoryQueryOptions(params.merchantId),
+      ),
     ),
   pendingMs: 0,
   pendingComponent: MerchantHistorySkeleton,

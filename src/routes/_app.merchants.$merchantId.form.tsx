@@ -10,9 +10,10 @@ import {
 
 export const Route = createFileRoute('/_app/merchants/$merchantId/form')({
   loader: ({ context, params }) =>
-    ensureMerchantQuery(
-      context.queryClient,
-      merchantFormQueryOptions(params.merchantId),
+    ensureMerchantQuery(() =>
+      context.queryClient.ensureQueryData(
+        merchantFormQueryOptions(params.merchantId),
+      ),
     ),
   pendingMs: 0,
   pendingComponent: MerchantFormSkeleton,

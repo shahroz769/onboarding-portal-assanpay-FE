@@ -45,8 +45,6 @@ export function NotificationsProvider() {
 
   const syncVisibleTab = useEffectEvent(() => {
     void Promise.all([
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_KEY }),
       queryClient.invalidateQueries({ queryKey: CASE_DETAIL_KEY }),
       queryClient.invalidateQueries({ queryKey: CASE_HISTORY_KEY }),
       queryClient.invalidateQueries({ queryKey: CASES_KEY }),

@@ -80,7 +80,7 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
 
   if (workflowType === 'document_review') {
     return (
-      <DocumentsReviewDraftProvider caseDetail={data}>
+      <DocumentsReviewDraftProvider key={caseId} caseDetail={data}>
         {pageContent}
       </DocumentsReviewDraftProvider>
     )

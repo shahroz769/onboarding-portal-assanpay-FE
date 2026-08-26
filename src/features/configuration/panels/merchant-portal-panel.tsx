@@ -30,10 +30,10 @@ import type { MerchantPortalSettings } from '#/schemas/configuration.schema'
 
 import { merchantPortalSettingsSchema } from '#/schemas/configuration.schema'
 
+import { MerchantPortalSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -50,7 +50,7 @@ export function MerchantPortalPanel() {
     ? getValidationErrors(merchantPortalSettingsSchema.safeParse(value))
     : {}
   if (isPending || !value) {
-    return <PanelLoading />
+    return <MerchantPortalSkeleton />
   }
   return (
     <ConfigurationSectionCard

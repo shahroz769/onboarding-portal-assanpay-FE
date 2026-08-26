@@ -1,10 +1,4 @@
-import {
-  createContext,
-  startTransition,
-  useContext,
-  useEffect,
-  useState,
-} from 'react'
+import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import type { CaseDetail } from '#/schemas/cases.schema'
@@ -46,27 +40,14 @@ export function DocumentsReviewDraftProvider({
     initialSubMerchantIds,
   )
 
-  useEffect(() => {
-    startTransition(() => {
-      setDraftReviews(createDocumentsReviewDraft(caseDetail.fieldReviews))
-    })
-  }, [caseDetail.fieldReviews])
-
-  useEffect(() => {
-    startTransition(() => {
-      setSelectedSubMerchantIds(
-        initialSubMerchants?.map((item) => item.id) ?? [],
-      )
-    })
-  }, [initialSubMerchants])
+  const initialIdKey = [...initialSubMerchantIds].sort().join(',')
+  const selectedIdKey = [...selectedSubMerchantIds].sort().join(',')
 
   const value: DocumentsReviewDraftContextValue = {
     draftReviews,
     reviewSummary: getDocumentsReviewSummaryFromDraft(caseDetail, draftReviews),
     selectedSubMerchantIds,
-    isSubMerchantChanged:
-      [...selectedSubMerchantIds].sort().join(',') !==
-      [...initialSubMerchantIds].sort().join(','),
+    isSubMerchantChanged: selectedIdKey !== initialIdKey,
     setSelectedSubMerchantIds,
     saveRejectedReview: (fieldName, remarks) => {
       setDraftReviews((currentDraft) => ({

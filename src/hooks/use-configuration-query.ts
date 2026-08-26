@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import {
   createQueue,
   createSubMerchantDraft,
+  enqueueMissingCloseTriggerCases,
   fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
   fetchEmailSendingMode,
@@ -20,6 +21,7 @@ import {
   fetchQueueDetail,
   fetchSubMerchantDrafts,
   fetchSubMerchantOptions,
+  previewMissingCloseTriggerCases,
   updateCaseFlowConfiguration,
   updateEmailSendingMode,
   updateMerchantPortal,
@@ -285,6 +287,35 @@ export function useUpdateCaseFlowConfigurationMutation() {
     onError: (error) => {
       if (isCaseFlowRevisionConflict(error)) return
       toast.error(getApiErrorMessage(error, 'Failed to save case flow rules.'))
+    },
+  })
+}
+
+export function usePreviewMissingCloseTriggerCasesMutation() {
+  return useMutation({
+    mutationFn: previewMissingCloseTriggerCases,
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to check for missing cases.'),
+      )
+    },
+  })
+}
+
+export function useEnqueueMissingCloseTriggerCasesMutation() {
+  return useMutation({
+    mutationFn: enqueueMissingCloseTriggerCases,
+    onSuccess: (result) => {
+      if (result.queuedMerchantCount === 0) {
+        toast.success('No missing cases were found.')
+        return
+      }
+      toast.success(
+        `Queued ${result.trigger.targetQueueName} for ${result.queuedMerchantCount} merchant${result.queuedMerchantCount === 1 ? '' : 's'}.`,
+      )
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to queue missing cases.'))
     },
   })
 }

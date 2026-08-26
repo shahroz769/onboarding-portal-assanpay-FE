@@ -33,7 +33,7 @@ import { Label } from '#/components/ui/label'
 
 import { Spinner } from '#/components/ui/spinner'
 
-import { ConfigurationPanelSkeleton } from '../configuration-route-skeleton'
+import { MethodListSkeleton } from '../configuration-route-skeleton'
 
 import { SectionIcon } from '#/components/section-icon'
 import type { StatusTint } from '#/lib/status-styles'
@@ -239,7 +239,7 @@ export function MethodListPanel<T extends MethodSettings>({
     )
   }
   if (isPending || !value) {
-    return <PanelLoading />
+    return <MethodListSkeleton />
   }
   return (
     <div className="flex flex-col gap-6">
@@ -433,8 +433,4 @@ function ConfigurationCardHeaderContent({
       </div>
     </div>
   )
-}
-
-export function PanelLoading() {
-  return <ConfigurationPanelSkeleton />
 }

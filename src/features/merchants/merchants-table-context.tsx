@@ -26,6 +26,14 @@ import { createMerchantColumns } from './merchants-columns'
 import type { MerchantPriorityTarget } from './merchants-priority-dialog'
 import type { TerminateTarget } from './merchants-terminate-dialog'
 
+function selectedNonTerminatedIds(
+  selectedIds: string[],
+  merchants: MerchantListItem[],
+) {
+  const byId = new Map(merchants.map((item) => [item.id, item]))
+  return selectedIds.filter((id) => byId.get(id)?.status !== 'terminated')
+}
+
 interface MerchantsTableState {
   flatData: MerchantListItem[]
   selectedIds: string[]
@@ -114,7 +122,7 @@ function cleanEmptyParams(search: Record<string, unknown>) {
   return cleaned
 }
 
-const routeApi = getRouteApi('/_app/merchants')
+const routeApi = getRouteApi('/_app/merchants/')
 
 function useMerchantFilters() {
   const navigate = useNavigate()
@@ -361,10 +369,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     },
     closePriorityDialog: () => setPriorityTarget(null),
     openBulkPriorityDialog: () => {
-      const ids = selectedIds.filter((id) => {
-        const merchant = flatData.find((item) => item.id === id)
-        return merchant?.status !== 'terminated'
-      })
+      const ids = selectedNonTerminatedIds(selectedIds, flatData)
 
       if (ids.length === 0) return
 
@@ -400,4 +405,4 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export { MerchantsTableProvider }
+export { MerchantsTableProvider, selectedNonTerminatedIds }

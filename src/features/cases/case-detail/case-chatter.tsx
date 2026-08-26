@@ -210,14 +210,12 @@ function buildCommentThreads(comments: CaseComment[]) {
     childrenByParent.set(comment.parentId, siblings)
   }
 
-  roots.sort(compareCommentsByNewest)
-
   for (const [parentId, siblings] of childrenByParent.entries()) {
     childrenByParent.set(parentId, [...siblings].sort(compareCommentsByNewest))
   }
 
   return {
-    roots,
+    roots: [...roots].sort(compareCommentsByNewest),
     childrenByParent,
   }
 }

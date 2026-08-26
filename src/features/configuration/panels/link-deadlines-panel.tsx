@@ -30,10 +30,10 @@ import type { LinkDeadlineSettings } from '#/schemas/configuration.schema'
 
 import { linkDeadlineSettingsSchema } from '#/schemas/configuration.schema'
 
+import { LinkDeadlinesSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -57,7 +57,7 @@ export function LinkDeadlinesPanel() {
   ] as const
 
   if (isPending || !value) {
-    return <PanelLoading />
+    return <LinkDeadlinesSkeleton />
   }
   return (
     <ConfigurationSectionCard

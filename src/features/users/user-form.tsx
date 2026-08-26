@@ -1,5 +1,5 @@
 import { useForm, useStore } from '@tanstack/react-form'
-import { useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import {
   CheckIcon,
   ChevronsUpDownIcon,
@@ -254,7 +254,6 @@ export function UserForm({
   disabledReason?: string
 }) {
   const { user: currentUser } = useAuth()
-  const navigate = useNavigate()
   const queuesQuery = useQuery(queuesQueryOptions())
   const resetPasswordMutation = useSendUserResetPasswordMutation()
   const queues = queuesQuery.data ?? []
@@ -718,14 +717,15 @@ export function UserForm({
             </Button>
           ) : null}
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => void navigate({ to: '/user-management/all-users' })}
-          disabled={disabled}
-        >
-          Cancel
-        </Button>
+        {disabled ? (
+          <Button type="button" variant="ghost" disabled>
+            Cancel
+          </Button>
+        ) : (
+          <Button asChild variant="ghost">
+            <Link to="/user-management/all-users">Cancel</Link>
+          </Button>
+        )}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" disabled={disabled || isSubmitting}>

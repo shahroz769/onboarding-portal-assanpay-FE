@@ -28,10 +28,10 @@ import type { EmailSendingMode } from '#/schemas/configuration.schema'
 
 import { emailSendingModeSchema } from '#/schemas/configuration.schema'
 
+import { EmailSendingSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
 } from './configuration-panel-shared'
 
 // ─── Email Sending Mode ───────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ export function EmailSendingModePanel() {
     mutation.mutate(value)
   }
   if (isPending || !value) {
-    return <PanelLoading />
+    return <EmailSendingSkeleton />
   }
   return (
     <ConfigurationSectionCard

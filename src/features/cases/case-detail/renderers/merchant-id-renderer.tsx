@@ -312,13 +312,14 @@ export default function MerchantIdRenderer({
   }
 
   async function handleSave() {
+    const selectedPayoutById = new Map(
+      form.payoutMethods.map((method) => [method.id, method]),
+    )
     const payoutMethods = resolveRolePayoutMethods(
       form.merchantRole,
       availablePayoutMethods,
     ).map((method) => {
-      const selectedMethod = form.payoutMethods.find(
-        (selected) => selected.id === method.id,
-      )
+      const selectedMethod = selectedPayoutById.get(method.id)
       return selectedMethod
         ? { ...method, commissionRate: selectedMethod.commissionRate }
         : method
@@ -875,16 +876,16 @@ function MethodList<T extends PaymentMethodSettings | PayoutMethodSettings>({
     )
   }
 
-  const selectedIds = new Set(selectedMethods.map((method) => method.id))
+  const selectedById = new Map(
+    selectedMethods.map((method) => [method.id, method]),
+  )
 
   return (
     <Field data-invalid={Boolean(error)}>
       <FieldGroup className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {availableMethods.map((method) => {
-          const checked = selectedIds.has(method.id)
-          const selectedMethod = selectedMethods.find(
-            (selected) => selected.id === method.id,
-          )
+          const selectedMethod = selectedById.get(method.id)
+          const checked = selectedById.has(method.id)
           const commissionRate = getMethodCommissionRate(
             selectedMethod ?? method,
           )

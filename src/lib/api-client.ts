@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { RegisteredRouter } from '@tanstack/react-router'
 
 import { API_BASE_URL } from '#/config/client-env'
 import type { AuthClient } from '#/features/auth/auth-client'
@@ -19,9 +20,14 @@ export const apiClient = axios.create({
 })
 
 let authClient: AuthClient | null = null
+let router: RegisteredRouter | null = null
 
 export function setApiClientAuth(nextAuthClient: AuthClient) {
   authClient = nextAuthClient
+}
+
+export function setApiClientRouter(nextRouter: RegisteredRouter) {
+  router = nextRouter
 }
 
 apiClient.interceptors.request.use((config) => {
@@ -65,13 +71,16 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError)
       }
 
-      if (typeof window !== 'undefined') {
-        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      if (router && !import.meta.env.SSR) {
+        const { pathname, href } = router.state.location
 
-        if (window.location.pathname !== '/login') {
-          window.location.href = `/login?redirect=${encodeURIComponent(
-            sanitizeRedirect(currentPath),
-          )}`
+        if (pathname !== '/login') {
+          authClient?.clear()
+          void router.navigate({
+            to: '/login',
+            search: { redirect: sanitizeRedirect(href) },
+            replace: true,
+          })
         }
       }
 

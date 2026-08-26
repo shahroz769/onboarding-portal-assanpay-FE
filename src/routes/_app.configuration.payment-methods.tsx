@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
+import { MethodListSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { PaymentMethodsPanel } from '#/features/configuration/panels/payment-methods-panel'
 import { paymentMethodsQueryOptions } from '#/hooks/use-configuration-query'
 
@@ -10,9 +10,9 @@ export const Route = createFileRoute('/_app/configuration/payment-methods')({
     subtitle: 'Manage collection methods available in MID Creation.',
   },
   loader: async ({ context }) => {
-    void context.queryClient.prefetchQuery(paymentMethodsQueryOptions())
+    await context.queryClient.ensureQueryData(paymentMethodsQueryOptions())
   },
   pendingMs: 0,
-  pendingComponent: ConfigurationPanelSkeleton,
+  pendingComponent: MethodListSkeleton,
   component: PaymentMethodsPanel,
 })

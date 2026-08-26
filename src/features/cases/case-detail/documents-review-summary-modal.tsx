@@ -34,7 +34,6 @@ import type { getDocumentsReviewSummary } from './renderers/documents-review-sha
 type ReviewSummary = ReturnType<typeof getDocumentsReviewSummary>
 
 interface DocumentsReviewSummaryModalProps {
-  open: boolean
   onOpenChange: (open: boolean) => void
   caseDetail: CaseDetail
   caseId: string
@@ -42,17 +41,17 @@ interface DocumentsReviewSummaryModalProps {
 }
 
 export function DocumentsReviewSummaryModal({
-  open,
   onOpenChange,
   caseDetail,
   caseId,
   reviewSummary,
 }: DocumentsReviewSummaryModalProps) {
   const { user } = useAuth()
-  const { data: emailModeSettings } = useQuery({
-    ...emailSendingModeQueryOptions(),
-    enabled: open,
-  })
+  const {
+    data: emailModeSettings,
+    isError: isEmailModeError,
+    refetch: refetchEmailMode,
+  } = useQuery(emailSendingModeQueryOptions())
   const sendForResubmission = useSendForResubmission(caseId)
   const fetchPreview = useFetchResubmissionEmailPreview(caseId)
   const confirmManual = useConfirmResubmissionEmailManual(caseId)
@@ -60,11 +59,6 @@ export function DocumentsReviewSummaryModal({
   const [preview, setPreview] = useState<EmailPreviewResult | null>(null)
   const [recipientEmailType, setRecipientEmailType] =
     useState<EmailRecipientType>('submitter')
-
-  const emailMode = emailModeSettings ?? {
-    autoEnabled: true,
-    manualEnabled: true,
-  }
 
   const merchant = caseDetail.merchant as {
     submitterEmail?: string | null
@@ -269,25 +263,52 @@ export function DocumentsReviewSummaryModal({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Send for resubmission</DialogTitle>
           <DialogDescription>
-            {emailMode.autoEnabled && emailMode.manualEnabled
-              ? 'Choose to send automatically via Resend or manually via Gmail.'
-              : emailMode.autoEnabled
-                ? 'We will email the client a secure link to update only the rejected fields below.'
-                : 'Copy the subject and body below to send from Gmail, then upload a screenshot as proof.'}
+            {!emailModeSettings
+              ? isEmailModeError
+                ? 'Load the current email settings before choosing a delivery workflow.'
+                : 'Loading the available email workflows.'
+              : emailModeSettings.autoEnabled && emailModeSettings.manualEnabled
+                ? 'Choose to send automatically via Resend or manually via Gmail.'
+                : emailModeSettings.autoEnabled
+                  ? 'We will email the client a secure link to update only the rejected fields below.'
+                  : 'Copy the subject and body below to send from Gmail, then upload a screenshot as proof.'}
           </DialogDescription>
         </DialogHeader>
 
-        <EmailModeChoice
-          mode={emailMode}
-          autoContent={autoContent}
-          manualContent={manualContent}
-          whatsappContent={whatsappContent}
-        />
+        {emailModeSettings ? (
+          <EmailModeChoice
+            mode={emailModeSettings}
+            autoContent={autoContent}
+            manualContent={manualContent}
+            whatsappContent={whatsappContent}
+          />
+        ) : isEmailModeError ? (
+          <Alert variant="destructive">
+            <ShieldAlert />
+            <AlertTitle>Email settings unavailable</AlertTitle>
+            <AlertDescription>
+              Email workflows are disabled until the current configuration can
+              be loaded.
+            </AlertDescription>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void refetchEmailMode()}
+            >
+              Try again
+            </Button>
+          </Alert>
+        ) : (
+          <div className="flex min-h-32 items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Spinner />
+            Loading email settings
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

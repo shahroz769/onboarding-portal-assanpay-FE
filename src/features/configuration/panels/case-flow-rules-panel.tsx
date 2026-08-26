@@ -9,6 +9,7 @@ import {
   FileCheck2,
   GitBranch,
   Landmark,
+  ListRestart,
   Play,
   Plus,
   Save,
@@ -20,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -37,6 +39,8 @@ import {
   CASE_FLOW_CONFIGURATION_KEY,
   caseFlowConfigurationQueryOptions,
   isCaseFlowRevisionConflict,
+  useEnqueueMissingCloseTriggerCasesMutation,
+  usePreviewMissingCloseTriggerCasesMutation,
   useUpdateCaseFlowConfigurationMutation,
 } from '#/hooks/use-configuration-query'
 
@@ -48,10 +52,10 @@ import type {
   CaseFlowStartRule,
 } from '#/schemas/configuration.schema'
 
+import { CaseFlowRulesSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
   QueueSelect,
 } from './configuration-panel-shared'
 import type { QueueOption } from './configuration-panel-shared'
@@ -61,14 +65,19 @@ export function CaseFlowRulesPanel() {
   const queryClient = useQueryClient()
   const { data, isPending } = useQuery(caseFlowConfigurationQueryOptions())
   const mutation = useUpdateCaseFlowConfigurationMutation()
+  const previewBackfillMutation = usePreviewMissingCloseTriggerCasesMutation()
+  const backfillMutation = useEnqueueMissingCloseTriggerCasesMutation()
   const [form, setForm] = useState<CaseFlowConfiguration | null>(null)
   const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
   const [reloadingStale, setReloadingStale] = useState(false)
+  const [backfillTriggerId, setBackfillTriggerId] = useState<string | null>(
+    null,
+  )
   const value = form ?? data ?? null
   const queues = value?.queues ?? []
   const formError = value ? getCaseFlowFormError(value) : null
   if (isPending || !value) {
-    return <PanelLoading />
+    return <CaseFlowRulesSkeleton />
   }
   function update(next: CaseFlowConfiguration) {
     setForm(next)
@@ -92,6 +101,21 @@ export function CaseFlowRulesPanel() {
       })
       .then(() => setStaleRevisionOpen(false))
       .finally(() => setReloadingStale(false))
+  }
+  function handleOpenBackfill(triggerId: string) {
+    previewBackfillMutation.reset()
+    backfillMutation.reset()
+    setBackfillTriggerId(triggerId)
+    previewBackfillMutation.mutate(triggerId)
+  }
+  async function handleBackfill() {
+    if (!backfillTriggerId) return
+    try {
+      await backfillMutation.mutateAsync(backfillTriggerId)
+      setBackfillTriggerId(null)
+    } catch {
+      // The mutation displays the API error and keeps the confirmation open.
+    }
   }
   return (
     <div className="flex flex-col gap-6">
@@ -204,6 +228,11 @@ export function CaseFlowRulesPanel() {
                       (_, i) => i !== index,
                     ),
                   })
+                }
+                onBackfill={
+                  rule.id && rule.isActive
+                    ? () => handleOpenBackfill(rule.id!)
+                    : undefined
                 }
               />
             ))}
@@ -375,6 +404,81 @@ export function CaseFlowRulesPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(backfillTriggerId)}
+        onOpenChange={(open) => {
+          if (!open && !backfillMutation.isPending) setBackfillTriggerId(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create missing cases?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This checks the saved close trigger and queues only merchants who
+              have successfully closed the source case and have never had the
+              target case.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {previewBackfillMutation.isPending ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Spinner />
+              Checking merchant case history…
+            </div>
+          ) : previewBackfillMutation.data ? (
+            <Alert>
+              <AlertTitle>
+                {previewBackfillMutation.data.eligibleMerchantCount === 0
+                  ? 'No missing cases'
+                  : `${previewBackfillMutation.data.eligibleMerchantCount} merchant${previewBackfillMutation.data.eligibleMerchantCount === 1 ? '' : 's'} found`}
+              </AlertTitle>
+              <AlertDescription>
+                {previewBackfillMutation.data.trigger.sourceQueueName} →{' '}
+                {previewBackfillMutation.data.trigger.targetQueueName}
+                {previewBackfillMutation.data.eligibleMerchantCount > 0
+                  ? `. Never queued: ${previewBackfillMutation.data.jobBreakdown.neverQueued}; degraded and retrying automatically: ${previewBackfillMutation.data.jobBreakdown.failed}; still pending: ${previewBackfillMutation.data.jobBreakdown.pending}`
+                  : ''}
+                {previewBackfillMutation.data.sampleMerchants.length > 0
+                  ? `. Includes ${previewBackfillMutation.data.sampleMerchants.map((merchant) => merchant.merchantName).join(', ')}${previewBackfillMutation.data.eligibleMerchantCount > previewBackfillMutation.data.sampleMerchants.length ? ', and others' : ''}.`
+                  : '.'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant="destructive">
+              <AlertTitle>Unable to check missing cases</AlertTitle>
+              <AlertDescription>
+                Close this dialog and try again.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={backfillMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                previewBackfillMutation.isPending ||
+                !previewBackfillMutation.data ||
+                previewBackfillMutation.data.eligibleMerchantCount === 0 ||
+                backfillMutation.isPending
+              }
+              onClick={(event) => {
+                event.preventDefault()
+                void handleBackfill()
+              }}
+            >
+              {backfillMutation.isPending ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <ListRestart data-icon="inline-start" />
+              )}
+              {backfillMutation.isPending ? 'Queueing' : 'Create missing cases'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -417,17 +521,20 @@ function CloseTriggerRuleRow({
   queues,
   onChange,
   onRemove,
+  onBackfill,
 }: {
   rule: CaseFlowCloseTrigger
   queues: QueueOption[]
   onChange: (rule: CaseFlowCloseTrigger) => void
   onRemove: () => void
+  onBackfill?: () => void
 }) {
   return (
     <FlowRuleRow
       isActive={rule.isActive}
       onActiveChange={(isActive) => onChange({ ...rule, isActive })}
       onRemove={onRemove}
+      onBackfill={onBackfill}
       fields={
         <FlowRuleRelation
           left={
@@ -568,16 +675,29 @@ function FlowRuleRow({
   isActive,
   onActiveChange,
   onRemove,
+  onBackfill,
 }: {
   fields: ReactNode
   isActive: boolean
   onActiveChange: (isActive: boolean) => void
   onRemove: () => void
+  onBackfill?: () => void
 }) {
   return (
     <div className="group flex flex-col gap-3 rounded-md border bg-background p-3 transition-colors hover:border-border/80 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center">{fields}</div>
       <div className="flex items-center justify-end gap-2 sm:gap-3">
+        {onBackfill ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onBackfill}
+          >
+            <ListRestart data-icon="inline-start" />
+            Create missing
+          </Button>
+        ) : null}
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <Switch
             checked={isActive}

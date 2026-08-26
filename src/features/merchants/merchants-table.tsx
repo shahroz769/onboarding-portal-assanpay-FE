@@ -22,6 +22,7 @@ import {
 } from '#/schemas/merchants.schema'
 import {
   MerchantsTableProvider,
+  selectedNonTerminatedIds,
   useMerchantsTableActions,
   useMerchantsTableMeta,
   useMerchantsTableState,
@@ -116,21 +117,17 @@ function BulkActions() {
   const canEditPriority =
     state.userRole === 'super_admin' || state.userRole === 'admin'
   const canTerminate = state.userRole === 'super_admin'
-  const prioritizableIds = state.selectedIds.filter((id) => {
-    const merchant = state.flatData.find((item) => item.id === id)
-    return merchant?.status !== 'terminated'
-  })
-  const terminatableIds = state.selectedIds.filter((id) => {
-    const merchant = state.flatData.find((item) => item.id === id)
-    return merchant?.status !== 'terminated'
-  })
+  const actionableIds = selectedNonTerminatedIds(
+    state.selectedIds,
+    state.flatData,
+  )
 
   return (
     <DataTableSelectionInfo
       selectedCount={state.selectedIds.length}
       visibleCount={state.flatData.length}
     >
-      {canEditPriority && prioritizableIds.length > 0 && (
+      {canEditPriority && actionableIds.length > 0 && (
         <Button
           variant="outline"
           size="sm"
@@ -138,23 +135,23 @@ function BulkActions() {
           disabled={state.isBulkPriorityPending}
         >
           <AlertTriangleIcon data-icon="inline-start" />
-          Set Priority ({prioritizableIds.length})
+          Set Priority ({actionableIds.length})
         </Button>
       )}
-      {canTerminate && terminatableIds.length > 0 && (
+      {canTerminate && actionableIds.length > 0 && (
         <Button
           variant="destructive"
           size="sm"
           onClick={() =>
             actions.openTerminateDialog({
               type: 'bulk',
-              ids: terminatableIds,
+              ids: actionableIds,
             })
           }
           disabled={state.isTerminatePending}
         >
           <BanIcon data-icon="inline-start" />
-          Terminate ({terminatableIds.length})
+          Terminate ({actionableIds.length})
         </Button>
       )}
     </DataTableSelectionInfo>

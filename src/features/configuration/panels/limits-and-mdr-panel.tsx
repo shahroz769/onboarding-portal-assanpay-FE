@@ -37,10 +37,10 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import { limitsAndMdrSettingsSchema } from '#/schemas/configuration.schema'
 
+import { LimitsAndMdrSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -97,7 +97,7 @@ export function LimitsAndMdrPanel() {
     payoutMethodsQuery.isPending ||
     !value
   ) {
-    return <PanelLoading />
+    return <LimitsAndMdrSkeleton />
   }
   return (
     <div className="flex flex-col gap-6">

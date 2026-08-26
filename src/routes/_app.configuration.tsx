@@ -4,7 +4,6 @@ import {
   FileText,
   GitBranch,
   Headset,
-  ListChecks,
   Mail,
   Play,
   Send,

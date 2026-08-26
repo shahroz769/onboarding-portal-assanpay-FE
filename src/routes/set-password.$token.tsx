@@ -1,10 +1,12 @@
 import {
   createFileRoute,
   Link,
+  notFound,
   useNavigate,
   useRouter,
 } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
+import type { ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, Clock3 } from 'lucide-react'
 import axios from 'axios'
@@ -36,12 +38,12 @@ export const Route = createFileRoute('/set-password/$token')({
       return await fetchPasswordToken(params.token)
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 410) {
-          throw new Error('PASSWORD_TOKEN_EXPIRED')
+        if (error.response?.status === 404) {
+          throw notFound()
         }
 
-        if (error.response?.status === 404) {
-          throw new Error('PASSWORD_TOKEN_NOT_FOUND')
+        if (error.response?.status === 410) {
+          throw new Error('PASSWORD_TOKEN_EXPIRED')
         }
       }
 
@@ -50,6 +52,7 @@ export const Route = createFileRoute('/set-password/$token')({
   },
   component: RouteComponent,
   errorComponent: PasswordTokenError,
+  notFoundComponent: PasswordTokenNotFound,
 })
 
 function RouteComponent() {
@@ -189,13 +192,59 @@ function RouteComponent() {
   )
 }
 
+function PasswordTokenNotFound() {
+  return (
+    <PasswordTokenStatusCard
+      tone="destructive"
+      icon={<AlertCircle className="size-6" aria-hidden="true" />}
+      title="Password link not found"
+      description="This link is invalid. Check that you opened the complete link from your email, or ask your administrator for a new one."
+    />
+  )
+}
+
 function PasswordTokenError({ error }: { error: Error }) {
   const router = useRouter()
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
   const isExpired = status === 410 || error.message === 'PASSWORD_TOKEN_EXPIRED'
-  const isMissing =
-    status === 404 || error.message === 'PASSWORD_TOKEN_NOT_FOUND'
 
+  if (isExpired) {
+    return (
+      <PasswordTokenStatusCard
+        tone="muted"
+        icon={<Clock3 className="size-6" aria-hidden="true" />}
+        title="This password link is no longer valid"
+        description="This link may have expired or already been used. Ask your administrator to send you a new password link."
+      />
+    )
+  }
+
+  return (
+    <PasswordTokenStatusCard
+      tone="destructive"
+      icon={<AlertCircle className="size-6" aria-hidden="true" />}
+      title="Unable to open password link"
+      description="We could not verify this link right now. Please try again."
+      extraAction={
+        <Button onClick={() => router.invalidate()}>Try again</Button>
+      }
+    />
+  )
+}
+
+function PasswordTokenStatusCard({
+  tone,
+  icon,
+  title,
+  description,
+  extraAction,
+}: {
+  tone: 'muted' | 'destructive'
+  icon: ReactNode
+  title: string
+  description: string
+  extraAction?: ReactNode
+}) {
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
       <div className="w-full max-w-md">
@@ -203,40 +252,19 @@ function PasswordTokenError({ error }: { error: Error }) {
           <CardHeader className="items-center text-center">
             <div
               className={
-                isExpired
+                tone === 'muted'
                   ? 'flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground'
                   : 'flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive'
               }
             >
-              {isExpired ? (
-                <Clock3 className="size-6" aria-hidden="true" />
-              ) : (
-                <AlertCircle className="size-6" aria-hidden="true" />
-              )}
+              {icon}
             </div>
-            <CardTitle>
-              {isExpired
-                ? 'This password link is no longer valid'
-                : isMissing
-                  ? 'Password link not found'
-                  : 'Unable to open password link'}
-            </CardTitle>
-            <CardDescription>
-              {isExpired
-                ? 'This link may have expired or already been used. Ask your administrator to send you a new password link.'
-                : isMissing
-                  ? 'This link is invalid. Check that you opened the complete link from your email, or ask your administrator for a new one.'
-                  : 'We could not verify this link right now. Please try again.'}
-            </CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {!isExpired && !isMissing ? (
-              <Button onClick={() => router.invalidate()}>Try again</Button>
-            ) : null}
-            <Button
-              asChild
-              variant={isExpired || isMissing ? 'default' : 'ghost'}
-            >
+            {extraAction}
+            <Button asChild variant={extraAction ? 'ghost' : 'default'}>
               <Link to="/login">Back to login</Link>
             </Button>
           </CardContent>

@@ -39,10 +39,10 @@ import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 import type { SubMerchantOption } from '#/schemas/configuration.schema'
 
+import { CaseTriggeringSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationActionBar,
   ConfigurationSectionCard,
-  PanelLoading,
   QueueSelect,
 } from './configuration-panel-shared'
 
@@ -93,7 +93,7 @@ export function CaseTriggeringPanel() {
     queuesQuery.isPending ||
     subMerchantsQuery.isPending
   ) {
-    return <PanelLoading />
+    return <CaseTriggeringSkeleton />
   }
   return (
     <ConfigurationSectionCard

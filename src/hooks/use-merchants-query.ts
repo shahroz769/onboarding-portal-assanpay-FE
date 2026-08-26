@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
-  type QueryClient,
+  type QueryKey,
   type UseQueryOptions,
 } from '@tanstack/react-query'
 import { notFound } from '@tanstack/react-router'
@@ -127,15 +127,9 @@ export function merchantHistoryQueryOptions(merchantId: string) {
   })
 }
 
-export async function ensureMerchantQuery<T>(
-  queryClient: QueryClient,
-  options: {
-    queryKey: readonly unknown[]
-    queryFn: () => Promise<T>
-  },
-) {
+export async function ensureMerchantQuery<T>(loadQuery: () => Promise<T>) {
   try {
-    return await queryClient.ensureQueryData(options)
+    return await loadQuery()
   } catch (error) {
     if (error instanceof AxiosError && error.response?.status === 404) {
       throw notFound()
@@ -145,9 +139,12 @@ export async function ensureMerchantQuery<T>(
   }
 }
 
-export function useLoadedMerchantSection<T>(
-  options: UseQueryOptions<T, Error, T, readonly unknown[]>,
-) {
+export function useLoadedMerchantSection<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+>(options: UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const { data, error, isError, isPending } = useQuery(options)
 
   if (isError && !data) {

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
+import { MerchantPortalSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { MerchantPortalPanel } from '#/features/configuration/panels/merchant-portal-panel'
 import { merchantPortalQueryOptions } from '#/hooks/use-configuration-query'
 
@@ -11,9 +11,9 @@ export const Route = createFileRoute('/_app/configuration/merchant-portal')({
       'Manage merchant portal, server integration, and support details.',
   },
   loader: async ({ context }) => {
-    void context.queryClient.prefetchQuery(merchantPortalQueryOptions())
+    await context.queryClient.ensureQueryData(merchantPortalQueryOptions())
   },
   pendingMs: 0,
-  pendingComponent: ConfigurationPanelSkeleton,
+  pendingComponent: MerchantPortalSkeleton,
   component: MerchantPortalPanel,
 })

@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
 
 import { DefaultRouteError } from '#/components/default-route-error'
+import { setApiClientRouter } from '#/lib/api-client'
 import { getContext } from './integrations/tanstack-query/root-provider'
 
 export function getRouter() {
@@ -21,6 +22,8 @@ export function getRouter() {
       </QueryClientProvider>
     ),
   })
+
+  setApiClientRouter(router)
 
   return router
 }

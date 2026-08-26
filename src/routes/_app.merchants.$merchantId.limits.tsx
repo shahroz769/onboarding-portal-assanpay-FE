@@ -11,9 +11,10 @@ import {
 
 export const Route = createFileRoute('/_app/merchants/$merchantId/limits')({
   loader: ({ context, params }) =>
-    ensureMerchantQuery(
-      context.queryClient,
-      merchantLimitsQueryOptions(params.merchantId),
+    ensureMerchantQuery(() =>
+      context.queryClient.ensureQueryData(
+        merchantLimitsQueryOptions(params.merchantId),
+      ),
     ),
   pendingMs: 0,
   pendingComponent: MerchantLimitsSkeleton,

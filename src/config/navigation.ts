@@ -6,19 +6,22 @@ import {
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import type { FileRouteTypes } from '@tanstack/react-router'
 
 import type { RoleType } from '#/types/auth'
 
+type AppPath = FileRouteTypes['to']
+
 export type NavSubItem = {
   title: string
-  url: string
+  url: AppPath
   roles?: RoleType[]
   requiresWorkAccess?: boolean
 }
 
 export type NavItem = {
   title: string
-  url: string
+  url: AppPath
   activePrefix?: string
   icon?: LucideIcon
   roles?: RoleType[]

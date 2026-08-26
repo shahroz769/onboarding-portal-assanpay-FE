@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { formatDistanceToNow } from 'date-fns'
 import { Check } from 'lucide-react'
 
@@ -27,30 +27,12 @@ export function NotificationItem({
   notification,
   onNavigate,
 }: NotificationItemProps) {
-  const navigate = useNavigate()
   const markRead = useMarkNotificationReadMutation()
+  const target = resolveNotificationTarget(notification)
 
-  const handleClick = () => {
-    const target = resolveNotificationTarget(notification)
+  function markUnread() {
     if (!notification.isRead) {
       markRead.mutate(notification.id)
-    }
-    if (target) {
-      onNavigate()
-      void navigate(target)
-    }
-  }
-
-  const handleMarkRead = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (notification.isRead) return
-    markRead.mutate(notification.id)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      handleClick()
     }
   }
 
@@ -58,19 +40,8 @@ export function NotificationItem({
     addSuffix: true,
   })
 
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        'group relative flex cursor-pointer gap-3 px-4 py-3 text-left transition-colors',
-        'border-b border-border/40 last:border-b-0',
-        'hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
-        !notification.isRead && 'bg-primary/[0.04]',
-      )}
-    >
+  const body = (
+    <>
       {!notification.isRead ? (
         <span
           aria-hidden="true"
@@ -85,27 +56,14 @@ export function NotificationItem({
       </Avatar>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className={cn(
-              'text-sm leading-snug',
-              !notification.isRead ? 'font-semibold' : 'font-medium',
-            )}
-          >
-            {notification.title}
-          </p>
-          {!notification.isRead ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
-              onClick={handleMarkRead}
-              aria-label="Mark as read"
-            >
-              <Check className="size-3.5" />
-            </Button>
-          ) : null}
-        </div>
+        <p
+          className={cn(
+            'pr-8 text-sm leading-snug',
+            !notification.isRead ? 'font-semibold' : 'font-medium',
+          )}
+        >
+          {notification.title}
+        </p>
         <p className="line-clamp-2 text-xs text-muted-foreground">
           {notification.body}
         </p>
@@ -113,6 +71,52 @@ export function NotificationItem({
           {relativeTime}
         </span>
       </div>
+    </>
+  )
+
+  const rowClassName = cn(
+    'relative flex min-w-0 flex-1 gap-3 px-4 py-3 text-left transition-colors',
+    'hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
+    !notification.isRead && 'bg-primary/[0.04]',
+  )
+
+  return (
+    <div
+      className={cn(
+        'group relative flex border-b border-border/40 last:border-b-0',
+      )}
+    >
+      {target ? (
+        <Link
+          to={target.to}
+          params={target.params}
+          className={rowClassName}
+          onClick={() => {
+            markUnread()
+            onNavigate()
+          }}
+        >
+          {body}
+        </Link>
+      ) : (
+        <div className={rowClassName}>{body}</div>
+      )}
+
+      {!notification.isRead ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2.5 right-3 size-6 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            markRead.mutate(notification.id)
+          }}
+          aria-label="Mark as read"
+        >
+          <Check className="size-3.5" />
+        </Button>
+      ) : null}
     </div>
   )
 }

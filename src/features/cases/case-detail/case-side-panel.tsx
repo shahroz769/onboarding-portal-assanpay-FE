@@ -319,7 +319,6 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const advanceStage = useAdvanceStage(caseId)
   const closeUnsuccessful = useCloseUnsuccessful(caseId)
   const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
-  const caseHistoryQuery = useQuery(caseHistoryQueryOptions(caseId))
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
@@ -338,6 +337,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isMidCreationCase = workflowType === 'mid'
   const isTestingCase = workflowType === 'testing'
   const isAgreementCase = workflowType === 'agreement'
+  const caseHistoryQuery = useQuery({
+    ...caseHistoryQueryOptions(caseId),
+    enabled: isTestingCase,
+  })
   const reviewSummary = isDocumentReviewCase
     ? (documentsReviewDraft?.reviewSummary ??
       getDocumentsReviewSummary(caseDetail))
@@ -715,7 +718,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="chatter"
-            forceMount={visitedChatter}
+            forceMount={visitedChatter ? true : undefined}
             className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
           >
             <KeepAliveTabBody
@@ -729,7 +732,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="history"
-            forceMount={visitedHistory}
+            forceMount={visitedHistory ? true : undefined}
             className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
           >
             <KeepAliveTabBody
@@ -743,9 +746,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         </Tabs>
       </CardContent>
 
-      {isDocumentReviewCase ? (
+      {isDocumentReviewCase && reviewModalOpen ? (
         <DocumentsReviewSummaryModal
-          open={reviewModalOpen}
           onOpenChange={setReviewModalOpen}
           caseDetail={caseDetail}
           caseId={caseId}

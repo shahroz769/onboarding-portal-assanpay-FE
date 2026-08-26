@@ -136,6 +136,41 @@ export const caseFlowConfigurationSchema = z.object({
   creationRequirements: z.array(caseFlowCreationRequirementSchema).default([]),
 })
 
+const caseFlowBackfillTriggerSchema = z.object({
+  id: z.uuid(),
+  sourceQueueId: z.uuid(),
+  sourceQueueName: z.string(),
+  targetQueueId: z.uuid(),
+  targetQueueName: z.string(),
+})
+
+const caseFlowBackfillJobBreakdownSchema = z.object({
+  neverQueued: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+})
+
+export const caseFlowBackfillPreviewSchema = z.object({
+  trigger: caseFlowBackfillTriggerSchema,
+  eligibleMerchantCount: z.number().int().nonnegative(),
+  jobBreakdown: caseFlowBackfillJobBreakdownSchema,
+  sampleMerchants: z.array(
+    z.object({
+      merchantId: z.uuid(),
+      merchantName: z.string(),
+    }),
+  ),
+})
+
+export const caseFlowBackfillResultSchema = z.object({
+  trigger: caseFlowBackfillTriggerSchema,
+  eligibleMerchantCount: z.number().int().nonnegative(),
+  queuedMerchantCount: z.number().int().nonnegative(),
+  jobBreakdown: caseFlowBackfillJobBreakdownSchema,
+  newJobCount: z.number().int().nonnegative(),
+  revivedJobCount: z.number().int().nonnegative(),
+})
+
 export const emailSendingModeSchema = z
   .object({
     autoEnabled: z.boolean(),
@@ -288,4 +323,10 @@ export type CaseFlowCloseTrigger = z.infer<typeof caseFlowCloseTriggerSchema>
 export type CaseFlowCloseBlocker = z.infer<typeof caseFlowCloseBlockerSchema>
 export type CaseFlowCreationRequirement = z.infer<
   typeof caseFlowCreationRequirementSchema
+>
+export type CaseFlowBackfillPreview = z.infer<
+  typeof caseFlowBackfillPreviewSchema
+>
+export type CaseFlowBackfillResult = z.infer<
+  typeof caseFlowBackfillResultSchema
 >

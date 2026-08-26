@@ -1,6 +1,8 @@
 import { apiClient } from '#/lib/api-client'
 import type {
   CaseFlowConfiguration,
+  CaseFlowBackfillPreview,
+  CaseFlowBackfillResult,
   ConfigurationOverview,
   AgreementDraft,
   EmailSendingMode,
@@ -14,6 +16,8 @@ import type {
 } from '#/schemas/configuration.schema'
 import {
   caseFlowConfigurationSchema,
+  caseFlowBackfillPreviewSchema,
+  caseFlowBackfillResultSchema,
   configurationOverviewSchema,
   agreementDraftSchema,
   emailSendingModeSchema,
@@ -165,6 +169,25 @@ export async function updateCaseFlowConfiguration(
 
   const response = await apiClient.put('/api/configuration/case-flow', payload)
   return caseFlowConfigurationSchema.parse(response.data)
+}
+
+export async function previewMissingCloseTriggerCases(
+  triggerId: string,
+): Promise<CaseFlowBackfillPreview> {
+  const response = await apiClient.get(
+    '/api/cases/flow-jobs/backfill/preview',
+    { params: { triggerId } },
+  )
+  return caseFlowBackfillPreviewSchema.parse(response.data)
+}
+
+export async function enqueueMissingCloseTriggerCases(
+  triggerId: string,
+): Promise<CaseFlowBackfillResult> {
+  const response = await apiClient.post('/api/cases/flow-jobs/backfill', {
+    triggerId,
+  })
+  return caseFlowBackfillResultSchema.parse(response.data)
 }
 
 export async function uploadAgreementDraft({

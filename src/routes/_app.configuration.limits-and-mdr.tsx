@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { ConfigurationPanelSkeleton } from '#/features/configuration/configuration-route-skeleton'
+import { LimitsAndMdrSkeleton } from '#/features/configuration/configuration-route-skeleton'
 import { LimitsAndMdrPanel } from '#/features/configuration/panels/limits-and-mdr-panel'
 import {
   limitsAndMdrQueryOptions,
@@ -15,12 +15,12 @@ export const Route = createFileRoute('/_app/configuration/limits-and-mdr')({
   },
   loader: async ({ context }) => {
     await Promise.all([
-      context.queryClient.prefetchQuery(limitsAndMdrQueryOptions()),
-      context.queryClient.prefetchQuery(paymentMethodsQueryOptions()),
-      context.queryClient.prefetchQuery(payoutMethodsQueryOptions()),
+      context.queryClient.ensureQueryData(limitsAndMdrQueryOptions()),
+      context.queryClient.ensureQueryData(paymentMethodsQueryOptions()),
+      context.queryClient.ensureQueryData(payoutMethodsQueryOptions()),
     ])
   },
   pendingMs: 0,
-  pendingComponent: ConfigurationPanelSkeleton,
+  pendingComponent: LimitsAndMdrSkeleton,
   component: LimitsAndMdrPanel,
 })

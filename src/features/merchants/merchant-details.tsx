@@ -7,6 +7,7 @@ import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
+import { cn } from '#/lib/utils'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 import type { MerchantHeader } from '#/schemas/merchants.schema'
 
@@ -144,13 +145,27 @@ function MerchantDetailsHeaderSkeleton() {
 export function MerchantOverviewSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <MerchantSectionSkeleton
-          key={index}
-          fieldCount={index === 3 ? 6 : index > 3 ? 3 : 4}
-          columns={index === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3'}
-        />
-      ))}
+      <MerchantSectionSkeleton fieldCount={6} columns="sm:grid-cols-2 lg:grid-cols-3" />
+      <MerchantSectionSkeleton fieldCount={4} columns="sm:grid-cols-2 lg:grid-cols-3" />
+      <MerchantSectionSkeleton fieldCount={5} columns="sm:grid-cols-2 lg:grid-cols-3" />
+      <Card>
+        <CardHeader>
+          <MerchantSectionHeaderSkeleton />
+        </CardHeader>
+        <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <MerchantRateRowSkeleton />
+          <MerchantRateRowSkeleton />
+          <MerchantPaymentMethodsSkeleton className="sm:col-span-2 lg:col-span-3" />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <MerchantSectionHeaderSkeleton />
+        </CardHeader>
+        <CardContent>
+          <MerchantPaymentMethodsSkeleton />
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -158,33 +173,32 @@ export function MerchantOverviewSkeleton() {
 export function MerchantFormSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <MerchantSectionSkeleton
-          key={index}
-          fieldCount={index === 2 ? 8 : 2}
-          columns="sm:grid-cols-2"
-        />
-      ))}
+      <MerchantReadFieldsSkeleton fieldCount={1} />
+      <MerchantReadFieldsSkeleton fieldCount={3} />
+      <MerchantReadFieldsSkeleton fieldCount={9} />
+      <MerchantReadFieldsSkeleton fieldCount={3} />
+      <MerchantReadFieldsSkeleton fieldCount={5} />
+      <MerchantReadFieldsSkeleton fieldCount={1} />
       <Card>
         <CardHeader>
           <MerchantSectionHeaderSkeleton />
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 py-2">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-72 max-w-full" />
+          </div>
           {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="flex flex-wrap items-center justify-between gap-3 py-1.5"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <Skeleton className="size-9 rounded-md" />
-                <div className="flex min-w-0 flex-col gap-2">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-3 w-56 max-w-full" />
-                </div>
-              </div>
-              <Skeleton className="h-5 w-20" />
-            </div>
+            <MerchantFileRowSkeleton key={index} />
           ))}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <MerchantSectionHeaderSkeleton />
+        </CardHeader>
+        <CardContent>
+          <MerchantFileRowSkeleton />
         </CardContent>
       </Card>
     </div>
@@ -194,14 +208,32 @@ export function MerchantFormSkeleton() {
 export function MerchantLimitsSkeleton() {
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-56" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </CardHeader>
+        <CardContent>
+          <MerchantPaymentMethodsSkeleton />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </CardHeader>
+        <CardContent>
+          <MerchantPaymentMethodsSkeleton />
+        </CardContent>
+      </Card>
       <div className="grid gap-4 lg:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <MerchantSectionSkeleton key={index} fieldCount={4} columns="" />
-        ))}
+        <MerchantLimitFieldsSkeleton />
+        <MerchantLimitFieldsSkeleton />
+        <MerchantLimitFieldsSkeleton fieldCount={1} />
       </div>
       <div className="flex justify-end gap-3">
+        <Skeleton className="h-9 w-36 rounded-md" />
         <Skeleton className="h-9 w-32 rounded-md" />
-        <Skeleton className="h-9 w-28 rounded-md" />
       </div>
     </div>
   )
@@ -210,6 +242,15 @@ export function MerchantLimitsSkeleton() {
 export function MerchantHistorySkeleton() {
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <MerchantSectionHeaderSkeleton />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <MerchantTimelineRowSkeleton />
+          <MerchantTimelineRowSkeleton />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <MerchantSectionHeaderSkeleton />
@@ -229,7 +270,7 @@ export function MerchantHistorySkeleton() {
               </div>
             ))}
           </div>
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 2 }).map((_, index) => (
             <div key={index} className="rounded-lg border bg-muted/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-2">
@@ -239,15 +280,9 @@ export function MerchantHistorySkeleton() {
                 <Skeleton className="h-4 w-24" />
               </div>
               <div className="mt-4 flex flex-col gap-3">
-                {Array.from({ length: 3 }).map((_, rowIndex) => (
-                  <div key={rowIndex} className="flex gap-3">
-                    <Skeleton className="size-8 rounded-full" />
-                    <div className="flex flex-1 flex-col gap-2">
-                      <Skeleton className="h-4 w-52 max-w-full" />
-                      <Skeleton className="h-3 w-72 max-w-full" />
-                    </div>
-                  </div>
-                ))}
+                <MerchantTimelineRowSkeleton />
+                <MerchantTimelineRowSkeleton />
+                <MerchantTimelineRowSkeleton />
               </div>
             </div>
           ))}
@@ -271,13 +306,111 @@ function MerchantSectionSkeleton({
       </CardHeader>
       <CardContent className={`grid gap-x-8 gap-y-5 ${columns}`}>
         {Array.from({ length: fieldCount }).map((_, index) => (
-          <div key={index} className="flex flex-col gap-2">
+          <div key={index} className="flex flex-col gap-1.5">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-5 w-40 max-w-full" />
           </div>
         ))}
       </CardContent>
     </Card>
+  )
+}
+
+function MerchantReadFieldsSkeleton({ fieldCount }: { fieldCount: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <MerchantSectionHeaderSkeleton />
+      </CardHeader>
+      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+        {Array.from({ length: fieldCount }).map((_, index) => (
+          <div key={index} className="flex flex-col gap-1.5">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+function MerchantPaymentMethodsSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn('grid gap-4 md:grid-cols-2', className)}>
+      {Array.from({ length: 2 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-12 w-24 rounded-md" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MerchantRateRowSkeleton() {
+  return (
+    <div className="flex items-center justify-between">
+      <Skeleton className="h-4 w-36" />
+      <Skeleton className="h-4 w-28" />
+    </div>
+  )
+}
+
+function MerchantLimitFieldsSkeleton({ fieldCount = 2 }: { fieldCount?: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-48 max-w-full" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {Array.from({ length: fieldCount }).map((_, index) => (
+          <div key={index} className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+function MerchantFileRowSkeleton() {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 py-1.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <Skeleton className="size-9 rounded-md" />
+        <div className="flex min-w-0 flex-col gap-2">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-3 w-56 max-w-full" />
+        </div>
+      </div>
+      <Skeleton className="h-5 w-20" />
+    </div>
+  )
+}
+
+function MerchantTimelineRowSkeleton() {
+  return (
+    <div className="flex gap-3">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-52 max-w-full" />
+        <Skeleton className="h-3 w-72 max-w-full" />
+      </div>
+    </div>
   )
 }
 
