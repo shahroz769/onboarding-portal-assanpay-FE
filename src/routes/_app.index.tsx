@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  stripSearchParams,
+  useNavigate,
+} from '@tanstack/react-router'
 
 import { Dashboard, DashboardSkeleton } from '#/features/dashboard/dashboard'
 import { dashboardQueryOptions } from '#/hooks/use-dashboard-query'
@@ -11,6 +15,11 @@ export const Route = createFileRoute('/_app/')({
     subtitle: 'Operations overview across cases, merchants, and queues.',
   },
   validateSearch: dashboardRouteSearchSchema,
+  search: {
+    // Keep the dashboard's 30-day default out of the URL while preserving
+    // every other range and any custom date parameters.
+    middlewares: [stripSearchParams({ range: '30d' })],
+  },
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
     await context.queryClient.ensureQueryData(dashboardQueryOptions(deps))

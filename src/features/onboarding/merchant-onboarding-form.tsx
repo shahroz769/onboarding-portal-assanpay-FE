@@ -240,6 +240,10 @@ function showValidationErrorsToast(errors: Iterable<unknown>) {
   )
 }
 
+function hasNonEmptyString(value: unknown) {
+  return typeof value === 'string' && value.trim() !== ''
+}
+
 function getNumericInputValue(value: string, allowDecimal: boolean) {
   if (!allowDecimal) {
     return value.replace(/\D/g, '')
@@ -404,22 +408,22 @@ export function MerchantOnboardingForm({
 
   // Per-section completion (primitive selectors → rerender only on flips)
   const submitterComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[0].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[0].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
   const businessComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[1].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[1].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
   const classificationComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[2].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[2].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
   const financialComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[3].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[3].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
   const ownerComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[4].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[4].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
   const kinComplete = useStore(form.store, (s) =>
-    FORM_SECTIONS[5].fields.every((name) => s.values[name].trim() !== ''),
+    FORM_SECTIONS[5].fields.every((name) => hasNonEmptyString(s.values[name])),
   )
 
   const specificDocs = merchantType
@@ -1176,7 +1180,7 @@ export function MerchantOnboardingForm({
                     <Combobox
                       items={BANK_NAMES as unknown as string[]}
                       value={field.state.value || null}
-                      onValueChange={(val) => field.handleChange(val as string)}
+                      onValueChange={(value) => field.handleChange(value ?? '')}
                     >
                       <ComboboxInput
                         placeholder="Search bank..."
