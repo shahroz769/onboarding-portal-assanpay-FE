@@ -181,7 +181,7 @@ export async function previewMissingCloseTriggerCases(
   return caseFlowBackfillPreviewSchema.parse(response.data)
 }
 
-export async function enqueueMissingCloseTriggerCases(
+export async function createMissingCloseTriggerCases(
   triggerId: string,
 ): Promise<CaseFlowBackfillResult> {
   const response = await apiClient.post('/api/cases/flow-jobs/backfill', {

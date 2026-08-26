@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import {
   createQueue,
   createSubMerchantDraft,
-  enqueueMissingCloseTriggerCases,
+  createMissingCloseTriggerCases,
   fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
   fetchEmailSendingMode,
@@ -34,7 +34,7 @@ import {
   updateQueueStatus,
   uploadAgreementDraft,
 } from '#/apis/configuration'
-import { QUEUES_KEY } from '#/hooks/use-cases-query'
+import { CASES_KEY, QUEUES_KEY } from '#/hooks/use-cases-query'
 import type {
   CaseFlowConfiguration,
   EmailSendingMode,
@@ -302,20 +302,32 @@ export function usePreviewMissingCloseTriggerCasesMutation() {
   })
 }
 
-export function useEnqueueMissingCloseTriggerCasesMutation() {
+export function useCreateMissingCloseTriggerCasesMutation() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: enqueueMissingCloseTriggerCases,
-    onSuccess: (result) => {
-      if (result.queuedMerchantCount === 0) {
+    mutationFn: createMissingCloseTriggerCases,
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
+      if (result.eligibleMerchantCount === 0) {
         toast.success('No missing cases were found.')
         return
       }
+      if (result.failedMerchantCount > 0) {
+        toast.error(
+          `Created cases for ${result.createdMerchantCount} merchant${result.createdMerchantCount === 1 ? '' : 's'}; ${result.failedMerchantCount} failed. See the errors below.`,
+        )
+        return
+      }
+      if (result.createdCaseCount === 0) {
+        toast.success('The missing cases had already been created.')
+        return
+      }
       toast.success(
-        `Queued ${result.trigger.targetQueueName} for ${result.queuedMerchantCount} merchant${result.queuedMerchantCount === 1 ? '' : 's'}.`,
+        `Created ${result.createdCaseCount} ${result.trigger.targetQueueName} case${result.createdCaseCount === 1 ? '' : 's'} immediately.`,
       )
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to queue missing cases.'))
+      toast.error(getApiErrorMessage(error, 'Failed to create missing cases.'))
     },
   })
 }

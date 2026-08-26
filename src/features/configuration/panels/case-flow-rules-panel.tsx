@@ -39,7 +39,7 @@ import {
   CASE_FLOW_CONFIGURATION_KEY,
   caseFlowConfigurationQueryOptions,
   isCaseFlowRevisionConflict,
-  useEnqueueMissingCloseTriggerCasesMutation,
+  useCreateMissingCloseTriggerCasesMutation,
   usePreviewMissingCloseTriggerCasesMutation,
   useUpdateCaseFlowConfigurationMutation,
 } from '#/hooks/use-configuration-query'
@@ -66,7 +66,7 @@ export function CaseFlowRulesPanel() {
   const { data, isPending } = useQuery(caseFlowConfigurationQueryOptions())
   const mutation = useUpdateCaseFlowConfigurationMutation()
   const previewBackfillMutation = usePreviewMissingCloseTriggerCasesMutation()
-  const backfillMutation = useEnqueueMissingCloseTriggerCasesMutation()
+  const backfillMutation = useCreateMissingCloseTriggerCasesMutation()
   const [form, setForm] = useState<CaseFlowConfiguration | null>(null)
   const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
   const [reloadingStale, setReloadingStale] = useState(false)
@@ -111,8 +111,12 @@ export function CaseFlowRulesPanel() {
   async function handleBackfill() {
     if (!backfillTriggerId) return
     try {
-      await backfillMutation.mutateAsync(backfillTriggerId)
-      setBackfillTriggerId(null)
+      const result = await backfillMutation.mutateAsync(backfillTriggerId)
+      if (result.failedMerchantCount === 0) {
+        setBackfillTriggerId(null)
+      } else {
+        previewBackfillMutation.mutate(backfillTriggerId)
+      }
     } catch {
       // The mutation displays the API error and keeps the confirmation open.
     }
@@ -415,9 +419,9 @@ export function CaseFlowRulesPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Create missing cases?</AlertDialogTitle>
             <AlertDialogDescription>
-              This checks the saved close trigger and queues only merchants who
-              have successfully closed the source case and have never had the
-              target case.
+              This checks the saved close trigger and immediately creates cases
+              only for merchants who successfully closed the source case and
+              have never had the target case.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -437,7 +441,7 @@ export function CaseFlowRulesPanel() {
                 {previewBackfillMutation.data.trigger.sourceQueueName} →{' '}
                 {previewBackfillMutation.data.trigger.targetQueueName}
                 {previewBackfillMutation.data.eligibleMerchantCount > 0
-                  ? `. Never queued: ${previewBackfillMutation.data.jobBreakdown.neverQueued}; degraded and retrying automatically: ${previewBackfillMutation.data.jobBreakdown.failed}; still pending: ${previewBackfillMutation.data.jobBreakdown.pending}`
+                  ? `. Not previously queued: ${previewBackfillMutation.data.jobBreakdown.neverQueued}; retrying with errors: ${previewBackfillMutation.data.jobBreakdown.failed}; pending: ${previewBackfillMutation.data.jobBreakdown.pending}`
                   : ''}
                 {previewBackfillMutation.data.sampleMerchants.length > 0
                   ? `. Includes ${previewBackfillMutation.data.sampleMerchants.map((merchant) => merchant.merchantName).join(', ')}${previewBackfillMutation.data.eligibleMerchantCount > previewBackfillMutation.data.sampleMerchants.length ? ', and others' : ''}.`
@@ -452,6 +456,40 @@ export function CaseFlowRulesPanel() {
               </AlertDescription>
             </Alert>
           )}
+
+          {previewBackfillMutation.data?.retryIssues.length ? (
+            <Alert variant="destructive">
+              <AlertTitle>Why automatic retries are failing</AlertTitle>
+              <AlertDescription>
+                <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
+                  {previewBackfillMutation.data.retryIssues.map((issue) => (
+                    <li key={issue.merchantId}>
+                      {issue.merchantName} ({issue.attempts} attempts):{' '}
+                      {issue.error}
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {backfillMutation.data?.failedMerchantCount ? (
+            <Alert variant="destructive">
+              <AlertTitle>
+                Created for {backfillMutation.data.createdMerchantCount}; failed
+                for {backfillMutation.data.failedMerchantCount}
+              </AlertTitle>
+              <AlertDescription>
+                <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
+                  {backfillMutation.data.failures.map((failure) => (
+                    <li key={failure.merchantId}>
+                      {failure.merchantName}: {failure.error}
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={backfillMutation.isPending}>
@@ -474,7 +512,9 @@ export function CaseFlowRulesPanel() {
               ) : (
                 <ListRestart data-icon="inline-start" />
               )}
-              {backfillMutation.isPending ? 'Queueing' : 'Create missing cases'}
+              {backfillMutation.isPending
+                ? 'Creating cases'
+                : 'Create missing cases now'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

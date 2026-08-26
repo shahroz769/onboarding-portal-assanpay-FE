@@ -154,6 +154,14 @@ export const caseFlowBackfillPreviewSchema = z.object({
   trigger: caseFlowBackfillTriggerSchema,
   eligibleMerchantCount: z.number().int().nonnegative(),
   jobBreakdown: caseFlowBackfillJobBreakdownSchema,
+  retryIssues: z.array(
+    z.object({
+      merchantId: z.uuid(),
+      merchantName: z.string(),
+      attempts: z.number().int().nonnegative(),
+      error: z.string(),
+    }),
+  ),
   sampleMerchants: z.array(
     z.object({
       merchantId: z.uuid(),
@@ -165,10 +173,18 @@ export const caseFlowBackfillPreviewSchema = z.object({
 export const caseFlowBackfillResultSchema = z.object({
   trigger: caseFlowBackfillTriggerSchema,
   eligibleMerchantCount: z.number().int().nonnegative(),
-  queuedMerchantCount: z.number().int().nonnegative(),
+  createdMerchantCount: z.number().int().nonnegative(),
+  createdCaseCount: z.number().int().nonnegative(),
+  skippedMerchantCount: z.number().int().nonnegative(),
+  failedMerchantCount: z.number().int().nonnegative(),
   jobBreakdown: caseFlowBackfillJobBreakdownSchema,
-  newJobCount: z.number().int().nonnegative(),
-  revivedJobCount: z.number().int().nonnegative(),
+  failures: z.array(
+    z.object({
+      merchantId: z.uuid(),
+      merchantName: z.string(),
+      error: z.string(),
+    }),
+  ),
 })
 
 export const emailSendingModeSchema = z
