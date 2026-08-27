@@ -116,7 +116,8 @@ function BulkActions() {
   const actions = useMerchantsTableActions()
   const canEditPriority =
     state.userRole === 'super_admin' || state.userRole === 'admin'
-  const canTerminate = state.userRole === 'super_admin'
+  const canTerminate =
+    state.userRole === 'super_admin' || state.userRole === 'admin'
   const actionableIds = selectedNonTerminatedIds(
     state.selectedIds,
     state.flatData,

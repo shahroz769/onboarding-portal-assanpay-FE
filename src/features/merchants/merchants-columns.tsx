@@ -68,7 +68,8 @@ export function createMerchantColumns({
   onDeleteClick,
 }: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
   const canEdit = userRole === 'super_admin' || userRole === 'admin'
-  const canTerminate = userRole === 'super_admin'
+  const canTerminate = userRole === 'super_admin' || userRole === 'admin'
+  const canDelete = userRole === 'super_admin'
 
   const isAllSelected =
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
@@ -270,7 +271,7 @@ export function createMerchantColumns({
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
-          {canTerminate && merchant.status === 'terminated' ? (
+          {canDelete && merchant.status === 'terminated' ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
