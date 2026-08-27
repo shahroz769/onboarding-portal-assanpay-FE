@@ -167,7 +167,7 @@ export const merchantDetailRecordSchema = z.object({
 
 export type MerchantDetailRecord = z.infer<typeof merchantDetailRecordSchema>
 
-export const merchantHeaderSchema = z.object({
+const merchantHeaderSchema = z.object({
   id: z.string(),
   merchantNumber: z.number(),
   businessName: z.string(),
@@ -276,7 +276,7 @@ const merchantLimitsAndMdrSchema = z.object({
   isOverridden: z.boolean(),
 })
 
-export const merchantOverviewResponseSchema = z.object({
+const merchantOverviewResponseSchema = z.object({
   merchant: z.object({
     id: z.string(),
     businessName: z.string(),
@@ -307,7 +307,7 @@ export type MerchantOverviewResponse = z.infer<
   typeof merchantOverviewResponseSchema
 >
 
-export const merchantFormResponseSchema = z.object({
+const merchantFormResponseSchema = z.object({
   merchant: merchantDetailRecordSchema,
   documents: z.array(merchantDocumentSchema),
   agreements: z
@@ -322,7 +322,7 @@ export const merchantFormResponseSchema = z.object({
 
 export type MerchantFormResponse = z.infer<typeof merchantFormResponseSchema>
 
-export const merchantLimitsResponseSchema = z.object({
+const merchantLimitsResponseSchema = z.object({
   merchant: z.object({
     id: z.string(),
     status: z.enum(MERCHANT_STATUSES),
@@ -334,7 +334,7 @@ export const merchantLimitsResponseSchema = z.object({
 
 export type MerchantLimitsResponse = z.infer<typeof merchantLimitsResponseSchema>
 
-export const merchantHistoryResponseSchema = z.object({
+const merchantHistoryResponseSchema = z.object({
   merchant: z.object({
     submitterEmail: z.string(),
   }),

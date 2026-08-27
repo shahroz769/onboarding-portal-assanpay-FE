@@ -25,14 +25,7 @@ import type { RoleType } from '#/types/auth'
 import { createMerchantColumns } from './merchants-columns'
 import type { MerchantPriorityTarget } from './merchants-priority-dialog'
 import type { TerminateTarget } from './merchants-terminate-dialog'
-
-function selectedNonTerminatedIds(
-  selectedIds: string[],
-  merchants: MerchantListItem[],
-) {
-  const byId = new Map(merchants.map((item) => [item.id, item]))
-  return selectedIds.filter((id) => byId.get(id)?.status !== 'terminated')
-}
+import { selectedNonTerminatedIds } from './merchants-table-utils'
 
 interface MerchantsTableState {
   flatData: MerchantListItem[]
@@ -405,4 +398,4 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export { MerchantsTableProvider, selectedNonTerminatedIds }
+export { MerchantsTableProvider }

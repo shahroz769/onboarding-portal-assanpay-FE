@@ -22,11 +22,11 @@ import {
 } from '#/schemas/merchants.schema'
 import {
   MerchantsTableProvider,
-  selectedNonTerminatedIds,
   useMerchantsTableActions,
   useMerchantsTableMeta,
   useMerchantsTableState,
 } from './merchants-table-context'
+import { selectedNonTerminatedIds } from './merchants-table-utils'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 import { MerchantDeleteDialog } from './merchant-delete-dialog'

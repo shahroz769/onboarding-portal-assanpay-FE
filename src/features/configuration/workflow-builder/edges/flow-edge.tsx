@@ -1,10 +1,64 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react'
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  getStraightPath,
+  Position,
+} from '@xyflow/react'
 import type { EdgeProps } from '@xyflow/react'
 
 import { cn } from '#/lib/utils'
 
 import type { WorkflowEdge } from '../workflow-graph-types'
 import { EDGE_KIND_META } from '../workflow-graph-types'
+
+/** Forked edges have a large Y gap; this only catches same-row sag. */
+const COLLINEAR_Y_PX = 8
+
+function isHorizontalPair(source: Position, target: Position) {
+  return (
+    (source === Position.Right && target === Position.Left) ||
+    (source === Position.Left && target === Position.Right)
+  )
+}
+
+function flowPath({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+}: Pick<
+  EdgeProps<WorkflowEdge>,
+  | 'sourceX'
+  | 'sourceY'
+  | 'targetX'
+  | 'targetY'
+  | 'sourcePosition'
+  | 'targetPosition'
+>) {
+  if (
+    isHorizontalPair(sourcePosition, targetPosition) &&
+    Math.abs(sourceY - targetY) <= COLLINEAR_Y_PX
+  ) {
+    const y = (sourceY + targetY) / 2
+    return getStraightPath({
+      sourceX,
+      sourceY: y,
+      targetX,
+      targetY: y,
+    })
+  }
+  return getBezierPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+  })
+}
 
 function edgeLabel(edge: WorkflowEdge['data']) {
   switch (edge.kind) {
@@ -30,7 +84,7 @@ export function FlowEdge({
   selected,
   markerEnd,
 }: EdgeProps<WorkflowEdge>) {
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = flowPath({
     sourceX,
     sourceY,
     targetX,

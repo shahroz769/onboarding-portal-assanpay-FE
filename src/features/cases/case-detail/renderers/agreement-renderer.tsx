@@ -249,14 +249,15 @@ export default function AgreementRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Agreement</CardTitle>
               <CardDescription>
-                Review the merchant business type, open the draft agreement,
-                then upload the final agreement for client signing.
+                Review the merchant business type, prepare the final agreement,
+                send its link to the merchant, then upload the scanned physical
+                copy when it arrives at the office.
               </CardDescription>
             </div>
             {caseDetail.case.status === 'awaiting_client' ? (
               <Badge variant="secondary">
                 <MailCheck />
-                Awaiting signed copy
+                Awaiting physical copy
               </Badge>
             ) : agreement?.receivedAgreement ? (
               <Badge variant="secondary">
@@ -311,23 +312,23 @@ export default function AgreementRenderer({
               </Field>
             ) : null}
 
-            <Field data-disabled={!canUploadFinal}>
-              <FieldLabel>Final Agreement</FieldLabel>
-              <AgreementUpload
-                mode="final"
-                disabled={!canUploadFinal}
-                isUploading={uploadFinalAgreement.isPending}
-                onUpload={(file) => uploadFinalAgreement.mutate({ file })}
-              />
+            {agreement?.emailStatus !== 'sent' ? (
+              <Field data-disabled={!canUploadFinal}>
+                <FieldLabel>Final Agreement</FieldLabel>
+                <AgreementUpload
+                  mode="final"
+                  disabled={!canUploadFinal}
+                  isUploading={uploadFinalAgreement.isPending}
+                  onUpload={(file) => uploadFinalAgreement.mutate({ file })}
+                />
 
-              <FieldDescription>
-                {agreement?.emailStatus === 'sent'
-                  ? 'The Final Agreement cannot be replaced after the email has been sent.'
-                  : agreement?.finalAgreement
+                <FieldDescription>
+                  {agreement?.finalAgreement
                     ? 'Upload a new PDF, DOC, or DOCX file to replace the current Final Agreement before sending the email.'
                     : 'Upload one completed PDF, DOC, or DOCX file. Maximum size is 10 MB.'}
-              </FieldDescription>
-            </Field>
+                </FieldDescription>
+              </Field>
+            ) : null}
           </FieldGroup>
         </CardContent>
       </Card>
@@ -350,7 +351,7 @@ export default function AgreementRenderer({
 
       {agreement?.receivedAgreement ? (
         <AgreementFileCard
-          title="Received Signed Agreement"
+          title="Received Physical Agreement Scan"
           description="Scanned copy of the signed physical agreement received by the office."
           file={agreement.receivedAgreement}
         />
@@ -359,11 +360,12 @@ export default function AgreementRenderer({
       {canUploadReceived ? (
         <Card>
           <CardHeader>
-            <CardTitle>Upload Received Agreement</CardTitle>
+            <CardTitle>Upload Scanned Physical Agreement</CardTitle>
             <CardDescription>
-              Once the signed physical agreement arrives at the office, scan it
-              and upload the complete copy here. The case will return to Working
-              and can then be closed successfully.
+              The merchant has been asked to courier the signed physical
+              agreement to the office. Once it arrives, scan the complete copy
+              and upload it here. The case will return to Working and can then
+              be closed successfully.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -667,7 +669,7 @@ function AgreementUpload({
                 ? 'Uploading agreement'
                 : mode === 'final'
                   ? 'Drop final agreement here'
-                  : 'Drop received scan here'}
+                  : 'Drop scanned physical copy here'}
             </p>
             <p className="text-sm text-muted-foreground">
               {mode === 'final'

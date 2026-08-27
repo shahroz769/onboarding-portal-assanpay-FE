@@ -6,6 +6,10 @@ import { Play } from 'lucide-react'
 import { cn } from '#/lib/utils'
 
 import type { SubmissionFlowNode } from '../workflow-graph-types'
+import {
+  QUEUE_NODE_HEIGHT,
+  SUBMISSION_NODE_WIDTH,
+} from '../workflow-layout'
 
 export function SubmissionNode({
   data,
@@ -14,11 +18,12 @@ export function SubmissionNode({
   return (
     <div
       className={cn(
-        'w-[208px] rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2.5 shadow-xs transition-colors dark:border-emerald-800 dark:bg-emerald-950/60',
+        'flex items-center rounded-lg border border-emerald-300 bg-emerald-50 px-3 shadow-xs transition-colors dark:border-emerald-800 dark:bg-emerald-950/60',
         selected && 'ring-2 ring-emerald-500/40',
       )}
+      style={{ width: SUBMISSION_NODE_WIDTH, height: QUEUE_NODE_HEIGHT }}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white dark:bg-emerald-700">
           <Play className="size-3.5" />
         </span>
@@ -37,6 +42,7 @@ export function SubmissionNode({
         id="s-start"
         type="source"
         position={Position.Right}
+        style={{ top: '50%' }}
         className="!size-2.5 !border-2 !border-background !bg-emerald-500 transition-transform hover:!scale-125"
         title="Start rule — drag to the first queue to open"
       />

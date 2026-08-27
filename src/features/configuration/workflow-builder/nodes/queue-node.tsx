@@ -6,6 +6,7 @@ import { Badge } from '#/components/ui/badge'
 import { cn } from '#/lib/utils'
 
 import type { QueueFlowNode } from '../workflow-graph-types'
+import { QUEUE_NODE_HEIGHT, QUEUE_NODE_WIDTH } from '../workflow-layout'
 
 const HANDLE_BASE =
   '!size-2.5 !border-2 !border-background transition-transform hover:!scale-125'
@@ -30,15 +31,16 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
   return (
     <div
       className={cn(
-        'w-[236px] rounded-lg border bg-card px-3 py-2.5 shadow-xs transition-colors',
+        'flex items-center rounded-lg border bg-card px-3 shadow-xs transition-colors',
         selected
           ? 'border-primary ring-2 ring-ring/30'
           : 'hover:border-foreground/40',
         !inFlow && 'border-dashed opacity-70',
         !connectable && 'bg-muted/40',
       )}
+      style={{ width: QUEUE_NODE_WIDTH, height: QUEUE_NODE_HEIGHT }}
     >
-      <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
           {queue.prefix.slice(0, 3)}
         </span>

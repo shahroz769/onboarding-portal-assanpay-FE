@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, Outlet } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import { FileText, History, LayoutGrid, Wallet } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
@@ -10,32 +9,10 @@ import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { cn } from '#/lib/utils'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 import type { MerchantHeader } from '#/schemas/merchants.schema'
-
-export const MERCHANT_DETAIL_TABS = [
-  {
-    to: '/merchants/$merchantId/overview',
-    label: 'Overview',
-    icon: LayoutGrid,
-  },
-  {
-    to: '/merchants/$merchantId/form',
-    label: 'Form and Agreement',
-    icon: FileText,
-  },
-  {
-    to: '/merchants/$merchantId/limits',
-    label: 'MDR & Limits',
-    icon: Wallet,
-  },
-  {
-    to: '/merchants/$merchantId/history',
-    label: 'History',
-    icon: History,
-  },
-] as const
+import { MERCHANT_DETAIL_TABS } from './merchant-detail-tabs'
 
 const merchantDetailTabClassName =
-  "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+  "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
 
 type MerchantDetailsLayoutProps = {
   merchantId: string

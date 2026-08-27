@@ -34,19 +34,6 @@ export const linkDeadlineSettingsSchema = z.object({
   goLiveAvailabilityHours: z.coerce.number().int().min(1).max(8760).nullable(),
 })
 
-export const businessTypeOptionSchema = z.object({
-  value: z.enum([
-    'sole_proprietorship',
-    'private_limited_company',
-    'public_limited_company',
-    'partnership',
-    'limited_liability_partnership',
-    'ngo_npo_charity',
-    'trust_society_association',
-  ]),
-  label: z.string(),
-})
-
 export const agreementDraftSchema = z.object({
   businessType: z.enum([
     'sole_proprietorship',
@@ -307,18 +294,6 @@ export const payoutMethodSettingsSchema = uniqueMethodSettingsSchema(
   'payoutMethods',
 )
 
-export const configurationOverviewSchema = z.object({
-  limitsAndMdr: limitsAndMdrSettingsSchema,
-  linkDeadlines: linkDeadlineSettingsSchema,
-  emailSendingMode: emailSendingModeSchema,
-  merchantPortal: merchantPortalSettingsSchema,
-  paymentMethods: paymentMethodSettingsSchema,
-  payoutMethods: payoutMethodSettingsSchema,
-  agreementDrafts: z.array(agreementDraftSchema),
-  subMerchants: z.array(subMerchantDraftSchema),
-  businessTypes: z.array(businessTypeOptionSchema),
-})
-
 export type LimitsAndMdrSettings = z.infer<typeof limitsAndMdrSettingsSchema>
 export type LinkDeadlineSettings = z.infer<typeof linkDeadlineSettingsSchema>
 export type EmailSendingMode = z.infer<typeof emailSendingModeSchema>
@@ -331,7 +306,6 @@ export type PayoutMethodSettings = z.infer<typeof payoutMethodSettingsSchema>
 export type PayoutMethod = PayoutMethodSettings[number]
 export type AgreementDraft = z.infer<typeof agreementDraftSchema>
 export type SubMerchantDraft = z.infer<typeof subMerchantDraftSchema>
-export type ConfigurationOverview = z.infer<typeof configurationOverviewSchema>
 export type SubMerchantOption = z.infer<typeof subMerchantOptionSchema>
 export type CaseFlowConfiguration = z.infer<typeof caseFlowConfigurationSchema>
 export type CaseFlowStartRule = z.infer<typeof caseFlowStartRuleSchema>

@@ -48,6 +48,8 @@ export function layoutWorkflowGraph(
     if (!position) return node
     return {
       ...node,
+      width,
+      height,
       position: {
         x: position.x - width / 2,
         y: position.y - height / 2,

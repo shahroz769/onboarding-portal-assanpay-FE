@@ -6,7 +6,7 @@ export const SUBMISSION_NODE_ID = 'submission'
 
 export type CaseFlowQueue = CaseFlowConfiguration['queues'][number]
 
-export const WORKFLOW_EDGE_KINDS = [
+const WORKFLOW_EDGE_KINDS = [
   'startRule',
   'closeTrigger',
   'closeBlocker',
@@ -117,7 +117,3 @@ export const QUEUE_TO_QUEUE_KINDS = [
   'closeBlocker',
   'creationRequirement',
 ] as const satisfies readonly WorkflowEdgeKind[]
-
-export function isQueueToQueueKind(kind: WorkflowEdgeKind) {
-  return kind !== 'startRule'
-}

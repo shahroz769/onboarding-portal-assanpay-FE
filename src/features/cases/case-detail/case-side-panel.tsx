@@ -61,13 +61,13 @@ const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
   'mid_creation_whatsapp_sent_manual',
 ])
 
-const DOCUMENT_REVIEW_LINK_ACTIONS = [
+const DOCUMENT_REVIEW_LINK_ACTIONS = new Set([
   'resubmission_link_regenerated',
   'resubmission_email_sent',
   'resubmission_email_sent_manual',
   'resubmission_whatsapp_sent_manual',
-] as const
-const AGREEMENT_LINK_ACTIONS = ['agreement_email_sent'] as const
+])
+const AGREEMENT_LINK_ACTIONS = new Set(['agreement_email_sent'])
 
 interface CaseSidePanelProps {
   caseDetail: CaseDetail
@@ -137,9 +137,9 @@ function getPrimaryActionCopy(
 
   if (options.isAgreementCase && status === 'awaiting_client') {
     return {
-      title: 'Awaiting signed agreement',
+      title: 'Awaiting physical signed copy',
       description:
-        'The agreement and delivery instructions were sent. Upload the scanned signed copy when it arrives at the office.',
+        'The agreement link was sent to the merchant. They must print, sign, and courier the physical copy to the office. Upload the scan when it arrives.',
       actionLabel: null,
       actionKind: 'agreement' as const,
     }
@@ -596,7 +596,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                   : primaryAction.actionKind === 'testing'
                                     ? 'Complete testing limits and send credentials by auto Resend, manual Gmail, or WhatsApp in the case workspace.'
                                     : primaryAction.actionKind === 'agreement'
-                                      ? 'Complete the Agreement email and received-copy workflow in the case workspace.'
+                                      ? 'Send the final agreement link to the merchant, then upload the scanned physical copy when it arrives.'
                                       : isCaseOwner
                                         ? 'When everything checks out, close this case successfully.'
                                         : 'Only the current case owner can complete this case.'}
@@ -657,7 +657,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 status === 'awaiting_client' ? (
                   <AwaitingClientAlert
                     caseId={caseId}
-                    actions={DOCUMENT_REVIEW_LINK_ACTIONS}
+                    actionSet={DOCUMENT_REVIEW_LINK_ACTIONS}
                     title="Awaiting client resubmission"
                     description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
                     canRegenerate={isCaseOwner}
@@ -667,9 +667,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 {isAgreementCase && hasOwner && status === 'awaiting_client' ? (
                   <AwaitingClientAlert
                     caseId={caseId}
-                    actions={AGREEMENT_LINK_ACTIONS}
-                    title="Awaiting client agreement"
-                    description="We emailed the client a secure link to upload the signed agreement. The case will return to working as soon as they submit."
+                    actionSet={AGREEMENT_LINK_ACTIONS}
+                    title="Awaiting physical signed copy"
+                    description="The agreement link was sent to the merchant. After they print, sign, and courier the physical agreement to the office, upload the scanned copy in the Agreement workspace. The case will return to Working after upload."
                   />
                 ) : null}
 
@@ -785,13 +785,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
 function AwaitingClientAlert({
   caseId,
-  actions,
+  actionSet,
   title,
   description,
   canRegenerate = false,
 }: {
   caseId: string
-  actions: readonly string[]
+  actionSet: ReadonlySet<string>
   title: string
   description: string
   canRegenerate?: boolean
@@ -804,7 +804,7 @@ function AwaitingClientAlert({
     const items = historyQuery.data
     if (!items) return null
     const latest = items.find((historyEntry) =>
-      actions.includes(historyEntry.action),
+      actionSet.has(historyEntry.action),
     )
     const details = latest?.details as
       { expiresAt?: string | null } | null | undefined

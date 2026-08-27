@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -149,82 +149,70 @@ export function WorkflowBuilderPanel() {
     : (displayNodes.find((node) => node.selected) ?? null)
 
   // ─── Canvas callbacks ─────────────────────────────────────────────────────
-  const handleNodesChange = useCallback(
-    (changes: NodeChange<WorkflowNode>[]) => {
-      setNodes((current) => applyNodeChanges(changes, current))
-    },
-    [],
-  )
+  function handleNodesChange(changes: NodeChange<WorkflowNode>[]) {
+    setNodes((current) => applyNodeChanges(changes, current))
+  }
 
-  const handleEdgesChange = useCallback(
-    (changes: EdgeChange<WorkflowEdge>[]) => {
-      if (changes.some((change) => change.type === 'remove')) {
-        dirtyRef.current = true
-        setDirty(true)
-      }
-      setEdges((current) => applyEdgeChanges(changes, current))
-    },
-    [],
-  )
+  function handleEdgesChange(changes: EdgeChange<WorkflowEdge>[]) {
+    if (changes.some((change) => change.type === 'remove')) {
+      dirtyRef.current = true
+      setDirty(true)
+    }
+    setEdges((current) => applyEdgeChanges(changes, current))
+  }
 
-  const handleConnect = useCallback(
-    (connection: Connection) => {
-      if (!connection.source || !connection.target) return
-      const kind =
-        SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
-      const error = getNewEdgeError({
+  function handleConnect(connection: Connection) {
+    if (!connection.source || !connection.target) return
+    const kind =
+      SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
+    const error = getNewEdgeError({
+      edges,
+      nodes,
+      kind,
+      source: connection.source,
+      target: connection.target,
+    })
+    if (error) {
+      toast.error(error)
+      return
+    }
+    const needsOrder = kind === 'startRule' || kind === 'closeTrigger'
+    const edge = makeWorkflowEdge({
+      kind,
+      source: connection.source,
+      target: connection.target,
+      isActive: true,
+      ...(needsOrder ? { order: nextRuleOrder(edges, kind) } : {}),
+    })
+    setEdges((current) => [
+      ...current.map((item) => ({ ...item, selected: false })),
+      { ...edge, selected: true },
+    ])
+    setNodes((current) =>
+      current.map((node) => ({ ...node, selected: false })),
+    )
+    dirtyRef.current = true
+    setDirty(true)
+  }
+
+  function isValidConnection(connection: Connection | WorkflowEdge) {
+    if (!connection.source || !connection.target) return false
+    const kind =
+      SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
+    return (
+      getNewEdgeError({
         edges,
         nodes,
         kind,
         source: connection.source,
         target: connection.target,
-      })
-      if (error) {
-        toast.error(error)
-        return
-      }
-      const needsOrder = kind === 'startRule' || kind === 'closeTrigger'
-      const edge = makeWorkflowEdge({
-        kind,
-        source: connection.source,
-        target: connection.target,
-        isActive: true,
-        ...(needsOrder ? { order: nextRuleOrder(edges, kind) } : {}),
-      })
-      setEdges((current) => [
-        ...current.map((item) => ({ ...item, selected: false })),
-        { ...edge, selected: true },
-      ])
-      setNodes((current) =>
-        current.map((node) => ({ ...node, selected: false })),
-      )
-      dirtyRef.current = true
-      setDirty(true)
-    },
-    [edges, nodes],
-  )
+      }) === null
+    )
+  }
 
-  const isValidConnection = useCallback(
-    (connection: Connection | WorkflowEdge) => {
-      if (!connection.source || !connection.target) return false
-      const kind =
-        SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
-      return (
-        getNewEdgeError({
-          edges,
-          nodes,
-          kind,
-          source: connection.source,
-          target: connection.target,
-        }) === null
-      )
-    },
-    [edges, nodes],
-  )
-
-  const handleRelayout = useCallback(() => {
+  function handleRelayout() {
     setNodes((current) => layoutWorkflowGraph(current, edges))
-  }, [edges])
+  }
 
   // ─── Inspector callbacks ──────────────────────────────────────────────────
   function handleSelectEdge(edgeId: string) {

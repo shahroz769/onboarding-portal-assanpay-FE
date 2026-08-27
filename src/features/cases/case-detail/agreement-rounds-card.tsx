@@ -183,7 +183,8 @@ export function AgreementRoundsCard({ caseId }: AgreementRoundsCardProps) {
           <div className="min-w-0 flex-1">
             <CardTitle className="text-sm">Agreement rounds</CardTitle>
             <CardDescription className="mt-1">
-              Final agreement emails and signed copies received by the office.
+              Final agreement emails and physical signed copies received by the
+              office.
             </CardDescription>
           </div>
           <CardAction className="static row-auto col-auto">
@@ -297,7 +298,7 @@ function RoundStatusBadge({ round }: { round: AgreementRound }) {
   }
 
   if (round.sentEntry) {
-    return <Badge variant="outline">Awaiting delivery</Badge>
+    return <Badge variant="outline">Awaiting physical copy</Badge>
   }
 
   return <Badge variant="outline">Uploaded</Badge>
@@ -395,7 +396,7 @@ function DetailBlock({
 function getRoundStateLabel(round: AgreementRound) {
   if (round.emailFailed) return 'Email failed'
   if (round.submittedEntry) return 'Received'
-  if (round.sentEntry) return 'Awaiting delivery'
+  if (round.sentEntry) return 'Awaiting physical copy'
   return 'Uploaded'
 }
 const AGREEMENT_ROUND_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {

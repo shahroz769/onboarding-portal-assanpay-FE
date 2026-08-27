@@ -3,7 +3,6 @@ import type {
   CaseFlowConfiguration,
   CaseFlowBackfillPreview,
   CaseFlowBackfillResult,
-  ConfigurationOverview,
   AgreementDraft,
   EmailSendingMode,
   LimitsAndMdrSettings,
@@ -18,7 +17,6 @@ import {
   caseFlowConfigurationSchema,
   caseFlowBackfillPreviewSchema,
   caseFlowBackfillResultSchema,
-  configurationOverviewSchema,
   agreementDraftSchema,
   emailSendingModeSchema,
   limitsAndMdrSettingsSchema,
@@ -29,11 +27,6 @@ import {
   subMerchantDraftSchema,
   subMerchantOptionsSchema,
 } from '#/schemas/configuration.schema'
-
-export async function fetchConfiguration(): Promise<ConfigurationOverview> {
-  const response = await apiClient.get('/api/configuration')
-  return configurationOverviewSchema.parse(response.data)
-}
 
 export async function fetchSubMerchantOptions(): Promise<SubMerchantOption[]> {
   const response = await apiClient.get('/api/configuration/sub-merchants')
