@@ -75,7 +75,7 @@ const configurationNavGroups = [
       },
       {
         to: '/configuration/case-flow-rules',
-        label: 'Case Flow Rules',
+        label: 'Caseflow Builder',
         icon: GitBranch,
       },
       {
