@@ -59,27 +59,31 @@ function TokenErrorScreen({ error }: { error: unknown }) {
         : (error.response.data as { error?: string }).error
       : null
 
-  const isExpired = status === 410
+  const isGone = status === 410
+  const isTimeExpired =
+    isGone && message?.toLowerCase().includes('expired') === true
   const isMissing = status === 404
 
   return (
     <div className="rounded-xl border bg-background p-8">
       <div className="flex flex-col items-center gap-3 text-center">
-        {isExpired ? (
+        {isGone ? (
           <CheckCircle2 className="size-10 text-muted-foreground" />
         ) : (
           <AlertCircle className="size-10 text-destructive" />
         )}
         <h1 className="text-2xl font-semibold tracking-tight">
-          {isExpired
-            ? 'This link has expired or was already used'
+          {isGone
+            ? isTimeExpired
+              ? 'This link has expired'
+              : 'This link was already used or replaced'
             : isMissing
               ? 'Link not found'
               : 'Unable to load resubmission'}
         </h1>
         <p className="max-w-md text-sm text-muted-foreground">
           {message ??
-            (isExpired
+            (isGone
               ? 'Ask your account contact to send a new resubmission link.'
               : 'Please check the link and try again, or contact support.')}
         </p>
