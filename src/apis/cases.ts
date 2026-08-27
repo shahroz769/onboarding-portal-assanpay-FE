@@ -352,6 +352,12 @@ export interface ManualEmailConfirmResult {
   fileId: string
 }
 
+export interface RegeneratedResubmissionLinkResult {
+  url: string
+  expiresAt: string
+  rejectedFieldCount: number
+}
+
 export type ManualCommunicationChannel = 'email' | 'whatsapp'
 
 export async function fetchResubmissionEmailPreview(
@@ -361,6 +367,15 @@ export async function fetchResubmissionEmailPreview(
   const response = await apiClient.post<EmailPreviewResult>(
     `/api/cases/${caseId}/send-for-resubmission/preview`,
     input,
+  )
+  return response.data
+}
+
+export async function regenerateResubmissionLink(
+  caseId: string,
+): Promise<RegeneratedResubmissionLinkResult> {
+  const response = await apiClient.post<RegeneratedResubmissionLinkResult>(
+    `/api/cases/${caseId}/send-for-resubmission/regenerate-link`,
   )
   return response.data
 }

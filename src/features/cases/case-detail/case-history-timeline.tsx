@@ -127,6 +127,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
+  resubmission_link_regenerated: {
+    label: 'Resubmission link regenerated',
+    icon: RotateCcw,
+    iconClassName: 'text-cyan-700 dark:text-cyan-300',
+    iconWrapperClassName:
+      'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
+  },
   resubmission_whatsapp_sent_manual: {
     label: 'Manual WhatsApp sent',
     icon: MailCheck,
@@ -556,6 +563,22 @@ function formatDetails(
 
     if (total) {
       return `${total} rejected item${total === 1 ? '' : 's'} finalized`
+    }
+  }
+
+  if (action === 'resubmission_link_regenerated') {
+    const labels = Array.isArray(details.rejectedFieldLabels)
+      ? details.rejectedFieldLabels.filter(
+          (value): value is string =>
+            typeof value === 'string' && value.trim().length > 0,
+        )
+      : []
+    const total = Array.isArray(details.rejectedFields)
+      ? details.rejectedFields.length
+      : labels.length
+
+    if (total > 0) {
+      return `${total} latest rejected item${total === 1 ? '' : 's'} included${labels.length > 0 ? `: ${labels.join(', ')}` : ''}`
     }
   }
 

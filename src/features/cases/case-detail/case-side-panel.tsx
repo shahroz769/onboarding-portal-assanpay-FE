@@ -1,11 +1,14 @@
-import { Activity, Suspense, useRef, useState, type ReactNode } from 'react'
+import { Activity, Suspense, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
   Clock3,
+  Copy,
   MailCheck,
   MessageSquareMore,
+  RefreshCw,
   Send,
   ShieldAlert,
   UserRoundPlus,
@@ -13,8 +16,20 @@ import {
 
 import { Button } from '#/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Card, CardContent } from '#/components/ui/card'
 import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
@@ -24,6 +39,7 @@ import {
   caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
+  useRegenerateResubmissionLink,
   useSaveDocumentReviewSubMerchant,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
@@ -44,6 +60,14 @@ const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
   'mid_creation_email_sent_manual',
   'mid_creation_whatsapp_sent_manual',
 ])
+
+const DOCUMENT_REVIEW_LINK_ACTIONS = [
+  'resubmission_link_regenerated',
+  'resubmission_email_sent',
+  'resubmission_email_sent_manual',
+  'resubmission_whatsapp_sent_manual',
+] as const
+const AGREEMENT_LINK_ACTIONS = ['agreement_email_sent'] as const
 
 interface CaseSidePanelProps {
   caseDetail: CaseDetail
@@ -633,16 +657,17 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 status === 'awaiting_client' ? (
                   <AwaitingClientAlert
                     caseId={caseId}
-                    action="resubmission_email_sent"
+                    actions={DOCUMENT_REVIEW_LINK_ACTIONS}
                     title="Awaiting client resubmission"
                     description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
+                    canRegenerate={isCaseOwner}
                   />
                 ) : null}
 
                 {isAgreementCase && hasOwner && status === 'awaiting_client' ? (
                   <AwaitingClientAlert
                     caseId={caseId}
-                    action="agreement_email_sent"
+                    actions={AGREEMENT_LINK_ACTIONS}
                     title="Awaiting client agreement"
                     description="We emailed the client a secure link to upload the signed agreement. The case will return to working as soon as they submit."
                   />
@@ -760,21 +785,27 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
 function AwaitingClientAlert({
   caseId,
-  action,
+  actions,
   title,
   description,
+  canRegenerate = false,
 }: {
   caseId: string
-  action: string
+  actions: readonly string[]
   title: string
   description: string
+  canRegenerate?: boolean
 }) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
+  const regenerateLink = useRegenerateResubmissionLink(caseId)
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
 
   const expiresAt = (() => {
     const items = historyQuery.data
     if (!items) return null
-    const latest = items.find((h) => h.action === action)
+    const latest = items.find((historyEntry) =>
+      actions.includes(historyEntry.action),
+    )
     const details = latest?.details as
       { expiresAt?: string | null } | null | undefined
     return details?.expiresAt ?? null
@@ -783,6 +814,28 @@ function AwaitingClientAlert({
   const expiresLabel = formatExpiryLabel(expiresAt, (date) =>
     EXPIRY_DATE_TIME_FORMATTER.format(date),
   )
+  const regeneratedLink = regenerateLink.data?.url ?? null
+  const regeneratedFieldCount =
+    regenerateLink.data?.rejectedFieldCount ?? 0
+
+  async function handleCopyLink() {
+    if (!regeneratedLink) return
+    try {
+      await navigator.clipboard.writeText(regeneratedLink)
+      toast.success('Resubmission link copied')
+    } catch {
+      toast.error('Could not copy the link. Select and copy it manually.')
+    }
+  }
+
+  async function handleRegenerateLink() {
+    try {
+      await regenerateLink.mutateAsync()
+      setRegenerateDialogOpen(false)
+    } catch {
+      // The mutation hook displays the backend error and keeps the dialog open.
+    }
+  }
 
   return (
     <Alert>
@@ -796,6 +849,69 @@ function AwaitingClientAlert({
               ? expiresLabel
               : `Link expires ${expiresLabel}`}
           </span>
+        ) : null}
+        {regeneratedLink ? (
+          <div className="mt-2 flex w-full min-w-0 flex-col gap-2">
+            <p>
+              New link generated for {regeneratedFieldCount} current rejected
+              field{regeneratedFieldCount === 1 ? '' : 's'}.
+            </p>
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+              <Input
+                value={regeneratedLink}
+                readOnly
+                aria-label="New resubmission link"
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <Button type="button" variant="outline" onClick={handleCopyLink}>
+                <Copy data-icon="inline-start" />
+                Copy link
+              </Button>
+            </div>
+          </div>
+        ) : null}
+        {canRegenerate ? (
+          <AlertDialog
+            open={regenerateDialogOpen}
+            onOpenChange={setRegenerateDialogOpen}
+          >
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="outline" size="sm">
+                <RefreshCw data-icon="inline-start" />
+                Regenerate link
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Regenerate resubmission link?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The current link will stop working immediately. The new link
+                  will include the latest rejected fields on this case.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={regenerateLink.isPending}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(event) => {
+                    event.preventDefault()
+                    void handleRegenerateLink()
+                  }}
+                  disabled={regenerateLink.isPending}
+                >
+                  {regenerateLink.isPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <RefreshCw data-icon="inline-start" />
+                  )}
+                  {regenerateLink.isPending
+                    ? 'Generating link'
+                    : 'Regenerate link'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : null}
       </AlertDescription>
     </Alert>

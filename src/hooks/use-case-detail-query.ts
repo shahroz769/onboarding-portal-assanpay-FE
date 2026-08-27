@@ -14,6 +14,7 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   markLiveLimitsApplied,
+  regenerateResubmissionLink,
   saveMidCreationDetails,
   saveFieldReviews,
   saveDocumentReviewSubMerchant,
@@ -354,6 +355,23 @@ export function useSendForResubmission(caseId: string) {
     onError: (error: unknown) => {
       toast.error(
         getApiErrorMessage(error, 'Failed to send resubmission email'),
+      )
+    },
+  })
+}
+
+export function useRegenerateResubmissionLink(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => regenerateResubmissionLink(caseId),
+    onSuccess: async () => {
+      await invalidateCaseWorkflowQueries(queryClient, caseId)
+      toast.success('New resubmission link generated')
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to regenerate resubmission link'),
       )
     },
   })
