@@ -10,7 +10,10 @@ export const WEBSITE_CMS_OPTIONS = [
 
 export const MERCHANT_TYPES = [
   { value: 'sole_proprietorship', label: 'Sole Proprietorship' },
-  { value: 'private_limited_company', label: 'Private Limited Company' },
+  {
+    value: 'private_limited_company',
+    label: 'Private Limited Company / SMC Private Limited',
+  },
   { value: 'public_limited_company', label: 'Public Limited Company' },
   { value: 'partnership', label: 'Partnership' },
   {
@@ -201,7 +204,7 @@ export const DOCUMENT_LABELS: Record<DocumentFieldName, string> = {
   company_incorporation_certificate: 'Company Incorporation Certificate',
   memorandum_articles: 'Memorandum & Articles',
   form_ii: 'Form II',
-  form_a: 'Form A',
+  form_a: 'Form 1 / Form A',
   board_resolution: 'Board Resolution / Authorization Letter',
   certificate_of_commencement: 'Certificate Of Commencement',
   partnership_deed: 'Partnership Deed',
@@ -240,11 +243,14 @@ export const MERCHANT_SPECIFIC_DOCUMENTS: Record<
     optional: ['authority_letter', 'taxpayer_registration_certificate'],
   },
   private_limited_company: {
-    required: ['company_ntn', 'company_incorporation_certificate'],
+    required: [
+      'company_ntn',
+      'company_incorporation_certificate',
+      'form_a',
+    ],
     optional: [
       'memorandum_articles',
       'form_ii',
-      'form_a',
       'board_resolution',
       'certificate_of_commencement',
     ],
