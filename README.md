@@ -29,7 +29,6 @@ Do not run the frontend build unless explicitly requested; follow `AGENTS.md`.
 - `/login` and `/set-password/:token`: employee authentication.
 - `/onboarding-form`: public merchant onboarding.
 - `/onboarding-form/resubmit/:token`: rejected-field resubmission.
-- `/onboarding-form/go-live/:token`: MID Go-Live activation.
 - Authenticated cases, merchants, dashboard, users, configuration, and notifications under `_app` routes.
 
 API functions live in `src/apis`, shared authentication/error handling in `src/lib` and `src/features/auth`, and query integration in `src/hooks`.

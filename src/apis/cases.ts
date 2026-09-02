@@ -339,7 +339,6 @@ export interface EmailPreviewResult {
   body: string
   tokenId: string
   tokenExpiresAt?: string
-  goLiveAvailableAt?: string
 }
 
 export type AgreementEmailPreviewResult = Pick<

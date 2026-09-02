@@ -203,8 +203,8 @@ export default function TestingRenderer({
             <div className="flex min-w-0 flex-col gap-1">
               <CardTitle>Send Credentials</CardTitle>
               <CardDescription>
-                Send the saved merchant portal credentials and Go-Live link by
-                auto Resend, manual Gmail, or WhatsApp.
+                Send the saved merchant portal credentials and testing
+                instructions by auto Resend, manual Gmail, or WhatsApp.
               </CardDescription>
             </div>
             <Badge variant={credentialsEmailSent ? 'secondary' : 'outline'}>
@@ -281,9 +281,9 @@ export default function TestingRenderer({
             <MailCheck />
             <AlertTitle>Credentials stay hidden</AlertTitle>
             <AlertDescription>
-              Send the saved merchant portal credentials and Go-Live link by
-              auto Resend, manual Gmail, or WhatsApp. Manual Gmail and WhatsApp
-              require a sent-message screenshot.
+              Send the saved merchant portal credentials and testing
+              instructions by auto Resend, manual Gmail, or WhatsApp. Manual
+              Gmail and WhatsApp require a sent-message screenshot.
             </AlertDescription>
           </Alert>
 

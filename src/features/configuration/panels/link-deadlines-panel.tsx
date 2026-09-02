@@ -53,7 +53,6 @@ export function LinkDeadlinesPanel() {
     ['passwordResetHours', 'Password reset'],
     ['newPasswordSetHours', 'New password set'],
     ['documentsReviewResubmissionHours', 'Documents review resubmission'],
-    ['goLiveAvailabilityHours', 'Go Live availability'],
   ] as const
 
   if (isPending || !value) {

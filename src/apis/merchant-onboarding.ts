@@ -3,10 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { toast } from 'sonner'
-
 import { apiClient } from '#/lib/api-client'
-import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 type MerchantLifecycleStatus = 'pending' | 'testing' | 'live' | 'terminated'
 
@@ -167,81 +164,5 @@ export function useSubmitResubmissionMutation(token: string) {
       queryClient.invalidateQueries({
         queryKey: ['resubmission-context', token],
       }),
-  })
-}
-
-// ─── Agreement Upload ───────────────────────────────────────────────────────
-
-// MID Go-Live
-
-export type MidGoLiveContext = {
-  status: 'not_ready' | 'ready' | 'started'
-  caseNumber: string
-  merchantName: string
-  availableAt: string
-  availableInHours: number
-  liveCaseNumber: string | null
-  testingMethods: Array<{
-    key: string
-    label: string
-    type: 'collection' | 'disbursement'
-  }>
-}
-
-export async function fetchMidGoLiveContext(
-  token: string,
-): Promise<MidGoLiveContext> {
-  const { data } = await apiClient.get<MidGoLiveContext>(
-    `/api/public/mid-go-live/${token}`,
-  )
-  return data
-}
-
-export function midGoLiveContextQueryOptions(token: string) {
-  return queryOptions({
-    queryKey: ['mid-go-live-context', token] as const,
-    queryFn: () => fetchMidGoLiveContext(token),
-    enabled: Boolean(token),
-    staleTime: 0,
-    retry: false,
-  })
-}
-
-export type MidGoLiveActivationResponse = {
-  success: true
-  alreadyStarted: boolean
-  caseNumber: string
-  liveCaseId: string | null
-  liveCaseNumber: string | null
-}
-
-export async function activateMidGoLive(
-  token: string,
-  testedMethodKeys: string[],
-): Promise<MidGoLiveActivationResponse> {
-  const { data } = await apiClient.post<MidGoLiveActivationResponse>(
-    `/api/public/mid-go-live/${token}`,
-    { testedMethodKeys },
-  )
-  return data
-}
-
-export function useActivateMidGoLiveMutation(token: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationKey: ['mid-go-live', 'activate', token] as const,
-    mutationFn: (testedMethodKeys: string[]) =>
-      activateMidGoLive(token, testedMethodKeys),
-    retry: false,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['mid-go-live-context', token],
-      }),
-    onError: (error: unknown) => {
-      toast.error(
-        getApiErrorMessage(error, 'Unable to start Go-Live activation.'),
-      )
-    },
   })
 }

@@ -584,7 +584,6 @@ export type SendLiveEmailInput = z.infer<typeof sendLiveEmailInputSchema>
 export type MidCreationEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
-  goLiveAvailableAt: string | null
   error?: string
 }
 
