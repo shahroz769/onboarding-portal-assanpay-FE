@@ -35,6 +35,7 @@ const edgeTypes = {
 } satisfies EdgeTypes
 
 export function WorkflowCanvas({
+  readOnly = false,
   nodes,
   edges,
   colorMode,
@@ -44,6 +45,7 @@ export function WorkflowCanvas({
   isValidConnection,
   onRelayout,
 }: {
+  readOnly?: boolean
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
   colorMode: 'light' | 'dark'
@@ -68,7 +70,9 @@ export function WorkflowCanvas({
       fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
       minZoom={0.2}
       maxZoom={1.5}
-      deleteKeyCode={['Backspace', 'Delete']}
+      nodesConnectable={!readOnly}
+      edgesReconnectable={!readOnly}
+      deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
       selectNodesOnDrag={false}
       connectionRadius={36}
       proOptions={{ hideAttribution: false }}

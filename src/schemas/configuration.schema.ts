@@ -115,6 +115,17 @@ export const caseFlowCreationRequirementSchema = z.object({
 })
 
 export const caseFlowConfigurationSchema = z.object({
+  versionId: z.number().int().positive(),
+  activeVersionId: z.number().int().positive(),
+  versions: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      publishedAt: z.string(),
+      publishedBy: z.string().nullable(),
+      changeNote: z.string().nullable(),
+    }),
+  ),
+  changeNote: z.string().max(1000).optional(),
   revision: z.number().int().min(1),
   queues: z.array(caseFlowQueueSchema),
   startRules: z.array(caseFlowStartRuleSchema),
@@ -124,6 +135,7 @@ export const caseFlowConfigurationSchema = z.object({
 })
 
 const caseFlowBackfillTriggerSchema = z.object({
+  flowVersionId: z.number().int().positive(),
   id: z.uuid(),
   sourceQueueId: z.uuid(),
   sourceQueueName: z.string(),
