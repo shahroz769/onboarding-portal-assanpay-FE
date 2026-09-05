@@ -30,7 +30,15 @@ import { Button } from '#/components/ui/button'
 
 import { Input } from '#/components/ui/input'
 
-import { Label } from '#/components/ui/label'
+import { Field, FieldGroup, FieldLabel, FieldSet } from '#/components/ui/field'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 
 import { Spinner } from '#/components/ui/spinner'
 
@@ -470,36 +478,42 @@ export function WorkflowBuilderPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="flow-version">Flow version</Label>
+      <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-end">
+        <FieldGroup className="min-w-0">
+          <Field data-disabled={dirty || mutation.isPending}>
+            <FieldLabel htmlFor="flow-version">Flow version</FieldLabel>
+            <Select
+              value={String(base.versionId)}
+              disabled={dirty || mutation.isPending}
+              onValueChange={(value) => {
+                setChangeNote('')
+                setBackfillTriggerId(null)
+                setSelectedVersionId(Number(value))
+              }}
+            >
+              <SelectTrigger
+                id="flow-version"
+                className="w-full"
+                aria-describedby="flow-version-help"
+              >
+                <SelectValue placeholder="Select flow version" />
+              </SelectTrigger>
+              <SelectContent position="popper" align="start">
+                <SelectGroup>
+                  {[...base.versions].reverse().map((version) => (
+                    <SelectItem key={version.id} value={String(version.id)}>
+                      v{version.id}
+                      {version.id === base.activeVersionId ? ' - Current' : ' - History'}{' '}
+                      ({new Date(version.publishedAt).toLocaleDateString()})
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+        </FieldGroup>
 
-          <select
-            id="flow-version"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-
-            value={base.versionId}
-            disabled={dirty || mutation.isPending}
-
-            onChange={(event) => {
-              setChangeNote('')
-              setBackfillTriggerId(null)
-              setSelectedVersionId(Number(event.target.value))
-            }}
-          >
-            {[...base.versions].reverse().map((version) => (
-              <option key={version.id} value={version.id}>
-                v{version.id}
-                {version.id === base.activeVersionId
-                  ? ' - Current'
-                  : ' - History'}{' '}
-                ({new Date(version.publishedAt).toLocaleDateString()})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <p className="text-sm text-muted-foreground">
+        <p id="flow-version-help" className="text-sm text-muted-foreground">
           {readOnly
             ? `Viewing v${base.versionId}. Published rules are read-only.`
             : `New submissions use v${base.versionId}. Publishing creates a new version; existing merchants keep theirs.`}
@@ -534,7 +548,7 @@ export function WorkflowBuilderPanel() {
           />
         </div>
 
-        <fieldset
+        <FieldSet
           disabled={readOnly || mutation.isPending}
           className="min-w-0 shrink-0 xl:w-[320px]"
         >
@@ -567,7 +581,7 @@ export function WorkflowBuilderPanel() {
               setBackfillTriggerId(id)
             }}
           />
-        </fieldset>
+        </FieldSet>
       </div>
 
       {readOnly &&
@@ -593,17 +607,19 @@ export function WorkflowBuilderPanel() {
 
       {!readOnly ? (
         <>
-          <div className="grid gap-2">
-            <Label htmlFor="flow-change-note">Change note (optional)</Label>
-
-            <Input
-              id="flow-change-note"
-              maxLength={1000}
-              value={changeNote}
-              onChange={(event) => setChangeNote(event.target.value)}
-              placeholder="What changed in this version?"
-            />
-          </div>
+          <FieldGroup>
+            <Field data-disabled={mutation.isPending}>
+              <FieldLabel htmlFor="flow-change-note">Change note (optional)</FieldLabel>
+              <Input
+                id="flow-change-note"
+                maxLength={1000}
+                value={changeNote}
+                disabled={mutation.isPending}
+                onChange={(event) => setChangeNote(event.target.value)}
+                placeholder="What changed in this version?"
+              />
+            </Field>
+          </FieldGroup>
 
           <ConfigurationActionBar>
             {dirty ? (
