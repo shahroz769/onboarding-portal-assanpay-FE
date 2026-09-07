@@ -173,10 +173,12 @@ export function emailSendingModeQueryOptions() {
   })
 }
 
-export function caseFlowConfigurationQueryOptions() {
+export function caseFlowConfigurationQueryOptions(versionId?: number) {
   return queryOptions({
-    queryKey: CASE_FLOW_CONFIGURATION_KEY,
-    queryFn: fetchCaseFlowConfiguration,
+    queryKey: versionId
+      ? [...CASE_FLOW_CONFIGURATION_KEY, versionId]
+      : CASE_FLOW_CONFIGURATION_KEY,
+    queryFn: () => fetchCaseFlowConfiguration(versionId),
     staleTime: 60_000,
   })
 }
@@ -279,7 +281,9 @@ export function useUpdateCaseFlowConfigurationMutation() {
     mutationFn: (input: CaseFlowConfiguration) =>
       updateCaseFlowConfiguration(input),
     onSuccess: async () => {
-      toast.success('Case flow rules saved.')
+      toast.success(
+        'New flow version published. Existing merchants keep their flow.',
+      )
       await queryClient.invalidateQueries({
         queryKey: CASE_FLOW_CONFIGURATION_KEY,
       })

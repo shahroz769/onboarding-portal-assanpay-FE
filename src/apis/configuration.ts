@@ -123,8 +123,14 @@ export async function updatePayoutMethods(input: PayoutMethodSettings) {
   return response.data
 }
 
-export async function fetchCaseFlowConfiguration(): Promise<CaseFlowConfiguration> {
-  const response = await apiClient.get('/api/configuration/case-flow')
+export async function fetchCaseFlowConfiguration(
+  versionId?: number,
+): Promise<CaseFlowConfiguration> {
+  const response = await apiClient.get(
+    versionId
+      ? `/api/configuration/case-flow/versions/${versionId}`
+      : '/api/configuration/case-flow',
+  )
   return caseFlowConfigurationSchema.parse(response.data)
 }
 
@@ -133,6 +139,7 @@ export async function updateCaseFlowConfiguration(
 ): Promise<CaseFlowConfiguration> {
   const payload = {
     revision: input.revision,
+    changeNote: input.changeNote,
     startRules: input.startRules.map((rule) => ({
       ...(rule.id ? { id: rule.id } : {}),
       targetQueueId: rule.targetQueueId,

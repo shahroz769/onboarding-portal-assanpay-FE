@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { MarkerType } from '@xyflow/react'
+
 import type { Connection, EdgeChange, NodeChange } from '@xyflow/react'
+
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
 
 import { Save, Undo2 } from 'lucide-react'
@@ -26,10 +28,21 @@ import {
 
 import { Button } from '#/components/ui/button'
 
+import { Input } from '#/components/ui/input'
+
+import { Field, FieldGroup, FieldLabel, FieldSet } from '#/components/ui/field'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
+
 import { Spinner } from '#/components/ui/spinner'
 
 import {
-  CASE_FLOW_CONFIGURATION_KEY,
   caseFlowConfigurationQueryOptions,
   isCaseFlowRevisionConflict,
   useUpdateCaseFlowConfigurationMutation,
@@ -38,10 +51,13 @@ import {
 import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
 
 import { WorkflowBuilderSkeleton } from '../configuration-route-skeleton'
+
 import { ConfigurationActionBar } from '../panels/configuration-panel-shared'
 
 import { CaseFlowBackfillDialog } from './backfill-dialog'
+
 import { WorkflowCanvas } from './workflow-canvas'
+
 import {
   buildWorkflowGraph,
   canonicalizeFlowRules,
@@ -50,90 +66,142 @@ import {
   makeWorkflowEdge,
   nextRuleOrder,
 } from './workflow-graph-mapper'
+
 import type {
   WorkflowEdge,
   WorkflowEdgeData,
   WorkflowNode,
 } from './workflow-graph-types'
+
 import {
   EDGE_KIND_META,
   KIND_HANDLES,
   SOURCE_HANDLE_KIND,
 } from './workflow-graph-types'
+
 import { WorkflowInspector } from './workflow-inspector'
+
 import { layoutWorkflowGraph } from './workflow-layout'
+
 import { getWorkflowFormError } from './workflow-validation'
 
 export function WorkflowBuilderPanel() {
   const queryClient = useQueryClient()
+
   const { resolvedTheme } = useTheme()
-  const { data, isPending } = useQuery(caseFlowConfigurationQueryOptions())
+
+  const [selectedVersionId, setSelectedVersionId] = useState<
+    number | undefined
+  >()
+
+  const [changeNote, setChangeNote] = useState('')
+
+  const { data, isPending, isError, refetch } = useQuery(
+    caseFlowConfigurationQueryOptions(selectedVersionId),
+  )
+
   const mutation = useUpdateCaseFlowConfigurationMutation()
 
   const [base, setBase] = useState<CaseFlowConfiguration | null>(null)
+
   const [nodes, setNodes] = useState<WorkflowNode[]>([])
+
   const [edges, setEdges] = useState<WorkflowEdge[]>([])
+
   const [dirty, setDirty] = useState(false)
+
   const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
+
   const [reloadingStale, setReloadingStale] = useState(false)
+
   const [backfillTriggerId, setBackfillTriggerId] = useState<string | null>(
     null,
   )
 
+  const readOnly = Boolean(base && base.versionId !== base.activeVersionId)
+
   const dirtyRef = useRef(false)
+
   const baseRef = useRef<CaseFlowConfiguration | null>(null)
 
   function markDirty() {
     dirtyRef.current = true
+
     setDirty(true)
   }
 
   function initializeFromConfig(config: CaseFlowConfiguration) {
     const graph = buildWorkflowGraph(config)
+
     baseRef.current = config
+
     setBase(config)
+
     setEdges(graph.edges)
+
     setNodes(layoutWorkflowGraph(graph.nodes, graph.edges))
+
     dirtyRef.current = false
+
     setDirty(false)
+
+    setChangeNote('')
   }
 
   // Sync from the query cache whenever the server config changes and the
+
   // user has no unsaved edits.
+
   useEffect(() => {
     if (!data || dirtyRef.current) return
+
     const current = baseRef.current
+
     if (
       current &&
       current.revision === data.revision &&
+      current.versionId === data.versionId &&
       canonicalizeFlowRules(current) === canonicalizeFlowRules(data)
     ) {
       return
     }
+
     const graph = buildWorkflowGraph(data)
+
     baseRef.current = data
+
     setBase(data)
+
     setEdges(graph.edges)
+
     setNodes(layoutWorkflowGraph(graph.nodes, graph.edges))
   }, [data])
 
   // Keep derived node badges (start-rule count, in-flow styling) in sync
+
   // with the current edges without disturbing node identity.
+
   const inFlowIds = new Set<string>()
+
   for (const edge of edges) {
     inFlowIds.add(edge.source)
+
     inFlowIds.add(edge.target)
   }
+
   const activeStartRules = edges.filter(
     (edge) => edge.data.kind === 'startRule' && edge.data.isActive,
   ).length
+
   const displayNodes = nodes.map((node): WorkflowNode => {
     if (node.type === 'submission') {
       return node.data.startRuleCount === activeStartRules
         ? node
         : { ...node, data: { startRuleCount: activeStartRules } }
     }
+
     const inFlow = inFlowIds.has(node.id)
+
     return node.data.inFlow === inFlow
       ? node
       : { ...node, data: { ...node.data, inFlow } }
@@ -144,67 +212,107 @@ export function WorkflowBuilderPanel() {
     : null
 
   const selectedEdge = edges.find((edge) => edge.selected) ?? null
+
   const selectedNode = selectedEdge
     ? null
     : (displayNodes.find((node) => node.selected) ?? null)
 
   // ─── Canvas callbacks ─────────────────────────────────────────────────────
+
   function handleNodesChange(changes: NodeChange<WorkflowNode>[]) {
     setNodes((current) => applyNodeChanges(changes, current))
   }
 
   function handleEdgesChange(changes: EdgeChange<WorkflowEdge>[]) {
+    if (readOnly || mutation.isPending) {
+      setEdges((current) =>
+        applyEdgeChanges(
+          changes.filter((change) => change.type === 'select'),
+          current,
+        ),
+      )
+
+      return
+    }
+
     if (changes.some((change) => change.type === 'remove')) {
       dirtyRef.current = true
+
       setDirty(true)
     }
+
     setEdges((current) => applyEdgeChanges(changes, current))
   }
 
   function handleConnect(connection: Connection) {
+    if (readOnly || mutation.isPending) return
+
     if (!connection.source || !connection.target) return
+
     const kind =
       SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
+
     const error = getNewEdgeError({
       edges,
+
       nodes,
+
       kind,
+
       source: connection.source,
+
       target: connection.target,
     })
+
     if (error) {
       toast.error(error)
+
       return
     }
+
     const needsOrder = kind === 'startRule' || kind === 'closeTrigger'
+
     const edge = makeWorkflowEdge({
       kind,
+
       source: connection.source,
+
       target: connection.target,
+
       isActive: true,
+
       ...(needsOrder ? { order: nextRuleOrder(edges, kind) } : {}),
     })
+
     setEdges((current) => [
       ...current.map((item) => ({ ...item, selected: false })),
+
       { ...edge, selected: true },
     ])
-    setNodes((current) =>
-      current.map((node) => ({ ...node, selected: false })),
-    )
+
+    setNodes((current) => current.map((node) => ({ ...node, selected: false })))
+
     dirtyRef.current = true
+
     setDirty(true)
   }
 
   function isValidConnection(connection: Connection | WorkflowEdge) {
     if (!connection.source || !connection.target) return false
+
     const kind =
       SOURCE_HANDLE_KIND[connection.sourceHandle ?? ''] ?? 'closeTrigger'
+
     return (
       getNewEdgeError({
         edges,
+
         nodes,
+
         kind,
+
         source: connection.source,
+
         target: connection.target,
       }) === null
     )
@@ -215,69 +323,103 @@ export function WorkflowBuilderPanel() {
   }
 
   // ─── Inspector callbacks ──────────────────────────────────────────────────
+
   function handleSelectEdge(edgeId: string) {
     setEdges((current) =>
       current.map((edge) => ({ ...edge, selected: edge.id === edgeId })),
     )
+
     setNodes((current) => current.map((node) => ({ ...node, selected: false })))
   }
 
   function handleUpdateEdge(edgeId: string, patch: Partial<WorkflowEdgeData>) {
+    if (readOnly || mutation.isPending) return
+
     setEdges((current) =>
       current.map((edge) => {
         if (edge.id !== edgeId) return edge
+
         if (patch.kind && patch.kind !== edge.data.kind) {
           // Kind switch = deactivate the old rule server-side (omitted from
+
           // its array) and insert a new one (ruleId dropped).
+
           const kind = patch.kind
+
           const handles = KIND_HANDLES[kind]
+
           const needsOrder = kind === 'startRule' || kind === 'closeTrigger'
+
           return {
             ...edge,
+
             sourceHandle: handles.source,
+
             targetHandle: handles.target,
+
             markerEnd: {
               type: MarkerType.ArrowClosed,
+
               width: 16,
+
               height: 16,
+
               color: EDGE_KIND_META[kind].color,
             },
+
             data: {
               kind,
+
               isActive: patch.isActive ?? edge.data.isActive,
+
               ...(needsOrder
                 ? { order: edge.data.order ?? nextRuleOrder(current, kind) }
                 : {}),
             },
           }
         }
+
         return { ...edge, data: { ...edge.data, ...patch } }
       }),
     )
+
     markDirty()
   }
 
   function handleDeleteEdge(edgeId: string) {
+    if (readOnly || mutation.isPending) return
+
     setEdges((current) => current.filter((edge) => edge.id !== edgeId))
+
     markDirty()
   }
 
   function handleDeleteNodeRules(nodeId: string) {
+    if (readOnly || mutation.isPending) return
+
     setEdges((current) =>
       current.filter(
         (edge) => edge.source !== nodeId && edge.target !== nodeId,
       ),
     )
+
     markDirty()
   }
 
   // ─── Save / reload ────────────────────────────────────────────────────────
+
   async function handleSave() {
     const current = baseRef.current
-    if (!current) return
-    const payload = graphToConfig(current, edges)
+
+    if (!current || readOnly) return
+
+    const payload = { ...graphToConfig(current, edges), changeNote }
+
     try {
       const saved = await mutation.mutateAsync(payload)
+
+      setSelectedVersionId(undefined)
+
       initializeFromConfig(saved)
     } catch (error) {
       if (isCaseFlowRevisionConflict(error)) {
@@ -288,109 +430,259 @@ export function WorkflowBuilderPanel() {
 
   function handleDiscard() {
     const current = baseRef.current
+
     if (!current) return
+
     initializeFromConfig(current)
   }
 
   async function handleReloadStaleConfig() {
     setReloadingStale(true)
-    await queryClient
-      .invalidateQueries({
-        queryKey: CASE_FLOW_CONFIGURATION_KEY,
+
+    try {
+      const latest = await queryClient.fetchQuery({
+        ...caseFlowConfigurationQueryOptions(),
+        staleTime: 0,
       })
-      .then(() => setStaleRevisionOpen(false))
-      .finally(() => setReloadingStale(false))
+
+      setSelectedVersionId(undefined)
+
+      initializeFromConfig(latest)
+
+      setStaleRevisionOpen(false)
+    } finally {
+      setReloadingStale(false)
+    }
   }
 
-  if (isPending || !base) {
+  if (isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Could not load flow version</AlertTitle>
+        <AlertDescription>
+          <Button variant="outline" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (isPending || !base || base.versionId !== data?.versionId) {
     return <WorkflowBuilderSkeleton />
   }
 
+  const publication = base.versions.find(
+    (version) => version.id === base.versionId,
+  )
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-end">
+        <FieldGroup className="min-w-0">
+          <Field data-disabled={dirty || mutation.isPending}>
+            <FieldLabel htmlFor="flow-version">Flow version</FieldLabel>
+            <Select
+              value={String(base.versionId)}
+              disabled={dirty || mutation.isPending}
+              onValueChange={(value) => {
+                setChangeNote('')
+                setBackfillTriggerId(null)
+                setSelectedVersionId(Number(value))
+              }}
+            >
+              <SelectTrigger
+                id="flow-version"
+                className="w-full"
+                aria-describedby="flow-version-help"
+              >
+                <SelectValue placeholder="Select flow version" />
+              </SelectTrigger>
+              <SelectContent position="popper" align="start">
+                <SelectGroup>
+                  {[...base.versions].reverse().map((version) => (
+                    <SelectItem key={version.id} value={String(version.id)}>
+                      v{version.id}
+                      {version.id === base.activeVersionId ? ' - Current' : ' - History'}{' '}
+                      ({new Date(version.publishedAt).toLocaleDateString()})
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+        </FieldGroup>
+
+        <p id="flow-version-help" className="text-sm text-muted-foreground">
+          {readOnly
+            ? `Viewing v${base.versionId}. Published rules are read-only.`
+            : `New submissions use v${base.versionId}. Publishing creates a new version; existing merchants keep theirs.`}
+        </p>
+      </div>
+
+      {publication?.changeNote ? (
+        <p className="text-sm text-muted-foreground">
+          {publication.changeNote}
+        </p>
+      ) : null}
       <div className="flex flex-col gap-4 xl:flex-row">
         <div className="h-[62vh] min-h-[480px] min-w-0 flex-1 overflow-hidden rounded-lg border bg-muted/20">
           <WorkflowCanvas
+            readOnly={readOnly || mutation.isPending}
+
             nodes={displayNodes}
+
             edges={edges}
+
             colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
+
             onNodesChange={handleNodesChange}
+
             onEdgesChange={handleEdgesChange}
+
             onConnect={handleConnect}
+
             isValidConnection={isValidConnection}
+
             onRelayout={handleRelayout}
           />
         </div>
-        <WorkflowInspector
-          className="shrink-0 xl:w-[320px]"
-          nodes={displayNodes}
-          edges={edges}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          onSelectEdge={handleSelectEdge}
-          onUpdateEdge={handleUpdateEdge}
-          onDeleteEdge={handleDeleteEdge}
-          onDeleteNodeRules={handleDeleteNodeRules}
-          onOpenBackfill={setBackfillTriggerId}
-        />
+
+        <FieldSet
+          disabled={readOnly || mutation.isPending}
+          className="min-w-0 shrink-0 xl:w-[320px]"
+        >
+          <WorkflowInspector
+            className="shrink-0 xl:w-[320px]"
+
+            nodes={displayNodes}
+
+            edges={edges}
+
+            selectedNode={selectedNode}
+
+            selectedEdge={selectedEdge}
+
+            onSelectEdge={handleSelectEdge}
+
+            onUpdateEdge={handleUpdateEdge}
+
+            onDeleteEdge={handleDeleteEdge}
+
+            onDeleteNodeRules={handleDeleteNodeRules}
+
+            onOpenBackfill={(id) => {
+              if (dirty) {
+                toast.error(
+                  'Publish or discard changes before creating missing cases.',
+                )
+                return
+              }
+              setBackfillTriggerId(id)
+            }}
+          />
+        </FieldSet>
       </div>
 
-      {formError ? (
+      {readOnly &&
+      selectedEdge?.data.kind === 'closeTrigger' &&
+      selectedEdge.data.isActive &&
+      selectedEdge.data.ruleId ? (
+        <Button
+          variant="outline"
+          className="self-start"
+          onClick={() => setBackfillTriggerId(selectedEdge.data.ruleId!)}
+        >
+          Create missing cases for v{base.versionId}
+        </Button>
+      ) : null}
+
+      {!readOnly && formError ? (
         <Alert variant="destructive">
           <AlertTitle>Fix the errors below</AlertTitle>
+
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}
 
-      <ConfigurationActionBar>
-        {dirty ? (
-          <span className="mr-auto text-sm text-muted-foreground">
-            Unsaved changes
-          </span>
-        ) : null}
-        {dirty ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleDiscard}
-            disabled={mutation.isPending}
-          >
-            <Undo2 data-icon="inline-start" />
-            Discard changes
-          </Button>
-        ) : null}
-        <Button
-          disabled={mutation.isPending || Boolean(formError) || !dirty}
-          onClick={() => void handleSave()}
-        >
-          {mutation.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <Save data-icon="inline-start" />
-          )}
-          Save workflow
-        </Button>
-      </ConfigurationActionBar>
+      {!readOnly ? (
+        <>
+          <FieldGroup>
+            <Field data-disabled={mutation.isPending}>
+              <FieldLabel htmlFor="flow-change-note">Change note (optional)</FieldLabel>
+              <Input
+                id="flow-change-note"
+                maxLength={1000}
+                value={changeNote}
+                disabled={mutation.isPending}
+                onChange={(event) => setChangeNote(event.target.value)}
+                placeholder="What changed in this version?"
+              />
+            </Field>
+          </FieldGroup>
+
+          <ConfigurationActionBar>
+            {dirty ? (
+              <span className="mr-auto text-sm text-muted-foreground">
+                Unsaved changes
+              </span>
+            ) : null}
+
+            {dirty ? (
+              <Button
+                type="button"
+
+                variant="outline"
+
+                onClick={handleDiscard}
+
+                disabled={mutation.isPending}
+              >
+                <Undo2 data-icon="inline-start" />
+                Discard changes
+              </Button>
+            ) : null}
+
+            <Button
+              disabled={mutation.isPending || Boolean(formError) || !dirty}
+
+              onClick={() => void handleSave()}
+            >
+              {mutation.isPending ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <Save data-icon="inline-start" />
+              )}
+              Publish new version
+            </Button>
+          </ConfigurationActionBar>
+        </>
+      ) : null}
 
       <AlertDialog open={staleRevisionOpen} onOpenChange={setStaleRevisionOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Configuration was updated</AlertDialogTitle>
+
             <AlertDialogDescription>
               Someone else saved case flow rules while you were editing. Reload
               the latest configuration before making changes. Your unsaved edits
               will be discarded.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogAction
               disabled={reloadingStale}
+
               onClick={(event) => {
                 event.preventDefault()
+
                 void handleReloadStaleConfig()
               }}
             >
               {reloadingStale ? <Spinner data-icon="inline-start" /> : null}
+
               {reloadingStale ? 'Reloading' : 'Reload configuration'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -399,6 +691,7 @@ export function WorkflowBuilderPanel() {
 
       <CaseFlowBackfillDialog
         triggerId={backfillTriggerId}
+
         onOpenChange={(open) => {
           if (!open) setBackfillTriggerId(null)
         }}

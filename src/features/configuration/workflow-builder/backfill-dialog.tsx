@@ -24,28 +24,39 @@ import {
 
 export function CaseFlowBackfillDialog({
   triggerId,
+
   onOpenChange,
 }: {
   triggerId: string | null
+
   onOpenChange: (open: boolean) => void
 }) {
   const previewMutation = usePreviewMissingCloseTriggerCasesMutation()
+
   const backfillMutation = useCreateMissingCloseTriggerCasesMutation()
+
   const previewMutate = previewMutation.mutate
+
   const previewReset = previewMutation.reset
+
   const backfillReset = backfillMutation.reset
 
   useEffect(() => {
     if (!triggerId) return
+
     previewReset()
+
     backfillReset()
+
     previewMutate(triggerId)
   }, [triggerId, previewMutate, previewReset, backfillReset])
 
   async function handleBackfill() {
     if (!triggerId) return
+
     try {
       const result = await backfillMutation.mutateAsync(triggerId)
+
       if (result.failedMerchantCount === 0) {
         onOpenChange(false)
       } else {
@@ -59,6 +70,7 @@ export function CaseFlowBackfillDialog({
   return (
     <AlertDialog
       open={Boolean(triggerId)}
+
       onOpenChange={(open) => {
         if (!open && !backfillMutation.isPending) onOpenChange(false)
       }}
@@ -66,12 +78,20 @@ export function CaseFlowBackfillDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Create missing cases?</AlertDialogTitle>
+
           <AlertDialogDescription>
             This checks the saved close trigger and immediately creates cases
             only for merchants who successfully closed the source case and have
-            never had the target case.
+            never had the target case. Only merchants assigned to this rule's
+            flow version are included.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {previewMutation.data ? (
+          <p className="text-sm text-muted-foreground">
+            Flow version: v{previewMutation.data.trigger.flowVersionId}
+          </p>
+        ) : null}
 
         {previewMutation.isPending ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -85,6 +105,7 @@ export function CaseFlowBackfillDialog({
                 ? 'No missing cases'
                 : `${previewMutation.data.eligibleMerchantCount} merchant${previewMutation.data.eligibleMerchantCount === 1 ? '' : 's'} found`}
             </AlertTitle>
+
             <AlertDescription>
               {previewMutation.data.trigger.sourceQueueName} →{' '}
               {previewMutation.data.trigger.targetQueueName}
@@ -99,6 +120,7 @@ export function CaseFlowBackfillDialog({
         ) : (
           <Alert variant="destructive">
             <AlertTitle>Unable to check missing cases</AlertTitle>
+
             <AlertDescription>
               Close this dialog and try again.
             </AlertDescription>
@@ -108,6 +130,7 @@ export function CaseFlowBackfillDialog({
         {previewMutation.data?.retryIssues.length ? (
           <Alert variant="destructive">
             <AlertTitle>Why automatic retries are failing</AlertTitle>
+
             <AlertDescription>
               <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
                 {previewMutation.data.retryIssues.map((issue) => (
@@ -127,6 +150,7 @@ export function CaseFlowBackfillDialog({
               Created for {backfillMutation.data.createdMerchantCount}; failed
               for {backfillMutation.data.failedMerchantCount}
             </AlertTitle>
+
             <AlertDescription>
               <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
                 {backfillMutation.data.failures.map((failure) => (
@@ -143,6 +167,7 @@ export function CaseFlowBackfillDialog({
           <AlertDialogCancel disabled={backfillMutation.isPending}>
             Cancel
           </AlertDialogCancel>
+
           <AlertDialogAction
             disabled={
               previewMutation.isPending ||
@@ -150,8 +175,10 @@ export function CaseFlowBackfillDialog({
               previewMutation.data.eligibleMerchantCount === 0 ||
               backfillMutation.isPending
             }
+
             onClick={(event) => {
               event.preventDefault()
+
               void handleBackfill()
             }}
           >
@@ -160,6 +187,7 @@ export function CaseFlowBackfillDialog({
             ) : (
               <ListRestart data-icon="inline-start" />
             )}
+
             {backfillMutation.isPending
               ? 'Creating cases'
               : 'Create missing cases now'}
