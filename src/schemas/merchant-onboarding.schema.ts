@@ -40,6 +40,7 @@ export const KIN_RELATIONS = [
 export const BANK_NAMES = [
   'Al Baraka Islamic Bank Limited',
   'Bank AlFalah Limited',
+  'Bank Al Habib',
   'Allied Bank Limited',
   'Askari Commercial Bank Limited',
   'Bank of Khyber',
