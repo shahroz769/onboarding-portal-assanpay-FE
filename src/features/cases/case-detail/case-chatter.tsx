@@ -507,12 +507,13 @@ export function CaseChatter({
             sideOffset={6}
             className="w-80 p-0"
           >
-            <Command shouldFilter={false}>
-              <CommandInput
-                value={mentionSearch}
-                onValueChange={setMentionSearchOverride}
-                placeholder="Search employees"
-              />
+            <Command
+              shouldFilter={false}
+              items={mentionResults.map((candidate) => candidate.id)}
+              inputValue={mentionSearch}
+              onInputValueChange={setMentionSearchOverride}
+            >
+              <CommandInput placeholder="Search employees" />
 
               {hasMentionQuery ? (
                 <CommandList className="max-h-none overflow-hidden">

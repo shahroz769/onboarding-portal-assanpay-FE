@@ -124,7 +124,7 @@ export function CaseAssignOwnerDialog({
               />
             </PopoverTrigger>
             <PopoverContent className="w-(--anchor-width) p-0" align="start">
-              <Command>
+              <Command items={options.map((option) => option.label)}>
                 <CommandInput placeholder="Search users..." />
                 <CommandList>
                   <CommandEmpty>No users found.</CommandEmpty>

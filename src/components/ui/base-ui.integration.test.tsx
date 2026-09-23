@@ -35,6 +35,14 @@ import {
   ComboboxItem,
   ComboboxList,
 } from './combobox'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from './command'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
 import {
   DropdownMenu,
@@ -80,6 +88,86 @@ beforeAll(() => {
 })
 
 afterEach(cleanup)
+
+it('filters and selects items in the Base UI command interface', () => {
+  const onSelect = vi.fn()
+  render(
+    <Command items={['Alice', 'Bob']}>
+      <CommandInput placeholder="Search users" />
+      <CommandList>
+        <CommandEmpty>No users found.</CommandEmpty>
+        <CommandGroup heading="Users">
+          <CommandItem value="Alice" onSelect={onSelect}>
+            Alice
+          </CommandItem>
+          <CommandItem value="Bob" onSelect={onSelect}>
+            Bob
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </Command>,
+  )
+  expect(screen.getByText('Users')).toBeTruthy()
+  fireEvent.change(screen.getByPlaceholderText('Search users'), {
+    target: { value: 'Ali' },
+  })
+  expect(screen.getByText('Alice')).toBeTruthy()
+  expect(screen.queryByText('Bob')).toBeNull()
+  fireEvent.click(screen.getByText('Alice'))
+  expect(onSelect).toHaveBeenCalledWith('Alice')
+  fireEvent.change(screen.getByPlaceholderText('Search users'), {
+    target: { value: '' },
+  })
+  expect(screen.getByText('Bob')).toBeTruthy()
+  fireEvent.click(screen.getByText('Bob'))
+  expect(onSelect).toHaveBeenCalledWith('Bob')
+})
+
+it('supports keyboard selection and an empty command result', () => {
+  const onSelect = vi.fn()
+  render(
+    <Command items={['Alice', 'Bob']}>
+      <CommandInput placeholder="Search people" />
+      <CommandList>
+        <CommandEmpty>No people found.</CommandEmpty>
+        <CommandGroup>
+          <CommandItem value="Alice" onSelect={onSelect}>
+            Alice
+          </CommandItem>
+          <CommandItem value="Bob" onSelect={onSelect}>
+            Bob
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </Command>,
+  )
+  const input = screen.getByPlaceholderText('Search people')
+  fireEvent.keyDown(input, { key: 'ArrowDown' })
+  fireEvent.keyDown(input, { key: 'Enter' })
+  expect(onSelect).toHaveBeenCalledWith('Alice')
+  fireEvent.change(input, { target: { value: 'Nobody' } })
+  expect(screen.getByText('No people found.')).toBeTruthy()
+  expect(screen.queryByText('Alice')).toBeNull()
+})
+
+it('keeps externally filtered mention items visible regardless of the query', () => {
+  const onSelect = vi.fn()
+  render(
+    <Command items={['id-1']} shouldFilter={false} inputValue="jan">
+      <CommandInput placeholder="Search employees" />
+      <CommandList>
+        <CommandGroup heading="Team members">
+          <CommandItem value="id-1" onSelect={onSelect}>
+            Jane Doe
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </Command>,
+  )
+  expect(screen.getByText('Jane Doe')).toBeTruthy()
+  fireEvent.click(screen.getByText('Jane Doe'))
+  expect(onSelect).toHaveBeenCalledWith('id-1')
+})
 
 it('opens the real account menu without a missing group context', async () => {
   render(

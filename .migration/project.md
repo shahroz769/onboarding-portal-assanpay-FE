@@ -7,7 +7,7 @@
 - Removed the direct `radix-ui` dependency from `package.json` and updated `bun.lock` with Bun.
 - Removed the stale `package-lock.json`; this project declares Bun as its package manager.
 - Kept `@base-ui/react`, which was already installed.
-- Radix packages remain in `bun.lock` transitively through `cmdk`. The `cmdk` wrapper was left on its own primitive.
+- Replaced the `cmdk` command interface with an inline Base UI Combobox and removed `cmdk`. No Radix package remains in `package.json` or `bun.lock`.
 
 ## Consumer sweep
 
@@ -36,5 +36,13 @@
 
 ## Follow-up
 
-- `components.json` still says `new-york`, which shadcn recognizes as Radix. There is no `base-new-york` registry style. Future `shadcn add` commands may install Radix variants; inspect components before adding them.
+- `components.json` now uses the official `base-nova` style. `shadcn info` reports `base: base`, so future `shadcn add` commands resolve Base UI variants. Existing component classes retain the customized legacy appearance.
+- The current shadcn `base-nova` registry still defines `command` with `cmdk`. Keep this project's Base UI backed `command.tsx` when updating components; overwriting it from the registry would reinstall `cmdk` and Radix packages.
 - Manually check the component interactions listed in the individual reports, especially dialogs, menus, select labels, and keyboard navigation.
+
+### Full Radix removal follow-up
+
+- The command interface's three consumers now provide explicit item collections; filtering, pointer selection, keyboard selection, empty state, and externally filtered mentions have runtime coverage.
+- `bun run typecheck` and 8 runtime tests pass. The dependency tree, frontend source, and Bun lockfile contain no Radix or `cmdk` references.
+- `bun run test` also runs `scripts/check-no-radix.mjs`, which fails if a future component update restores Radix or `cmdk` dependencies, imports, CSS variables, or a Radix shadcn style.
+- A stale `node_modules/@radix-ui` directory remains on this workstation. Automatic command review rejected its recursive deletion; `bun install --frozen-lockfile --force` also left it in place. It is not present in the installed dependency tree and is not part of the project lockfile.

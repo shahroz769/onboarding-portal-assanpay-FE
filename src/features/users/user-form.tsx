@@ -145,7 +145,12 @@ function QueueAccessSelect({
         className="w-[var(--anchor-width)] max-w-[calc(100vw-2rem)] min-w-72 p-0"
         align="start"
       >
-        <Command>
+        <Command
+          items={[
+            ...(showAllOption && onSelectAll ? ['All Queues'] : []),
+            ...queues.map((queue) => queue.name),
+          ]}
+        >
           <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No queues found.</CommandEmpty>
@@ -153,7 +158,7 @@ function QueueAccessSelect({
               {showAllOption && onSelectAll ? (
                 <>
                   <CommandGroup>
-                    <CommandItem value="all-queues" onSelect={onSelectAll}>
+                    <CommandItem value="All Queues" onSelect={onSelectAll}>
                       <CheckIcon
                         className={cn(
                           'opacity-0',
