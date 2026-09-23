@@ -8,6 +8,7 @@ export const Route = createFileRoute('/_app/configuration/case-flow-rules')({
   staticData: {
     title: 'Caseflow Builder',
     subtitle: 'Design the cross-queue case workflow visually.',
+    fitViewport: true,
   },
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(

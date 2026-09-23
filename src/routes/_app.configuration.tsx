@@ -9,14 +9,13 @@ export const Route = createFileRoute('/_app/configuration')({
   staticData: {
     title: 'Configuration',
     subtitle: 'Manage portal-wide workflow and onboarding settings.',
-    fitViewport: true,
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   return (
-    <div className="-m-1 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-1">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <Outlet />
     </div>
   )

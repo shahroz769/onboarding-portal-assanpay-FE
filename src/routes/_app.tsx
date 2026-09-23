@@ -61,16 +61,14 @@ function AppLayout() {
         title?: string
         subtitle?: string
         hidePageShell?: boolean
+        fitViewport?: boolean
       }
     | undefined
   const title = staticData?.title ?? ''
   const subtitle = staticData?.subtitle
   const hidePageShell =
     isCaseDetailRoute || (staticData?.hidePageShell ?? false)
-  const fitViewport = matches.some(
-    (match) =>
-      (match.staticData as { fitViewport?: boolean } | undefined)?.fitViewport,
-  )
+  const fitViewport = staticData?.fitViewport ?? false
   const caseDetailMatch = matches.find(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
