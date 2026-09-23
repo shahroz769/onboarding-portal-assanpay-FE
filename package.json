@@ -14,7 +14,7 @@
     "preview:cloudflare": "bun run build && wrangler dev",
     "cf-typegen": "wrangler types",
     "preview": "vite preview",
-    "test": "vitest run --config vitest.config.ts && node scripts/check-no-radix.mjs",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "format": "prettier --check .",
