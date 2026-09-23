@@ -28,6 +28,12 @@
 - Frontend and backend builds were not run, per `AGENTS.md`.
 - The separate Bun Hono backend needed no change for this frontend primitive migration.
 
+### Runtime follow-up
+
+- Fixed the account menu's missing `Menu.Group` around its `Menu.GroupLabel`, which caused the reported `MenuGroupContext is missing` error when opened.
+- Added a jsdom integration suite that mounts every migrated wrapper and the existing Base UI combobox, including open overlays, grouped menu/select content, basic interactions, and the real account menu. All 5 tests pass.
+- Added a minimal Vitest config so `bun run test` works without loading the Cloudflare development plugin. `bun run typecheck` passes.
+
 ## Follow-up
 
 - `components.json` still says `new-york`, which shadcn recognizes as Radix. There is no `base-new-york` registry style. Future `shadcn add` commands may install Radix variants; inspect components before adding them.

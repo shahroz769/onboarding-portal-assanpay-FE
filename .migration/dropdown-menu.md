@@ -20,3 +20,8 @@ Base UI checkbox and radio menu items do not close on click by default. Check me
 ## Verify by hand
 
 - Open the user and theme menus; check keyboard navigation, typeahead, submenu placement, and selection.
+
+## Runtime follow-up
+
+- Wrapped the real account menu's `DropdownMenuLabel` in `DropdownMenuGroup` to satisfy Base UI's required menu group context. Its logout item is grouped as well.
+- The integration suite opens the real account menu and a representative radio menu; both render without context errors.
