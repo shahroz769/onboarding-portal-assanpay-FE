@@ -17,6 +17,7 @@ export type NavSubItem = {
   url: AppPath
   roles?: RoleType[]
   requiresWorkAccess?: boolean
+  group?: string
 }
 
 export type NavItem = {
@@ -87,17 +88,61 @@ const navItems: NavItem[] = [
     icon: Settings2,
     roles: ['super_admin', 'admin'],
     items: [
-      { title: 'Limits & MDR', url: '/configuration/limits-and-mdr' },
-      { title: 'Payment Methods', url: '/configuration/payment-methods' },
-      { title: 'Payout Methods', url: '/configuration/payout-methods' },
-      { title: 'Agreements', url: '/configuration/agreements' },
-      { title: 'Sub-Merchants', url: '/configuration/sub-merchants' },
-      { title: 'Portal & Support', url: '/configuration/merchant-portal' },
-      { title: 'Queues', url: '/configuration/queues' },
-      { title: 'Case Triggering', url: '/configuration/case-triggering' },
-      { title: 'Caseflow Builder', url: '/configuration/case-flow-rules' },
-      { title: 'Link Deadlines', url: '/configuration/link-deadlines' },
-      { title: 'Email Sending', url: '/configuration/email-sending' },
+      {
+        title: 'Limits & MDR',
+        url: '/configuration/limits-and-mdr',
+        group: 'Pricing & Methods',
+      },
+      {
+        title: 'Payment Methods',
+        url: '/configuration/payment-methods',
+        group: 'Pricing & Methods',
+      },
+      {
+        title: 'Payout Methods',
+        url: '/configuration/payout-methods',
+        group: 'Pricing & Methods',
+      },
+      {
+        title: 'Agreements',
+        url: '/configuration/agreements',
+        group: 'Merchant Onboarding',
+      },
+      {
+        title: 'Sub-Merchants',
+        url: '/configuration/sub-merchants',
+        group: 'Merchant Onboarding',
+      },
+      {
+        title: 'Portal & Support',
+        url: '/configuration/merchant-portal',
+        group: 'Merchant Onboarding',
+      },
+      {
+        title: 'Queues',
+        url: '/configuration/queues',
+        group: 'Case Workflow',
+      },
+      {
+        title: 'Case Triggering',
+        url: '/configuration/case-triggering',
+        group: 'Case Workflow',
+      },
+      {
+        title: 'Caseflow Builder',
+        url: '/configuration/case-flow-rules',
+        group: 'Case Workflow',
+      },
+      {
+        title: 'Email Sending',
+        url: '/configuration/email-sending',
+        group: 'Communication',
+      },
+      {
+        title: 'Link Deadlines',
+        url: '/configuration/link-deadlines',
+        group: 'Communication',
+      },
     ],
   },
 ]

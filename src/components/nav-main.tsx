@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
+
+import { cn } from '#/lib/utils'
 
 import type { NavItem as SidebarNavItem } from '#/config/navigation'
 import {
@@ -153,19 +155,37 @@ function NavItem({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>
-            {item.items.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.title} className="w-full">
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={pathname === subItem.url}
-                  className="w-full"
-                >
-                  <Link to={subItem.url}>
-                    <span>{subItem.title}</span>
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
+            {item.items.map((subItem, index) => {
+              const showGroupLabel =
+                subItem.group !== undefined &&
+                subItem.group !== item.items?.[index - 1]?.group
+
+              return (
+                <Fragment key={subItem.title}>
+                  {showGroupLabel ? (
+                    <li
+                      className={cn(
+                        'px-2 pb-0.5 text-xs font-medium text-sidebar-foreground/60',
+                        index === 0 ? 'pt-1' : 'pt-3',
+                      )}
+                    >
+                      {subItem.group}
+                    </li>
+                  ) : null}
+                  <SidebarMenuSubItem className="w-full">
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={pathname === subItem.url}
+                      className="w-full"
+                    >
+                      <Link to={subItem.url}>
+                        <span>{subItem.title}</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </Fragment>
+              )
+            })}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>

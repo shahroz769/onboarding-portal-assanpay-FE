@@ -5,6 +5,7 @@ import {
   useNavigate,
   useRouter,
 } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -203,10 +204,12 @@ function PasswordTokenNotFound() {
   )
 }
 
-function PasswordTokenError({ error }: { error: Error }) {
+function PasswordTokenError({ error }: ErrorComponentProps) {
   const router = useRouter()
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  const isExpired = status === 410 || error.message === 'PASSWORD_TOKEN_EXPIRED'
+  const isExpired =
+    status === 410 ||
+    (error instanceof Error && error.message === 'PASSWORD_TOKEN_EXPIRED')
 
   if (isExpired) {
     return (
