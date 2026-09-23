@@ -34,6 +34,10 @@ export function EmailRecipientSelect({
       <FieldLabel>Send to</FieldLabel>
       <FieldContent>
         <Select
+          items={[
+            { value: 'submitter', label: 'Submitter Email' },
+            { value: 'business', label: 'Business Email' },
+          ]}
           value={value}
           onValueChange={(nextValue) =>
             onValueChange(nextValue as EmailRecipientType)

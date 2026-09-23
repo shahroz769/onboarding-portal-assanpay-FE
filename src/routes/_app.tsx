@@ -93,27 +93,29 @@ function AppLayout() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink asChild>
-                  <Link to="/">AssanPay</Link>
+                <BreadcrumbLink render={<Link to="/" />}>
+                  AssanPay
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               {isCaseDetailRoute ? (
                 <>
                   <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link to="/cases/all-cases">All Cases</Link>
+                    <BreadcrumbLink render={<Link to="/cases/all-cases" />}>
+                      All Cases
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link
-                        to="/cases/all-cases"
-                        search={{ queueId: caseDetail?.queue?.id }}
-                      >
-                        {caseDetail?.queue?.name ?? 'Queue'}
-                      </Link>
+                    <BreadcrumbLink
+                      render={
+                        <Link
+                          to="/cases/all-cases"
+                          search={{ queueId: caseDetail?.queue?.id }}
+                        />
+                      }
+                    >
+                      {caseDetail?.queue?.name ?? 'Queue'}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />

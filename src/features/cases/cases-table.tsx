@@ -56,9 +56,19 @@ function QueueSelector() {
 
   const content = (
     <Select
+      items={[
+        { value: 'all', label: 'All Queues' },
+        ...state.queues.map((queue) => ({
+          value: queue.id,
+          label: queue.name,
+        })),
+      ]}
       value={filters.queueId ?? 'all'}
       onValueChange={(value) =>
-        actions.setFilter('queueId', value === 'all' ? undefined : value)
+        actions.setFilter(
+          'queueId',
+          value === 'all' ? undefined : (value ?? undefined),
+        )
       }
       disabled={state.isQueuesLoading}
     >
@@ -158,6 +168,13 @@ function BulkActions() {
               <Skeleton className="h-8 w-40" />
             ) : (
               <Select
+                items={[
+                  { value: 'ap-system', label: 'AP System (New)' },
+                  ...state.users.map((user) => ({
+                    value: user.id,
+                    label: user.name,
+                  })),
+                ]}
                 value={state.bulkAssignOwnerId ?? 'ap-system'}
                 onValueChange={(value) =>
                   actions.setBulkAssignOwnerId(

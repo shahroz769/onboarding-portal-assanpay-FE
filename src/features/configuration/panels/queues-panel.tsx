@@ -200,29 +200,31 @@ export function QueuesPanel() {
           <div className="flex justify-end gap-1">
             <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  disabled={updateStatus.isPending}
-                  onClick={() =>
-                    updateStatus.mutate({
-                      queueId: queue.id,
-                      lifecycle: nextLifecycle,
-                      revision: queue.revision,
-                    })
-                  }
-                >
-                  {lifecycle === 'active' ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4" />
-                  )}
-                  <span className="sr-only">
-                    {lifecycle === 'active' ? 'Deactivate' : 'Activate'}
-                  </span>
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    disabled={updateStatus.isPending}
+                    onClick={() =>
+                      updateStatus.mutate({
+                        queueId: queue.id,
+                        lifecycle: nextLifecycle,
+                        revision: queue.revision,
+                      })
+                    }
+                  />
+                }
+              >
+                {lifecycle === 'active' ? (
+                  <Pause className="size-4" />
+                ) : (
+                  <Play className="size-4" />
+                )}
+                <span className="sr-only">
+                  {lifecycle === 'active' ? 'Deactivate' : 'Activate'}
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 {lifecycle === 'active' ? 'Deactivate' : 'Activate'}
@@ -304,11 +306,9 @@ function CreateQueueDialog() {
         if (!next) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button type="button" size="sm">
-          <Plus data-icon="inline-start" />
-          Create queue
-        </Button>
+      <DialogTrigger render={<Button type="button" size="sm" />}>
+        <Plus data-icon="inline-start" />
+        Create queue
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -351,6 +351,7 @@ function CreateQueueDialog() {
           <Field>
             <FieldLabel>Workflow type</FieldLabel>
             <Select
+              items={WORKFLOW_OPTIONS}
               value={workflowType}
               onValueChange={(value) =>
                 setWorkflowType(value as QueueWorkflowType)
@@ -370,10 +371,8 @@ function CreateQueueDialog() {
           </Field>
         </FieldGroup>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancel
           </DialogClose>
           <Button
             type="button"
@@ -468,18 +467,22 @@ function QueueEditorDialog({
         }}
       >
         <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-8"
-              >
-                <ListOrdered className="size-4" />
-                <span className="sr-only">Edit stages</span>
-              </Button>
-            </DialogTrigger>
+          <TooltipTrigger
+            render={
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                  />
+                }
+              />
+            }
+          >
+            <ListOrdered className="size-4" />
+            <span className="sr-only">Edit stages</span>
           </TooltipTrigger>
           <TooltipContent>Edit stages</TooltipContent>
         </Tooltip>
@@ -592,6 +595,13 @@ function QueueEditorDialog({
                       }}
                     />
                     <Select
+                      items={[
+                        'new',
+                        'in_progress',
+                        'qc',
+                        'error',
+                        'closed',
+                      ].map((value) => ({ value, label: value }))}
                       value={stage.category}
                       onValueChange={(value) => {
                         const next = [...stages]
@@ -633,10 +643,8 @@ function QueueEditorDialog({
             </div>
           )}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
             </DialogClose>
             <Button
               type="button"
@@ -722,14 +730,16 @@ function QueueSlaCell({
   }
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-auto cursor-pointer justify-start px-0 font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
-        >
-          {slaHours} {slaHours === 1 ? 'hour' : 'hours'}
-        </Button>
+      <DialogTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto cursor-pointer justify-start px-0 font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+          />
+        }
+      >
+        {slaHours} {slaHours === 1 ? 'hour' : 'hours'}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -756,10 +766,8 @@ function QueueSlaCell({
           </Field>
         </FieldGroup>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancel
           </DialogClose>
           <Button
             type="button"

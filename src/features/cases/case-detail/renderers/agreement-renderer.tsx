@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -192,7 +192,9 @@ export default function AgreementRenderer({
   const hasReceivedAgreement = Boolean(agreement?.receivedAgreement)
   const canUploadFinal = canEdit && agreement?.emailStatus !== 'sent'
   const canReviewFinal =
-    canUploadFinal && Boolean(agreement?.finalAgreement) && !hasReceivedAgreement
+    canUploadFinal &&
+    Boolean(agreement?.finalAgreement) &&
+    !hasReceivedAgreement
   const canUploadReceived = isCaseOwner && isAwaitingClient
 
   function openReview() {
@@ -298,16 +300,19 @@ export default function AgreementRenderer({
                       Open the draft and prepare the final agreement manually.
                     </p>
                   </div>
-                  <Button asChild variant="outline">
-                    <a
-                      href={agreement.draftUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <ExternalLink data-icon="inline-start" />
-                      Open draft
-                    </a>
-                  </Button>
+                  <ButtonLink
+                    variant="outline"
+                    render={
+                      <a
+                        href={agreement.draftUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    }
+                  >
+                    <ExternalLink data-icon="inline-start" />
+                    Open draft
+                  </ButtonLink>
                 </div>
               </Field>
             ) : null}
@@ -563,16 +568,19 @@ function AgreementFileCard({
               {formatFileSize(file.sizeBytes)}
             </p>
           </div>
-          <Button asChild variant="outline">
-            <a
-              href={file.googleDriveWebViewLink}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink data-icon="inline-start" />
-              View agreement
-            </a>
-          </Button>
+          <ButtonLink
+            variant="outline"
+            render={
+              <a
+                href={file.googleDriveWebViewLink}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            <ExternalLink data-icon="inline-start" />
+            View agreement
+          </ButtonLink>
         </div>
       </CardContent>
     </Card>

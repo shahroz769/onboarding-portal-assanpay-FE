@@ -106,25 +106,24 @@ export function CaseAssignOwnerDialog({
         <Field>
           <FieldLabel className="sr-only">Owner</FieldLabel>
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={popoverOpen}
-                className="w-full justify-between font-normal"
-                disabled={isClosed}
-              >
-                {selectedLabel}
-                <ChevronsUpDownIcon
-                  data-icon="inline-end"
-                  className="opacity-50"
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={popoverOpen}
+                  className="w-full justify-between font-normal"
+                  disabled={isClosed}
                 />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-(--radix-popover-trigger-width) p-0"
-              align="start"
+              }
             >
+              {selectedLabel}
+              <ChevronsUpDownIcon
+                data-icon="inline-end"
+                className="opacity-50"
+              />
+            </PopoverTrigger>
+            <PopoverContent className="w-(--anchor-width) p-0" align="start">
               <Command>
                 <CommandInput placeholder="Search users..." />
                 <CommandList>

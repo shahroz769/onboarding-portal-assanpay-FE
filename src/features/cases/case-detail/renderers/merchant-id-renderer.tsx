@@ -467,6 +467,7 @@ export default function MerchantIdRenderer({
             <Field data-invalid={Boolean(errors.merchantRole)}>
               <FieldLabel htmlFor="merchant-role">Role</FieldLabel>
               <Select
+                items={ROLE_OPTIONS}
                 value={form.merchantRole}
                 disabled={!canEdit || saveMidCreationDetails.isPending}
                 onValueChange={(value) =>

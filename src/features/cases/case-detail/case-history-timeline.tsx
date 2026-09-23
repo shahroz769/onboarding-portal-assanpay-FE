@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { ButtonLink } from '#/components/ui/button'
 import { EmptyState } from '#/components/empty-state'
 import {
   Card,
@@ -461,21 +461,21 @@ export function CaseHistoryTimeline({
                             >
                               {proofFile.originalName}
                             </Badge>
-                            <Button
-                              asChild
+                            <ButtonLink
                               variant="outline"
                               size="sm"
                               className="max-w-full"
+                              render={
+                                <a
+                                  href={proofFile.googleDriveWebViewLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                />
+                              }
                             >
-                              <a
-                                href={proofFile.googleDriveWebViewLink}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink data-icon="inline-start" />
-                                <span className="truncate">{proofLabel}</span>
-                              </a>
-                            </Button>
+                              <ExternalLink data-icon="inline-start" />
+                              <span className="truncate">{proofLabel}</span>
+                            </ButtonLink>
                           </div>
                         ) : null}
                       </div>

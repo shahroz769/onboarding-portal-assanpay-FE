@@ -102,7 +102,8 @@ export function createUserColumns({
       id: 'select',
       header: (
         <Checkbox
-          checked={isAllSelected || (isSomeSelected && 'indeterminate')}
+          checked={isAllSelected}
+          indeterminate={isSomeSelected}
           onCheckedChange={(value) => onSelectAll(!!value)}
           aria-label="Select all users"
         />

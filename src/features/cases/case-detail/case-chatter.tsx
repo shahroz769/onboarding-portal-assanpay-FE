@@ -27,7 +27,7 @@ import {
   CommandItem,
   CommandList,
 } from '#/components/ui/command'
-import { Popover, PopoverAnchor, PopoverContent } from '#/components/ui/popover'
+import { Popover, PopoverContent } from '#/components/ui/popover'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
@@ -284,6 +284,7 @@ export function CaseChatter({
   const [composerScrollTop, setComposerScrollTop] = useState(0)
 
   const formRef = useRef<HTMLFormElement | null>(null)
+  const mentionAnchorRef = useRef<HTMLSpanElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const pendingCursorRef = useRef<number | null>(null)
   const deferredContent = useDeferredValue(content)
@@ -407,16 +408,15 @@ export function CaseChatter({
             onSubmit={handleSubmit}
             className="relative min-w-0 rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
           >
-            <PopoverAnchor asChild>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute size-1 opacity-0"
-                style={{
-                  left: mentionAnchorPosition.left,
-                  top: mentionAnchorPosition.top,
-                }}
-              />
-            </PopoverAnchor>
+            <span
+              ref={mentionAnchorRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute size-1 opacity-0"
+              style={{
+                left: mentionAnchorPosition.left,
+                top: mentionAnchorPosition.top,
+              }}
+            />
 
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               {replyTarget ? (
@@ -501,6 +501,7 @@ export function CaseChatter({
           </form>
 
           <PopoverContent
+            anchor={mentionAnchorRef}
             align="start"
             side="bottom"
             sideOffset={6}

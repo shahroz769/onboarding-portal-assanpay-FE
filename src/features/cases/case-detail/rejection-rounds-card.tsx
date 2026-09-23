@@ -12,7 +12,7 @@ import {
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardAction,
@@ -305,7 +305,7 @@ function RoundRow({ round }: { round: Round }) {
             </p>
           </div>
         </div>
-        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-open:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className="motion-collapsible-content">
         <Separator />
@@ -566,12 +566,15 @@ function ValueBlock({ label, value }: { label: string; value: string }) {
 
 function FileLink({ href, label }: { href: string; label: string }) {
   return (
-    <Button asChild variant="outline" size="xs" className="max-w-full">
-      <a href={href} target="_blank" rel="noreferrer">
-        <ExternalLink data-icon="inline-start" />
-        <span className="truncate">{label}</span>
-      </a>
-    </Button>
+    <ButtonLink
+      variant="outline"
+      size="xs"
+      className="max-w-full"
+      render={<a href={href} target="_blank" rel="noreferrer" />}
+    >
+      <ExternalLink data-icon="inline-start" />
+      <span className="truncate">{label}</span>
+    </ButtonLink>
   )
 }
 const REJECTION_ROUND_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {

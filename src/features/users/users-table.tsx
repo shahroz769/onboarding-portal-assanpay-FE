@@ -11,7 +11,7 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,12 +65,10 @@ function CreateUserHeaderAction() {
   if (!portalTarget) return null
 
   return createPortal(
-    <Button asChild size="sm">
-      <Link to="/user-management/user-creation">
-        <PlusIcon data-icon="inline-start" />
-        Create User
-      </Link>
-    </Button>,
+    <ButtonLink size="sm" render={<Link to="/user-management/user-creation" />}>
+      <PlusIcon data-icon="inline-start" />
+      Create User
+    </ButtonLink>,
     portalTarget,
   )
 }
@@ -200,6 +198,10 @@ export function UsersTableComposed({
               visibleCount={users.length}
             >
               <Select
+                items={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                ]}
                 value={bulkStatus}
                 onValueChange={(value) =>
                   setBulkStatus(value as 'active' | 'inactive')

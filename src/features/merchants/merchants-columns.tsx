@@ -3,7 +3,7 @@ import { BanIcon, EyeIcon, Trash2Icon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import {
   Tooltip,
@@ -82,7 +82,8 @@ export function createMerchantColumns({
       id: 'select',
       header: (
         <Checkbox
-          checked={isAllSelected || (isSomeSelected && 'indeterminate')}
+          checked={isAllSelected}
+          indeterminate={isSomeSelected}
           onCheckedChange={(value) => onSelectAll(!!value)}
           aria-label="Select all"
         />
@@ -201,7 +202,7 @@ export function createMerchantColumns({
         if (merchant.priorityNote) {
           return (
             <Tooltip>
-              <TooltipTrigger asChild>{priorityBadge}</TooltipTrigger>
+              <TooltipTrigger render={priorityBadge} />
               <TooltipContent className="max-w-xs">
                 <p>{merchant.priorityNote}</p>
               </TooltipContent>
@@ -242,47 +243,58 @@ export function createMerchantColumns({
       cell: (merchant) => (
         <div className="flex items-center gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8" asChild>
-                <Link
-                  to="/merchants/$merchantId/overview"
-                  params={{ merchantId: merchant.id }}
-                >
-                  <EyeIcon className="size-4" />
-                  <span className="sr-only">View</span>
-                </Link>
-              </Button>
+            <TooltipTrigger
+              render={
+                <ButtonLink
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  render={
+                    <Link
+                      to="/merchants/$merchantId/overview"
+                      params={{ merchantId: merchant.id }}
+                    />
+                  }
+                />
+              }
+            >
+              <EyeIcon className="size-4" />
+              <span className="sr-only">View</span>
             </TooltipTrigger>
             <TooltipContent>View</TooltipContent>
           </Tooltip>
           {canTerminate && merchant.status !== 'terminated' && (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => onTerminateClick(merchant)}
-                >
-                  <BanIcon className="size-4" />
-                  <span className="sr-only">Terminate</span>
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onTerminateClick(merchant)}
+                  />
+                }
+              >
+                <BanIcon className="size-4" />
+                <span className="sr-only">Terminate</span>
               </TooltipTrigger>
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
           {canDelete && merchant.status === 'terminated' ? (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => onDeleteClick(merchant)}
-                >
-                  <Trash2Icon />
-                  <span className="sr-only">Delete permanently</span>
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onDeleteClick(merchant)}
+                  />
+                }
+              >
+                <Trash2Icon />
+                <span className="sr-only">Delete permanently</span>
               </TooltipTrigger>
               <TooltipContent>
                 Delete terminated merchant permanently

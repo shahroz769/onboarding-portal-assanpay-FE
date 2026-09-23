@@ -50,6 +50,10 @@ export function DashboardFilterBar({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select
+        items={DASHBOARD_RANGES.map((range) => ({
+          value: range,
+          label: DASHBOARD_RANGE_LABELS[range],
+        }))}
         value={search.range}
         onValueChange={(value) => onChange({ range: value as DashboardRange })}
       >
@@ -110,15 +114,17 @@ function DateField({ label, value, min, max, onChange }: DateFieldProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          data-empty={!value}
-          className="w-40 justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-        >
-          <CalendarIcon data-icon="inline-start" />
-          {selected ? format(selected, 'MMM d, yyyy') : label}
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            data-empty={!value}
+            className="w-40 justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+          />
+        }
+      >
+        <CalendarIcon data-icon="inline-start" />
+        {selected ? format(selected, 'MMM d, yyyy') : label}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar

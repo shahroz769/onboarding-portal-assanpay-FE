@@ -871,9 +871,10 @@ export function MerchantOnboardingForm({
                       Website Platform / CMS *
                     </FieldLabel>
                     <Select
+                      items={WEBSITE_CMS_OPTIONS}
                       name={field.name}
                       value={field.state.value}
-                      onValueChange={field.handleChange}
+                      onValueChange={(value) => field.handleChange(value ?? '')}
                     >
                       <SelectTrigger
                         id={field.name}
@@ -936,19 +937,21 @@ export function MerchantOnboardingForm({
                   <Field data-invalid={isInvalid}>
                     <FieldLabel>Business Registration Date *</FieldLabel>
                     <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          data-empty={!field.state.value}
-                          aria-invalid={isInvalid}
-                          className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-                          onBlur={field.handleBlur}
-                        >
-                          <CalendarIcon data-icon="inline-start" />
-                          {selectedDate
-                            ? format(selectedDate, 'PPP')
-                            : 'Pick a date'}
-                        </Button>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="outline"
+                            data-empty={!field.state.value}
+                            aria-invalid={isInvalid}
+                            className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+                            onBlur={field.handleBlur}
+                          />
+                        }
+                      >
+                        <CalendarIcon data-icon="inline-start" />
+                        {selectedDate
+                          ? format(selectedDate, 'PPP')
+                          : 'Pick a date'}
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
@@ -1028,9 +1031,10 @@ export function MerchantOnboardingForm({
                       Business Type *
                     </FieldLabel>
                     <Select
+                      items={MERCHANT_TYPES}
                       name={field.name}
                       value={field.state.value}
-                      onValueChange={field.handleChange}
+                      onValueChange={(value) => field.handleChange(value ?? '')}
                     >
                       <SelectTrigger
                         id={field.name}
@@ -1390,9 +1394,10 @@ export function MerchantOnboardingForm({
                       Next of Kin Relation *
                     </FieldLabel>
                     <Select
+                      items={KIN_RELATIONS}
                       name={field.name}
                       value={field.state.value}
-                      onValueChange={field.handleChange}
+                      onValueChange={(value) => field.handleChange(value ?? '')}
                     >
                       <SelectTrigger
                         id={field.name}

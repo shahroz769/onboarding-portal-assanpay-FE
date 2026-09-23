@@ -546,7 +546,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="resolution"
-            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden not-data-hidden:flex data-hidden:hidden"
           >
             <Suspense fallback={<ResolutionTabSkeleton />}>
               <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden overflow-y-auto pb-1">
@@ -743,8 +743,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="chatter"
-            forceMount={visitedChatter ? true : undefined}
-            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+            keepMounted={visitedChatter}
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden not-data-hidden:flex data-hidden:hidden"
           >
             <KeepAliveTabBody
               visited={visitedChatter}
@@ -757,8 +757,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
           <TabsContent
             value="history"
-            forceMount={visitedHistory ? true : undefined}
-            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden"
+            keepMounted={visitedHistory}
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden not-data-hidden:flex data-hidden:hidden"
           >
             <KeepAliveTabBody
               visited={visitedHistory}
@@ -815,8 +815,7 @@ function AwaitingClientAlert({
     EXPIRY_DATE_TIME_FORMATTER.format(date),
   )
   const regeneratedLink = regenerateLink.data?.url ?? null
-  const regeneratedFieldCount =
-    regenerateLink.data?.rejectedFieldCount ?? 0
+  const regeneratedFieldCount = regenerateLink.data?.rejectedFieldCount ?? 0
 
   async function handleCopyLink() {
     if (!regeneratedLink) return
@@ -875,15 +874,17 @@ function AwaitingClientAlert({
             open={regenerateDialogOpen}
             onOpenChange={setRegenerateDialogOpen}
           >
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="outline" size="sm">
-                <RefreshCw data-icon="inline-start" />
-                Regenerate link
-              </Button>
+            <AlertDialogTrigger
+              render={<Button type="button" variant="outline" size="sm" />}
+            >
+              <RefreshCw data-icon="inline-start" />
+              Regenerate link
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Regenerate resubmission link?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  Regenerate resubmission link?
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   The current link will stop working immediately. The new link
                   will include the latest rejected fields on this case.

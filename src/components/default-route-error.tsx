@@ -3,7 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Link, useRouter } from '@tanstack/react-router'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export function DefaultRouteError({ error }: { error: unknown }) {
@@ -35,9 +35,9 @@ export function DefaultRouteError({ error }: { error: unknown }) {
           <RefreshCw />
           Retry
         </Button>
-        <Button asChild variant="outline">
-          <Link to="/">Go to Dashboard</Link>
-        </Button>
+        <ButtonLink variant="outline" render={<Link to="/" />}>
+          Go to Dashboard
+        </ButtonLink>
       </div>
     </main>
   )

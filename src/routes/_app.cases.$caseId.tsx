@@ -9,7 +9,7 @@ import {
 import { AlertTriangle, FileQuestion, RefreshCw } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   CaseDetailShell,
   CaseDetailShellSkeleton,
@@ -66,9 +66,9 @@ function CaseDetailsNotFound() {
           be using an old link.
         </AlertDescription>
       </Alert>
-      <Button asChild variant="outline">
-        <Link to="/cases/all-cases">Back to cases</Link>
-      </Button>
+      <ButtonLink variant="outline" render={<Link to="/cases/all-cases" />}>
+        Back to cases
+      </ButtonLink>
     </RouteStateShell>
   )
 }
@@ -102,9 +102,9 @@ function CaseDetailsError({ error }: { error: unknown }) {
           <RefreshCw />
           Retry
         </Button>
-        <Button asChild variant="outline">
-          <Link to="/cases/all-cases">Back to cases</Link>
-        </Button>
+        <ButtonLink variant="outline" render={<Link to="/cases/all-cases" />}>
+          Back to cases
+        </ButtonLink>
       </div>
     </RouteStateShell>
   )
