@@ -329,7 +329,10 @@ function RejectionsList({
         {items.length} field{items.length === 1 ? '' : 's'} the client must
         update
       </p>
-      <ScrollArea className="max-h-72 rounded-lg border">
+      <ScrollArea
+        className="rounded-lg border"
+        viewportClassName="max-h-72"
+      >
         <div className="flex flex-col divide-y">
           {items.map((item) => (
             <div key={item.key} className="px-3 py-2">

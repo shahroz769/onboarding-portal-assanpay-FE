@@ -224,7 +224,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           </DialogHeader>
 
           {appliedCount > 0 ? (
-            <ScrollArea className="max-h-[60vh]">
+            <ScrollArea viewportClassName="max-h-[60vh]">
               <div className="flex flex-col gap-4 pr-3">
                 <AppliedMidSection
                   title="Custom/WordPress"

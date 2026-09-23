@@ -154,7 +154,7 @@ function QueueAccessSelect({
           <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No queues found.</CommandEmpty>
-            <ScrollArea className="max-h-72">
+            <ScrollArea viewportClassName="max-h-72">
               {showAllOption && onSelectAll ? (
                 <>
                   <CommandGroup>
