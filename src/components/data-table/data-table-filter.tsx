@@ -43,46 +43,48 @@ export function DataTableFilter({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="border-dashed">
-          <PlusCircleIcon data-icon="inline-start" />
-          {title}
-          {selectedValues.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-1 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedValues.size}
-              </Badge>
-              <div className="hidden gap-1 lg:flex">
-                {selectedValues.size > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-sm px-1 font-normal"
-                  >
-                    {selectedValues.size} selected
-                  </Badge>
-                ) : (
-                  options.flatMap((option) =>
-                    selectedValues.has(option.value)
-                      ? [
-                          <Badge
-                            key={option.value}
-                            variant="secondary"
-                            className="rounded-sm px-1 font-normal"
-                          >
-                            {option.label}
-                          </Badge>,
-                        ]
-                      : [],
-                  )
-                )}
-              </div>
-            </>
-          )}
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button variant="outline" size="sm" className="border-dashed" />
+        }
+      >
+        <PlusCircleIcon data-icon="inline-start" />
+        {title}
+        {selectedValues.size > 0 && (
+          <>
+            <Separator orientation="vertical" className="mx-1 h-4" />
+            <Badge
+              variant="secondary"
+              className="rounded-sm px-1 font-normal lg:hidden"
+            >
+              {selectedValues.size}
+            </Badge>
+            <div className="hidden gap-1 lg:flex">
+              {selectedValues.size > 2 ? (
+                <Badge
+                  variant="secondary"
+                  className="rounded-sm px-1 font-normal"
+                >
+                  {selectedValues.size} selected
+                </Badge>
+              ) : (
+                options.flatMap((option) =>
+                  selectedValues.has(option.value)
+                    ? [
+                        <Badge
+                          key={option.value}
+                          variant="secondary"
+                          className="rounded-sm px-1 font-normal"
+                        >
+                          {option.label}
+                        </Badge>,
+                      ]
+                    : [],
+                )
+              )}
+            </div>
+          </>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-52 p-0" align="start">
         <div className="flex flex-col gap-0.5 p-1">

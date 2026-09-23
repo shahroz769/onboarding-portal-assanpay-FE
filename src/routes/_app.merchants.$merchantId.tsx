@@ -4,7 +4,7 @@ import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { AlertTriangle, FileQuestion, RefreshCw } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import { MerchantDetailsLayout } from '#/features/merchants/merchant-details'
 import {
   ensureMerchantQuery,
@@ -46,9 +46,9 @@ function MerchantDetailsNotFound() {
           you may be using an old link.
         </AlertDescription>
       </Alert>
-      <Button asChild variant="outline">
-        <Link to="/merchants">Back to merchants</Link>
-      </Button>
+      <ButtonLink variant="outline" render={<Link to="/merchants" />}>
+        Back to merchants
+      </ButtonLink>
     </RouteStateShell>
   )
 }
@@ -82,9 +82,9 @@ function MerchantDetailsError({ error }: { error: unknown }) {
           <RefreshCw />
           Retry
         </Button>
-        <Button asChild variant="outline">
-          <Link to="/merchants">Back to merchants</Link>
-        </Button>
+        <ButtonLink variant="outline" render={<Link to="/merchants" />}>
+          Back to merchants
+        </ButtonLink>
       </div>
     </RouteStateShell>
   )

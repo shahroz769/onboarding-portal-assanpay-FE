@@ -13,7 +13,7 @@ import {
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -328,16 +328,19 @@ export default function SubMerchantFormRenderer({
                       the final file.
                     </p>
                   </div>
-                  <Button asChild variant="outline">
-                    <a
-                      href={inheritedSubMerchant.draftUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <ExternalLink data-icon="inline-start" />
-                      Open draft form
-                    </a>
-                  </Button>
+                  <ButtonLink
+                    variant="outline"
+                    render={
+                      <a
+                        href={inheritedSubMerchant.draftUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    }
+                  >
+                    <ExternalLink data-icon="inline-start" />
+                    Open draft form
+                  </ButtonLink>
                 </div>
               </Field>
             ) : null}
@@ -384,16 +387,19 @@ export default function SubMerchantFormRenderer({
                   {formatFileSize(details.finalForm.sizeBytes)}
                 </p>
               </div>
-              <Button asChild variant="outline">
-                <a
-                  href={details.finalForm.googleDriveWebViewLink}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ExternalLink data-icon="inline-start" />
-                  View final form
-                </a>
-              </Button>
+              <ButtonLink
+                variant="outline"
+                render={
+                  <a
+                    href={details.finalForm.googleDriveWebViewLink}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <ExternalLink data-icon="inline-start" />
+                View final form
+              </ButtonLink>
             </div>
           </CardContent>
         </Card>
@@ -562,16 +568,18 @@ function FieldHeadingAction({
     <div className="flex items-center justify-between gap-2">
       <FieldTitle>{title}</FieldTitle>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={copyLabel}
-            onClick={() => void navigator.clipboard.writeText(value)}
-          >
-            <Copy />
-          </Button>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={copyLabel}
+              onClick={() => void navigator.clipboard.writeText(value)}
+            />
+          }
+        >
+          <Copy />
         </TooltipTrigger>
         <TooltipContent>{copyLabel}</TooltipContent>
       </Tooltip>
@@ -594,19 +602,31 @@ function AttachmentRow({ attachment }: { attachment: AttachmentLink }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 pl-7">
-        <Button asChild variant="outline" size="sm">
-          <a href={attachment.viewUrl} target="_blank" rel="noreferrer">
-            <ExternalLink data-icon="inline-start" />
-            View
-          </a>
-        </Button>
+        <ButtonLink
+          variant="outline"
+          size="sm"
+          render={
+            <a href={attachment.viewUrl} target="_blank" rel="noreferrer" />
+          }
+        >
+          <ExternalLink data-icon="inline-start" />
+          View
+        </ButtonLink>
         {attachment.downloadUrl ? (
-          <Button asChild variant="outline" size="sm">
-            <a href={attachment.downloadUrl} target="_blank" rel="noreferrer">
-              <Download data-icon="inline-start" />
-              Download
-            </a>
-          </Button>
+          <ButtonLink
+            variant="outline"
+            size="sm"
+            render={
+              <a
+                href={attachment.downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            <Download data-icon="inline-start" />
+            Download
+          </ButtonLink>
         ) : null}
       </div>
     </div>

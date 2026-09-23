@@ -13,7 +13,7 @@ import {
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardAction,
@@ -266,7 +266,7 @@ function AgreementRoundRow({ round }: { round: AgreementRound }) {
             </p>
           </div>
         </div>
-        <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-open:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className="motion-collapsible-content">
         <Separator />
@@ -350,12 +350,20 @@ function AgreementRoundDetails({ round }: { round: AgreementRound }) {
           title={round.submittedFileName ?? 'Received agreement'}
         >
           {round.submittedFileUrl ? (
-            <Button asChild variant="outline" size="xs">
-              <a href={round.submittedFileUrl} target="_blank" rel="noreferrer">
-                <ExternalLink data-icon="inline-start" />
-                Open received file
-              </a>
-            </Button>
+            <ButtonLink
+              variant="outline"
+              size="xs"
+              render={
+                <a
+                  href={round.submittedFileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+            >
+              <ExternalLink data-icon="inline-start" />
+              Open received file
+            </ButtonLink>
           ) : null}
         </DetailBlock>
       ) : null}

@@ -22,26 +22,28 @@ export function NotificationBell() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
-        >
-          <Bell />
-          {hasUnread ? (
-            <Badge
-              className={cn(
-                'absolute -top-1 -right-1 rounded-full text-[10px] leading-none tabular-nums',
-                displayCount.length === 1 ? 'size-5 p-0' : 'h-5 min-w-5 px-1.5',
-              )}
-              variant="destructive"
-            >
-              {displayCount}
-            </Badge>
-          ) : null}
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
+          />
+        }
+      >
+        <Bell />
+        {hasUnread ? (
+          <Badge
+            className={cn(
+              'absolute -top-1 -right-1 rounded-full text-[10px] leading-none tabular-nums',
+              displayCount.length === 1 ? 'size-5 p-0' : 'h-5 min-w-5 px-1.5',
+            )}
+            variant="destructive"
+          >
+            {displayCount}
+          </Badge>
+        ) : null}
       </PopoverTrigger>
       <PopoverContent
         align="end"

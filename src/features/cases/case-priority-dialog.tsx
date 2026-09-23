@@ -68,6 +68,10 @@ export function CasePriorityDialog({
           <Field>
             <FieldLabel>Priority</FieldLabel>
             <Select
+              items={PRIORITIES.map((p) => ({
+                value: p,
+                label: PRIORITY_LABELS[p],
+              }))}
               value={priority}
               onValueChange={(v) => setPriority(v as Priority)}
             >

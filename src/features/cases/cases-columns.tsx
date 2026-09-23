@@ -97,10 +97,12 @@ function PriorityCell({
   }
 
   return (
-    <Badge asChild variant="secondary" className={className}>
-      <button type="button" onClick={() => onOpenPriority(item)}>
-        {item.priority === 'high' ? 'High' : 'Normal'}
-      </button>
+    <Badge
+      render={<button type="button" onClick={() => onOpenPriority(item)} />}
+      variant="secondary"
+      className={className}
+    >
+      {item.priority === 'high' ? 'High' : 'Normal'}
     </Badge>
   )
 }
@@ -170,7 +172,8 @@ export function createCaseColumns({
       id: 'select',
       header: (
         <Checkbox
-          checked={isAllSelected || (isSomeSelected && 'indeterminate')}
+          checked={isAllSelected}
+          indeterminate={isSomeSelected}
           onCheckedChange={(value) => onSelectAll(!!value)}
           disabled={!canEdit || allIds.length === 0}
           aria-label="Select all"

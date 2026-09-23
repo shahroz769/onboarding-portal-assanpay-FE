@@ -59,15 +59,17 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Theme: ${selectedTheme.label}`}
-        >
-          <SelectedIcon />
-          <span className="sr-only">{selectedTheme.label}</span>
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Theme: ${selectedTheme.label}`}
+          />
+        }
+      >
+        <SelectedIcon />
+        <span className="sr-only">{selectedTheme.label}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuGroup>

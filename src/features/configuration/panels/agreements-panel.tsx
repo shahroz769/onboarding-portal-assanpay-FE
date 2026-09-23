@@ -126,53 +126,59 @@ function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
               <span className="truncate">{file.name}</span>
             </span>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  disabled={Boolean(fileError) || uploadDraft.isPending}
-                  onClick={handleUpload}
-                  aria-label="Upload draft"
-                >
-                  {uploadDraft.isPending ? <Spinner /> : <Upload />}
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    disabled={Boolean(fileError) || uploadDraft.isPending}
+                    onClick={handleUpload}
+                    aria-label="Upload draft"
+                  />
+                }
+              >
+                {uploadDraft.isPending ? <Spinner /> : <Upload />}
               </TooltipTrigger>
               <TooltipContent>
                 {uploadDraft.isPending ? 'Uploading' : 'Upload draft'}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-muted-foreground"
-                  disabled={uploadDraft.isPending}
-                  onClick={clearSelection}
-                  aria-label="Clear selected file"
-                >
-                  <X />
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground"
+                    disabled={uploadDraft.isPending}
+                    onClick={clearSelection}
+                    aria-label="Clear selected file"
+                  />
+                }
+              >
+                <X />
               </TooltipTrigger>
               <TooltipContent>Clear</TooltipContent>
             </Tooltip>
           </>
         ) : (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Select file"
-              >
-                <FileUp />
-              </Button>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Select file"
+                />
+              }
+            >
+              <FileUp />
             </TooltipTrigger>
             <TooltipContent>Select file</TooltipContent>
           </Tooltip>

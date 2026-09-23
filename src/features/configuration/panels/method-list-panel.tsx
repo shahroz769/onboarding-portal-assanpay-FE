@@ -169,31 +169,35 @@ export function MethodListPanel({
       cell: (method) => (
         <div className="flex justify-end gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={mutation.isPending}
-                onClick={() => setEditor({ mode: 'edit', method })}
-              >
-                <Pencil />
-                <span className="sr-only">Edit {method.label}</span>
-              </Button>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={mutation.isPending}
+                  onClick={() => setEditor({ mode: 'edit', method })}
+                />
+              }
+            >
+              <Pencil />
+              <span className="sr-only">Edit {method.label}</span>
             </TooltipTrigger>
             <TooltipContent>Edit</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground hover:text-destructive"
-                disabled={mutation.isPending}
-                onClick={() => setPendingRemoval(method)}
-              >
-                <Trash2 />
-                <span className="sr-only">Remove {method.label}</span>
-              </Button>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-destructive"
+                  disabled={mutation.isPending}
+                  onClick={() => setPendingRemoval(method)}
+                />
+              }
+            >
+              <Trash2 />
+              <span className="sr-only">Remove {method.label}</span>
             </TooltipTrigger>
             <TooltipContent>Remove</TooltipContent>
           </Tooltip>
@@ -452,14 +456,16 @@ function MethodEditorDialog({
         </form>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={mutation.isPending}
-            >
-              Cancel
-            </Button>
+          <DialogClose
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                disabled={mutation.isPending}
+              />
+            }
+          >
+            Cancel
           </DialogClose>
           <Button
             type="submit"

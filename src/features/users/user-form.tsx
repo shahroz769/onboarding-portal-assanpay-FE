@@ -10,7 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -121,29 +121,36 @@ function QueueAccessSelect({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-9 w-full min-w-0 justify-between"
-          disabled={disabled}
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-9 w-full min-w-0 justify-between"
+            disabled={disabled}
+          />
+        }
+      >
+        <span
+          className={cn(
+            'min-w-0 truncate text-left',
+            isPlaceholder && 'font-normal text-muted-foreground',
+          )}
         >
-          <span
-            className={cn(
-              'min-w-0 truncate text-left',
-              isPlaceholder && 'font-normal text-muted-foreground',
-            )}
-          >
-            {triggerLabel}
-          </span>
-          <ChevronsUpDownIcon data-icon="inline-end" />
-        </Button>
+          {triggerLabel}
+        </span>
+        <ChevronsUpDownIcon data-icon="inline-end" />
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] min-w-72 p-0"
+        className="w-[var(--anchor-width)] max-w-[calc(100vw-2rem)] min-w-72 p-0"
         align="start"
       >
-        <Command>
+        <Command
+          items={[
+            ...(showAllOption && onSelectAll ? ['All Queues'] : []),
+            ...queues.map((queue) => queue.name),
+          ]}
+        >
           <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No queues found.</CommandEmpty>
@@ -151,7 +158,7 @@ function QueueAccessSelect({
               {showAllOption && onSelectAll ? (
                 <>
                   <CommandGroup>
-                    <CommandItem value="all-queues" onSelect={onSelectAll}>
+                    <CommandItem value="All Queues" onSelect={onSelectAll}>
                       <CheckIcon
                         className={cn(
                           'opacity-0',
@@ -458,6 +465,10 @@ export function UserForm({
                     <Field data-invalid={isInvalid}>
                       <FieldLabel>Gender</FieldLabel>
                       <Select
+                        items={[
+                          { value: 'male', label: USER_GENDER_LABELS.male },
+                          { value: 'female', label: USER_GENDER_LABELS.female },
+                        ]}
                         value={field.state.value}
                         onValueChange={(value) =>
                           field.handleChange(value as UserFormValues['gender'])
@@ -497,6 +508,10 @@ export function UserForm({
                     <Field data-invalid={isInvalid}>
                       <FieldLabel>Role</FieldLabel>
                       <Select
+                        items={roleOptions.map((role) => ({
+                          value: role,
+                          label: USER_ROLE_LABELS[role],
+                        }))}
                         value={field.state.value}
                         onValueChange={(value) => {
                           const nextRole = value as UserFormValues['roleType']
@@ -547,6 +562,16 @@ export function UserForm({
                       <Field data-invalid={isInvalid}>
                         <FieldLabel>Status</FieldLabel>
                         <Select
+                          items={[
+                            {
+                              value: 'active',
+                              label: USER_STATUS_LABELS.active,
+                            },
+                            {
+                              value: 'inactive',
+                              label: USER_STATUS_LABELS.inactive,
+                            },
+                          ]}
                           value={field.state.value}
                           onValueChange={(value) =>
                             field.handleChange(
@@ -722,9 +747,12 @@ export function UserForm({
             Cancel
           </Button>
         ) : (
-          <Button asChild variant="ghost">
-            <Link to="/user-management/all-users">Cancel</Link>
-          </Button>
+          <ButtonLink
+            variant="ghost"
+            render={<Link to="/user-management/all-users" />}
+          >
+            Cancel
+          </ButtonLink>
         )}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (

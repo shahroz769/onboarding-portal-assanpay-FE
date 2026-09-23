@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Popover as PopoverPrimitive } from 'radix-ui'
+import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 
 import { cn } from '#/lib/utils'
 
@@ -17,30 +17,38 @@ function PopoverTrigger({
 
 function PopoverContent({
   className,
+  anchor,
   align = 'center',
+  alignOffset = 0,
+  side = 'bottom',
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Popup> &
+  Pick<
+    React.ComponentProps<typeof PopoverPrimitive.Positioner>,
+    'anchor' | 'align' | 'alignOffset' | 'side' | 'sideOffset'
+  >) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content
-        data-slot="popover-content"
+      <PopoverPrimitive.Positioner
+        anchor={anchor}
         align={align}
+        alignOffset={alignOffset}
+        side={side}
         sideOffset={sideOffset}
-        className={cn(
-          'z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
-          className,
-        )}
-        {...props}
-      />
+        className="isolate z-50"
+      >
+        <PopoverPrimitive.Popup
+          data-slot="popover-content"
+          className={cn(
+            'z-50 w-72 origin-(--transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95',
+            className,
+          )}
+          {...props}
+        />
+      </PopoverPrimitive.Positioner>
     </PopoverPrimitive.Portal>
   )
-}
-
-function PopoverAnchor({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<'div'>) {
@@ -53,9 +61,12 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
-function PopoverTitle({ className, ...props }: React.ComponentProps<'h2'>) {
+function PopoverTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Title>) {
   return (
-    <div
+    <PopoverPrimitive.Title
       data-slot="popover-title"
       className={cn('font-medium', className)}
       {...props}
@@ -66,9 +77,9 @@ function PopoverTitle({ className, ...props }: React.ComponentProps<'h2'>) {
 function PopoverDescription({
   className,
   ...props
-}: React.ComponentProps<'p'>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Description>) {
   return (
-    <p
+    <PopoverPrimitive.Description
       data-slot="popover-description"
       className={cn('text-muted-foreground', className)}
       {...props}
@@ -80,7 +91,6 @@ export {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverAnchor,
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,

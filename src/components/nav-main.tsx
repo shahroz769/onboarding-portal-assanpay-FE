@@ -122,14 +122,12 @@ function NavItem({
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
-          asChild
+          render={<Link to={item.url} />}
           isActive={isDirectActive}
           tooltip={item.title}
         >
-          <Link to={item.url}>
-            {item.icon ? <item.icon /> : null}
-            <span className={labelClassName}>{item.title}</span>
-          </Link>
+          {item.icon ? <item.icon /> : null}
+          <span className={labelClassName}>{item.title}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     )
@@ -137,58 +135,56 @@ function NavItem({
 
   return (
     <Collapsible
-      asChild
+      render={<SidebarMenuItem />}
       open={open}
       onOpenChange={setOpen}
       className="group/collapsible"
     >
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton isActive={shouldBeOpen} tooltip={item.title}>
-            {item.icon ? <item.icon /> : null}
-            <span className={labelClassName}>{item.title}</span>
-            <ChevronRight
-              aria-hidden="true"
-              className="ml-auto transition-[opacity,transform] duration-150 group-data-[collapsible=icon]:opacity-0 group-data-[state=open]/collapsible:rotate-90"
-            />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.items.map((subItem, index) => {
-              const showGroupLabel =
-                subItem.group !== undefined &&
-                subItem.group !== item.items?.[index - 1]?.group
+      <CollapsibleTrigger
+        render={
+          <SidebarMenuButton isActive={shouldBeOpen} tooltip={item.title} />
+        }
+      >
+        {item.icon ? <item.icon /> : null}
+        <span className={labelClassName}>{item.title}</span>
+        <ChevronRight
+          aria-hidden="true"
+          className="ml-auto transition-[opacity,transform] duration-150 group-data-[collapsible=icon]:opacity-0 group-data-open/collapsible:rotate-90"
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>
+          {item.items.map((subItem, index) => {
+            const showGroupLabel =
+              subItem.group !== undefined &&
+              subItem.group !== item.items?.[index - 1]?.group
 
-              return (
-                <Fragment key={subItem.title}>
-                  {showGroupLabel ? (
-                    <li
-                      className={cn(
-                        'px-2 pb-0.5 text-xs font-medium text-sidebar-foreground/60',
-                        index === 0 ? 'pt-1' : 'pt-3',
-                      )}
-                    >
-                      {subItem.group}
-                    </li>
-                  ) : null}
-                  <SidebarMenuSubItem className="w-full">
-                    <SidebarMenuSubButton
-                      asChild
-                      isActive={pathname === subItem.url}
-                      className="w-full"
-                    >
-                      <Link to={subItem.url}>
-                        <span>{subItem.title}</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </Fragment>
-              )
-            })}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
+            return (
+              <Fragment key={subItem.title}>
+                {showGroupLabel ? (
+                  <li
+                    className={cn(
+                      'px-2 pb-0.5 text-xs font-medium text-sidebar-foreground/60',
+                      index === 0 ? 'pt-1' : 'pt-3',
+                    )}
+                  >
+                    {subItem.group}
+                  </li>
+                ) : null}
+                <SidebarMenuSubItem className="w-full">
+                  <SidebarMenuSubButton
+                    render={<Link to={subItem.url} />}
+                    isActive={pathname === subItem.url}
+                    className="w-full"
+                  >
+                    <span>{subItem.title}</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </Fragment>
+            )
+          })}
+        </SidebarMenuSub>
+      </CollapsibleContent>
     </Collapsible>
   )
 }

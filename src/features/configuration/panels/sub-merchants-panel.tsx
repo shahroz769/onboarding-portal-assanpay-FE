@@ -8,7 +8,7 @@ import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
 
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 
 import {
   Dialog,
@@ -88,17 +88,24 @@ export function SubMerchantsPanel() {
       cell: (item) => (
         <div className="flex justify-end">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8" asChild>
-                <a
-                  href={item.googleDriveWebViewLink}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ExternalLink className="size-4" />
-                  <span className="sr-only">View draft</span>
-                </a>
-              </Button>
+            <TooltipTrigger
+              render={
+                <ButtonLink
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  render={
+                    <a
+                      href={item.googleDriveWebViewLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                />
+              }
+            >
+              <ExternalLink className="size-4" />
+              <span className="sr-only">View draft</span>
             </TooltipTrigger>
             <TooltipContent>View draft</TooltipContent>
           </Tooltip>
@@ -190,11 +197,9 @@ function AddSubMerchantDialog({
         if (!next) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus data-icon="inline-start" />
-          Add Sub-Merchant
-        </Button>
+      <DialogTrigger render={<Button size="sm" />}>
+        <Plus data-icon="inline-start" />
+        Add Sub-Merchant
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -257,14 +262,16 @@ function AddSubMerchantDialog({
         </FieldGroup>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={createDraft.isPending}
-            >
-              Cancel
-            </Button>
+          <DialogClose
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                disabled={createDraft.isPending}
+              />
+            }
+          >
+            Cancel
           </DialogClose>
           <Button
             type="button"

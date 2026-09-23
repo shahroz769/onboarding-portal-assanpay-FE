@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Check, Copy, ExternalLink, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import type { AgreementEmailPreviewResult } from '#/apis/cases'
 
 interface WhatsAppMessagePanelProps {
@@ -52,17 +52,20 @@ export function WhatsAppMessagePanel({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" asChild disabled={!whatsappUrl}>
-          <a
-            href={whatsappUrl || undefined}
-            target="_blank"
-            rel="noreferrer"
-            aria-disabled={!whatsappUrl}
-          >
-            <ExternalLink data-icon="inline-start" />
-            Open WhatsApp
-          </a>
-        </Button>
+        <ButtonLink
+          render={
+            <a
+              href={whatsappUrl || undefined}
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled={!whatsappUrl}
+            />
+          }
+          className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        >
+          <ExternalLink data-icon="inline-start" />
+          Open WhatsApp
+        </ButtonLink>
       </div>
 
       <div className="flex flex-col gap-1">

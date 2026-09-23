@@ -14,7 +14,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 
 import { fetchPasswordToken, setPasswordRequest } from '#/apis/auth'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -181,9 +181,9 @@ function RouteComponent() {
                   )}
                 </form.Subscribe>
 
-                <Button asChild variant="ghost">
-                  <Link to="/login">Back to login</Link>
-                </Button>
+                <ButtonLink variant="ghost" render={<Link to="/login" />}>
+                  Back to login
+                </ButtonLink>
               </FieldGroup>
             </form>
           </CardContent>
@@ -267,9 +267,12 @@ function PasswordTokenStatusCard({
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {extraAction}
-            <Button asChild variant={extraAction ? 'ghost' : 'default'}>
-              <Link to="/login">Back to login</Link>
-            </Button>
+            <ButtonLink
+              variant={extraAction ? 'ghost' : 'default'}
+              render={<Link to="/login" />}
+            >
+              Back to login
+            </ButtonLink>
           </CardContent>
         </Card>
       </div>

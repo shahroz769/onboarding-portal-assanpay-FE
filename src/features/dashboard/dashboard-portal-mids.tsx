@@ -280,6 +280,11 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             <Field>
               <FieldLabel htmlFor="portal-mid-category">Category</FieldLabel>
               <Select
+                items={[
+                  { value: 'custom_wordpress', label: 'Custom/WordPress' },
+                  { value: 'shopify', label: 'Shopify' },
+                  { value: 'internal', label: 'Internal' },
+                ]}
                 value={category}
                 disabled={applyLimits.isPending}
                 onValueChange={(nextCategory) =>

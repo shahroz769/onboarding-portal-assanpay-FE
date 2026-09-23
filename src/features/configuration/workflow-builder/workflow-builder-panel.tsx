@@ -519,6 +519,10 @@ export function WorkflowBuilderPanel() {
         ) : null}
 
         <Select
+          items={base.versions.map((version) => ({
+            value: String(version.id),
+            label: `v${version.id}${version.id === base.activeVersionId ? ' - Current' : ' - History'} (${new Date(version.publishedAt).toLocaleDateString()})`,
+          }))}
           value={String(base.versionId)}
           disabled={dirty || mutation.isPending}
           onValueChange={(value) => {
@@ -539,7 +543,7 @@ export function WorkflowBuilderPanel() {
           >
             <SelectValue placeholder="Select flow version" />
           </SelectTrigger>
-          <SelectContent position="popper" align="end">
+          <SelectContent alignItemWithTrigger={false} align="end">
             <SelectGroup>
               {[...base.versions].reverse().map((version) => (
                 <SelectItem key={version.id} value={String(version.id)}>
@@ -696,14 +700,16 @@ export function WorkflowBuilderPanel() {
           </Field>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={mutation.isPending}
-              >
-                Cancel
-              </Button>
+            <DialogClose
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={mutation.isPending}
+                />
+              }
+            >
+              Cancel
             </DialogClose>
 
             <Button

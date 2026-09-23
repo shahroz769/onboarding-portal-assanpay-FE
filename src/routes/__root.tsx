@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router'
 
 import { ThemeProvider } from '#/components/theme-provider'
-import { Button } from '#/components/ui/button'
+import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import appCss from '../styles.css?url'
 
@@ -94,9 +94,9 @@ function NotFoundPage() {
             The page you&apos;re looking for doesn&apos;t exist or may have
             moved.
           </p>
-          <Button asChild className="mt-6">
-            <Link to="/">Go to Dashboard</Link>
-          </Button>
+          <ButtonLink className="mt-6" render={<Link to="/" />}>
+            Go to Dashboard
+          </ButtonLink>
         </div>
       </div>
     </main>

@@ -2,6 +2,8 @@ work on both frontend and backend
 do not run builds on frontend and backend unless specified
 Desktop folder \Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
 
+Use shadcn/ui components built on Base UI for all new and updated frontend UI. Keep `components.json` on a Base UI style. Do not add Radix UI or `cmdk` components or dependencies.
+
 <!-- intent-skills:start -->
 
 # Skill mappings - when working in these areas, load the linked skill file into context.

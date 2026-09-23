@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Card,
   CardContent,
@@ -392,12 +392,20 @@ export default function DialogPayCardRenderer({
           <span>{stepCopy.description}</span>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{stepCopy.badge}</Badge>
-            <Button asChild variant="outline" size="sm">
-              <a href={DIALOGPAY_PORTAL_URL} target="_blank" rel="noreferrer">
-                <ExternalLink data-icon="inline-start" />
-                Open DialogPay
-              </a>
-            </Button>
+            <ButtonLink
+              variant="outline"
+              size="sm"
+              render={
+                <a
+                  href={DIALOGPAY_PORTAL_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+            >
+              <ExternalLink data-icon="inline-start" />
+              Open DialogPay
+            </ButtonLink>
           </div>
         </AlertDescription>
       </Alert>
@@ -540,18 +548,24 @@ function DialogPayDocumentField({ document }: { document: DialogPayDocument }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <a href={document.url} target="_blank" rel="noreferrer">
-            <ExternalLink data-icon="inline-start" />
-            Open
-          </a>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <a href={document.downloadUrl} target="_blank" rel="noreferrer">
-            <Download data-icon="inline-start" />
-            Download
-          </a>
-        </Button>
+        <ButtonLink
+          variant="outline"
+          size="sm"
+          render={<a href={document.url} target="_blank" rel="noreferrer" />}
+        >
+          <ExternalLink data-icon="inline-start" />
+          Open
+        </ButtonLink>
+        <ButtonLink
+          variant="outline"
+          size="sm"
+          render={
+            <a href={document.downloadUrl} target="_blank" rel="noreferrer" />
+          }
+        >
+          <Download data-icon="inline-start" />
+          Download
+        </ButtonLink>
       </div>
     </div>
   )

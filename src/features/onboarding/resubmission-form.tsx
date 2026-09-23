@@ -782,17 +782,19 @@ function FieldControl({
 
     return (
       <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            type="button"
-            data-empty={!value}
-            className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-            aria-invalid={isInvalid}
-          >
-            <CalendarIcon data-icon="inline-start" />
-            {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              type="button"
+              data-empty={!value}
+              className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+              aria-invalid={isInvalid}
+            />
+          }
+        >
+          <CalendarIcon data-icon="inline-start" />
+          {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
           <Calendar
@@ -817,7 +819,11 @@ function FieldControl({
         : rejection.label.toLowerCase()
 
     return (
-      <Select value={value} onValueChange={onChange}>
+      <Select
+        items={config.options}
+        value={value}
+        onValueChange={(nextValue) => onChange(nextValue ?? '')}
+      >
         <SelectTrigger
           id={rejection.fieldName}
           className="w-full"
