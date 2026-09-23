@@ -15,7 +15,6 @@ import {
   useUploadAgreementDraftMutation,
 } from '#/hooks/use-configuration-query'
 import type { AgreementDraft } from '#/schemas/configuration.schema'
-import { ConfigurationSectionCard } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Agreements ─────────────────────────────────────────────────────────────
@@ -69,24 +68,17 @@ export function AgreementsPanel() {
     },
   ]
   return (
-    <ConfigurationSectionCard
-      icon={FileText}
-      tone="blue"
-      title="Agreement Drafts"
-      description="Upload and review agreement templates by business type."
-    >
-      <DataTable
-        columns={columns}
-        data={data ?? []}
-        getRowId={(draft) => draft.businessType}
-        isLoading={isPending}
-        emptyContent={
-          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-            <p className="text-sm">No business types configured.</p>
-          </div>
-        }
-      />
-    </ConfigurationSectionCard>
+    <DataTable
+      columns={columns}
+      data={data ?? []}
+      getRowId={(draft) => draft.businessType}
+      isLoading={isPending}
+      emptyContent={
+        <div className="flex flex-col items-center gap-1 text-muted-foreground">
+          <p className="text-sm">No business types configured.</p>
+        </div>
+      }
+    />
   )
 }
 function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {

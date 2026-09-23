@@ -1,23 +1,12 @@
-import type { ComponentType, ReactNode, SVGProps } from 'react'
+import type { ReactNode } from 'react'
 
-import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
-import { Plus, Save, Trash2 } from 'lucide-react'
-
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { Save } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 
 import { Button } from '#/components/ui/button'
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
 
 import {
   Combobox,
@@ -28,23 +17,12 @@ import {
   ComboboxList,
 } from '#/components/ui/combobox'
 
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
-
 import { Spinner } from '#/components/ui/spinner'
 
-import { MethodListSkeleton } from '../configuration-route-skeleton'
+import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
+import { cn } from '#/lib/utils'
 
-import { SectionIcon } from '#/components/section-icon'
-import type { StatusTint } from '#/lib/status-styles'
-import { getApiErrorMessage } from '#/lib/get-api-error-message'
-
-import type {
-  CaseFlowConfiguration,
-  PayoutMethodSettings,
-} from '#/schemas/configuration.schema'
-
-import { getValidationErrors } from './configuration-panel-utils'
+import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
 
 export type QueueOption = Pick<
   CaseFlowConfiguration['queues'][number],
@@ -102,335 +80,89 @@ export function QueueSelect({
   )
 }
 
-type MethodSettings = PayoutMethodSettings
-
-export function MethodListPanel<T extends MethodSettings>({
-  data,
-  isPending,
-  queryError,
-  mutation,
-  icon,
-  tone,
-  title,
-  description,
-  addLabel,
-  saveLabel,
-  emptyMessage,
-  schema,
-  createMethod,
-  renderMethodDetails,
-  methodNameLabel = 'Method name',
-}: {
-  data: T | null
-  isPending: boolean
-  queryError?: unknown
-  mutation: {
-    isPending: boolean
-    mutate: (value: T) => void
-  }
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  tone?: StatusTint
-  title: string
-  description: string
-  addLabel: string
-  saveLabel: string
-  emptyMessage: string
-  schema: {
-    safeParse: (value: unknown) =>
-      | { success: true }
-      | {
-          success: false
-          error: { issues: Array<{ path: PropertyKey[]; message: string }> }
-        }
-  }
-  createMethod: (id: string) => T[number]
-  methodNameLabel?: string
-  renderMethodDetails?: (input: {
-    method: T[number]
-    index: number
-    disabled: boolean
-    update: (method: T[number]) => void
-  }) => ReactNode
-}) {
-  const [form, setForm] = useState<T | null>(null)
-  const [enteringMethodIds, setEnteringMethodIds] = useState<Set<string>>(
-    () => new Set(),
-  )
-  const [removingMethodIds, setRemovingMethodIds] = useState<Set<string>>(
-    () => new Set(),
-  )
-  const value = form ?? data ?? null
-  const validationErrors = value
-    ? getValidationErrors(schema.safeParse(value))
-    : {}
-  const formError = Object.values(validationErrors)[0]
-  function updateMethod(id: string, label: string) {
-    setForm(
-      (current) =>
-        (current ?? data ?? []).map((method) =>
-          method.id === id ? { ...method, label } : method,
-        ) as T,
-    )
-  }
-  function replaceMethod(method: T[number]) {
-    setForm(
-      (current) =>
-        (current ?? data ?? []).map((item) =>
-          item.id === method.id ? method : item,
-        ) as T,
-    )
-  }
-  function addMethod() {
-    const id = createMethodId()
-    setForm((current) => [...(current ?? data ?? []), createMethod(id)] as T)
-    setEnteringMethodIds((current) => new Set(current).add(id))
-  }
-  function removeMethod(id: string) {
-    setRemovingMethodIds((current) => new Set(current).add(id))
-  }
-  function finishMethodTransition(
-    id: string,
-    event: React.TransitionEvent<HTMLDivElement>,
-  ) {
-    if (
-      event.target !== event.currentTarget ||
-      event.propertyName !== 'opacity'
-    ) {
-      return
-    }
-
-    if (removingMethodIds.has(id)) {
-      setForm(
-        (current) =>
-          (current ?? data ?? []).filter((method) => method.id !== id) as T,
-      )
-      setRemovingMethodIds((current) => {
-        const next = new Set(current)
-        next.delete(id)
-        return next
-      })
-      setEnteringMethodIds((current) => {
-        const next = new Set(current)
-        next.delete(id)
-        return next
-      })
-      return
-    }
-
-    if (enteringMethodIds.has(id)) {
-      setEnteringMethodIds((current) => {
-        const next = new Set(current)
-        next.delete(id)
-        return next
-      })
-    }
-  }
-  if (queryError) {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>{title} could not be loaded</AlertTitle>
-        <AlertDescription>
-          {getApiErrorMessage(
-            queryError,
-            `Failed to load ${title.toLowerCase()}.`,
-          )}
-        </AlertDescription>
-      </Alert>
-    )
-  }
-  if (isPending || !value) {
-    return <MethodListSkeleton />
-  }
-  return (
-    <div className="flex flex-col gap-6">
-      <ConfigurationSectionCard
-        icon={icon}
-        tone={tone}
-        title={title}
-        description={description}
-        action={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addMethod}
-            disabled={mutation.isPending || removingMethodIds.size > 0}
-          >
-            <Plus data-icon="inline-start" />
-            {addLabel}
-          </Button>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          {value.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {value.map((method, index) => (
-                <div
-                  key={method.id}
-                  data-motion={
-                    removingMethodIds.has(method.id)
-                      ? 'exiting'
-                      : enteringMethodIds.has(method.id)
-                        ? 'entering'
-                        : undefined
-                  }
-                  className="motion-list-item grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[1.5rem_minmax(0,1fr)_auto]"
-                  onTransitionEnd={(event) =>
-                    finishMethodTransition(method.id, event)
-                  }
-                >
-                  <span className="w-6 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
-                    {index + 1}
-                  </span>
-                  <div className="grid gap-1">
-                    <Label htmlFor={`method-name-${method.id}`}>
-                      {methodNameLabel}
-                    </Label>
-                    <Input
-                      id={`method-name-${method.id}`}
-                      value={method.label}
-                      onChange={(event) =>
-                        updateMethod(method.id, event.target.value)
-                      }
-                      disabled={
-                        mutation.isPending || removingMethodIds.has(method.id)
-                      }
-                      placeholder={`Enter ${methodNameLabel.toLowerCase()}`}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => removeMethod(method.id)}
-                    disabled={
-                      mutation.isPending || removingMethodIds.has(method.id)
-                    }
-                    aria-label={`Remove method ${index + 1}`}
-                  >
-                    <Trash2 />
-                  </Button>
-                  {renderMethodDetails ? (
-                    <div className="sm:col-start-2 sm:col-end-4">
-                      {renderMethodDetails({
-                        method,
-                        index,
-                        disabled:
-                          mutation.isPending ||
-                          removingMethodIds.has(method.id),
-                        update: replaceMethod,
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1 rounded-md border border-dashed py-8 text-center">
-              <p className="text-sm font-medium">{emptyMessage}</p>
-              <p className="text-xs text-muted-foreground">
-                Click &ldquo;{addLabel}&rdquo; to create one.
-              </p>
-            </div>
-          )}
-          {formError ? (
-            <Alert variant="destructive">
-              <AlertTitle>Payment method details need attention</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
-        </div>
-      </ConfigurationSectionCard>
-
-      <ConfigurationActionBar>
-        <Button
-          onClick={() =>
-            mutation.mutate(
-              value.flatMap((method) => {
-                const label = method.label.trim()
-                return label ? [{ ...method, label }] : []
-              }) as T,
-            )
-          }
-          disabled={
-            mutation.isPending ||
-            removingMethodIds.size > 0 ||
-            Boolean(formError)
-          }
-        >
-          {mutation.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <Save data-icon="inline-start" />
-          )}
-          {saveLabel}
-        </Button>
-      </ConfigurationActionBar>
-    </div>
-  )
-}
-
-function createMethodId() {
-  return crypto.randomUUID()
-}
-
-export function ConfigurationSectionCard({
-  icon,
-  tone,
-  title,
-  description,
-  action,
+export function ConfigurationHeaderActions({
   children,
 }: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  tone?: StatusTint
-  title: string
-  description: string
-  action?: ReactNode
+  children: ReactNode
+}) {
+  const target = usePageHeaderActions()
+  if (!target) return null
+  return createPortal(children, target)
+}
+
+export function ConfigurationSaveButton({
+  dirty,
+  isPending,
+  disabled = false,
+  onClick,
+  label = 'Save changes',
+}: {
+  dirty: boolean
+  isPending: boolean
+  disabled?: boolean
+  onClick: () => void
+  label?: string
+}) {
+  return (
+    <>
+      {dirty && !isPending ? (
+        <span className="text-sm text-muted-foreground">Unsaved changes</span>
+      ) : null}
+      <Button
+        size="sm"
+        onClick={onClick}
+        disabled={!dirty || isPending || disabled}
+      >
+        {isPending ? (
+          <Spinner data-icon="inline-start" />
+        ) : (
+          <Save data-icon="inline-start" />
+        )}
+        {label}
+      </Button>
+    </>
+  )
+}
+
+export function ConfigurationPanel({
+  className,
+  children,
+}: {
+  className?: string
   children: ReactNode
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <ConfigurationCardHeaderContent
-          icon={icon}
-          tone={tone}
-          title={title}
-          description={description}
-        />
-        {action ? <CardAction>{action}</CardAction> : null}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  )
-}
-
-export function ConfigurationActionBar({ children }: { children: ReactNode }) {
-  return (
-    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 border-t bg-background/90 py-4 backdrop-blur-sm">
+    <div
+      className={cn(
+        'divide-y rounded-xl border bg-card text-card-foreground',
+        className,
+      )}
+    >
       {children}
     </div>
   )
 }
 
-function ConfigurationCardHeaderContent({
-  icon,
-  tone,
+export function ConfigurationSection({
   title,
   description,
+  children,
 }: {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
-  tone?: StatusTint
   title: string
-  description: string
+  description?: ReactNode
+  children: ReactNode
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <SectionIcon icon={icon} tone={tone} />
-      <div>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <section className="grid gap-4 p-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-10">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {description ? (
+          <p className="text-sm text-pretty text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
       </div>
-    </div>
+      <div className="min-w-0">{children}</div>
+    </section>
   )
 }

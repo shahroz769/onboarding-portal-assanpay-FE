@@ -1,23 +1,12 @@
 import { useState } from 'react'
 
+import type { ComponentProps } from 'react'
+
 import { useQuery } from '@tanstack/react-query'
 
-import { Save, Server } from 'lucide-react'
-
-import { Button } from '#/components/ui/button'
-
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 
 import { Input } from '#/components/ui/input'
-
-import { Separator } from '#/components/ui/separator'
-
-import { Spinner } from '#/components/ui/spinner'
 
 import { Textarea } from '#/components/ui/textarea'
 
@@ -32,8 +21,10 @@ import { merchantPortalSettingsSchema } from '#/schemas/configuration.schema'
 
 import { MerchantPortalSkeleton } from '../configuration-route-skeleton'
 import {
-  ConfigurationActionBar,
-  ConfigurationSectionCard,
+  ConfigurationHeaderActions,
+  ConfigurationPanel,
+  ConfigurationSaveButton,
+  ConfigurationSection,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -52,195 +43,147 @@ export function MerchantPortalPanel() {
   if (isPending || !value) {
     return <MerchantPortalSkeleton />
   }
+  const settings = value
+  function update(key: keyof MerchantPortalSettings, next: string) {
+    setForm((current) => ({ ...(current ?? settings), [key]: next }))
+  }
   return (
-    <ConfigurationSectionCard
-      icon={Server}
-      tone="sky"
-      title="Merchant Integration Settings"
-      description="Configure merchant portal, server integration, and support details."
-    >
-      <FieldGroup>
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">Merchant portal</p>
-          <Field data-invalid={Boolean(validationErrors.loginUrl)}>
-            <FieldLabel htmlFor="merchant-portal-login-url">
-              Login URL
-            </FieldLabel>
-            <Input
-              id="merchant-portal-login-url"
+    <>
+      <ConfigurationHeaderActions>
+        <ConfigurationSaveButton
+          dirty={form !== null}
+          isPending={mutation.isPending}
+          disabled={hasValidationErrors(validationErrors)}
+          onClick={() =>
+            mutation.mutate(value, { onSuccess: () => setForm(null) })
+          }
+        />
+      </ConfigurationHeaderActions>
+      <ConfigurationPanel>
+        <ConfigurationSection
+          title="Merchant portal"
+          description="Where merchants sign in after onboarding."
+        >
+          <TextField
+            id="merchant-portal-login-url"
+            label="Login URL"
+            type="url"
+            value={value.loginUrl}
+            placeholder="https://merchant.assanpay.com/login"
+            error={validationErrors.loginUrl}
+            onChange={(next) => update('loginUrl', next)}
+          />
+        </ConfigurationSection>
+
+        <ConfigurationSection
+          title="Custom website integration"
+          description="Included in credential emails for custom website merchants only."
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <TextField
+              id="merchant-server-base-url"
+              label="Server Base URL"
               type="url"
-              value={value.loginUrl}
-              placeholder="https://merchant.assanpay.com/login"
-              aria-invalid={Boolean(validationErrors.loginUrl)}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...(current ?? value),
-                  loginUrl: event.target.value,
-                }))
-              }}
+              value={value.serverBaseUrl}
+              placeholder="https://api.example.com"
+              error={validationErrors.serverBaseUrl}
+              onChange={(next) => update('serverBaseUrl', next)}
             />
-            <FieldError>{validationErrors.loginUrl}</FieldError>
-          </Field>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-3">
-          <div>
-            <p className="text-sm font-medium">Custom website integration</p>
-            <p className="text-sm text-muted-foreground">
-              Included in credential emails for custom website merchants only.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field data-invalid={Boolean(validationErrors.serverBaseUrl)}>
-              <FieldLabel htmlFor="merchant-server-base-url">
-                Server Base URL
-              </FieldLabel>
-              <Input
-                id="merchant-server-base-url"
-                type="url"
-                value={value.serverBaseUrl}
-                placeholder="https://api.example.com"
-                aria-invalid={Boolean(validationErrors.serverBaseUrl)}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    serverBaseUrl: event.target.value,
-                  }))
-                }}
-              />
-              <FieldError>{validationErrors.serverBaseUrl}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(validationErrors.serverCallbackIp)}>
-              <FieldLabel htmlFor="merchant-server-callback-ip">
-                Server Callback IP
-              </FieldLabel>
-              <Input
-                id="merchant-server-callback-ip"
-                value={value.serverCallbackIp}
-                placeholder="203.0.113.10"
-                aria-invalid={Boolean(validationErrors.serverCallbackIp)}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    serverCallbackIp: event.target.value,
-                  }))
-                }}
-              />
-              <FieldError>{validationErrors.serverCallbackIp}</FieldError>
-            </Field>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">Support contacts</p>
-          <Field data-invalid={Boolean(validationErrors.officeAddress)}>
-            <FieldLabel htmlFor="merchant-portal-office-address">
-              Office Address
-            </FieldLabel>
-            <Textarea
-              id="merchant-portal-office-address"
-              value={value.officeAddress}
-              placeholder="Enter office address"
-              aria-invalid={Boolean(validationErrors.officeAddress)}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...(current ?? value),
-                  officeAddress: event.target.value,
-                }))
-              }}
+            <TextField
+              id="merchant-server-callback-ip"
+              label="Server Callback IP"
+              value={value.serverCallbackIp}
+              placeholder="203.0.113.10"
+              error={validationErrors.serverCallbackIp}
+              onChange={(next) => update('serverCallbackIp', next)}
             />
-            <FieldError>{validationErrors.officeAddress}</FieldError>
-          </Field>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field
-              data-invalid={Boolean(validationErrors.whatsappSupportNumber)}
-            >
-              <FieldLabel htmlFor="merchant-portal-whatsapp-support-number">
-                WhatsApp Support Number
+          </div>
+        </ConfigurationSection>
+
+        <ConfigurationSection
+          title="Support contacts"
+          description="Shared with merchants for help and legal queries."
+        >
+          <div className="flex flex-col gap-4">
+            <Field data-invalid={Boolean(validationErrors.officeAddress)}>
+              <FieldLabel htmlFor="merchant-portal-office-address">
+                Office Address
               </FieldLabel>
-              <Input
+              <Textarea
+                id="merchant-portal-office-address"
+                value={value.officeAddress}
+                placeholder="Enter office address"
+                aria-invalid={Boolean(validationErrors.officeAddress)}
+                onChange={(event) =>
+                  update('officeAddress', event.target.value)
+                }
+              />
+              <FieldError>{validationErrors.officeAddress}</FieldError>
+            </Field>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField
                 id="merchant-portal-whatsapp-support-number"
+                label="WhatsApp Support Number"
                 type="tel"
                 inputMode="numeric"
                 value={value.whatsappSupportNumber}
                 placeholder="Enter WhatsApp support number"
-                aria-invalid={Boolean(validationErrors.whatsappSupportNumber)}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    whatsappSupportNumber: event.target.value.replace(
-                      /\D/g,
-                      '',
-                    ),
-                  }))
-                }}
+                error={validationErrors.whatsappSupportNumber}
+                onChange={(next) =>
+                  update('whatsappSupportNumber', next.replace(/\D/g, ''))
+                }
               />
-              <FieldError>{validationErrors.whatsappSupportNumber}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(validationErrors.supportEmail)}>
-              <FieldLabel htmlFor="merchant-portal-support-email">
-                Support Email
-              </FieldLabel>
-              <Input
+              <TextField
                 id="merchant-portal-support-email"
+                label="Support Email"
                 type="email"
                 value={value.supportEmail}
                 placeholder="support@example.com"
-                aria-invalid={Boolean(validationErrors.supportEmail)}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    supportEmail: event.target.value,
-                  }))
-                }}
+                error={validationErrors.supportEmail}
+                onChange={(next) => update('supportEmail', next)}
               />
-              <FieldError>{validationErrors.supportEmail}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(validationErrors.legalEmail)}>
-              <FieldLabel htmlFor="merchant-portal-legal-email">
-                Legal Email
-              </FieldLabel>
-              <Input
+              <TextField
                 id="merchant-portal-legal-email"
+                label="Legal Email"
                 type="email"
                 value={value.legalEmail}
                 placeholder="legal@example.com"
-                aria-invalid={Boolean(validationErrors.legalEmail)}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...(current ?? value),
-                    legalEmail: event.target.value,
-                  }))
-                }}
+                error={validationErrors.legalEmail}
+                onChange={(next) => update('legalEmail', next)}
               />
-              <FieldError>{validationErrors.legalEmail}</FieldError>
-            </Field>
+            </div>
           </div>
-        </div>
-        <ConfigurationActionBar>
-          <Button
-            onClick={() =>
-              mutation.mutate(value, {
-                onSuccess: (savedSettings) => setForm(savedSettings),
-              })
-            }
-            disabled={
-              mutation.isPending || hasValidationErrors(validationErrors)
-            }
-          >
-            {mutation.isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Save data-icon="inline-start" />
-            )}
-            Save integration settings
-          </Button>
-        </ConfigurationActionBar>
-      </FieldGroup>
-    </ConfigurationSectionCard>
+        </ConfigurationSection>
+      </ConfigurationPanel>
+    </>
+  )
+}
+
+function TextField({
+  id,
+  label,
+  value,
+  error,
+  onChange,
+  ...inputProps
+}: {
+  id: string
+  label: string
+  value: string
+  error?: string
+  onChange: (value: string) => void
+} & Pick<ComponentProps<'input'>, 'type' | 'placeholder' | 'inputMode'>) {
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        value={value}
+        aria-invalid={Boolean(error)}
+        onChange={(event) => onChange(event.target.value)}
+        {...inputProps}
+      />
+      <FieldError>{error}</FieldError>
+    </Field>
   )
 }

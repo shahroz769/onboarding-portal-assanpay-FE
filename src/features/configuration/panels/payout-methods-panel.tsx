@@ -7,10 +7,9 @@ import {
   useUpdatePayoutMethodsMutation,
 } from '#/hooks/use-configuration-query'
 
-import { MethodListPanel } from './configuration-panel-shared'
 import { payoutMethodSettingsSchema } from '#/schemas/configuration.schema'
-import { createEmptyConfiguredMethod } from './configuration-panel-utils'
-import { MethodConfigurationFields } from './method-configuration-fields'
+
+import { MethodListPanel } from './method-list-panel'
 
 export function PayoutMethodsPanel() {
   const { data, isPending, error } = useQuery(payoutMethodsQueryOptions())
@@ -22,18 +21,9 @@ export function PayoutMethodsPanel() {
       queryError={error}
       mutation={mutation}
       icon={Send}
-      tone="sky"
+      noun="payout method"
       title="Payout Methods"
-      description="Manage payout methods, limits, and commission available during MID Creation."
-      addLabel="Add payout method"
-      saveLabel="Save payout methods"
-      emptyMessage="No payout methods configured."
-      methodNameLabel="Payout method name"
       schema={payoutMethodSettingsSchema}
-      createMethod={createEmptyConfiguredMethod}
-      renderMethodDetails={(props) => (
-        <MethodConfigurationFields {...props} transactionType="Disbursement" />
-      )}
     />
   )
 }

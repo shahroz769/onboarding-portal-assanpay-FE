@@ -86,6 +86,19 @@ const navItems: NavItem[] = [
     activePrefix: '/configuration',
     icon: Settings2,
     roles: ['super_admin', 'admin'],
+    items: [
+      { title: 'Limits & MDR', url: '/configuration/limits-and-mdr' },
+      { title: 'Payment Methods', url: '/configuration/payment-methods' },
+      { title: 'Payout Methods', url: '/configuration/payout-methods' },
+      { title: 'Agreements', url: '/configuration/agreements' },
+      { title: 'Sub-Merchants', url: '/configuration/sub-merchants' },
+      { title: 'Portal & Support', url: '/configuration/merchant-portal' },
+      { title: 'Queues', url: '/configuration/queues' },
+      { title: 'Case Triggering', url: '/configuration/case-triggering' },
+      { title: 'Caseflow Builder', url: '/configuration/case-flow-rules' },
+      { title: 'Link Deadlines', url: '/configuration/link-deadlines' },
+      { title: 'Email Sending', url: '/configuration/email-sending' },
+    ],
   },
 ]
 

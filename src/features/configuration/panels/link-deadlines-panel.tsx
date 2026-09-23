@@ -2,24 +2,13 @@ import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import { LinkIcon } from 'lucide-react'
-
-import { Button } from '#/components/ui/button'
-
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '#/components/ui/input-group'
-
-import { Spinner } from '#/components/ui/spinner'
 
 import {
   linkDeadlinesQueryOptions,
@@ -32,13 +21,33 @@ import { linkDeadlineSettingsSchema } from '#/schemas/configuration.schema'
 
 import { LinkDeadlinesSkeleton } from '../configuration-route-skeleton'
 import {
-  ConfigurationActionBar,
-  ConfigurationSectionCard,
+  ConfigurationHeaderActions,
+  ConfigurationPanel,
+  ConfigurationSaveButton,
+  ConfigurationSection,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
   hasValidationErrors,
 } from './configuration-panel-utils'
+
+const fields = [
+  {
+    key: 'passwordResetHours',
+    label: 'Password reset',
+    description: 'Password reset links sent to employees.',
+  },
+  {
+    key: 'newPasswordSetHours',
+    label: 'New password set',
+    description: 'Link sent to new employees to set their first password.',
+  },
+  {
+    key: 'documentsReviewResubmissionHours',
+    label: 'Documents review resubmission',
+    description: 'Link sent to merchants to resubmit rejected documents.',
+  },
+] as const
 
 // ─── Link Deadlines ─────────────────────────────────────────────────────────
 export function LinkDeadlinesPanel() {
@@ -49,27 +58,34 @@ export function LinkDeadlinesPanel() {
   const validationErrors = value
     ? getValidationErrors(linkDeadlineSettingsSchema.safeParse(value))
     : {}
-  const fields = [
-    ['passwordResetHours', 'Password reset'],
-    ['newPasswordSetHours', 'New password set'],
-    ['documentsReviewResubmissionHours', 'Documents review resubmission'],
-  ] as const
 
   if (isPending || !value) {
     return <LinkDeadlinesSkeleton />
   }
   return (
-    <ConfigurationSectionCard
-      icon={LinkIcon}
-      tone="amber"
-      title="Link Deadlines"
-      description="Configure expiry and availability windows for secure links. Leave a field blank for no expiry."
-    >
-      <FieldGroup>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {fields.map(([key, label]) => (
-            <Field key={key} data-invalid={Boolean(validationErrors[key])}>
-              <FieldLabel htmlFor={key}>{label}</FieldLabel>
+    <>
+      <ConfigurationHeaderActions>
+        <ConfigurationSaveButton
+          dirty={form !== null}
+          isPending={mutation.isPending}
+          disabled={hasValidationErrors(validationErrors)}
+          onClick={() =>
+            mutation.mutate(value, { onSuccess: () => setForm(null) })
+          }
+        />
+      </ConfigurationHeaderActions>
+      <ConfigurationPanel>
+        {fields.map(({ key, label, description }) => (
+          <ConfigurationSection
+            key={key}
+            title={label}
+            description={description}
+          >
+            <Field
+              data-invalid={Boolean(validationErrors[key])}
+              className="max-w-xs"
+            >
+              <FieldLabel htmlFor={key}>Expires after</FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id={key}
@@ -93,24 +109,12 @@ export function LinkDeadlinesPanel() {
               </InputGroup>
               <FieldError>{validationErrors[key]}</FieldError>
             </Field>
-          ))}
-        </div>
-        <ConfigurationActionBar>
-          <Button
-            onClick={() => mutation.mutate(value)}
-            disabled={
-              mutation.isPending || hasValidationErrors(validationErrors)
-            }
-          >
-            {mutation.isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <LinkIcon data-icon="inline-start" />
-            )}
-            Save deadlines
-          </Button>
-        </ConfigurationActionBar>
-      </FieldGroup>
-    </ConfigurationSectionCard>
+          </ConfigurationSection>
+        ))}
+      </ConfigurationPanel>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Leave a field blank for links that never expire.
+      </p>
+    </>
   )
 }

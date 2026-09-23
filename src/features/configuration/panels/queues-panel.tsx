@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ListOrdered, Pause, Play, Plus, Workflow } from 'lucide-react'
+import { ListOrdered, Pause, Play, Plus } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -59,7 +59,7 @@ import {
 } from '#/hooks/use-configuration-query'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import type { QueueLifecycle, QueueWorkflowType } from '#/schemas/cases.schema'
-import { ConfigurationSectionCard } from './configuration-panel-shared'
+import { ConfigurationHeaderActions } from './configuration-panel-shared'
 
 const STAGE_GRID_COLUMNS =
   'md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_76px_132px_56px]'
@@ -234,13 +234,10 @@ export function QueuesPanel() {
     },
   ]
   return (
-    <ConfigurationSectionCard
-      icon={Workflow}
-      tone="violet"
-      title="Queues"
-      description="Create queues with workflow types, edit stages, and manage lifecycle."
-      action={<CreateQueueDialog />}
-    >
+    <>
+      <ConfigurationHeaderActions>
+        <CreateQueueDialog />
+      </ConfigurationHeaderActions>
       <DataTable
         columns={columns}
         data={queues}
@@ -254,7 +251,7 @@ export function QueuesPanel() {
           />
         }
       />
-    </ConfigurationSectionCard>
+    </>
   )
 }
 function CreateQueueDialog() {

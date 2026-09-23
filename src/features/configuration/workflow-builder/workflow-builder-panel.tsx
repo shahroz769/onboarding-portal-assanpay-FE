@@ -26,11 +26,21 @@ import {
   AlertDialogTitle,
 } from '#/components/ui/alert-dialog'
 
+import { Badge } from '#/components/ui/badge'
+
 import { Button } from '#/components/ui/button'
 
-import { Input } from '#/components/ui/input'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 
-import { Field, FieldGroup, FieldLabel, FieldSet } from '#/components/ui/field'
+import { Field, FieldLabel, FieldSet } from '#/components/ui/field'
 import {
   Select,
   SelectContent,
@@ -42,6 +52,8 @@ import {
 
 import { Spinner } from '#/components/ui/spinner'
 
+import { Textarea } from '#/components/ui/textarea'
+
 import {
   caseFlowConfigurationQueryOptions,
   isCaseFlowRevisionConflict,
@@ -52,7 +64,7 @@ import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
 
 import { WorkflowBuilderSkeleton } from '../configuration-route-skeleton'
 
-import { ConfigurationActionBar } from '../panels/configuration-panel-shared'
+import { ConfigurationHeaderActions } from '../panels/configuration-panel-shared'
 
 import { CaseFlowBackfillDialog } from './backfill-dialog'
 
@@ -111,6 +123,8 @@ export function WorkflowBuilderPanel() {
   const [dirty, setDirty] = useState(false)
 
   const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
+
+  const [publishOpen, setPublishOpen] = useState(false)
 
   const [reloadingStale, setReloadingStale] = useState(false)
 
@@ -421,8 +435,12 @@ export function WorkflowBuilderPanel() {
       setSelectedVersionId(undefined)
 
       initializeFromConfig(saved)
+
+      setPublishOpen(false)
     } catch (error) {
       if (isCaseFlowRevisionConflict(error)) {
+        setPublishOpen(false)
+
         setStaleRevisionOpen(true)
       }
     }
@@ -476,57 +494,118 @@ export function WorkflowBuilderPanel() {
     (version) => version.id === base.versionId,
   )
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-end">
-        <FieldGroup className="min-w-0">
-          <Field data-disabled={dirty || mutation.isPending}>
-            <FieldLabel htmlFor="flow-version">Flow version</FieldLabel>
-            <Select
-              value={String(base.versionId)}
-              disabled={dirty || mutation.isPending}
-              onValueChange={(value) => {
-                setChangeNote('')
-                setBackfillTriggerId(null)
-                setSelectedVersionId(Number(value))
-              }}
-            >
-              <SelectTrigger
-                id="flow-version"
-                className="w-full"
-                aria-describedby="flow-version-help"
-              >
-                <SelectValue placeholder="Select flow version" />
-              </SelectTrigger>
-              <SelectContent position="popper" align="start">
-                <SelectGroup>
-                  {[...base.versions].reverse().map((version) => (
-                    <SelectItem key={version.id} value={String(version.id)}>
-                      v{version.id}
-                      {version.id === base.activeVersionId ? ' - Current' : ' - History'}{' '}
-                      ({new Date(version.publishedAt).toLocaleDateString()})
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </Field>
-        </FieldGroup>
+  const backfillRuleId =
+    readOnly &&
+    selectedEdge?.data.kind === 'closeTrigger' &&
+    selectedEdge.data.isActive
+      ? selectedEdge.data.ruleId
+      : undefined
 
-        <p id="flow-version-help" className="text-sm text-muted-foreground">
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto xl:overflow-hidden">
+      <ConfigurationHeaderActions>
+        {backfillRuleId ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBackfillTriggerId(backfillRuleId)}
+          >
+            Create missing cases for v{base.versionId}
+          </Button>
+        ) : null}
+
+        {dirty && !mutation.isPending ? (
+          <span className="text-sm text-muted-foreground">Unsaved changes</span>
+        ) : null}
+
+        <Select
+          value={String(base.versionId)}
+          disabled={dirty || mutation.isPending}
+          onValueChange={(value) => {
+            setChangeNote('')
+            setBackfillTriggerId(null)
+            setSelectedVersionId(Number(value))
+          }}
+        >
+          <SelectTrigger
+            size="sm"
+            className="w-56"
+            aria-label="Flow version"
+            title={
+              dirty
+                ? 'Publish or discard changes to switch versions.'
+                : undefined
+            }
+          >
+            <SelectValue placeholder="Select flow version" />
+          </SelectTrigger>
+          <SelectContent position="popper" align="end">
+            <SelectGroup>
+              {[...base.versions].reverse().map((version) => (
+                <SelectItem key={version.id} value={String(version.id)}>
+                  v{version.id}
+                  {version.id === base.activeVersionId
+                    ? ' - Current'
+                    : ' - History'}{' '}
+                  ({new Date(version.publishedAt).toLocaleDateString()})
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {dirty ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleDiscard}
+            disabled={mutation.isPending}
+          >
+            <Undo2 data-icon="inline-start" />
+            Discard
+          </Button>
+        ) : null}
+
+        {!readOnly ? (
+          <Button
+            size="sm"
+            disabled={mutation.isPending || Boolean(formError) || !dirty}
+            onClick={() => setPublishOpen(true)}
+          >
+            <Save data-icon="inline-start" />
+            Publish new version
+          </Button>
+        ) : null}
+      </ConfigurationHeaderActions>
+
+      <div className="flex min-w-0 shrink-0 items-center gap-2 text-sm text-muted-foreground">
+        <Badge
+          variant={readOnly ? 'outline' : 'secondary'}
+          className="shrink-0"
+        >
           {readOnly
-            ? `Viewing v${base.versionId}. Published rules are read-only.`
-            : `New submissions use v${base.versionId}. Publishing creates a new version; existing merchants keep theirs.`}
-        </p>
+            ? `v${base.versionId} · Read-only`
+            : `v${base.versionId} · Current`}
+        </Badge>
+        <span className="min-w-0 truncate">
+          {readOnly
+            ? 'Published rules are read-only. Select the current version to make changes.'
+            : 'New submissions use this version. Publishing creates a new version; existing merchants keep theirs.'}
+          {publication?.changeNote ? ` — “${publication.changeNote}”` : null}
+        </span>
       </div>
 
-      {publication?.changeNote ? (
-        <p className="text-sm text-muted-foreground">
-          {publication.changeNote}
-        </p>
+      {!readOnly && formError ? (
+        <Alert variant="destructive" className="shrink-0">
+          <AlertTitle>Fix these errors before publishing</AlertTitle>
+
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
       ) : null}
-      <div className="flex flex-col gap-4 xl:flex-row">
-        <div className="h-[62vh] min-h-[480px] min-w-0 flex-1 overflow-hidden rounded-lg border bg-muted/20">
+
+      <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1 xl:flex-row">
+        <div className="h-[60vh] min-h-[420px] min-w-0 overflow-hidden rounded-lg border bg-muted/20 xl:h-auto xl:min-h-0 xl:flex-1">
           <WorkflowCanvas
             readOnly={readOnly || mutation.isPending}
 
@@ -550,10 +629,10 @@ export function WorkflowBuilderPanel() {
 
         <FieldSet
           disabled={readOnly || mutation.isPending}
-          className="min-w-0 shrink-0 xl:w-[320px]"
+          className="min-w-0 shrink-0 xl:min-h-0 xl:w-[340px] xl:overflow-y-auto"
         >
           <WorkflowInspector
-            className="shrink-0 xl:w-[320px]"
+            className="shrink-0"
 
             nodes={displayNodes}
 
@@ -584,68 +663,51 @@ export function WorkflowBuilderPanel() {
         </FieldSet>
       </div>
 
-      {readOnly &&
-      selectedEdge?.data.kind === 'closeTrigger' &&
-      selectedEdge.data.isActive &&
-      selectedEdge.data.ruleId ? (
-        <Button
-          variant="outline"
-          className="self-start"
-          onClick={() => setBackfillTriggerId(selectedEdge.data.ruleId!)}
-        >
-          Create missing cases for v{base.versionId}
-        </Button>
-      ) : null}
+      <Dialog
+        open={publishOpen}
+        onOpenChange={(open) => {
+          if (!mutation.isPending) setPublishOpen(open)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Publish new version</DialogTitle>
 
-      {!readOnly && formError ? (
-        <Alert variant="destructive">
-          <AlertTitle>Fix the errors below</AlertTitle>
+            <DialogDescription>
+              New submissions will use the published version. Existing merchants
+              keep the version they started on.
+            </DialogDescription>
+          </DialogHeader>
 
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      ) : null}
+          <Field data-disabled={mutation.isPending}>
+            <FieldLabel htmlFor="flow-change-note">
+              Change note (optional)
+            </FieldLabel>
 
-      {!readOnly ? (
-        <>
-          <FieldGroup>
-            <Field data-disabled={mutation.isPending}>
-              <FieldLabel htmlFor="flow-change-note">Change note (optional)</FieldLabel>
-              <Input
-                id="flow-change-note"
-                maxLength={1000}
-                value={changeNote}
-                disabled={mutation.isPending}
-                onChange={(event) => setChangeNote(event.target.value)}
-                placeholder="What changed in this version?"
-              />
-            </Field>
-          </FieldGroup>
+            <Textarea
+              id="flow-change-note"
+              autoFocus
+              maxLength={1000}
+              value={changeNote}
+              disabled={mutation.isPending}
+              onChange={(event) => setChangeNote(event.target.value)}
+              placeholder="What changed in this version?"
+            />
+          </Field>
 
-          <ConfigurationActionBar>
-            {dirty ? (
-              <span className="mr-auto text-sm text-muted-foreground">
-                Unsaved changes
-              </span>
-            ) : null}
-
-            {dirty ? (
+          <DialogFooter>
+            <DialogClose asChild>
               <Button
                 type="button"
-
                 variant="outline"
-
-                onClick={handleDiscard}
-
                 disabled={mutation.isPending}
               >
-                <Undo2 data-icon="inline-start" />
-                Discard changes
+                Cancel
               </Button>
-            ) : null}
+            </DialogClose>
 
             <Button
-              disabled={mutation.isPending || Boolean(formError) || !dirty}
-
+              disabled={mutation.isPending || Boolean(formError)}
               onClick={() => void handleSave()}
             >
               {mutation.isPending ? (
@@ -653,11 +715,11 @@ export function WorkflowBuilderPanel() {
               ) : (
                 <Save data-icon="inline-start" />
               )}
-              Publish new version
+              Publish
             </Button>
-          </ConfigurationActionBar>
-        </>
-      ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={staleRevisionOpen} onOpenChange={setStaleRevisionOpen}>
         <AlertDialogContent>

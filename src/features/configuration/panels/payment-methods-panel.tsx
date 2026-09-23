@@ -9,9 +9,7 @@ import {
   useUpdatePaymentMethodsMutation,
 } from '#/hooks/use-configuration-query'
 
-import { MethodListPanel } from './configuration-panel-shared'
-import { createEmptyConfiguredMethod } from './configuration-panel-utils'
-import { MethodConfigurationFields } from './method-configuration-fields'
+import { MethodListPanel } from './method-list-panel'
 
 // ─── Payment Methods ────────────────────────────────────────────────────────
 export function PaymentMethodsPanel() {
@@ -24,18 +22,9 @@ export function PaymentMethodsPanel() {
       queryError={error}
       mutation={mutation}
       icon={Wallet}
-      tone="violet"
+      noun="payment method"
       title="Payment Methods"
-      description="Manage collection methods available during MID Creation."
-      addLabel="Add payment method"
-      saveLabel="Save payment methods"
-      emptyMessage="No payment methods configured."
-      methodNameLabel="Payment method name"
       schema={paymentMethodSettingsSchema}
-      createMethod={createEmptyConfiguredMethod}
-      renderMethodDetails={(props) => (
-        <MethodConfigurationFields {...props} transactionType="Collection" />
-      )}
     />
   )
 }

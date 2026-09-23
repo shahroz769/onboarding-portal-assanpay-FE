@@ -42,8 +42,9 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
-  const [headerActionsEl, setHeaderActionsEl] =
-    useState<HTMLDivElement | null>(null)
+  const [headerActionsEl, setHeaderActionsEl] = useState<HTMLDivElement | null>(
+    null,
+  )
   const matches = useRouterState({
     select: (state) => state.matches,
   })
@@ -60,14 +61,16 @@ function AppLayout() {
         title?: string
         subtitle?: string
         hidePageShell?: boolean
-        fitViewport?: boolean
       }
     | undefined
   const title = staticData?.title ?? ''
   const subtitle = staticData?.subtitle
   const hidePageShell =
     isCaseDetailRoute || (staticData?.hidePageShell ?? false)
-  const fitViewport = staticData?.fitViewport ?? false
+  const fitViewport = matches.some(
+    (match) =>
+      (match.staticData as { fitViewport?: boolean } | undefined)?.fitViewport,
+  )
   const caseDetailMatch = matches.find(
     (match) => match.routeId === '/_app/cases/$caseId',
   )

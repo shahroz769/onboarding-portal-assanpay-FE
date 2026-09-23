@@ -45,7 +45,7 @@ import {
   useCreateSubMerchantDraftMutation,
 } from '#/hooks/use-configuration-query'
 
-import { ConfigurationSectionCard } from './configuration-panel-shared'
+import { ConfigurationHeaderActions } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
@@ -108,13 +108,10 @@ export function SubMerchantsPanel() {
   ]
 
   return (
-    <ConfigurationSectionCard
-      icon={Store}
-      tone="emerald"
-      title="Sub-Merchants"
-      description="Manage draft forms and seller codes for sub-merchant onboarding."
-      action={<AddSubMerchantDialog existingNames={existingNames} />}
-    >
+    <>
+      <ConfigurationHeaderActions>
+        <AddSubMerchantDialog existingNames={existingNames} />
+      </ConfigurationHeaderActions>
       <DataTable
         columns={columns}
         data={data ?? []}
@@ -128,7 +125,7 @@ export function SubMerchantsPanel() {
           />
         }
       />
-    </ConfigurationSectionCard>
+    </>
   )
 }
 

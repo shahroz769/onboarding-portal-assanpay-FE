@@ -2,10 +2,6 @@ import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import { Mail, Save } from 'lucide-react'
-
-import { Button } from '#/components/ui/button'
-
 import { Checkbox } from '#/components/ui/checkbox'
 
 import {
@@ -13,11 +9,8 @@ import {
   FieldContent,
   FieldDescription,
   FieldError,
-  FieldGroup,
   FieldLabel,
 } from '#/components/ui/field'
-
-import { Spinner } from '#/components/ui/spinner'
 
 import {
   emailSendingModeQueryOptions,
@@ -30,9 +23,27 @@ import { emailSendingModeSchema } from '#/schemas/configuration.schema'
 
 import { EmailSendingSkeleton } from '../configuration-route-skeleton'
 import {
-  ConfigurationActionBar,
-  ConfigurationSectionCard,
+  ConfigurationHeaderActions,
+  ConfigurationPanel,
+  ConfigurationSaveButton,
+  ConfigurationSection,
 } from './configuration-panel-shared'
+
+const modes = [
+  {
+    field: 'autoEnabled',
+    id: 'email-mode-auto',
+    label: 'Auto (Resend)',
+    description: 'Emails are sent automatically through Resend when triggered.',
+  },
+  {
+    field: 'manualEnabled',
+    id: 'email-mode-manual',
+    label: 'Manual (Gmail)',
+    description:
+      'Agent receives subject and body to copy-paste and send from Gmail manually.',
+  },
+] as const
 
 // ─── Email Sending Mode ───────────────────────────────────────────────────────
 export function EmailSendingModePanel() {
@@ -67,89 +78,55 @@ export function EmailSendingModePanel() {
   }
   function handleSave() {
     if (!value || hasError) return
-    mutation.mutate(value)
+    mutation.mutate(value, { onSuccess: () => setForm(null) })
   }
   if (isPending || !value) {
     return <EmailSendingSkeleton />
   }
   return (
-    <ConfigurationSectionCard
-      icon={Mail}
-      tone="blue"
-      title="Email Sending"
-      description="Choose how case emails are sent from the portal."
-    >
-      <FieldGroup>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field
-            orientation="horizontal"
-            className="items-start rounded-lg border p-4 transition-colors has-[:checked]:border-primary/40 has-[:checked]:bg-accent/40"
-          >
-            <Checkbox
-              id="email-mode-auto"
-              className="mt-0.5"
-              checked={value.autoEnabled}
-              onCheckedChange={(checked) => {
-                if (typeof checked === 'boolean') {
-                  setMode('autoEnabled', checked)
-                }
-              }}
-            />
-            <FieldContent>
-              <FieldLabel htmlFor="email-mode-auto" className="cursor-pointer">
-                Auto (Resend)
-              </FieldLabel>
-              <FieldDescription>
-                Emails are sent automatically through Resend when triggered.
-              </FieldDescription>
-            </FieldContent>
-          </Field>
-
-          <Field
-            orientation="horizontal"
-            className="items-start rounded-lg border p-4 transition-colors has-[:checked]:border-primary/40 has-[:checked]:bg-accent/40"
-          >
-            <Checkbox
-              id="email-mode-manual"
-              className="mt-0.5"
-              checked={value.manualEnabled}
-              onCheckedChange={(checked) => {
-                if (typeof checked === 'boolean') {
-                  setMode('manualEnabled', checked)
-                }
-              }}
-            />
-            <FieldContent>
-              <FieldLabel
-                htmlFor="email-mode-manual"
-                className="cursor-pointer"
+    <>
+      <ConfigurationHeaderActions>
+        <ConfigurationSaveButton
+          dirty={form !== null}
+          isPending={mutation.isPending}
+          disabled={hasError}
+          onClick={handleSave}
+        />
+      </ConfigurationHeaderActions>
+      <ConfigurationPanel>
+        <ConfigurationSection
+          title="Sending modes"
+          description="Choose how case emails are sent from the portal. At least one mode must stay enabled."
+        >
+          <div className="flex flex-col gap-3">
+            {modes.map((mode) => (
+              <Field
+                key={mode.field}
+                orientation="horizontal"
+                className="items-start rounded-lg border p-4 transition-colors has-[:checked]:border-primary/40 has-[:checked]:bg-accent/40"
               >
-                Manual (Gmail)
-              </FieldLabel>
-              <FieldDescription>
-                Agent receives subject and body to copy-paste and send from
-                Gmail manually.
-              </FieldDescription>
-            </FieldContent>
-          </Field>
-        </div>
-
-        <FieldError>{bothDisabledError}</FieldError>
-
-        <ConfigurationActionBar>
-          <Button
-            disabled={mutation.isPending || hasError || !form}
-            onClick={handleSave}
-          >
-            {mutation.isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Save data-icon="inline-start" />
-            )}
-            Save email mode
-          </Button>
-        </ConfigurationActionBar>
-      </FieldGroup>
-    </ConfigurationSectionCard>
+                <Checkbox
+                  id={mode.id}
+                  className="mt-0.5"
+                  checked={value[mode.field]}
+                  onCheckedChange={(checked) => {
+                    if (typeof checked === 'boolean') {
+                      setMode(mode.field, checked)
+                    }
+                  }}
+                />
+                <FieldContent>
+                  <FieldLabel htmlFor={mode.id} className="cursor-pointer">
+                    {mode.label}
+                  </FieldLabel>
+                  <FieldDescription>{mode.description}</FieldDescription>
+                </FieldContent>
+              </Field>
+            ))}
+            <FieldError>{bothDisabledError}</FieldError>
+          </div>
+        </ConfigurationSection>
+      </ConfigurationPanel>
+    </>
   )
 }

@@ -1,17 +1,6 @@
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
-import type { PaymentMethod } from '#/schemas/configuration.schema'
 
 const DRAFT_EXTENSIONS = new Set(['.pdf', '.doc', '.docx'])
-
-export function createEmptyConfiguredMethod(id: string): PaymentMethod {
-  return {
-    id,
-    label: '',
-    testing: { min: Number.NaN, max: Number.NaN },
-    live: { min: Number.NaN, max: Number.NaN },
-    commissionRate: Number.NaN,
-  }
-}
 
 export function getValidationErrors(
   result:

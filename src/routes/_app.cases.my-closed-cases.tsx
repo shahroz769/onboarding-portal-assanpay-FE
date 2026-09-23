@@ -20,15 +20,19 @@ export const Route = createFileRoute('/_app/cases/my-closed-cases')({
     fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
-  loaderDeps: ({ search }) => ({
-    search: search.search,
-    queueId: search.queueId,
-    sortBy: search.sortBy,
-    sortOrder: search.sortOrder,
-  }),
   pendingMs: 0,
   pendingComponent: CasesRoutePending,
-  loader: async ({ context, deps }) => {
+  // Search params are read here instead of via loaderDeps: loaderDeps would
+  // create a new pending match per keystroke and unmount the filter toolbar.
+  loader: async ({ context, location }) => {
+    const search = caseRouteSearchSchema.parse(location.search)
+    const deps = {
+      search: search.search,
+      queueId: search.queueId,
+      sortBy: search.sortBy,
+      sortOrder: search.sortOrder,
+    }
+
     void context.queryClient.prefetchQuery(queuesQueryOptions())
     void context.queryClient.prefetchQuery(userDirectoryQueryOptions())
 

@@ -21,7 +21,6 @@ import {
   Field,
   FieldDescription,
   FieldError,
-  FieldGroup,
   FieldLabel,
   FieldSet,
 } from '#/components/ui/field'
@@ -41,8 +40,9 @@ import type { SubMerchantOption } from '#/schemas/configuration.schema'
 
 import { CaseTriggeringSkeleton } from '../configuration-route-skeleton'
 import {
-  ConfigurationActionBar,
-  ConfigurationSectionCard,
+  ConfigurationHeaderActions,
+  ConfigurationPanel,
+  ConfigurationSection,
   QueueSelect,
 } from './configuration-panel-shared'
 
@@ -96,76 +96,78 @@ export function CaseTriggeringPanel() {
     return <CaseTriggeringSkeleton />
   }
   return (
-    <ConfigurationSectionCard
-      icon={Play}
-      tone="emerald"
-      title="Case Triggering"
-      description="Create a case manually for a selected merchant and queue."
-    >
-      <FieldGroup>
-        <FieldSet>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field>
-              <FieldLabel>Merchant</FieldLabel>
-              <MerchantCombobox
-                merchants={merchants}
-                value={selectedMerchant ?? null}
-                isFetching={merchantsQuery.isFetching}
-                onSearchValueChange={setMerchantSearch}
-                onValueChange={setSelectedMerchant}
-              />
-              {merchantsQuery.isFetching ? (
-                <FieldDescription>Loading merchants</FieldDescription>
-              ) : null}
-            </Field>
-
-            <Field
-              data-invalid={Boolean(selectedQueue && !selectedQueue.isActive)}
-            >
-              <FieldLabel>Queue</FieldLabel>
-              <QueueSelect
-                value={queueId}
-                queues={queues}
-                placeholder="Select queue"
-                onValueChange={(value) => {
-                  setQueueId(value)
-                  setSelectedSubMerchant(null)
-                }}
-              />
-              {selectedQueue && !selectedQueue.isActive ? (
-                <FieldError>This queue is inactive.</FieldError>
-              ) : null}
-            </Field>
-            {isSubMerchantFormQueue ? (
+    <>
+      <ConfigurationHeaderActions>
+        <Button
+          size="sm"
+          disabled={!canSubmit || createCase.isPending}
+          onClick={handleSubmit}
+        >
+          {createCase.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Play data-icon="inline-start" />
+          )}
+          Trigger case
+        </Button>
+      </ConfigurationHeaderActions>
+      <ConfigurationPanel>
+        <ConfigurationSection
+          title="New case"
+          description="Create a case manually for a selected merchant and queue. Only active queues can be selected."
+        >
+          <FieldSet>
+            <div className="grid gap-4 md:grid-cols-2">
               <Field>
-                <FieldLabel>Sub-merchant</FieldLabel>
-                <SubMerchantCombobox
-                  subMerchants={subMerchantsQuery.data ?? []}
-                  value={selectedSubMerchant}
-                  onValueChange={setSelectedSubMerchant}
+                <FieldLabel>Merchant</FieldLabel>
+                <MerchantCombobox
+                  merchants={merchants}
+                  value={selectedMerchant ?? null}
+                  isFetching={merchantsQuery.isFetching}
+                  onSearchValueChange={setMerchantSearch}
+                  onValueChange={setSelectedMerchant}
                 />
-                <FieldDescription>
-                  This EP case and its form will be linked to this sub-merchant.
-                </FieldDescription>
+                {merchantsQuery.isFetching ? (
+                  <FieldDescription>Loading merchants</FieldDescription>
+                ) : null}
               </Field>
-            ) : null}
-          </div>
-        </FieldSet>
-        <ConfigurationActionBar>
-          <Button
-            disabled={!canSubmit || createCase.isPending}
-            onClick={handleSubmit}
-          >
-            {createCase.isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Play data-icon="inline-start" />
-            )}
-            Trigger case
-          </Button>
-        </ConfigurationActionBar>
-      </FieldGroup>
-    </ConfigurationSectionCard>
+
+              <Field
+                data-invalid={Boolean(selectedQueue && !selectedQueue.isActive)}
+              >
+                <FieldLabel>Queue</FieldLabel>
+                <QueueSelect
+                  value={queueId}
+                  queues={queues}
+                  placeholder="Select queue"
+                  onValueChange={(value) => {
+                    setQueueId(value)
+                    setSelectedSubMerchant(null)
+                  }}
+                />
+                {selectedQueue && !selectedQueue.isActive ? (
+                  <FieldError>This queue is inactive.</FieldError>
+                ) : null}
+              </Field>
+              {isSubMerchantFormQueue ? (
+                <Field>
+                  <FieldLabel>Sub-merchant</FieldLabel>
+                  <SubMerchantCombobox
+                    subMerchants={subMerchantsQuery.data ?? []}
+                    value={selectedSubMerchant}
+                    onValueChange={setSelectedSubMerchant}
+                  />
+                  <FieldDescription>
+                    This EP case and its form will be linked to this
+                    sub-merchant.
+                  </FieldDescription>
+                </Field>
+              ) : null}
+            </div>
+          </FieldSet>
+        </ConfigurationSection>
+      </ConfigurationPanel>
+    </>
   )
 }
 

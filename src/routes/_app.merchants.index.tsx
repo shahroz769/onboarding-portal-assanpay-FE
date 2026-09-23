@@ -15,18 +15,22 @@ export const Route = createFileRoute('/_app/merchants/')({
     fitViewport: true,
   },
   validateSearch: merchantRouteSearchSchema,
-  loaderDeps: ({ search }) => ({
-    search: search.search,
-    status: search.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
-    priority: search.priority,
-    businessScope: search.businessScope,
-    currency: search.currency,
-    sortBy: search.sortBy,
-    sortOrder: search.sortOrder,
-  }),
   pendingMs: 0,
   pendingComponent: MerchantsRoutePending,
-  loader: async ({ context, deps }) => {
+  // Search params are read here instead of via loaderDeps: loaderDeps would
+  // create a new pending match per keystroke and unmount the filter toolbar.
+  loader: async ({ context, location }) => {
+    const search = merchantRouteSearchSchema.parse(location.search)
+    const deps = {
+      search: search.search,
+      status: search.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
+      priority: search.priority,
+      businessScope: search.businessScope,
+      currency: search.currency,
+      sortBy: search.sortBy,
+      sortOrder: search.sortOrder,
+    }
+
     void context.queryClient.prefetchInfiniteQuery(
       merchantsInfiniteQueryOptions({
         ...deps,
