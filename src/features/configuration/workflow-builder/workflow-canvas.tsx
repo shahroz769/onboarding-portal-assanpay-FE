@@ -19,6 +19,7 @@ import { LayoutGrid } from 'lucide-react'
 import '@xyflow/react/dist/style.css'
 
 import { Button } from '#/components/ui/button'
+import { prefersReducedMotion } from '#/hooks/use-reduced-motion'
 
 import type { WorkflowEdge, WorkflowNode } from './workflow-graph-types'
 import { FlowEdge } from './edges/flow-edge'
@@ -96,7 +97,11 @@ function AutoLayoutPanel({ onRelayout }: { onRelayout: () => void }) {
         onClick={() => {
           onRelayout()
           window.setTimeout(() => {
-            void fitView({ padding: 0.25, maxZoom: 1, duration: 300 })
+            void fitView({
+              padding: 0.25,
+              maxZoom: 1,
+              duration: prefersReducedMotion() ? 0 : 300,
+            })
           }, 50)
         }}
       >

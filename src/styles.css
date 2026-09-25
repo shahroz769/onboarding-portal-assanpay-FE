@@ -44,6 +44,7 @@
   --radius: 0.625rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --sidebar: #f6f6f4;
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: var(--primary);
@@ -249,6 +250,63 @@ body,
   transition:
     opacity 160ms var(--ease-out),
     transform 160ms var(--ease-out);
+}
+
+/* A value that changed in place (e.g. a KPI after a range switch): a short
+   opacity-only fade so it reads as updated. Runs when the element is
+   inserted. Not for content replacing a skeleton: the skeleton vanishes
+   instantly while this starts at 0, which flashes empty; those swap
+   instantly (the skeletons are layout-exact). */
+.motion-content-enter {
+  transition: opacity 150ms var(--ease-out);
+}
+
+@starting-style {
+  .motion-content-enter {
+    opacity: 0;
+  }
+}
+
+/* Ctrl/Cmd+B toggles the sidebar without animating (keyboard actions should
+   feel instant); sidebar.tsx sets this attribute for two frames. */
+[data-sidebar-instant]
+  :is(
+    [data-slot='sidebar-gap'],
+    [data-slot='sidebar-container'],
+    [data-slot='sidebar-container'] *
+  ) {
+  transition-duration: 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Popups and dialogs keep their fade but drop the scale. */
+  :is(
+    [data-slot='dialog-content'],
+    [data-slot='alert-dialog-content'],
+    [data-slot='popover-content'],
+    [data-slot='dropdown-menu-content'],
+    [data-slot='dropdown-menu-sub-content'],
+    [data-slot='select-content'],
+    [data-slot='combobox-content'],
+    [data-slot='tooltip-content']
+  ) {
+    scale: none !important;
+  }
+
+  /* The sheet fades in place instead of sliding across the screen. */
+  [data-slot='sheet-content'] {
+    translate: none !important;
+    transition-property: opacity !important;
+  }
+
+  [data-slot='sheet-content']:is([data-starting-style], [data-ending-style]) {
+    opacity: 0;
+  }
+
+  /* The sidebar resizes instantly. */
+  :is([data-slot='sidebar-gap'], [data-slot='sidebar-container']) {
+    transition-duration: 0s !important;
+  }
 }
 
 .motion-collapsible-content {

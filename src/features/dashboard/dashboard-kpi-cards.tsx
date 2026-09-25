@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
@@ -60,6 +61,16 @@ function StatCard({
   accent = 'default',
   link,
 }: StatCardProps) {
+  // Fade a number only when an already-shown value changes (e.g. a range
+  // switch), never when it first replaces the skeleton: that would flash
+  // empty between the two.
+  const [shownValue, setShownValue] = useState(value)
+  const [hasChanged, setHasChanged] = useState(false)
+  if (value !== shownValue) {
+    setHasChanged(shownValue !== null && value !== null)
+    setShownValue(value)
+  }
+
   const card = (
     <Card
       className={cn(
@@ -80,7 +91,17 @@ function StatCard({
         <CardTitle className="text-2xl tabular-nums">
           {/* h-lh = exactly one line of the value's text, whatever the
               computed line-height is (cn drops CardTitle's leading-none) */}
-          {value ?? <Skeleton className="h-lh w-10" />}
+          {value === null ? (
+            <Skeleton className="h-lh w-10" />
+          ) : (
+            // Keyed on the value so a changed number remounts (and fades).
+            <span
+              key={value}
+              className={hasChanged ? 'motion-content-enter' : undefined}
+            >
+              {value}
+            </span>
+          )}
         </CardTitle>
         {hint ? (
           <p className="mt-1 text-xs text-muted-foreground">{hint}</p>

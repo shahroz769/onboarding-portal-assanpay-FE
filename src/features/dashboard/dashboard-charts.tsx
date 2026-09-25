@@ -15,6 +15,7 @@ import {
   ChartTooltipContent,
 } from '#/components/ui/chart'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import { useReducedMotion } from '#/hooks/use-reduced-motion'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { DailyCountPoint } from './dashboard-utils'
 import {
@@ -82,6 +83,7 @@ function DailyCountBarChart({
 }) {
   const gradientId = `daily-count-fill-${useId().replace(/:/g, '')}`
   const [granularity, setGranularity] = useState<Granularity>('daily')
+  const reducedMotion = useReducedMotion()
 
   const points = granularity === 'weekly' ? aggregateByWeek(data) : data
   const total = points.reduce((sum, day) => sum + day.count, 0)
@@ -180,6 +182,7 @@ function DailyCountBarChart({
               fill={`url(#${gradientId})`}
               radius={[6, 6, 0, 0]}
               maxBarSize={36}
+              isAnimationActive={!reducedMotion}
             />
           </BarChart>
         </ChartContainer>

@@ -132,8 +132,10 @@ export function OnboardingSectionNav({
         className="mt-2 h-1 overflow-hidden rounded-full bg-muted"
       >
         <div
-          className="h-full rounded-full bg-primary transition-[width] duration-300"
-          style={{ width: `${progress}%` }}
+          className="h-full rounded-full bg-primary transition-[clip-path] duration-300 ease-out"
+          // clip-path reveal instead of animating width (a layout property);
+          // `round` keeps the leading edge rounded at every progress value.
+          style={{ clipPath: `inset(0 ${100 - progress}% 0 0 round 9999px)` }}
         />
       </div>
     </div>
