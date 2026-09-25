@@ -9,7 +9,11 @@ import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
 import type { StatusTint } from '#/lib/status-styles'
-import { slaBadgeClasses, statusTint } from '#/lib/status-styles'
+import {
+  slaBadgeClasses,
+  statusTint,
+  statusTintText,
+} from '#/lib/status-styles'
 import type {
   CaseDetail,
   CloseOutcome,
@@ -107,6 +111,11 @@ function CaseStagesBlock({
   const currentStageIndex = stages.findIndex(
     (stage) => stage.id === currentStageId,
   )
+  const currentStage =
+    currentStageIndex >= 0 ? stages[currentStageIndex] : undefined
+  const currentTint = currentStage
+    ? currentStageTint(currentStage, closeOutcome)
+    : null
 
   return (
     <div className="overflow-hidden rounded-md bg-muted md:col-span-3">
@@ -126,18 +135,6 @@ function CaseStagesBlock({
             isPassed ||
             (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
 
-          // Current-stage hues mirror the case-status tints in
-          // lib/status-styles so a case keeps its color from list → detail.
-          let currentTint: StatusTint | null = null
-          if (isCurrent) {
-            if (isClosedUnsuccessfully) currentTint = 'red'
-            else if (stage.slug === 'new') currentTint = 'blue'
-            else if (stage.slug === 'working') currentTint = 'amber'
-            else if (stage.slug === 'awaiting_client') currentTint = 'sky'
-            else if (stage.slug.includes('pending')) currentTint = 'orange'
-            else if (stage.slug === 'docs_upload') currentTint = 'sky'
-            else if (stage.slug === 'closed') currentTint = 'emerald'
-          }
 
           return (
             <div key={stage.id} className="min-w-0">
@@ -152,7 +149,9 @@ function CaseStagesBlock({
                     'bg-muted text-muted-foreground/50',
                   isPassed && cn(statusTint('emerald'), 'font-semibold'),
                   connectsToCompletedFlow && 'rounded-r-none',
-                  currentTint && cn(statusTint(currentTint), 'font-semibold'),
+                  isCurrent &&
+                    currentTint &&
+                    cn(statusTint(currentTint), 'font-semibold'),
                   'rounded-none',
                 )}
               >
@@ -168,7 +167,10 @@ function CaseStagesBlock({
         })}
         <div
           aria-hidden="true"
-          className="motion-case-stage-indicator pointer-events-none absolute bottom-0 left-0 h-0.5 rounded-full bg-foreground/50"
+          className={cn(
+            'motion-case-stage-indicator pointer-events-none absolute bottom-0 left-0 h-0.5 rounded-full bg-current',
+            currentTint ? statusTintText(currentTint) : 'text-foreground/50',
+          )}
           style={{
             width: `${100 / stages.length}%`,
             opacity: currentStageIndex >= 0 ? 1 : 0,
@@ -178,6 +180,24 @@ function CaseStagesBlock({
       </div>
     </div>
   )
+}
+
+// Current-stage hues mirror the case-status tints in lib/status-styles so a
+// case keeps its color from list → detail.
+function currentStageTint(
+  stage: QueueStage,
+  closeOutcome: CloseOutcome | null,
+): StatusTint | null {
+  if (stage.category === 'closed' && closeOutcome === 'unsuccessful') {
+    return 'red'
+  }
+  if (stage.slug === 'new') return 'blue'
+  if (stage.slug === 'working') return 'amber'
+  if (stage.slug === 'awaiting_client') return 'sky'
+  if (stage.slug.includes('pending')) return 'orange'
+  if (stage.slug === 'docs_upload') return 'sky'
+  if (stage.slug === 'closed') return 'emerald'
+  return null
 }
 
 function InfoBlock({ label, value }: { label: string; value: string }) {

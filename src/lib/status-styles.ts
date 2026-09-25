@@ -32,6 +32,29 @@ export function statusTint(tint: StatusTint): string {
   return TINTS[tint]
 }
 
+// Text-only variants — the foreground half of TINTS, for accents (e.g. a
+// `bg-current` indicator bar) that should match a tinted label's color.
+const TEXT_TINTS: Record<StatusTint, string> = {
+  blue: 'text-blue-800 dark:text-blue-300',
+  amber: 'text-amber-800 dark:text-amber-300',
+  sky: 'text-sky-800 dark:text-sky-300',
+  orange: 'text-orange-800 dark:text-orange-300',
+  purple: 'text-purple-800 dark:text-purple-300',
+  violet: 'text-violet-800 dark:text-violet-300',
+  teal: 'text-teal-800 dark:text-teal-300',
+  green: 'text-green-800 dark:text-green-300',
+  rose: 'text-rose-800 dark:text-rose-300',
+  indigo: 'text-indigo-800 dark:text-indigo-300',
+  cyan: 'text-cyan-800 dark:text-cyan-300',
+  red: 'text-red-800 dark:text-red-300',
+  emerald: 'text-emerald-800 dark:text-emerald-300',
+  neutral: 'text-muted-foreground',
+}
+
+export function statusTintText(tint: StatusTint): string {
+  return TEXT_TINTS[tint]
+}
+
 // Deepened variants — for elements that sit ON a tinted surface (e.g. the
 // number chip inside a tinted nav pill), where a tint-on-tint look washes
 // out. One step deeper in the same hue, not a solid block.

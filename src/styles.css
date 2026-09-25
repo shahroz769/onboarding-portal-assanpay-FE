@@ -241,6 +241,7 @@ body,
 .motion-case-stage-indicator {
   transition:
     opacity 160ms var(--ease-out),
+    background-color 250ms var(--ease-in-out),
     transform 250ms var(--ease-in-out);
 }
 
