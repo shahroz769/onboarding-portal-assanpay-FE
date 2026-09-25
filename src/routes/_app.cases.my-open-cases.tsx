@@ -4,11 +4,6 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { useAuth } from '#/features/auth/auth-client'
-import {
-  casesInfiniteQueryOptions,
-  queuesQueryOptions,
-} from '#/hooks/use-cases-query'
-import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter(
@@ -25,36 +20,6 @@ export const Route = createFileRoute('/_app/cases/my-open-cases')({
   validateSearch: caseRouteSearchSchema,
   pendingMs: 0,
   pendingComponent: CasesRoutePending,
-  // Search params are read here instead of via loaderDeps: loaderDeps would
-  // create a new pending match per keystroke and unmount the filter toolbar.
-  loader: async ({ context, location }) => {
-    const search = caseRouteSearchSchema.parse(location.search)
-    const deps = {
-      search: search.search,
-      queueId: search.queueId,
-      sortBy: search.sortBy,
-      sortOrder: search.sortOrder,
-    }
-
-    void context.queryClient.prefetchQuery(queuesQueryOptions())
-    void context.queryClient.prefetchQuery(userDirectoryQueryOptions())
-
-    const userId = context.auth.getSnapshot().user?.id
-
-    if (!userId) {
-      return
-    }
-
-    void context.queryClient.prefetchInfiniteQuery(
-      casesInfiniteQueryOptions({
-        ...deps,
-        ownerId: userId,
-        status: OPEN_CASES_STATUS_FILTER,
-        createdAtFrom: undefined,
-        createdAtTo: undefined,
-      }),
-    )
-  },
   component: RouteComponent,
 })
 

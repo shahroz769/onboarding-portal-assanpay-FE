@@ -79,6 +79,7 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **What:** "Reset" sits directly beside the primary "Submit Application" CTA. `resetFormState` calls `form.reset()`, clears all uploaded documents, and **deletes the localStorage draft** — with no confirmation dialog, on a very long 7-section form with an autosaved PII draft.
 - **Impact:** One mis-tap causes severe accidental data loss.
 - **Recommendation:** Require a confirmation step (AlertDialog) before destructive reset, or restyle/move Reset away from the submit CTA (link-styled, left-aligned).
+- **Resolution (2026-09-25):** Confirmed. Reset is now an `AlertDialogTrigger` (ghost, left-aligned via `justify-between`) that opens a "Clear the whole application?" confirmation; only "Clear application" calls `resetFormState`. The success screen's "New submission" still resets directly.
 
 **UX-05 — Three different required-field marking conventions** · 🔵 Low
 📍 `src/features/onboarding/merchant-onboarding-form.tsx:645` (`Submitter Email *` literal text) · `src/features/users/user-form.tsx:71-77` (`RequiredMark` component, `aria-hidden` red asterisk) · `src/features/onboarding/document-upload-field.tsx:89-101`, `resubmission-form.tsx:725-726,970-971` ("Required"/"Optional" Badges)
@@ -223,12 +224,14 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **What:** Only `_app.index.tsx` imports the dashboard, yet the full `Dashboard` component, `DashboardCharts`, and the entire recharts library are statically inside the entry `index-*.js` (verified in the build: `recharts-wrapper`/`recharts-surface`/`Portal MIDs` strings exist only in the entry; the `_app.index-*` route chunk is a 0.51 kB shell). Every other route splits correctly — login, merchants, and case-flow-rules (@xyflow) all land in their own lazy chunks. So `/login` and the public onboarding form download recharts for no reason.
 - **Impact:** ~300 kB gzip entry on first paint for *all* routes; recharts alone is ~74+ kB gzip for the ~5 components actually used.
 - **Recommendation:** Wrap the dashboard charts in a `lazy()`/Suspense boundary (or move `Dashboard` behind `lazyRouteComponent`) so recharts moves into the `_app.index` lazy chunk. Do together with PERF-02.
+- **Resolution (2026-09-25):** Code review found no static import that should put the dashboard in the entry chunk (only `_app.index.tsx` imports it). There was no build output, so the claim couldn't be checked. Hardened regardless: `DashboardCharts` is now `lazy()` behind `Suspense` (fallback `DashboardChartsSkeleton`), loaded through `features/dashboard/load-dashboard-charts.ts`, and the `/` loader starts that import in parallel with the data. The route imports `DashboardSkeleton` directly instead of through `dashboard.tsx`. **Build-verified:** recharts markers now appear only in the lazy `dashboard-charts-*.js` chunk (~106 kB gzip), and the entry references it only through a dynamic `import()`. The Dashboard UI is in the lazy `_app.index-*.js` chunk (25.8 kB raw). Entry `index-*.js` went from 1,033.6 kB / 302.1 kB gzip to 696.7 kB / ~204.6 kB gzip.
 
 **PERF-02 — `import * as RechartsPrimitive from 'recharts'` weakens tree-shaking** · 🟡 Medium
 📍 `src/components/ui/chart.tsx:2`
 - **What:** Namespace import of all of recharts; only `ResponsiveContainer`, `Tooltip`, `Legend` (plus types) are used from it (`chart.tsx:50,69,112,266`), and `dashboard-charts.tsx:2` uses only `Bar, BarChart, CartesianGrid, XAxis, YAxis`.
 - **Impact:** Ships more of recharts than needed.
 - **Recommendation:** Replace with named imports.
+- **Resolution (2026-09-25):** `chart.tsx` now imports `Legend`, `ResponsiveContainer` and `Tooltip` by name, plus named types.
 
 **PERF-03 — TanStack devtools packages in `dependencies` instead of `devDependencies`** · 🔵 Low · ✅ **Fixed**
 📍 `package.json:37-39`
@@ -307,6 +310,7 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **What:** Loaders call `void context.queryClient.prefetchQuery(...)` / `void prefetchInfiniteQuery(...)` without awaiting. The loader promise resolves immediately, so the configured `pendingComponent` (with `pendingMs: 0`) **never renders** — the `DataTableRouteSkeleton`/`UserFormSkeleton` components are dead code on these routes. Prefetch rejections are silently dropped: they never reach the route `errorComponent` or `defaultErrorComponent`.
 - **Impact:** On slow/failed first loads users see an empty table shell with no router-level loading or error state; errors surface only if the inner component's own `useQuery` handles them.
 - **Recommendation:** `await` the prefetches (making pending/error states real) — or, if fire-and-forget is intentional, remove the misleading `pendingComponent` config. (Router data-loading guide: loaders are the integration point for the router's loading/error boundaries.)
+- **Resolution (2026-09-25):** Partly inaccurate. `pendingComponent` does render while the lazy route chunk loads, so it was kept. Awaiting was rejected: these loaders deliberately avoid `loaderDeps`, so awaiting would block every filter or search navigation. The `all-users` and `user-creation` routes no longer exist. Two real problems were found and fixed instead. (1) The all-cases, my-open and my-closed loaders prefetched without `queueAccess`, but `CasesTableProvider` queries with `queueAccess: 'view'`. The keys never matched, so every visit made a duplicate request. The loaders now pass `'view'`. (2) The cases, merchants and users tables ignored query errors and showed "No results" on failure. `DataTable` now accepts `error`/`onRetry` and, when there are no rows, shows an error state with a Retry button.
 
 **RTE-02 — User detail route: awaited loader but no `pendingComponent`** · 🔵 Low
 📍 `src/routes/_app.user-management.users.$userId.tsx:15`
@@ -388,10 +392,10 @@ Effort hints: **S** = small (hours) · **M** = medium (~a day) · **L** = large 
 
 ### P0 — Fix before production use with real users
 
-- [ ] **PERF-01** (M) — Lazy-load the dashboard charts so recharts leaves the entry chunk; every page (incl. `/login`) currently downloads ~300 kB gzip unnecessarily.
-- [ ] **UX-02** (S) — Add a confirmation dialog to the onboarding form "Reset" button (or move/restyle it away from Submit).
-- [ ] **HIGH-07** (S, main report) — `queryClient.clear()` + stop SSE on logout/session expiry (cross-user data leak).
-- [ ] **RTE-01** (M) — Decide loader semantics: `await` the list-route prefetches (making pending/error states real) or remove the dead `pendingComponent` configs.
+- [x] **PERF-01** (M) ✅ Fixed — Dashboard charts lazy-loaded (`load-dashboard-charts.ts`), chunk preloaded in the route loader. Build-verified: entry is ~98 kB gzip smaller and recharts only ships in the lazy `dashboard-charts` chunk.
+- [x] **UX-02** (S) ✅ Fixed — Reset now asks for confirmation (AlertDialog) and sits on the left, styled as ghost.
+- [x] **HIGH-07** (S, main report) ✅ Fixed — Query cache cleared when the signed-in user changes, on logout, and on session expiry. SSE already stopped via the `userId`-keyed effect.
+- [x] **RTE-01** (M) ✅ Resolved differently — Kept fire-and-forget (awaiting would block filter typing); fixed the prefetch/query key mismatch and added a table error state with Retry.
 
 ### P1 — Fix before scaling / shortly after launch
 
@@ -407,7 +411,7 @@ Effort hints: **S** = small (hours) · **M** = medium (~a day) · **L** = large 
 - [ ] **RTE-02 / RTE-03** (S) — Add `pendingComponent` to user-detail and set-password routes.
 - [x] **RTE-04** (S) ✅ Fixed — `params.parse` (Zod) on `$`-param routes.
 - [x] **QRY-03** (S) ✅ Fixed — Route mutation `onError` handlers through `getApiErrorMessage`.
-- [ ] **PERF-02** (S) — Named recharts imports instead of namespace import.
+- [x] **PERF-02** (S) ✅ Fixed — Named recharts imports in `chart.tsx`.
 - [ ] **MED-11** (S, main report) — 401 interceptor should reject with the original request's error.
 - [ ] **LOW-18** (S, main report) — `pendingComponent` on the merchant detail route.
 

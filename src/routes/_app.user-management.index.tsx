@@ -3,8 +3,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { UsersTableComposed } from '#/features/users/users-table'
 import { useUsersSearchActions } from '#/features/users/users-route-filters'
-import { queuesQueryOptions } from '#/hooks/use-cases-query'
-import { usersQueryOptions } from '#/hooks/use-users-query'
 import { userRouteSearchSchema } from '#/schemas/users.schema'
 
 export const Route = createFileRoute('/_app/user-management/')({
@@ -14,19 +12,6 @@ export const Route = createFileRoute('/_app/user-management/')({
     fitViewport: true,
   },
   validateSearch: userRouteSearchSchema,
-  // Search params are read here instead of via loaderDeps: loaderDeps would
-  // create a new pending match per keystroke and unmount the filter toolbar.
-  loader: async ({ context, location }) => {
-    const search = userRouteSearchSchema.parse(location.search)
-    void context.queryClient.prefetchQuery(queuesQueryOptions())
-    void context.queryClient.prefetchQuery(
-      usersQueryOptions({
-        search: search.search,
-        roleType: search.roleType,
-        status: search.status,
-      }),
-    )
-  },
   pendingMs: 0,
   pendingComponent: UsersRoutePending,
   component: RouteComponent,

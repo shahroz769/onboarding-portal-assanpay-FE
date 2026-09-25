@@ -18,29 +18,25 @@ import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { DailyCountPoint } from './dashboard-utils'
 import {
+  DASHBOARD_CHARTS,
   aggregateByWeek,
   formatCount,
   formatDay,
   formatWeekRange,
-  merchantsLiveChartConfig,
-  submissionsChartConfig,
 } from './dashboard-utils'
 
 export function DashboardCharts({ data }: { data: DashboardResponse }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <DailyCountBarChart
-        title="Form submissions"
-        description="Daily merchant form submissions"
-        data={data.trends.submissions}
-        config={submissionsChartConfig}
-      />
-      <DailyCountBarChart
-        title="Merchants live"
-        description="Daily merchants that went live"
-        data={data.trends.merchantsLive}
-        config={merchantsLiveChartConfig}
-      />
+      {DASHBOARD_CHARTS.map((chart) => (
+        <DailyCountBarChart
+          key={chart.key}
+          title={chart.title}
+          description={chart.description}
+          data={data.trends[chart.key]}
+          config={chart.config}
+        />
+      ))}
     </div>
   )
 }

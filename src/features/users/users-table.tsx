@@ -257,6 +257,8 @@ export function UsersTableComposed({
               getRowId={(user) => user.id}
               selectedIds={selectedIdSet}
               isLoading={isTableLoading}
+              error={usersQuery.error}
+              onRetry={() => void usersQuery.refetch()}
               emptyContent={
                 <div className="flex flex-col items-center gap-1 text-muted-foreground">
                   <p className="text-sm">No users found.</p>

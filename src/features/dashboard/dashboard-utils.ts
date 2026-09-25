@@ -61,3 +61,20 @@ export const submissionsChartConfig = {
 export const merchantsLiveChartConfig = {
   count: { label: 'Went live', theme: BRAND_PRIMARY },
 } satisfies ChartConfig
+
+// Shared by DashboardCharts and its skeleton so the static header text (and
+// therefore the header height) is identical while recharts loads.
+export const DASHBOARD_CHARTS = [
+  {
+    key: 'submissions',
+    title: 'Form submissions',
+    description: 'Daily merchant form submissions',
+    config: submissionsChartConfig,
+  },
+  {
+    key: 'merchantsLive',
+    title: 'Merchants live',
+    description: 'Daily merchants that went live',
+    config: merchantsLiveChartConfig,
+  },
+] as const

@@ -13,13 +13,15 @@ import {
 import { CASES_KEY } from '#/hooks/use-cases-query'
 import {
   NOTIFICATIONS_KEY,
-  NOTIFICATIONS_UNREAD_KEY,
   applyIncomingNotificationToCache,
 } from '#/hooks/use-notifications-query'
 import type { Notification } from '#/schemas/notifications.schema'
 
 import { createNotificationsSseClient } from './notifications-sse'
 import { showNotificationToast } from './notification-toast'
+
+/** Data fetched this recently is current enough to skip on a stream (re)open. */
+const RECENT_FETCH_MS = 5_000
 
 /**
  * Headless side-effect component. Mount once inside the auth-gated app layout.
@@ -37,11 +39,21 @@ export function NotificationsProvider() {
 
   const userId = auth.user?.id ?? null
 
+  // Catch up on events missed while the stream was down. NOTIFICATIONS_KEY is
+  // a prefix of every notifications query (unread count included), so one
+  // call covers them all. Queries that are loading or were just fetched (e.g.
+  // the bell's mount fetch on the initial connect) are skipped instead of
+  // being cancelled and requested again.
   const syncNotificationsFromServer = useEffectEvent(() => {
-    void Promise.all([
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_KEY }),
-    ])
+    void queryClient.invalidateQueries(
+      {
+        queryKey: NOTIFICATIONS_KEY,
+        predicate: (query) =>
+          query.state.fetchStatus !== 'fetching' &&
+          Date.now() - query.state.dataUpdatedAt > RECENT_FETCH_MS,
+      },
+      { cancelRefetch: false },
+    )
   })
 
   // The single tab-return refresh (the QueryClient disables

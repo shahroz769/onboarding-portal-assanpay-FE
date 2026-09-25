@@ -113,7 +113,12 @@ function lifecycleLabel(queue: {
   return queue.isActive === false ? 'inactive' : 'active'
 }
 export function QueuesPanel() {
-  const { data: queues = [], isPending } = useQuery(
+  const {
+    data: queues = [],
+    isPending,
+    error,
+    refetch,
+  } = useQuery(
     queuesQueryOptions({
       includeInactive: true,
     }),
@@ -245,6 +250,8 @@ export function QueuesPanel() {
         data={queues}
         getRowId={(queue) => queue.id}
         isLoading={isPending}
+        error={error}
+        onRetry={() => void refetch()}
         emptyContent={
           <EmptyState
             icon={ListOrdered}

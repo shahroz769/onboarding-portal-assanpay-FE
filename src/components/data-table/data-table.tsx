@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { SearchX } from 'lucide-react'
+import { AlertTriangle, RefreshCw, SearchX } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { Button } from '#/components/ui/button'
 import {
   Table,
   TableBody,
@@ -92,6 +94,10 @@ interface DataTableProps<TData> {
   isLoading?: boolean
   /** Empty state content */
   emptyContent?: React.ReactNode
+  /** Query error; shown in place of the empty state when there are no rows */
+  error?: unknown
+  /** Called from the error state's Retry button */
+  onRetry?: () => void
   /** Called when the scroll sentinel becomes visible */
   onScrollEnd?: () => void
   /** Whether more data is currently being fetched */
@@ -111,6 +117,8 @@ export function DataTable<TData>({
   selectedIds,
   isLoading = false,
   emptyContent,
+  error = null,
+  onRetry,
   onScrollEnd,
   isFetchingMore = false,
   hasMore = false,
@@ -226,12 +234,33 @@ export function DataTable<TData>({
       >
         {tableHeader}
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          {emptyContent ?? (
+          {error ? (
             <EmptyState
-              icon={SearchX}
-              title="No results found."
-              description="Try adjusting your search or filters."
+              icon={AlertTriangle}
+              title="Couldn't load results."
+              description={getApiErrorMessage(error)}
+              action={
+                onRetry ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onRetry}
+                  >
+                    <RefreshCw data-icon="inline-start" />
+                    Retry
+                  </Button>
+                ) : null
+              }
             />
+          ) : (
+            (emptyContent ?? (
+              <EmptyState
+                icon={SearchX}
+                title="No results found."
+                description="Try adjusting your search or filters."
+              />
+            ))
           )}
         </div>
       </div>

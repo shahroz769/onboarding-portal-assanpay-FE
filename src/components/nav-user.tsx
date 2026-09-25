@@ -1,5 +1,6 @@
 import { ChevronsUpDown, LogOut } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { useLogoutMutation } from '#/features/auth/auth-query'
@@ -32,11 +33,14 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
   const logoutMutation = useLogoutMutation()
+  const queryClient = useQueryClient()
 
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
       await navigate({ to: '/login' })
+      // After navigating, so the unmounted app queries don't refetch tokenless.
+      queryClient.clear()
     } catch {
       toast.error(
         'Logout failed. Your session is still active; please try again.',

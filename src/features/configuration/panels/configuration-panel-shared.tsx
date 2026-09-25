@@ -2,7 +2,9 @@ import type { ReactNode } from 'react'
 
 import { createPortal } from 'react-dom'
 
-import { Save } from 'lucide-react'
+import { RefreshCw, Save } from 'lucide-react'
+
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 
 import { Badge } from '#/components/ui/badge'
 
@@ -20,6 +22,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 
 import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { cn } from '#/lib/utils'
 
 import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
@@ -30,6 +33,30 @@ export type QueueOption = Pick<
 > & {
   isActive?: boolean
   lifecycle?: 'draft' | 'active' | 'inactive'
+}
+
+/** Load failure for a configuration page's own query, with a retry. */
+export function ConfigurationLoadError({
+  title,
+  error,
+  onRetry,
+}: {
+  title: string
+  error: unknown
+  onRetry: () => void
+}) {
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{title} could not be loaded</AlertTitle>
+      <AlertDescription className="flex flex-col items-start gap-3">
+        {getApiErrorMessage(error, `Failed to load ${title.toLowerCase()}.`)}
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw data-icon="inline-start" />
+          Retry
+        </Button>
+      </AlertDescription>
+    </Alert>
+  )
 }
 
 export function QueueSelect({

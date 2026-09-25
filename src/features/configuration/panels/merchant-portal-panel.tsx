@@ -25,6 +25,7 @@ import {
   ConfigurationPanel,
   ConfigurationSaveButton,
   ConfigurationSection,
+  ConfigurationLoadError,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -33,13 +34,25 @@ import {
 
 // ─── Merchant Portal ───────────────────────────────────────────────────────
 export function MerchantPortalPanel() {
-  const { data, isPending } = useQuery(merchantPortalQueryOptions())
+  const { data, isPending, error, refetch } = useQuery(
+    merchantPortalQueryOptions(),
+  )
   const mutation = useUpdateMerchantPortalMutation()
   const [form, setForm] = useState<MerchantPortalSettings | null>(null)
   const value = form ?? data ?? null
   const validationErrors = value
     ? getValidationErrors(merchantPortalSettingsSchema.safeParse(value))
     : {}
+  if (error && !data) {
+    return (
+      <ConfigurationLoadError
+        title="Merchant portal settings"
+        error={error}
+        onRetry={() => void refetch()}
+      />
+    )
+  }
+
   if (isPending || !value) {
     return <MerchantPortalSkeleton />
   }

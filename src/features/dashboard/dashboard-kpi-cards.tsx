@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { Skeleton } from '#/components/ui/skeleton'
 import { cn } from '#/lib/utils'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { CaseFilterStatus } from '#/schemas/cases.schema'
@@ -36,7 +37,8 @@ type StatCardLink =
 
 type StatCardProps = {
   label: string
-  value: string
+  /** null while the dashboard is loading: renders a same-size skeleton. */
+  value: string | null
   icon: LucideIcon
   hint?: string
   accent?: 'default' | 'positive' | 'warning' | 'danger'
@@ -75,7 +77,11 @@ function StatCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="px-4">
-        <CardTitle className="text-2xl tabular-nums">{value}</CardTitle>
+        <CardTitle className="text-2xl tabular-nums">
+          {/* h-lh = exactly one line of the value's text, whatever the
+              computed line-height is (cn drops CardTitle's leading-none) */}
+          {value ?? <Skeleton className="h-lh w-10" />}
+        </CardTitle>
         {hint ? (
           <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
         ) : null}
@@ -83,7 +89,7 @@ function StatCard({
     </Card>
   )
 
-  if (!link) return card
+  if (!link || value === null) return card
 
   return (
     <Link
@@ -114,27 +120,31 @@ function Section({
   )
 }
 
-export function DashboardKpiCards({ data }: { data: DashboardResponse }) {
-  const { cases, merchants } = data
+/** Without `data`, renders the loading state with the exact loaded layout. */
+export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
+  const cases = data?.cases
+  const merchants = data?.merchants
+  const count = (value: number | undefined) =>
+    value === undefined ? null : formatCount(value)
 
   return (
     <div className="flex flex-col gap-6">
       <Section title="Cases">
         <StatCard
           label="New"
-          value={formatCount(cases.new)}
+          value={count(cases?.new)}
           icon={FilePlus2}
           link={{ to: '/cases/all-cases', statuses: ['new'] }}
         />
         <StatCard
           label="Working"
-          value={formatCount(cases.working)}
+          value={count(cases?.working)}
           icon={Gauge}
           link={{ to: '/cases/all-cases', statuses: ['working'] }}
         />
         <StatCard
           label="Closed"
-          value={formatCount(cases.closed)}
+          value={count(cases?.closed)}
           icon={CheckCircle2}
           accent="positive"
           // The closed count includes unsuccessful closures, which the list
@@ -146,63 +156,63 @@ export function DashboardKpiCards({ data }: { data: DashboardResponse }) {
         />
         <StatCard
           label="Pending"
-          value={formatCount(cases.pending)}
+          value={count(cases?.pending)}
           icon={Clock}
           accent="warning"
           link={{ to: '/cases/all-cases', statuses: ['pending'] }}
         />
         <StatCard
           label="Awaiting merchant"
-          value={formatCount(cases.awaitingClient)}
+          value={count(cases?.awaitingClient)}
           icon={Hourglass}
           accent="warning"
           link={{ to: '/cases/all-cases', statuses: ['awaiting_client'] }}
         />
         <StatCard
           label="Breach rate"
-          value={formatPercent(cases.breachRate)}
+          value={cases ? formatPercent(cases.breachRate) : null}
           icon={AlertTriangle}
-          accent={cases.breachRate > 10 ? 'danger' : 'default'}
+          accent={cases && cases.breachRate > 10 ? 'danger' : 'default'}
         />
       </Section>
 
       <Section title="Merchants">
         <StatCard
           label="Total merchants"
-          value={formatCount(merchants.total)}
+          value={count(merchants?.total)}
           icon={Store}
           link={{ to: '/merchants', statuses: MERCHANT_STATUSES }}
         />
         <StatCard
           label="Live"
-          value={formatCount(merchants.live)}
+          value={count(merchants?.live)}
           icon={CheckCircle2}
           accent="positive"
           link={{ to: '/merchants', statuses: ['live'] }}
         />
         <StatCard
           label="Testing"
-          value={formatCount(merchants.testing)}
+          value={count(merchants?.testing)}
           icon={UserCheck}
           link={{ to: '/merchants', statuses: ['testing'] }}
         />
         <StatCard
           label="In process"
-          value={formatCount(merchants.pending)}
+          value={count(merchants?.pending)}
           icon={Clock}
           accent="warning"
           link={{ to: '/merchants', statuses: ['pending'] }}
         />
         <StatCard
           label="Terminated"
-          value={formatCount(merchants.terminated)}
+          value={count(merchants?.terminated)}
           icon={ShieldAlert}
           accent="danger"
           link={{ to: '/merchants', statuses: ['terminated'] }}
         />
         <StatCard
           label="Form submissions"
-          value={formatCount(merchants.submittedInRange)}
+          value={count(merchants?.submittedInRange)}
           icon={FilePlus2}
         />
       </Section>

@@ -4,18 +4,11 @@ import { useAuth } from '#/features/auth/auth-client'
 import { MerchantLimitsSkeleton } from '#/features/merchants/merchant-details'
 import { MerchantLimitsMdrTab } from '#/features/merchants/merchant-limits-mdr-tab'
 import {
-  ensureMerchantQuery,
   merchantLimitsQueryOptions,
   useLoadedMerchantSection,
 } from '#/hooks/use-merchants-query'
 
 export const Route = createFileRoute('/_app/merchants/$merchantId/limits')({
-  loader: ({ context, params }) =>
-    ensureMerchantQuery(() =>
-      context.queryClient.ensureQueryData(
-        merchantLimitsQueryOptions(params.merchantId),
-      ),
-    ),
   pendingMs: 0,
   pendingComponent: MerchantLimitsSkeleton,
   component: MerchantLimitsRoute,

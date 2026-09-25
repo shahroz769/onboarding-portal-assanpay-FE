@@ -9,8 +9,6 @@ import {
   type QueryKey,
   type UseQueryOptions,
 } from '@tanstack/react-query'
-import { notFound } from '@tanstack/react-router'
-import { AxiosError } from 'axios'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
@@ -79,6 +77,8 @@ export function merchantOptionsQueryOptions(search = '') {
         createdAtTo: undefined,
         limit: 50,
       }),
+    // Keep the current options listed while a new search term loads.
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }
@@ -125,18 +125,6 @@ export function merchantHistoryQueryOptions(merchantId: string) {
     queryFn: () => fetchMerchantHistory(merchantId),
     staleTime: 30_000,
   })
-}
-
-export async function ensureMerchantQuery<T>(loadQuery: () => Promise<T>) {
-  try {
-    return await loadQuery()
-  } catch (error) {
-    if (error instanceof AxiosError && error.response?.status === 404) {
-      throw notFound()
-    }
-
-    throw error
-  }
 }
 
 export function useLoadedMerchantSection<

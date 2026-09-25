@@ -4,8 +4,9 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 
-import { Dashboard, DashboardSkeleton } from '#/features/dashboard/dashboard'
-import { dashboardQueryOptions } from '#/hooks/use-dashboard-query'
+import { Dashboard } from '#/features/dashboard/dashboard'
+import { DashboardSkeleton } from '#/features/dashboard/dashboard-skeleton'
+import { loadDashboardCharts } from '#/features/dashboard/load-dashboard-charts'
 import { dashboardRouteSearchSchema } from '#/schemas/dashboard.schema'
 import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
 
@@ -20,9 +21,11 @@ export const Route = createFileRoute('/_app/')({
     // every other range and any custom date parameters.
     middlewares: [stripSearchParams({ range: '30d' })],
   },
-  loaderDeps: ({ search }) => search,
-  loader: async ({ context, deps }) => {
-    await context.queryClient.ensureQueryData(dashboardQueryOptions(deps))
+  // Data is fetched by Dashboard itself (it renders its own skeleton). The
+  // loader only starts the charts code chunk so it downloads alongside the
+  // data. A failed chunk load resurfaces through the lazy boundary.
+  loader: () => {
+    loadDashboardCharts().catch(() => {})
   },
   pendingComponent: DashboardSkeleton,
   pendingMs: 0,

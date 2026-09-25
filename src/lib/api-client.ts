@@ -75,12 +75,17 @@ apiClient.interceptors.response.use(
         const { pathname, href } = router.state.location
 
         if (pathname !== '/login') {
+          const activeRouter = router
           authClient?.clear()
-          void router.navigate({
-            to: '/login',
-            search: { redirect: sanitizeRedirect(href) },
-            replace: true,
-          })
+          // Clear after navigating, so the unmounted app queries don't
+          // refetch tokenless.
+          void activeRouter
+            .navigate({
+              to: '/login',
+              search: { redirect: sanitizeRedirect(href) },
+              replace: true,
+            })
+            .then(() => activeRouter.options.context.queryClient.clear())
         }
       }
 

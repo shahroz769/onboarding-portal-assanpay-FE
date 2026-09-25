@@ -4,11 +4,6 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import {
-  casesInfiniteQueryOptions,
-  queuesQueryOptions,
-} from '#/hooks/use-cases-query'
-import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
-import {
   DEFAULT_CASE_STATUS_FILTER,
   caseRouteSearchSchema,
 } from '#/schemas/cases.schema'
@@ -22,30 +17,6 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
   validateSearch: caseRouteSearchSchema,
   pendingMs: 0,
   pendingComponent: CasesRoutePending,
-  // Search params are read here instead of via loaderDeps: loaderDeps would
-  // create a new pending match per keystroke and unmount the filter toolbar.
-  loader: async ({ context, location }) => {
-    const search = caseRouteSearchSchema.parse(location.search)
-    const deps = {
-      search: search.search,
-      queueId: search.queueId,
-      ownerId: search.ownerId,
-      status: search.status ?? DEFAULT_CASE_STATUS_FILTER,
-      sortBy: search.sortBy,
-      sortOrder: search.sortOrder,
-    }
-
-    void context.queryClient.prefetchQuery(queuesQueryOptions())
-    void context.queryClient.prefetchQuery(userDirectoryQueryOptions())
-
-    void context.queryClient.prefetchInfiniteQuery(
-      casesInfiniteQueryOptions({
-        ...deps,
-        createdAtFrom: undefined,
-        createdAtTo: undefined,
-      }),
-    )
-  },
   component: RouteComponent,
 })
 

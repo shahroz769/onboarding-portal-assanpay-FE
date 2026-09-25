@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQueryClient,
@@ -20,6 +21,7 @@ export function dashboardQueryOptions(search: DashboardRouteSearch) {
   return queryOptions({
     queryKey: [...DASHBOARD_KEY, search],
     queryFn: () => fetchDashboard(search),
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

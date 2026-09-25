@@ -37,6 +37,7 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { ScrollArea } from '#/components/ui/scroll-area'
+import { Skeleton } from '#/components/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
@@ -102,13 +103,18 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
     },
   ]
 
-export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
+const EMPTY_PENDING: DashboardPendingPortalMidLimit[] = []
+const EMPTY_APPLIED: DashboardResponse['portalMids']['appliedLimits'] = []
+
+/** Without `data`, renders the loading state with the exact loaded layout. */
+export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   const { user } = useAuth()
   const applyLimits = useApplyPortalMidLimits()
-  const pending = data.portalMids.pendingLimits
-  const appliedCsv = data.portalMids.appliedCsv
-  const appliedLimits = data.portalMids.appliedLimits
-  const appliedCount = data.portalMids.appliedLimits.length
+  const isLoading = !data
+  const pending = data?.portalMids.pendingLimits ?? EMPTY_PENDING
+  const appliedCsv = data?.portalMids.appliedCsv ?? ''
+  const appliedLimits = data?.portalMids.appliedLimits ?? EMPTY_APPLIED
+  const appliedCount = appliedLimits.length
   const appliedGroups = {
     customWordpress: appliedLimits.filter(
       (item) => item.category === 'custom_wordpress',
@@ -188,10 +194,15 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                   here until their limits are applied.
                 </TooltipContent>
               </Tooltip>
-              <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
-                {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
-                {pending.length}
-              </Badge>
+              {isLoading ? (
+                // h-5.5 = Badge height (py-0.5 + text-xs line + border)
+                <Skeleton className="h-5.5 w-9 rounded-full" />
+              ) : (
+                <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
+                  {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
+                  {pending.length}
+                </Badge>
+              )}
             </div>
             <CardDescription>
               Successful MID Creation cases pending Portal MID and internal MID
@@ -199,11 +210,18 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => setAppliedOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setAppliedOpen(true)}
+              disabled={isLoading}
+            >
               <Eye data-icon="inline-start" />
               Applied Previously
             </Button>
-            <Button onClick={() => handleOpenChange(true)} disabled={!canApply}>
+            <Button
+              onClick={() => handleOpenChange(true)}
+              disabled={isLoading || !canApply}
+            >
               <ShieldCheck data-icon="inline-start" />
               Apply Limits
             </Button>
@@ -217,6 +235,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           getRowId={(item) =>
             `${item.caseId}-${item.midKind}-${item.portalMid}`
           }
+          isLoading={isLoading}
           className="h-auto max-h-72"
           emptyContent={
             <EmptyState

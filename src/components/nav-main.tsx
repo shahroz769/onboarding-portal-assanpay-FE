@@ -149,10 +149,10 @@ function NavItem({
         <span className={labelClassName}>{item.title}</span>
         <ChevronRight
           aria-hidden="true"
-          className="ml-auto transition-[opacity,transform] duration-150 group-data-[collapsible=icon]:opacity-0 group-data-open/collapsible:rotate-90"
+          className="ml-auto transition-[opacity,rotate] duration-200 ease-out group-data-[collapsible=icon]:opacity-0 group-data-open/collapsible:rotate-90"
         />
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="motion-collapsible-content">
         <SidebarMenuSub>
           {item.items.map((subItem, index) => {
             const showGroupLabel =

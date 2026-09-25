@@ -27,6 +27,7 @@ import {
   ConfigurationPanel,
   ConfigurationSaveButton,
   ConfigurationSection,
+  ConfigurationLoadError,
 } from './configuration-panel-shared'
 
 const modes = [
@@ -47,7 +48,9 @@ const modes = [
 
 // ─── Email Sending Mode ───────────────────────────────────────────────────────
 export function EmailSendingModePanel() {
-  const { data, isPending } = useQuery(emailSendingModeQueryOptions())
+  const { data, isPending, error, refetch } = useQuery(
+    emailSendingModeQueryOptions(),
+  )
   const mutation = useUpdateEmailSendingModeMutation()
   const [form, setForm] = useState<EmailSendingMode | null>(null)
   const value = form ?? data ?? null
@@ -80,6 +83,16 @@ export function EmailSendingModePanel() {
     if (!value || hasError) return
     mutation.mutate(value, { onSuccess: () => setForm(null) })
   }
+  if (error && !data) {
+    return (
+      <ConfigurationLoadError
+        title="Email sending mode"
+        error={error}
+        onRetry={() => void refetch()}
+      />
+    )
+  }
+
   if (isPending || !value) {
     return <EmailSendingSkeleton />
   }

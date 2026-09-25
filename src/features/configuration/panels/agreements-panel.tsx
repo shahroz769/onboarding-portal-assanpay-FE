@@ -19,7 +19,9 @@ import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Agreements ─────────────────────────────────────────────────────────────
 export function AgreementsPanel() {
-  const { data, isPending } = useQuery(agreementDraftsQueryOptions())
+  const { data, isPending, error, refetch } = useQuery(
+    agreementDraftsQueryOptions(),
+  )
   const columns: DataTableColumnDef<AgreementDraft>[] = [
     {
       id: 'businessType',
@@ -73,6 +75,8 @@ export function AgreementsPanel() {
       data={data ?? []}
       getRowId={(draft) => draft.businessType}
       isLoading={isPending}
+      error={error}
+      onRetry={() => void refetch()}
       emptyContent={
         <div className="flex flex-col items-center gap-1 text-muted-foreground">
           <p className="text-sm">No business types configured.</p>

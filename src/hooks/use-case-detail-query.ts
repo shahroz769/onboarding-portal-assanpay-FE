@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import {
   queryOptions,
   useMutation,
+  usePrefetchQuery,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
@@ -96,25 +99,27 @@ export function caseHistoryQueryOptions(caseId: string) {
   })
 }
 
-export async function preloadCaseDetailPageQueries(
-  queryClient: QueryClient,
-  caseId: string,
-) {
-  const detailPromise = queryClient.ensureQueryData(
-    caseDetailQueryOptions(caseId),
-  )
-  const queueRegistryPromise =
-    import('#/features/cases/case-detail/queue-registry')
-  void queryClient.prefetchQuery(caseCommentsQueryOptions(caseId))
-  void queryClient.prefetchQuery(caseHistoryQueryOptions(caseId))
-  void queryClient.prefetchQuery(userDirectoryQueryOptions())
+/**
+ * The case page's data, fetched from the page itself. Comments, history and
+ * the user directory start in the same render as the case (not after it), and
+ * the workflow's configuration queries start as soon as the case says which
+ * workflow it is in.
+ */
+export function useCaseDetailPageQuery(caseId: string) {
+  const queryClient = useQueryClient()
+  usePrefetchQuery(caseCommentsQueryOptions(caseId))
+  usePrefetchQuery(caseHistoryQueryOptions(caseId))
+  usePrefetchQuery(userDirectoryQueryOptions())
+  const query = useQuery(caseDetailQueryOptions(caseId))
+  const workflowType = query.data?.queue.workflowType
 
-  const detail = await detailPromise
-  prefetchCaseWorkflowConfiguration(queryClient, detail.queue.workflowType)
-  const { preloadQueueRenderer } = await queueRegistryPromise
-  await preloadQueueRenderer(detail.queue.workflowType)
+  useEffect(() => {
+    if (workflowType) {
+      prefetchCaseWorkflowConfiguration(queryClient, workflowType)
+    }
+  }, [queryClient, workflowType])
 
-  return detail
+  return query
 }
 
 function prefetchCaseWorkflowConfiguration(

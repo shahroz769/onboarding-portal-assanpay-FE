@@ -3,18 +3,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { MerchantHistorySkeleton } from '#/features/merchants/merchant-details'
 import { MerchantHistoryTab } from '#/features/merchants/merchant-history-tab'
 import {
-  ensureMerchantQuery,
   merchantHistoryQueryOptions,
   useLoadedMerchantSection,
 } from '#/hooks/use-merchants-query'
 
 export const Route = createFileRoute('/_app/merchants/$merchantId/history')({
-  loader: ({ context, params }) =>
-    ensureMerchantQuery(() =>
-      context.queryClient.ensureQueryData(
-        merchantHistoryQueryOptions(params.merchantId),
-      ),
-    ),
   pendingMs: 0,
   pendingComponent: MerchantHistorySkeleton,
   component: MerchantHistoryRoute,

@@ -33,6 +33,7 @@ interface MerchantsTableState {
   filters: MerchantRouteSearch
   userRole: RoleType
   isLoading: boolean
+  error: Error | null
   totalCount: number | null
   hasNextPage: boolean
   isFetchingNextPage: boolean
@@ -48,6 +49,7 @@ interface MerchantsTableState {
 interface MerchantsTableActions {
   setFilter: (key: keyof MerchantRouteSearch, value: string | undefined) => void
   fetchNextPage: () => void
+  retry: () => void
   openPriorityDialog: (merchant: MerchantListItem) => void
   closePriorityDialog: () => void
   openBulkPriorityDialog: () => void
@@ -180,6 +182,8 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     data,
     isLoading,
     isFetching,
+    error,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -340,6 +344,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     filters,
     userRole,
     isLoading: isTableLoading,
+    error,
     totalCount,
     hasNextPage,
     isFetchingNextPage,
@@ -355,6 +360,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const actionsValue: MerchantsTableActions = {
     setFilter,
     fetchNextPage: handleFetchNextPage,
+    retry: () => void refetch(),
     openPriorityDialog: (merchant) => {
       if (merchant.status !== 'terminated') {
         setPriorityTarget({ type: 'single', merchant })

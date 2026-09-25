@@ -1,11 +1,10 @@
 import { createElement, Suspense } from 'react'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent } from '#/components/ui/card'
-import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
+import { useCaseDetailPageQuery } from '#/hooks/use-case-detail-query'
 import { cn } from '#/lib/utils'
 import { getCaseSlaStatus } from '#/lib/sla'
 import type { StatusTint } from '#/lib/status-styles'
@@ -21,7 +20,10 @@ import type {
 } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
-import { CaseQueueWorkspaceSkeleton } from './case-detail-skeletons'
+import {
+  CaseDetailShellSkeleton,
+  CaseQueueWorkspaceSkeleton,
+} from './case-detail-skeletons'
 import { getQueueRenderer, resolveQueueWorkflowType } from './queue-registry'
 import { DocumentsReviewDraftProvider } from './renderers/documents-review-draft-context'
 
@@ -30,7 +32,18 @@ interface CaseDetailShellProps {
 }
 
 export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
-  const { data } = useSuspenseQuery(caseDetailQueryOptions(caseId))
+  const detailQuery = useCaseDetailPageQuery(caseId)
+  const data = detailQuery.data
+
+  if (detailQuery.error && !data) {
+    // Handled by the route's errorComponent (404 renders "Case not found").
+    throw detailQuery.error
+  }
+
+  if (!data) {
+    return <CaseDetailShellSkeleton />
+  }
+
   const workflowType = resolveQueueWorkflowType(data.queue)
   const queueRenderer = getQueueRenderer(workflowType)
   const merchantName =

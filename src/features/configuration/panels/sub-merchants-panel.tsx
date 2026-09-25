@@ -50,7 +50,9 @@ import { getDraftFileError } from './configuration-panel-utils'
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {
-  const { data, isPending } = useQuery(subMerchantDraftsQueryOptions())
+  const { data, isPending, error, refetch } = useQuery(
+    subMerchantDraftsQueryOptions(),
+  )
   type SubMerchant = NonNullable<typeof data>[number]
   const existingNames = new Set(
     (data ?? []).map((item) => item.name.trim().toLowerCase()),
@@ -124,6 +126,8 @@ export function SubMerchantsPanel() {
         data={data ?? []}
         getRowId={(item) => item.id}
         isLoading={isPending}
+        error={error}
+        onRetry={() => void refetch()}
         emptyContent={
           <EmptyState
             icon={Store}

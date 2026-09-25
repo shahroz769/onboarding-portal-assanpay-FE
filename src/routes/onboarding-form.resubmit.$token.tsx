@@ -13,15 +13,9 @@ export const Route = createFileRoute('/onboarding-form/resubmit/$token')({
     parse: ({ token }) => ({ token: parseTokenParam(token) }),
   },
   notFoundComponent: ResubmissionLinkNotFound,
-  loader: async ({ context, params }) => {
-    try {
-      await context.queryClient.ensureQueryData(
-        resubmissionContextQueryOptions(params.token),
-      )
-    } catch {
-      // Component will handle the error via useSuspenseQuery
-    }
-  },
+  // No loader: ResubmissionContent fetches the context itself and renders its
+  // own loading and error states. (A loader fetch here made a failed token
+  // request twice, since the page's query refetches an errored query.)
   component: ResubmissionRoute,
 })
 

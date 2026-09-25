@@ -166,6 +166,8 @@ function Grid() {
       getRowId={(m) => m.id}
       selectedIds={meta.selectedIdSet}
       isLoading={state.isLoading}
+      error={state.error}
+      onRetry={actions.retry}
       onScrollEnd={actions.fetchNextPage}
       isFetchingMore={state.isFetchingNextPage}
       hasMore={state.hasNextPage}

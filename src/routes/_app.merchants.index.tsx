@@ -2,11 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { MerchantsTableComposed } from '#/features/merchants/merchants-table'
-import { merchantsInfiniteQueryOptions } from '#/hooks/use-merchants-query'
-import {
-  DEFAULT_MERCHANT_STATUS_FILTER,
-  merchantRouteSearchSchema,
-} from '#/schemas/merchants.schema'
+import { merchantRouteSearchSchema } from '#/schemas/merchants.schema'
 
 export const Route = createFileRoute('/_app/merchants/')({
   staticData: {
@@ -17,28 +13,6 @@ export const Route = createFileRoute('/_app/merchants/')({
   validateSearch: merchantRouteSearchSchema,
   pendingMs: 0,
   pendingComponent: MerchantsRoutePending,
-  // Search params are read here instead of via loaderDeps: loaderDeps would
-  // create a new pending match per keystroke and unmount the filter toolbar.
-  loader: async ({ context, location }) => {
-    const search = merchantRouteSearchSchema.parse(location.search)
-    const deps = {
-      search: search.search,
-      status: search.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
-      priority: search.priority,
-      businessScope: search.businessScope,
-      currency: search.currency,
-      sortBy: search.sortBy,
-      sortOrder: search.sortOrder,
-    }
-
-    void context.queryClient.prefetchInfiniteQuery(
-      merchantsInfiniteQueryOptions({
-        ...deps,
-        createdAtFrom: undefined,
-        createdAtTo: undefined,
-      }),
-    )
-  },
   component: RouteComponent,
 })
 

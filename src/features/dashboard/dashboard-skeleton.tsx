@@ -1,93 +1,93 @@
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
-import { cn } from '#/lib/utils'
+import { DashboardKpiCards } from './dashboard-kpi-cards'
+import { DashboardPortalMids } from './dashboard-portal-mids'
+import { DASHBOARD_CHARTS } from './dashboard-utils'
 
-function KpiSectionSkeleton({ titleWidth }: { titleWidth: string }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <Skeleton className={cn('h-4', titleWidth)} />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Card key={index} className="gap-0 py-4">
-            <CardHeader className="px-4">
-              <Skeleton className="h-3.5 w-24 max-w-full" />
-            </CardHeader>
-            <CardContent className="px-4">
-              <Skeleton className="h-8 w-10" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function ChartCardSkeleton({
-  className,
-  titleWidth,
-  descriptionWidth,
-  chartClassName,
+// Mirrors HeaderStat in dashboard-charts.tsx: the label is real text so its
+// line box matches; the value/hint skeletons equal their leading-none heights.
+function HeaderStatSkeleton({
+  label,
+  hasHint = false,
 }: {
-  className?: string
-  titleWidth: string
-  descriptionWidth: string
-  chartClassName: string
+  label: string
+  hasHint?: boolean
 }) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <Skeleton className={cn('h-5', titleWidth)} />
-        <Skeleton className={cn('h-4 max-w-full', descriptionWidth)} />
-      </CardHeader>
-      <CardContent>
-        <Skeleton
-          className={cn('aspect-auto w-full rounded-md', chartClassName)}
-        />
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-1">
+      <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+        {label}
+      </span>
+      {/* h-4.5 = text-lg leading-none */}
+      <Skeleton className="h-4.5 w-8 self-end" />
+      {/* h-2.75 = text-[11px] leading-none */}
+      {hasHint ? <Skeleton className="h-2.75 w-12 self-end" /> : null}
+    </div>
   )
 }
 
-function PortalMidsSkeleton() {
+// Mirrors DailyCountBarChart's markup (recharts can't render until its lazy
+// chunk arrives, so this can't reuse the real component like the others).
+function ChartCardSkeleton({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
   return (
     <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <Skeleton className="h-12 w-full rounded-md" />
-        <div className="flex justify-end gap-2">
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-28" />
+      <CardHeader className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-1.5">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </div>
+        <div className="flex flex-col items-end gap-3">
+          {/* h-9 = the rendered TabsList height (the horizontal-tabs h-9 rule
+              outranks the chart's h-7) */}
+          <Skeleton className="h-9 w-30 rounded-lg" />
+          <div className="flex items-start gap-5 text-right">
+            <HeaderStatSkeleton label="Total" />
+            <HeaderStatSkeleton label="Daily avg" />
+            <HeaderStatSkeleton label="Peak" hasHint />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-64 w-full rounded-md" />
       </CardContent>
     </Card>
   )
 }
 
+export function DashboardChartsSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {DASHBOARD_CHARTS.map((chart) => (
+        <ChartCardSkeleton
+          key={chart.key}
+          title={chart.title}
+          description={chart.description}
+        />
+      ))}
+    </div>
+  )
+}
+
+// KPI cards and portal MIDs render their own loading state, so their layout
+// is identical to the loaded page by construction.
 export function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-6">
-        <KpiSectionSkeleton titleWidth="w-12" />
-        <KpiSectionSkeleton titleWidth="w-20" />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCardSkeleton
-          titleWidth="w-36"
-          descriptionWidth="w-56"
-          chartClassName="h-64"
-        />
-        <ChartCardSkeleton
-          titleWidth="w-40"
-          descriptionWidth="w-64"
-          chartClassName="h-64"
-        />
-      </div>
-
-      <PortalMidsSkeleton />
+      <DashboardKpiCards />
+      <DashboardChartsSkeleton />
+      <DashboardPortalMids />
     </div>
   )
 }

@@ -1,14 +1,18 @@
 import {
   createFileRoute,
   Link,
-  notFound,
   useNavigate,
   useRouter,
 } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { AlertCircle, Clock3 } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
@@ -38,33 +42,24 @@ export const Route = createFileRoute('/set-password/$token')({
   params: {
     parse: ({ token }) => ({ token: parseTokenParam(token) }),
   },
-  loader: async ({ params }) => {
-    try {
-      return await fetchPasswordToken(params.token)
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw notFound()
-        }
-
-        if (error.response?.status === 410) {
-          throw new Error('PASSWORD_TOKEN_EXPIRED')
-        }
-      }
-
-      throw error
-    }
-  },
+  // No loader: the page fetches the token itself and renders its own
+  // loading, not-found and expired states.
   component: RouteComponent,
   errorComponent: PasswordTokenError,
   notFoundComponent: PasswordTokenNotFound,
 })
 
+function passwordTokenQueryOptions(token: string) {
+  return queryOptions({
+    queryKey: ['password-token', token] as const,
+    queryFn: () => fetchPasswordToken(token),
+  })
+}
+
 function RouteComponent() {
-  const tokenContext = Route.useLoaderData()
   const { token } = Route.useParams()
+  const tokenQuery = useQuery(passwordTokenQueryOptions(token))
   const navigate = useNavigate()
-  const router = useRouter()
   const queryClient = useQueryClient()
   const setPasswordMutation = useMutation({
     mutationFn: (value: { password: string; confirmPassword: string }) =>
@@ -76,7 +71,8 @@ function RouteComponent() {
     },
     onError: (error) => {
       if (axios.isAxiosError(error) && error.response?.status === 410) {
-        void router.invalidate()
+        // Re-check the token so the page switches to the expired state.
+        void tokenQuery.refetch()
         return
       }
 
@@ -96,6 +92,32 @@ function RouteComponent() {
       await setPasswordMutation.mutateAsync(value)
     },
   })
+
+  const tokenContext = tokenQuery.data
+
+  if (tokenQuery.error && !tokenContext) {
+    if (
+      axios.isAxiosError(tokenQuery.error) &&
+      tokenQuery.error.response?.status === 404
+    ) {
+      return <PasswordTokenNotFound />
+    }
+
+    return (
+      <PasswordTokenError
+        error={tokenQuery.error}
+        onRetry={() => void tokenQuery.refetch()}
+      />
+    )
+  }
+
+  if (!tokenContext) {
+    return (
+      <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
+        <Spinner className="size-6" />
+      </main>
+    )
+  }
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
@@ -208,12 +230,13 @@ function PasswordTokenNotFound() {
   )
 }
 
-function PasswordTokenError({ error }: ErrorComponentProps) {
+function PasswordTokenError({
+  error,
+  onRetry,
+}: Pick<ErrorComponentProps, 'error'> & { onRetry?: () => void }) {
   const router = useRouter()
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  const isExpired =
-    status === 410 ||
-    (error instanceof Error && error.message === 'PASSWORD_TOKEN_EXPIRED')
+  const isExpired = status === 410
 
   if (isExpired) {
     return (
@@ -233,7 +256,9 @@ function PasswordTokenError({ error }: ErrorComponentProps) {
       title="Unable to open password link"
       description="We could not verify this link right now. Please try again."
       extraAction={
-        <Button onClick={() => router.invalidate()}>Try again</Button>
+        <Button onClick={onRetry ?? (() => void router.invalidate())}>
+          Try again
+        </Button>
       }
     />
   )

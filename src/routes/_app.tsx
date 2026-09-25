@@ -5,6 +5,7 @@ import {
   createFileRoute,
   useRouterState,
 } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { AppSidebar } from '#/components/app-sidebar'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
@@ -32,6 +33,8 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { PageHeaderActionsContext } from '#/hooks/use-page-header-actions'
+import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
+import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app')({
@@ -78,17 +81,24 @@ function AppLayout() {
   const caseDetailMatch = matches.find(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
-  const caseDetail = caseDetailMatch?.loaderData as
-    | {
-        case?: { caseNumber?: string }
-        queue?: { id?: string; name?: string }
-      }
-    | undefined
   const merchantDetailMatch = matches.find(
     (match) => match.routeId === '/_app/merchants/$merchantId',
   )
-  const merchantHeader = merchantDetailMatch?.loaderData as
-    { businessName?: string } | undefined
+  // Breadcrumb labels come from the detail pages' own queries. `enabled:
+  // false` only reads the shared cache: the layout never sends a request.
+  const caseId = (caseDetailMatch?.params as { caseId?: string } | undefined)
+    ?.caseId
+  const merchantId = (
+    merchantDetailMatch?.params as { merchantId?: string } | undefined
+  )?.merchantId
+  const { data: caseDetail } = useQuery({
+    ...caseDetailQueryOptions(caseId ?? ''),
+    enabled: false,
+  })
+  const { data: merchantHeader } = useQuery({
+    ...merchantHeaderQueryOptions(merchantId ?? ''),
+    enabled: false,
+  })
 
   return (
     <SidebarProvider>

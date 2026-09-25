@@ -33,6 +33,7 @@ interface CasesTableState {
   hideStatusFilter: boolean
   userRole: RoleType
   isLoading: boolean
+  error: Error | null
   totalCount: number | null
   hasNextPage: boolean
   isFetchingNextPage: boolean
@@ -50,6 +51,7 @@ interface CasesTableState {
 interface CasesTableActions {
   setFilter: (key: keyof CaseRouteSearch, value: string | undefined) => void
   fetchNextPage: () => void
+  retry: () => void
   setBulkAssignOwnerId: (value: string | null) => void
   submitBulkAssign: () => void
   openAssignOwnerDialog: (item: CaseListItem) => void
@@ -142,6 +144,8 @@ function CasesTableProviderState({
     data,
     isLoading,
     isFetching,
+    error,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -269,6 +273,7 @@ function CasesTableProviderState({
     hideStatusFilter,
     userRole,
     isLoading: isTableLoading,
+    error,
     totalCount,
     hasNextPage,
     isFetchingNextPage,
@@ -286,6 +291,7 @@ function CasesTableProviderState({
   const actionsValue: CasesTableActions = {
     setFilter,
     fetchNextPage: handleFetchNextPage,
+    retry: () => void refetch(),
     setBulkAssignOwnerId: (value) => {
       setBulkAssignOwnerId(value)
       setBulkAssignError(null)

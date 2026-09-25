@@ -1,15 +1,12 @@
 import { AxiosError } from 'axios'
 import type { ReactNode } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, FileQuestion, RefreshCw } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { MerchantDetailsLayout } from '#/features/merchants/merchant-details'
-import {
-  ensureMerchantQuery,
-  merchantHeaderQueryOptions,
-} from '#/hooks/use-merchants-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { parseUuidParam } from '#/lib/route-params'
 
@@ -21,12 +18,9 @@ export const Route = createFileRoute('/_app/merchants/$merchantId')({
     title: 'Merchant Details',
     hidePageShell: true,
   },
-  loader: ({ context, params }) =>
-    ensureMerchantQuery(() =>
-      context.queryClient.ensureQueryData(
-        merchantHeaderQueryOptions(params.merchantId),
-      ),
-    ),
+  // No loader: MerchantDetailsLayout and each tab fetch their own data (in
+  // parallel, since the layout renders the tab without waiting for its
+  // header). Query errors thrown from them land in MerchantDetailsError.
   errorComponent: MerchantDetailsError,
   notFoundComponent: MerchantDetailsNotFound,
   component: MerchantDetailsLayoutRoute,
@@ -59,6 +53,12 @@ function MerchantDetailsNotFound() {
 
 function MerchantDetailsError({ error }: { error: unknown }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  if (error instanceof AxiosError && error.response?.status === 404) {
+    return <MerchantDetailsNotFound />
+  }
+
   const isForbidden =
     error instanceof AxiosError && error.response?.status === 403
   const title = isForbidden ? 'Access denied' : 'Merchant could not be loaded'
@@ -80,6 +80,10 @@ function MerchantDetailsError({ error }: { error: unknown }) {
         <Button
           type="button"
           onClick={() => {
+            // Reset the failed query so the page requests it again.
+            void queryClient.resetQueries({
+              predicate: (query) => query.state.status === 'error',
+            })
             void router.invalidate()
           }}
         >

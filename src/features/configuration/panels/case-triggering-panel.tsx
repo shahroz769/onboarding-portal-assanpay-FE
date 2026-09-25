@@ -32,6 +32,7 @@ import {
   useCreateCaseMutation,
 } from '#/hooks/use-cases-query'
 
+import { useDebouncedValue } from '#/hooks/use-debounced-value'
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
 import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 
@@ -41,6 +42,7 @@ import type { SubMerchantOption } from '#/schemas/configuration.schema'
 import { CaseTriggeringSkeleton } from '../configuration-route-skeleton'
 import {
   ConfigurationHeaderActions,
+  ConfigurationLoadError,
   ConfigurationPanel,
   ConfigurationSection,
   QueueSelect,
@@ -54,7 +56,11 @@ export function CaseTriggeringPanel() {
   const [queueId, setQueueId] = useState('')
   const [selectedSubMerchant, setSelectedSubMerchant] =
     useState<SubMerchantOption | null>(null)
-  const merchantsQuery = useQuery(merchantOptionsQueryOptions(merchantSearch))
+  // Debounced so typing sends one request after a pause, not one per key.
+  const debouncedMerchantSearch = useDebouncedValue(merchantSearch)
+  const merchantsQuery = useQuery(
+    merchantOptionsQueryOptions(debouncedMerchantSearch),
+  )
   const queuesQuery = useQuery(queuesQueryOptions({ includeInactive: true }))
   const subMerchantsQuery = useQuery(subMerchantOptionsQueryOptions())
   const createCase = useCreateCaseMutation()
@@ -88,6 +94,22 @@ export function CaseTriggeringPanel() {
       },
     )
   }
+  const loadError =
+    merchantsQuery.error ?? queuesQuery.error ?? subMerchantsQuery.error
+  if (loadError && (!merchantsQuery.data || !queuesQuery.data)) {
+    return (
+      <ConfigurationLoadError
+        title="Case triggering"
+        error={loadError}
+        onRetry={() => {
+          void merchantsQuery.refetch()
+          void queuesQuery.refetch()
+          void subMerchantsQuery.refetch()
+        }}
+      />
+    )
+  }
+
   if (
     merchantsQuery.isPending ||
     queuesQuery.isPending ||

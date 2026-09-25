@@ -1,7 +1,12 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { AxiosError } from 'axios'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { usePrefetchQuery, useQuery } from '@tanstack/react-query'
+import { FileQuestion } from 'lucide-react'
 
-import { UserForm } from '#/features/users/user-form'
+import { DefaultRouteError } from '#/components/default-route-error'
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { ButtonLink } from '#/components/ui/button'
+import { UserForm, UserFormSkeleton } from '#/features/users/user-form'
 import { useAuth } from '#/features/auth/auth-client'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import {
@@ -19,12 +24,8 @@ export const Route = createFileRoute('/_app/user-management/users/$userId')({
     title: 'Edit User',
     subtitle: 'Update employee details, status, and queue access.',
   },
-  loader: async ({ context, params }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(queuesQueryOptions()),
-      context.queryClient.ensureQueryData(userQueryOptions(params.userId)),
-    ])
-  },
+  pendingMs: 0,
+  pendingComponent: UserFormSkeleton,
   component: RouteComponent,
 })
 
@@ -32,8 +33,33 @@ function RouteComponent() {
   const { userId } = Route.useParams()
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
-  const { data: user } = useSuspenseQuery(userQueryOptions(userId))
+  // UserForm reads queues itself; start that request now, alongside the user,
+  // instead of after the user arrives and the form mounts.
+  usePrefetchQuery(queuesQueryOptions())
+  const userQuery = useQuery(userQueryOptions(userId))
   const updateUserMutation = useUpdateUserMutation(userId)
+  const user = userQuery.data
+
+  if (userQuery.error && !user) {
+    if (
+      userQuery.error instanceof AxiosError &&
+      userQuery.error.response?.status === 404
+    ) {
+      return <UserNotFound userId={userId} />
+    }
+
+    return (
+      <DefaultRouteError
+        error={userQuery.error}
+        onRetry={() => void userQuery.refetch()}
+      />
+    )
+  }
+
+  if (!user) {
+    return <UserFormSkeleton />
+  }
+
   const adminViewingSuperAdmin =
     currentUser?.roleType === 'admin' && user.roleType === 'super_admin'
 
@@ -59,5 +85,23 @@ function RouteComponent() {
           : undefined
       }
     />
+  )
+}
+
+function UserNotFound({ userId }: { userId: string }) {
+  return (
+    <div className="flex max-w-2xl flex-col items-start gap-4">
+      <Alert variant="warning">
+        <FileQuestion />
+        <AlertTitle>User not found</AlertTitle>
+        <AlertDescription>
+          User {userId} could not be found. They may have been removed or you
+          may be using an old link.
+        </AlertDescription>
+      </Alert>
+      <ButtonLink variant="outline" render={<Link to="/user-management" />}>
+        Back to users
+      </ButtonLink>
+    </div>
   )
 }

@@ -85,17 +85,28 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 - **Impact:** Anyone who knows the merchant's email local-part and (sequential) merchant number — both present in emails the merchant receives — can derive the password without ever seeing the credential email. No randomness, no forced first-login rotation, and it's recomputed on demand so it can never be rotated. Effectively a publicly-computable credential guarding a financial portal.
 - **Fix:** Generate a random secret, store it hashed, force rotation on first login.
 
-**HIGH-02 — One shared rate-limit bucket for all users by default (trivial DoS)** · 🟠 High · Backend
+**HIGH-02 — One shared rate-limit bucket for all users by default (trivial DoS)** · 🟠 High · Backend · ✅ **Fixed**
 📍 `be/src/lib/client-ip.ts:6-8`, `be/src/index.ts:45-55`, `be/src/modules/auth/auth.routes.ts:43-52`
 - **What:** `getClientIp()` returns the constant `'untrusted-proxy'` when `TRUST_PROXY_HEADERS` is false (the documented default), and both the public limiter (60/15min) and login limiter (15/15min) key on it — so every client on the internet shares one 15-request login bucket. Additionally, `hono-rate-limiter` uses an in-memory `MemoryStore`, so multi-process deployments get per-process buckets: the limit is neither global nor correct.
 - **Impact:** One aggressive client locks *everyone* out of login and public submission. Multi-instance deployments have no coherent limiting at all.
 - **Fix:** Default to the connecting socket IP (or key by authenticated user); use a shared store (Redis) for multi-instance.
+- **Resolution (2026-09-25):** Confirmed live on staging: two clients with different IPs drew from one counter. Fixed in the backend:
+  - `getClientIp()` now uses the socket IP (`getConnInfo` from `hono/bun`) when proxy headers aren't trusted, or when no proxy header is present, instead of the shared `'untrusted-proxy'` / `'unknown'` strings. Session audit IPs are fixed as a side effect.
+  - `TRUST_PROXY_HEADERS` now defaults to `true`, because production sits behind Cloudflare (`CF-Connecting-IP`). Requests with no proxy header still fall back to the socket IP.
+  - Login gets a second per-account limit: 10 failed attempts per 15 min, successful sign-ins not counted.
+  - Verified: separate clients now get separate counters.
+  - **Remaining:** limit counters are still in memory, so a shared Redis store is needed before running more than one instance. The origin should accept only Cloudflare IP ranges, or `CF-Connecting-IP` can be spoofed by calling the server directly.
 
-**HIGH-03 — Queue *work access* is imported but never enforced on case mutations** · 🟠 High · Backend
+**HIGH-03 — Queue *work access* is imported but never enforced on case mutations** · 🟠 High · Backend · ✅ **Fixed**
 📍 `be/src/modules/cases/case-access.service.ts:60-78` (helper) — imported unused in 9 workflow service files; only `be/src/modules/cases/case-comments.service.ts:190` calls it
 - **What:** The repo's own rule (AGENTS.md) is "mutations require queue work access + ownership". Mutations check only ownership (`case-communications.service.ts:275,403`; `case-documents-review.service.ts:626`; `case-stage.service.ts:225-230,305-307`). Only `takeOwnership` enforces work access (`case-assignment.service.ts:760`).
 - **Impact:** If an agent's queue work access is revoked while they remain case owner (normal off-boarding), they keep full mutation power — sending credential emails, saving MIDs, uploading proofs — until manually unassigned.
 - **Fix:** Enforce `assertCanWorkCase` / `requireWorkAccess` on all case mutations; centralize into a single `authorize(caseId, action)` entry point.
+- **Resolution (2026-09-25):** Confirmed: 17 owner-only checks across 9 case services, and `updateUser` replaced queue access without touching owned cases. Fixed in the backend:
+  - `assertCanWorkCase(caseId, userId)` now runs after every one of the 17 ownership checks (stage/status/close, MID and limits saves, credential/live/resubmission emails, field reviews, and so on). Agents without work access get 403; admins are unaffected.
+  - `updateUser` now rejects (409, naming the queues and case counts) any role or queue-access change that would leave an agent owning open cases in queues they can no longer work. Deactivation is always allowed.
+  - Staging was checked: no existing agent owns open cases outside their work access.
+  - **Not done:** consolidating into one `authorize(caseId, action)` entry point. **Before deploying**, run the same stranded-case query on production.
 
 **HIGH-04 — Generic status endpoint allows jumps that bypass workflow close validation** · 🟠 High · Backend
 📍 `be/src/modules/cases/cases.schemas.ts:45-64`, `be/src/modules/cases/case-transition.service.ts:~190-197`
@@ -393,11 +404,11 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 - [ ] **CRT-01 / CRT-02:** Narrow `try/catch` in `createMerchantSubmission` and public resubmission so post-commit bookkeeping can never trigger Drive file deletion. Add regression tests.
 - [ ] **CRT-03:** Move Google Drive deletions after transaction commit in `permanentlyDeleteMerchant`.
 - [ ] **HIGH-01:** Replace deterministic portal password with a random secret (hashed at rest, forced rotation on first login).
-- [ ] **HIGH-02:** Fix rate limiting — real per-client keys by default, shared store for multi-instance.
+- [x] **HIGH-02:** ✅ Fixed — per-client keys (socket IP / `CF-Connecting-IP`, trusted by default) plus a per-account failed-login limit. Shared store for multi-instance still to do.
 - [ ] **HIGH-05:** Add idempotency to `POST /api/public/merchant-form`.
 
 ### P1 — Fix before scaling / shortly after launch
-- [ ] **HIGH-03:** Enforce `assertCanWorkCase` / `requireWorkAccess` on all case mutations.
+- [x] **HIGH-03:** ✅ Fixed — work access enforced on all 17 case mutations; access changes that would strand an agent's open cases are rejected.
 - [ ] **HIGH-04:** Restrict `PATCH /api/cases/:id/status` to validated transitions; fix `statusOrder` for `awaiting_client`.
 - [ ] **HIGH-06:** Add recovery/retry path + watchdog for stuck `awaiting_client` resubmissions.
 - [ ] **HIGH-07:** `queryClient.clear()` + stop SSE on logout/session expiry.

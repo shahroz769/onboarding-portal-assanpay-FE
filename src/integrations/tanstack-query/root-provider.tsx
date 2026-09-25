@@ -28,6 +28,18 @@ export function getContext() {
   })
   const auth = createAuthClient()
 
+  // Cache keys aren't user-scoped, so a different user signing in (login or a
+  // cookie refresh) must never see the previous user's cached data.
+  let lastUserId: string | null = null
+  auth.subscribe(() => {
+    const userId = auth.getSnapshot().user?.id ?? null
+    if (!userId) return
+    if (lastUserId !== null && userId !== lastUserId) {
+      queryClient.clear()
+    }
+    lastUserId = userId
+  })
+
   setApiClientAuth(auth)
 
   return {

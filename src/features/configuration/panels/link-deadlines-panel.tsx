@@ -25,6 +25,7 @@ import {
   ConfigurationPanel,
   ConfigurationSaveButton,
   ConfigurationSection,
+  ConfigurationLoadError,
 } from './configuration-panel-shared'
 import {
   getValidationErrors,
@@ -51,13 +52,25 @@ const fields = [
 
 // ─── Link Deadlines ─────────────────────────────────────────────────────────
 export function LinkDeadlinesPanel() {
-  const { data, isPending } = useQuery(linkDeadlinesQueryOptions())
+  const { data, isPending, error, refetch } = useQuery(
+    linkDeadlinesQueryOptions(),
+  )
   const mutation = useUpdateLinkDeadlinesMutation()
   const [form, setForm] = useState<LinkDeadlineSettings | null>(null)
   const value = form ?? data ?? null
   const validationErrors = value
     ? getValidationErrors(linkDeadlineSettingsSchema.safeParse(value))
     : {}
+
+  if (error && !data) {
+    return (
+      <ConfigurationLoadError
+        title="Link deadlines"
+        error={error}
+        onRetry={() => void refetch()}
+      />
+    )
+  }
 
   if (isPending || !value) {
     return <LinkDeadlinesSkeleton />

@@ -50,6 +50,17 @@ import {
   ComboboxList,
 } from '#/components/ui/combobox'
 import { Alert, AlertDescription } from '#/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Separator } from '#/components/ui/separator'
 import {
   Field,
@@ -309,6 +320,7 @@ export function MerchantOnboardingForm({
     Partial<Record<DocumentFieldName, string>>
   >({})
   const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const submitMerchantOnboardingMutation = useSubmitMerchantOnboardingMutation()
 
   const form = useForm({
@@ -1551,10 +1563,33 @@ export function MerchantOnboardingForm({
           <AlertDescription>{submissionError}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={resetFormState}>
-          Reset
-        </Button>
+      <div className="flex justify-between gap-3">
+        <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+          <AlertDialogTrigger render={<Button type="button" variant="ghost" />}>
+            Reset
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear the whole application?</AlertDialogTitle>
+              <AlertDialogDescription>
+                All entered details, uploaded documents, and the saved draft
+                will be deleted. This can't be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={() => {
+                  resetFormState()
+                  setResetDialogOpen(false)
+                }}
+              >
+                Clear application
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" disabled={isSubmitting}>
