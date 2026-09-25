@@ -109,7 +109,10 @@ export function createMerchantColumns({
         />
       ),
       cell: (merchant) => (
-        <span className="max-w-50 truncate font-medium">
+        <span
+          className="block max-w-52 truncate font-medium"
+          title={merchant.businessName}
+        >
           {merchant.businessName}
         </span>
       ),
