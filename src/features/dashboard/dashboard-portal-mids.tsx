@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 import {
   CheckCircle2,
@@ -224,7 +224,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           </DialogHeader>
 
           {appliedCount > 0 ? (
-            <ScrollArea viewportClassName="max-h-[60vh]">
+            <ScrollArea viewportClassName="max-h-[min(60vh,calc(100dvh-16rem))]">
               <div className="flex flex-col gap-4 pr-3">
                 <AppliedMidSection
                   title="Custom/WordPress"
@@ -314,7 +314,7 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
                 id="portal-mids"
                 value={value}
                 aria-invalid={Boolean(error)}
-                className="min-h-32 font-mono"
+                className="max-h-64 min-h-32 font-mono"
                 placeholder="1,2,5,8,9001,9002"
                 disabled={applyLimits.isPending}
                 onChange={(event) => {
@@ -362,7 +362,20 @@ function AppliedMidSection({ title, mids }: { title: string; mids: number[] }) {
         <Badge variant="outline">{mids.length}</Badge>
       </div>
       {mids.length > 0 ? (
-        <p className="wrap-break-word font-mono text-sm">{mids.join(',')}</p>
+        // <wbr> lets the list wrap after any comma without adding characters
+        // to copied text; wrap-anywhere covers a single oversized MID.
+        <p className="font-mono text-sm wrap-anywhere">
+          {mids.map((mid, index) => (
+            <Fragment key={`${mid}-${index}`}>
+              {index > 0 ? (
+                <>
+                  ,<wbr />
+                </>
+              ) : null}
+              {mid}
+            </Fragment>
+          ))}
+        </p>
       ) : (
         <p className="text-sm text-muted-foreground">No applied MIDs.</p>
       )}

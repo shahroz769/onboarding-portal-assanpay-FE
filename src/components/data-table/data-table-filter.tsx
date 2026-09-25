@@ -1,8 +1,17 @@
+import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { CheckIcon, PlusCircleIcon } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '#/components/ui/combobox'
 import {
   Popover,
   PopoverContent,
@@ -21,6 +30,56 @@ interface DataTableFilterProps {
   options: FilterOption[]
   selectedValues: Set<string>
   onChange: (values: Set<string>) => void
+  /** Adds a search input and a scrollable list, for long or growing option lists. */
+  searchable?: boolean
+}
+
+function DataTableFilterLabel({
+  title,
+  options,
+  selectedValues,
+}: Pick<DataTableFilterProps, 'title' | 'options' | 'selectedValues'>) {
+  return (
+    <>
+      <PlusCircleIcon data-icon="inline-start" />
+      {title}
+      {selectedValues.size > 0 && (
+        <>
+          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Badge
+            variant="secondary"
+            className="rounded-sm px-1 font-normal lg:hidden"
+          >
+            {selectedValues.size}
+          </Badge>
+          <div className="hidden gap-1 lg:flex">
+            {selectedValues.size > 2 ? (
+              <Badge
+                variant="secondary"
+                className="rounded-sm px-1 font-normal"
+              >
+                {selectedValues.size} selected
+              </Badge>
+            ) : (
+              options.flatMap((option) =>
+                selectedValues.has(option.value)
+                  ? [
+                      <Badge
+                        key={option.value}
+                        variant="secondary"
+                        className="rounded-sm px-1 font-normal"
+                      >
+                        {option.label}
+                      </Badge>,
+                    ]
+                  : [],
+              )
+            )}
+          </div>
+        </>
+      )}
+    </>
+  )
 }
 
 export function DataTableFilter({
@@ -28,7 +87,19 @@ export function DataTableFilter({
   options,
   selectedValues,
   onChange,
+  searchable = false,
 }: DataTableFilterProps) {
+  if (searchable) {
+    return (
+      <SearchableDataTableFilter
+        title={title}
+        options={options}
+        selectedValues={selectedValues}
+        onChange={onChange}
+      />
+    )
+  }
+
   const toggleValue = (value: string) => {
     const next = new Set(selectedValues)
     if (next.has(value)) {
@@ -48,43 +119,11 @@ export function DataTableFilter({
           <Button variant="outline" size="sm" className="border-dashed" />
         }
       >
-        <PlusCircleIcon data-icon="inline-start" />
-        {title}
-        {selectedValues.size > 0 && (
-          <>
-            <Separator orientation="vertical" className="mx-1 h-4" />
-            <Badge
-              variant="secondary"
-              className="rounded-sm px-1 font-normal lg:hidden"
-            >
-              {selectedValues.size}
-            </Badge>
-            <div className="hidden gap-1 lg:flex">
-              {selectedValues.size > 2 ? (
-                <Badge
-                  variant="secondary"
-                  className="rounded-sm px-1 font-normal"
-                >
-                  {selectedValues.size} selected
-                </Badge>
-              ) : (
-                options.flatMap((option) =>
-                  selectedValues.has(option.value)
-                    ? [
-                        <Badge
-                          key={option.value}
-                          variant="secondary"
-                          className="rounded-sm px-1 font-normal"
-                        >
-                          {option.label}
-                        </Badge>,
-                      ]
-                    : [],
-                )
-              )}
-            </div>
-          </>
-        )}
+        <DataTableFilterLabel
+          title={title}
+          options={options}
+          selectedValues={selectedValues}
+        />
       </PopoverTrigger>
       <PopoverContent className="w-52 p-0" align="start">
         <div className="flex flex-col gap-0.5 p-1">
@@ -135,5 +174,74 @@ export function DataTableFilter({
         )}
       </PopoverContent>
     </Popover>
+  )
+}
+
+function SearchableDataTableFilter({
+  title,
+  options,
+  selectedValues,
+  onChange,
+}: Omit<DataTableFilterProps, 'searchable'>) {
+  const selectedOptions = options.filter((option) =>
+    selectedValues.has(option.value),
+  )
+
+  return (
+    <Combobox
+      multiple
+      autoHighlight
+      items={options}
+      value={selectedOptions}
+      itemToStringLabel={(option: FilterOption) => option.label}
+      itemToStringValue={(option: FilterOption) => option.value}
+      isItemEqualToValue={(item: FilterOption, selected: FilterOption) =>
+        item.value === selected.value
+      }
+      onValueChange={(next: FilterOption[]) =>
+        onChange(new Set(next.map((option) => option.value)))
+      }
+    >
+      <ComboboxPrimitive.Trigger
+        render={
+          <Button variant="outline" size="sm" className="border-dashed" />
+        }
+      >
+        <DataTableFilterLabel
+          title={title}
+          options={options}
+          selectedValues={selectedValues}
+        />
+      </ComboboxPrimitive.Trigger>
+      <ComboboxContent align="start" className="w-60 min-w-60">
+        <ComboboxInput
+          showTrigger={false}
+          placeholder={`Search ${title.toLowerCase()}...`}
+        />
+        <ComboboxEmpty>No results found.</ComboboxEmpty>
+        <ComboboxList className="max-h-72">
+          {(option: FilterOption) => (
+            <ComboboxItem key={option.value} value={option}>
+              {option.icon && <option.icon className="text-muted-foreground" />}
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+        {selectedValues.size > 0 && (
+          <>
+            <Separator />
+            <div className="p-1">
+              <button
+                type="button"
+                onClick={() => onChange(new Set())}
+                className="w-full cursor-default rounded-sm px-2 py-1.5 text-center text-sm outline-hidden hover:bg-accent hover:text-accent-foreground"
+              >
+                Clear filters
+              </button>
+            </div>
+          </>
+        )}
+      </ComboboxContent>
+    </Combobox>
   )
 }

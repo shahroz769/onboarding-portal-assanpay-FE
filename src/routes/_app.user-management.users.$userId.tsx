@@ -40,7 +40,7 @@ function RouteComponent() {
     void email
     void username
     await updateUserMutation.mutateAsync({ userId, input })
-    await navigate({ to: '/user-management/all-users' })
+    await navigate({ to: '/user-management' })
   }
 
   return (

@@ -40,8 +40,6 @@ import { Route as AppConfigurationSubMerchantsRouteImport } from './routes/_app.
 import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.index'
 import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
 import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
-import { Route as AppUserManagementAllUsersRouteImport } from './routes/_app.user-management.all-users'
-import { Route as AppUserManagementUserCreationRouteImport } from './routes/_app.user-management.user-creation'
 import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
 import { Route as AppMerchantsMerchantIdIndexRouteImport } from './routes/_app.merchants.$merchantId.index'
 import { Route as AppMerchantsMerchantIdFormRouteImport } from './routes/_app.merchants.$merchantId.form'
@@ -214,18 +212,6 @@ const AppUserManagementIndexRoute = AppUserManagementIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppUserManagementRoute,
 } as any)
-const AppUserManagementAllUsersRoute =
-  AppUserManagementAllUsersRouteImport.update({
-    id: '/all-users',
-    path: '/all-users',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
-const AppUserManagementUserCreationRoute =
-  AppUserManagementUserCreationRouteImport.update({
-    id: '/user-creation',
-    path: '/user-creation',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
 const OnboardingFormResubmitTokenRoute =
   OnboardingFormResubmitTokenRouteImport.update({
     id: '/resubmit/$token',
@@ -296,8 +282,6 @@ export interface FileRoutesByFullPath {
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdRouteWithChildren
-  '/user-management/all-users': typeof AppUserManagementAllUsersRoute
-  '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases/': typeof AppCasesIndexRoute
   '/configuration/': typeof AppConfigurationIndexRoute
@@ -331,8 +315,6 @@ export interface FileRoutesByTo {
   '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
   '/configuration/queues': typeof AppConfigurationQueuesRoute
   '/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
-  '/user-management/all-users': typeof AppUserManagementAllUsersRoute
-  '/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/cases': typeof AppCasesIndexRoute
   '/configuration': typeof AppConfigurationIndexRoute
@@ -374,8 +356,6 @@ export interface FileRoutesById {
   '/_app/configuration/queues': typeof AppConfigurationQueuesRoute
   '/_app/configuration/sub-merchants': typeof AppConfigurationSubMerchantsRoute
   '/_app/merchants/$merchantId': typeof AppMerchantsMerchantIdRouteWithChildren
-  '/_app/user-management/all-users': typeof AppUserManagementAllUsersRoute
-  '/_app/user-management/user-creation': typeof AppUserManagementUserCreationRoute
   '/onboarding-form/resubmit/$token': typeof OnboardingFormResubmitTokenRoute
   '/_app/cases/': typeof AppCasesIndexRoute
   '/_app/configuration/': typeof AppConfigurationIndexRoute
@@ -417,8 +397,6 @@ export interface FileRouteTypes {
     | '/configuration/queues'
     | '/configuration/sub-merchants'
     | '/merchants/$merchantId'
-    | '/user-management/all-users'
-    | '/user-management/user-creation'
     | '/onboarding-form/resubmit/$token'
     | '/cases/'
     | '/configuration/'
@@ -452,8 +430,6 @@ export interface FileRouteTypes {
     | '/configuration/payout-methods'
     | '/configuration/queues'
     | '/configuration/sub-merchants'
-    | '/user-management/all-users'
-    | '/user-management/user-creation'
     | '/onboarding-form/resubmit/$token'
     | '/cases'
     | '/configuration'
@@ -494,8 +470,6 @@ export interface FileRouteTypes {
     | '/_app/configuration/queues'
     | '/_app/configuration/sub-merchants'
     | '/_app/merchants/$merchantId'
-    | '/_app/user-management/all-users'
-    | '/_app/user-management/user-creation'
     | '/onboarding-form/resubmit/$token'
     | '/_app/cases/'
     | '/_app/configuration/'
@@ -735,20 +709,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUserManagementIndexRouteImport
       parentRoute: typeof AppUserManagementRoute
     }
-    '/_app/user-management/all-users': {
-      id: '/_app/user-management/all-users'
-      path: '/all-users'
-      fullPath: '/user-management/all-users'
-      preLoaderRoute: typeof AppUserManagementAllUsersRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
-    '/_app/user-management/user-creation': {
-      id: '/_app/user-management/user-creation'
-      path: '/user-creation'
-      fullPath: '/user-management/user-creation'
-      preLoaderRoute: typeof AppUserManagementUserCreationRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
     '/onboarding-form/resubmit/$token': {
       id: '/onboarding-form/resubmit/$token'
       path: '/resubmit/$token'
@@ -893,15 +853,11 @@ const AppMerchantsRouteWithChildren = AppMerchantsRoute._addFileChildren(
 )
 
 interface AppUserManagementRouteChildren {
-  AppUserManagementAllUsersRoute: typeof AppUserManagementAllUsersRoute
-  AppUserManagementUserCreationRoute: typeof AppUserManagementUserCreationRoute
   AppUserManagementIndexRoute: typeof AppUserManagementIndexRoute
   AppUserManagementUsersUserIdRoute: typeof AppUserManagementUsersUserIdRoute
 }
 
 const AppUserManagementRouteChildren: AppUserManagementRouteChildren = {
-  AppUserManagementAllUsersRoute: AppUserManagementAllUsersRoute,
-  AppUserManagementUserCreationRoute: AppUserManagementUserCreationRoute,
   AppUserManagementIndexRoute: AppUserManagementIndexRoute,
   AppUserManagementUsersUserIdRoute: AppUserManagementUsersUserIdRoute,
 }

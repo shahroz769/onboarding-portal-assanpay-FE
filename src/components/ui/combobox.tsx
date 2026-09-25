@@ -4,6 +4,7 @@ import { CheckIcon, ChevronDownIcon, XIcon } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 import { Button } from '#/components/ui/button'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import {
   InputGroup,
   InputGroupAddon,
@@ -127,16 +128,22 @@ function ComboboxContent({
   )
 }
 
+// The list scrolls inside the shadcn ScrollArea so every combobox shares the
+// app's scrollbar styling. `className` sizes the scroll viewport.
 function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
   return (
-    <ComboboxPrimitive.List
-      data-slot="combobox-list"
-      className={cn(
-        'max-h-[min(calc((var(--spacing)*96)-(var(--spacing)*9)),calc(var(--available-height)-(var(--spacing)*9)))] scroll-py-1 overflow-y-auto p-1 data-empty:p-0',
+    <ScrollArea
+      viewportClassName={cn(
+        'max-h-[min(calc((var(--spacing)*96)-(var(--spacing)*9)),calc(var(--available-height)-(var(--spacing)*9)))] scroll-py-1',
         className,
       )}
-      {...props}
-    />
+    >
+      <ComboboxPrimitive.List
+        data-slot="combobox-list"
+        className="p-1 data-empty:p-0"
+        {...props}
+      />
+    </ScrollArea>
   )
 }
 

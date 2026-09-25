@@ -3,12 +3,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { UsersTableComposed } from '#/features/users/users-table'
 import { useUsersSearchActions } from '#/features/users/users-route-filters'
+import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { usersQueryOptions } from '#/hooks/use-users-query'
 import { userRouteSearchSchema } from '#/schemas/users.schema'
 
-export const Route = createFileRoute('/_app/user-management/all-users')({
+export const Route = createFileRoute('/_app/user-management/')({
   staticData: {
-    title: 'All Users',
+    title: 'User Management',
     subtitle: 'Manage employee status, access, and owned cases.',
     fitViewport: true,
   },
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_app/user-management/all-users')({
   // create a new pending match per keystroke and unmount the filter toolbar.
   loader: async ({ context, location }) => {
     const search = userRouteSearchSchema.parse(location.search)
+    void context.queryClient.prefetchQuery(queuesQueryOptions())
     void context.queryClient.prefetchQuery(
       usersQueryOptions({
         search: search.search,
@@ -32,7 +34,7 @@ export const Route = createFileRoute('/_app/user-management/all-users')({
 
 function RouteComponent() {
   const search = Route.useSearch()
-  const { setFilter } = useUsersSearchActions('/user-management/all-users')
+  const { setFilter } = useUsersSearchActions('/user-management')
 
   return <UsersTableComposed filters={search} setFilter={setFilter} />
 }

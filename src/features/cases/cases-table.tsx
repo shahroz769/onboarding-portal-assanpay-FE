@@ -24,6 +24,7 @@ import type { CaseFilterStatus, CaseRouteSearch } from '#/schemas/cases.schema'
 import { CASE_FILTER_STATUS_LABELS } from '#/schemas/cases.schema'
 import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
+import { useRetainedValue } from '#/hooks/use-retained-value'
 import { CasePriorityDialog } from './case-priority-dialog'
 import {
   CasesTableProvider,
@@ -124,6 +125,7 @@ function Toolbar() {
         {state.hideOwnerFilter ? null : (
           <DataTableFilter
             title="Case Owner"
+            searchable
             options={ownerFilterOptions}
             selectedValues={meta.commaToSet(filters.ownerId)}
             onChange={(set) =>
@@ -243,37 +245,39 @@ function Grid() {
 function Dialogs() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
+  const assignOwnerCase = useRetainedValue(state.assignOwnerCase)
+  const priorityCase = useRetainedValue(state.priorityCase)
 
   return (
     <>
-      {state.assignOwnerCase ? (
+      {assignOwnerCase ? (
         <CaseAssignOwnerDialog
-          open
+          open={state.assignOwnerCase !== null}
           onOpenChange={(open) => {
             if (!open) {
               actions.closeAssignOwnerDialog()
             }
           }}
-          caseId={state.assignOwnerCase.id}
-          caseNumber={state.assignOwnerCase.caseNumber}
-          currentOwnerId={state.assignOwnerCase.ownerId}
+          caseId={assignOwnerCase.id}
+          caseNumber={assignOwnerCase.caseNumber}
+          currentOwnerId={assignOwnerCase.ownerId}
           isClosed={
-            state.assignOwnerCase.status === 'closed' ||
-            state.assignOwnerCase.status === 'error' ||
-            !!state.assignOwnerCase.closedAt
+            assignOwnerCase.status === 'closed' ||
+            assignOwnerCase.status === 'error' ||
+            !!assignOwnerCase.closedAt
           }
         />
       ) : null}
-      {state.priorityCase ? (
+      {priorityCase ? (
         <CasePriorityDialog
-          key={state.priorityCase.id}
-          open
+          key={priorityCase.id}
+          open={state.priorityCase !== null}
           onOpenChange={(open) => {
             if (!open) {
               actions.closePriorityDialog()
             }
           }}
-          caseItem={state.priorityCase}
+          caseItem={priorityCase}
         />
       ) : null}
     </>

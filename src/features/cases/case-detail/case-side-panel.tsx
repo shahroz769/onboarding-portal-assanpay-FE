@@ -346,6 +346,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
   const [closeReason, setCloseReason] = useState('')
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  // Bumped on every open so the modal starts fresh, while staying mounted
+  // after close so its exit animation can play.
+  const [reviewModalKey, setReviewModalKey] = useState(0)
   const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('resolution')
   const [visitedChatter, setVisitedChatter] = useState(false)
   const [visitedHistory, setVisitedHistory] = useState(false)
@@ -448,7 +451,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
     if (primaryAction.actionKind === 'review') {
       await saveChangedSubMerchantBeforeReview()
-        .then(() => setReviewModalOpen(true))
+        .then(() => {
+          setReviewModalKey((key) => key + 1)
+          setReviewModalOpen(true)
+        })
         .catch(() => {
           // Mutation hook already surfaces the backend error via toast.
         })
@@ -771,8 +777,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         </Tabs>
       </CardContent>
 
-      {isDocumentReviewCase && reviewModalOpen ? (
+      {isDocumentReviewCase && reviewModalKey > 0 ? (
         <DocumentsReviewSummaryModal
+          key={reviewModalKey}
+          open={reviewModalOpen}
           onOpenChange={setReviewModalOpen}
           caseDetail={caseDetail}
           caseId={caseId}

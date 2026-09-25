@@ -278,7 +278,7 @@ export function createCaseColumns({
         />
       ),
       cell: (item) => (
-        <Badge className={getStatusBadgeClasses(item)}>
+        <Badge variant="secondary" className={getStatusBadgeClasses(item)}>
           {getStatusLabel(item)}
         </Badge>
       ),

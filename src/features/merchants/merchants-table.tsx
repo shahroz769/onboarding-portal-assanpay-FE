@@ -28,6 +28,7 @@ import {
 } from './merchants-table-context'
 import { selectedNonTerminatedIds } from './merchants-table-utils'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
+import { useRetainedValue } from '#/hooks/use-retained-value'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 import { MerchantDeleteDialog } from './merchant-delete-dialog'
 
@@ -192,14 +193,16 @@ function Grid() {
 function Dialogs() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
-  const { deleteTarget, priorityTarget, terminateTarget } = state
+  const priorityTarget = useRetainedValue(state.priorityTarget)
+  const terminateTarget = useRetainedValue(state.terminateTarget)
+  const deleteTarget = useRetainedValue(state.deleteTarget)
 
   return (
     <>
       {priorityTarget ? (
         <MerchantPriorityDialog
           target={priorityTarget}
-          open
+          open={state.priorityTarget !== null}
           onOpenChange={(open) => {
             if (!open) actions.closePriorityDialog()
           }}
@@ -210,7 +213,7 @@ function Dialogs() {
       {terminateTarget ? (
         <MerchantTerminateDialog
           target={terminateTarget}
-          open
+          open={state.terminateTarget !== null}
           onOpenChange={(open) => {
             if (!open) actions.closeTerminateDialog()
           }}
@@ -221,7 +224,7 @@ function Dialogs() {
       {deleteTarget ? (
         <MerchantDeleteDialog
           merchant={deleteTarget}
-          open
+          open={state.deleteTarget !== null}
           onOpenChange={(open) => {
             if (!open) actions.closeDeleteDialog()
           }}

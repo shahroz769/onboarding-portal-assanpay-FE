@@ -70,16 +70,6 @@ const navItems: NavItem[] = [
     url: '/user-management',
     icon: Users,
     roles: ['super_admin', 'admin'],
-    items: [
-      {
-        title: 'All Users',
-        url: '/user-management/all-users',
-      },
-      {
-        title: 'User Creation',
-        url: '/user-management/user-creation',
-      },
-    ],
   },
   {
     title: 'Configuration',

@@ -58,6 +58,7 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 
+import { useRetainedValue } from '#/hooks/use-retained-value'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import type { PaymentMethod } from '#/schemas/configuration.schema'
@@ -125,7 +126,17 @@ export function MethodListPanel({
   const [pendingRemoval, setPendingRemoval] = useState<PaymentMethod | null>(
     null,
   )
+  // Bumped on every open so the editor form starts fresh.
+  const [editorKey, setEditorKey] = useState(0)
+  // Keep the last editor/removal target through the dialog exit animation.
+  const shownEditor = useRetainedValue(editor)
+  const shownRemoval = useRetainedValue(pendingRemoval)
   const methods = data ?? []
+
+  const openEditor = (next: NonNullable<typeof editor>) => {
+    setEditorKey((key) => key + 1)
+    setEditor(next)
+  }
 
   const columns: DataTableColumnDef<PaymentMethod>[] = [
     {
@@ -175,7 +186,7 @@ export function MethodListPanel({
                   variant="ghost"
                   size="icon-sm"
                   disabled={mutation.isPending}
-                  onClick={() => setEditor({ mode: 'edit', method })}
+                  onClick={() => openEditor({ mode: 'edit', method })}
                 />
               }
             >
@@ -237,7 +248,7 @@ export function MethodListPanel({
         <Button
           size="sm"
           disabled={mutation.isPending}
-          onClick={() => setEditor({ mode: 'create' })}
+          onClick={() => openEditor({ mode: 'create' })}
         >
           <Plus data-icon="inline-start" />
           Add {noun}
@@ -258,12 +269,10 @@ export function MethodListPanel({
       />
 
       <MethodEditorDialog
-        key={
-          editor?.mode === 'edit' ? editor.method.id : (editor?.mode ?? 'none')
-        }
+        key={editorKey}
         open={editor !== null}
         noun={noun}
-        method={editor?.mode === 'edit' ? editor.method : null}
+        method={shownEditor?.mode === 'edit' ? shownEditor.method : null}
         methods={methods}
         schema={schema}
         mutation={mutation}
@@ -280,7 +289,7 @@ export function MethodListPanel({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {pendingRemoval?.label}?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {shownRemoval?.label}?</AlertDialogTitle>
             <AlertDialogDescription>
               This {noun} will no longer be available in MID Creation.
             </AlertDialogDescription>

@@ -63,14 +63,15 @@ export function statusTintDeep(tint: StatusTint): string {
 
 // ─── Case status ────────────────────────────────────────────────────────────
 
-const CASE_STATUS_TINTS: Record<string, StatusTint> = {
+// 'plain' = the untinted secondary badge (same look as the Normal priority).
+const CASE_STATUS_TINTS: Record<string, StatusTint | 'plain'> = {
   new: 'blue',
   working: 'amber',
   awaiting_client: 'sky',
   pending: 'orange',
   qc: 'purple',
   error: 'red',
-  closed: 'emerald',
+  closed: 'plain',
 }
 
 export function caseStatusBadgeClasses(
@@ -80,7 +81,8 @@ export function caseStatusBadgeClasses(
   if (status === 'closed' && closeOutcome === 'unsuccessful') {
     return TINTS.red
   }
-  return TINTS[CASE_STATUS_TINTS[status] ?? 'neutral']
+  const tint = CASE_STATUS_TINTS[status] ?? 'neutral'
+  return tint === 'plain' ? '' : TINTS[tint]
 }
 
 // ─── Merchant status ────────────────────────────────────────────────────────
@@ -106,7 +108,7 @@ export function priorityBadgeClasses(priority: string): string {
 // ─── SLA ────────────────────────────────────────────────────────────────────
 
 export function slaBadgeClasses(isBreached: boolean): string {
-  return isBreached ? TINTS.red : TINTS.emerald
+  return isBreached ? TINTS.red : ''
 }
 
 // ─── Interactive badge affordance ───────────────────────────────────────────

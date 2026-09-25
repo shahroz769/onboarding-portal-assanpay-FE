@@ -1,12 +1,7 @@
+import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
-import {
-  CheckIcon,
-  ChevronsUpDownIcon,
-  ListChecksIcon,
-  RotateCcwIcon,
-  UserRoundIcon,
-} from 'lucide-react'
+import { ListChecksIcon, RotateCcwIcon, UserRoundIcon } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -19,14 +14,17 @@ import {
   CardTitle,
 } from '#/components/ui/card'
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '#/components/ui/command'
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from '#/components/ui/combobox'
 import {
   Field,
   FieldDescription,
@@ -35,11 +33,6 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '#/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -51,8 +44,6 @@ import {
 import { Separator } from '#/components/ui/separator'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
-import { Badge } from '#/components/ui/badge'
-import { ScrollArea } from '#/components/ui/scroll-area'
 import { useAuth } from '#/features/auth/auth-client'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { useSendUserResetPasswordMutation } from '#/hooks/use-users-query'
@@ -66,6 +57,7 @@ import {
   userFormSchema,
 } from '#/schemas/users.schema'
 import { cn } from '#/lib/utils'
+import type { StatusTint } from '#/lib/status-styles'
 import { SectionIcon } from '#/components/section-icon'
 
 function RequiredMark() {
@@ -76,160 +68,136 @@ function RequiredMark() {
   )
 }
 
-function QueueAccessSelect({
-  label,
+const ALL_QUEUES = '__all_queues__'
+
+function QueueAccessCombobox({
   queues,
   selectedIds,
   isAllSelected,
   onChangeSelectedIds,
-  placeholder,
-  showAllOption = true,
   onSelectAll,
+  placeholder,
   disabled = false,
+  invalid = false,
 }: {
-  label: string
   queues: Queue[]
   selectedIds: string[]
   isAllSelected: boolean
   onChangeSelectedIds: (value: string[]) => void
-  placeholder: string
-  showAllOption?: boolean
   onSelectAll?: () => void
+  placeholder: string
   disabled?: boolean
+  invalid?: boolean
 }) {
-  const selectedIdsSet = new Set(selectedIds)
-  const selectedQueues = queues.filter((queue) => selectedIdsSet.has(queue.id))
-
-  const toggleQueue = (queueId: string) => {
-    if (isAllSelected) {
-      onChangeSelectedIds([queueId])
-    } else if (selectedIdsSet.has(queueId)) {
-      onChangeSelectedIds(selectedIds.filter((id) => id !== queueId))
-    } else {
-      onChangeSelectedIds([...selectedIds, queueId])
-    }
-  }
-
-  const isPlaceholder = !isAllSelected && selectedQueues.length === 0
-  const triggerLabel = isAllSelected
-    ? 'All Queues'
-    : isPlaceholder
-      ? placeholder
-      : selectedQueues.length === 1
-        ? selectedQueues[0].name
-        : `${selectedQueues.length} queues selected`
+  const anchor = useComboboxAnchor()
+  const queueNameById = new Map(queues.map((queue) => [queue.id, queue.name]))
+  const items = [
+    ...(onSelectAll ? [ALL_QUEUES] : []),
+    ...queues.map((queue) => queue.id),
+  ]
+  const value = isAllSelected ? [ALL_QUEUES] : selectedIds
+  const getLabel = (id: string) =>
+    id === ALL_QUEUES ? 'All Queues' : (queueNameById.get(id) ?? id)
 
   return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-9 w-full min-w-0 justify-between"
-            disabled={disabled}
-          />
+    <Combobox
+      multiple
+      autoHighlight
+      items={items}
+      value={value}
+      disabled={disabled}
+      itemToStringLabel={getLabel}
+      onValueChange={(next: string[]) => {
+        if (onSelectAll && next.includes(ALL_QUEUES) && !isAllSelected) {
+          onSelectAll()
+          return
         }
-      >
-        <span
-          className={cn(
-            'min-w-0 truncate text-left',
-            isPlaceholder && 'font-normal text-muted-foreground',
+        onChangeSelectedIds(next.filter((id) => id !== ALL_QUEUES))
+      }}
+    >
+      <ComboboxChips ref={anchor} className="w-full">
+        <ComboboxValue>
+          {(values: string[]) => (
+            <>
+              {values.map((id) => (
+                <ComboboxChip key={id} className="max-w-full">
+                  <span className="min-w-0 truncate">{getLabel(id)}</span>
+                </ComboboxChip>
+              ))}
+              <ComboboxChipsInput
+                placeholder={values.length > 0 ? undefined : placeholder}
+                aria-invalid={invalid}
+                disabled={disabled}
+              />
+            </>
           )}
-        >
-          {triggerLabel}
-        </span>
-        <ChevronsUpDownIcon data-icon="inline-end" />
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[var(--anchor-width)] max-w-[calc(100vw-2rem)] min-w-72 p-0"
-        align="start"
-      >
-        <Command
-          items={[
-            ...(showAllOption && onSelectAll ? ['All Queues'] : []),
-            ...queues.map((queue) => queue.name),
-          ]}
-        >
-          <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
-          <CommandList>
-            <CommandEmpty>No queues found.</CommandEmpty>
-            <ScrollArea viewportClassName="max-h-72">
-              {showAllOption && onSelectAll ? (
-                <>
-                  <CommandGroup>
-                    <CommandItem value="All Queues" onSelect={onSelectAll}>
-                      <CheckIcon
-                        className={cn(
-                          'opacity-0',
-                          isAllSelected && 'opacity-100',
-                        )}
-                      />
+        </ComboboxValue>
+      </ComboboxChips>
+      <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>No queues found.</ComboboxEmpty>
+        <ComboboxList>
+          {(id: string) => (
+            <ComboboxItem key={id} value={id}>
+              <span className="min-w-0 flex-1 truncate">{getLabel(id)}</span>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
 
-                      <span className="min-w-0 flex-1 truncate">
-                        All Queues
-                      </span>
-                    </CommandItem>
-                  </CommandGroup>
-                  <CommandSeparator />
-                </>
-              ) : null}
-              <CommandGroup>
-                {queues.map((queue) => {
-                  const selected =
-                    !isAllSelected && selectedIdsSet.has(queue.id)
-                  return (
-                    <CommandItem
-                      key={queue.id}
-                      value={queue.name}
-                      onSelect={() => toggleQueue(queue.id)}
-                    >
-                      <CheckIcon
-                        className={cn('opacity-0', selected && 'opacity-100')}
-                      />
+type UserFormLayout = 'page' | 'dialog'
 
-                      <span className="min-w-0 flex-1 truncate">
-                        {queue.name}
-                      </span>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            </ScrollArea>
-          </CommandList>
-        </Command>
-        {!isAllSelected && selectedIds.length > 0 ? (
+function UserFormSection({
+  layout,
+  icon,
+  tone,
+  title,
+  description,
+  children,
+}: {
+  layout: UserFormLayout
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  tone: StatusTint
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  const heading = (
+    <div className="flex min-w-0 items-center gap-3">
+      <SectionIcon icon={icon} tone={tone} />
+
+      <div className="min-w-0">
+        {layout === 'dialog' ? (
           <>
-            <Separator />
-            <div className="p-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={() => onChangeSelectedIds([])}
-              >
-                Clear queues
-              </Button>
-            </div>
+            <h3 className="font-medium">{title}</h3>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </>
-        ) : null}
-      </PopoverContent>
-      {isAllSelected || selectedQueues.length > 0 ? (
-        <div className="flex min-w-0 flex-wrap gap-1">
-          {isAllSelected ? <Badge variant="secondary">All Queues</Badge> : null}
-          {!isAllSelected &&
-            selectedQueues.slice(0, 4).map((queue) => (
-              <Badge key={queue.id} variant="secondary">
-                <span className="max-w-48 truncate">{queue.name}</span>
-              </Badge>
-            ))}
-          {!isAllSelected && selectedQueues.length > 4 ? (
-            <Badge variant="secondary">+{selectedQueues.length - 4}</Badge>
-          ) : null}
-        </div>
-      ) : null}
-    </Popover>
+        ) : (
+          <>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  if (layout === 'dialog') {
+    return (
+      <section className="flex min-w-0 flex-col gap-4">
+        {heading}
+        {children}
+      </section>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>{heading}</CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   )
 }
 
@@ -253,13 +221,18 @@ export function UserForm({
   onSubmit,
   disabled = false,
   disabledReason,
+  layout = 'page',
+  onCancel,
 }: {
   user?: UserListItem
   mode: 'create' | 'edit'
   onSubmit: (value: UserFormValues) => Promise<void>
   disabled?: boolean
   disabledReason?: string
+  layout?: UserFormLayout
+  onCancel?: () => void
 }) {
+  const isDialog = layout === 'dialog'
   const { user: currentUser } = useAuth()
   const queuesQuery = useQuery(queuesQueryOptions())
   const resetPasswordMutation = useSendUserResetPasswordMutation()
@@ -280,6 +253,7 @@ export function UserForm({
 
     return roleTypes.filter((role) => editableRoles.has(role))
   })()
+  const canChooseRole = roleOptions.length > 1
 
   const form = useForm({
     defaultValues: getDefaultValues(user),
@@ -317,7 +291,13 @@ export function UserForm({
     allVisibleWorkQueueIds.every((queueId) => workQueueIdSet.has(queueId))
 
   if (queuesQuery.isPending) {
-    return <UserFormSkeleton />
+    return isDialog ? (
+      <div className="flex h-48 items-center justify-center">
+        <Spinner />
+      </div>
+    ) : (
+      <UserFormSkeleton />
+    )
   }
 
   return (
@@ -327,7 +307,10 @@ export function UserForm({
         event.preventDefault()
         form.handleSubmit()
       }}
-      className="flex w-full flex-1 flex-col gap-6"
+      className={cn(
+        'flex w-full flex-col',
+        isDialog ? 'min-h-0 flex-1' : 'flex-1 gap-6',
+      )}
     >
       {disabledReason ? (
         <Alert>
@@ -336,142 +319,248 @@ export function UserForm({
         </Alert>
       ) : null}
 
-      <div className="grid items-start gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex min-w-0 items-center gap-3">
-              <SectionIcon icon={UserRoundIcon} tone="blue" />
+      <div
+        className={cn(
+          'grid items-start gap-6',
+          isDialog
+            ? 'min-h-0 flex-1 overflow-y-auto px-6 py-4'
+            : 'xl:grid-cols-2',
+        )}
+      >
+        <UserFormSection
+          layout={layout}
+          icon={UserRoundIcon}
+          tone="blue"
+          title="Employee Details"
+          description={
+            mode === 'create'
+              ? 'Basic identity, login, and role for the new employee.'
+              : 'Name, login identity, role, and employee status.'
+          }
+        >
+          <FieldGroup className="grid gap-6 sm:grid-cols-2">
+            <form.Field name="name">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Name <RequiredMark />
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      value={field.state.value}
+                      autoComplete="off"
+                      autoFocus={mode === 'create'}
+                      placeholder="e.g. Ayesha Khan"
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
+                      aria-invalid={isInvalid}
+                      disabled={disabled}
+                    />
 
-              <div className="min-w-0">
-                <CardTitle>Employee Details</CardTitle>
-                <CardDescription>
-                  {mode === 'create'
-                    ? 'Basic identity, login, and role for the new employee.'
-                    : 'Name, login identity, role, and employee status.'}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup className="grid gap-6 sm:grid-cols-2">
-              <form.Field name="name">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>
-                        Name <RequiredMark />
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        value={field.state.value}
-                        autoComplete="off"
-                        autoFocus={mode === 'create'}
-                        placeholder="e.g. Ayesha Khan"
-                        onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
-                        }
+                    {isInvalid ? (
+                      <FieldError errors={field.state.meta.errors} />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </form.Field>
+
+            <form.Field name="email">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Email <RequiredMark />
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="name@assanpay.com"
+                      autoComplete="off"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
+                      aria-invalid={isInvalid}
+                      disabled={disabled || mode === 'edit'}
+                    />
+
+                    {mode === 'edit' ? (
+                      <FieldDescription>
+                        Email cannot be changed after the account is created.
+                      </FieldDescription>
+                    ) : null}
+                    {isInvalid ? (
+                      <FieldError errors={field.state.meta.errors} />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </form.Field>
+
+            <form.Field name="username">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Username <RequiredMark />
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      value={field.state.value}
+                      autoComplete="off"
+                      placeholder="e.g. ayesha.khan"
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
+                      aria-invalid={isInvalid}
+                      disabled={disabled || mode === 'edit'}
+                    />
+
+                    {mode === 'edit' ? (
+                      <FieldDescription>
+                        Username cannot be changed after the account is created.
+                      </FieldDescription>
+                    ) : null}
+                    {isInvalid ? (
+                      <FieldError errors={field.state.meta.errors} />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </form.Field>
+
+            <form.Field name="gender">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel>Gender</FieldLabel>
+                    <Select
+                      items={[
+                        { value: 'male', label: USER_GENDER_LABELS.male },
+                        { value: 'female', label: USER_GENDER_LABELS.female },
+                      ]}
+                      value={field.state.value}
+                      onValueChange={(value) =>
+                        field.handleChange(value as UserFormValues['gender'])
+                      }
+                      disabled={disabled}
+                    >
+                      <SelectTrigger
                         aria-invalid={isInvalid}
-                        disabled={disabled}
-                      />
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="male">
+                            {USER_GENDER_LABELS.male}
+                          </SelectItem>
+                          <SelectItem value="female">
+                            {USER_GENDER_LABELS.female}
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {isInvalid ? (
+                      <FieldError errors={field.state.meta.errors} />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </form.Field>
 
-                      {isInvalid ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
-                    </Field>
-                  )
-                }}
-              </form.Field>
-
-              <form.Field name="email">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>
-                        Email <RequiredMark />
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        type="email"
-                        placeholder="name@assanpay.com"
-                        autoComplete="off"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
+            <form.Field name="roleType">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel>Role</FieldLabel>
+                    <Select
+                      items={roleOptions.map((role) => ({
+                        value: role,
+                        label: USER_ROLE_LABELS[role],
+                      }))}
+                      value={field.state.value}
+                      onValueChange={(value) => {
+                        const nextRole = value as UserFormValues['roleType']
+                        field.handleChange(nextRole)
+                        if (nextRole !== 'agent') {
+                          form.setFieldValue('queueViewScope', 'all')
+                          form.setFieldValue('viewQueueIds', [])
+                          form.setFieldValue('workQueueIds', [])
                         }
+                      }}
+                      disabled={disabled || isRoleLocked || !canChooseRole}
+                    >
+                      <SelectTrigger
                         aria-invalid={isInvalid}
-                        disabled={disabled || mode === 'edit'}
-                      />
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {roleOptions.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {USER_ROLE_LABELS[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                      {!isRoleLocked && !canChooseRole
+                        ? 'Admins can only create and manage agent accounts.'
+                        : field.state.value === 'agent'
+                          ? 'Agents only see cases from their assigned queues.'
+                          : 'Full access to every queue, no assignment needed.'}
+                    </FieldDescription>
+                    {isInvalid ? (
+                      <FieldError errors={field.state.meta.errors} />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </form.Field>
 
-                      {mode === 'edit' ? (
-                        <FieldDescription>
-                          Email cannot be changed after the account is created.
-                        </FieldDescription>
-                      ) : null}
-                      {isInvalid ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
-                    </Field>
-                  )
-                }}
-              </form.Field>
-
-              <form.Field name="username">
+            {mode === 'edit' ? (
+              <form.Field name="status">
                 {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>
-                        Username <RequiredMark />
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        value={field.state.value}
-                        autoComplete="off"
-                        placeholder="e.g. ayesha.khan"
-                        onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
-                        }
-                        aria-invalid={isInvalid}
-                        disabled={disabled || mode === 'edit'}
-                      />
-
-                      {mode === 'edit' ? (
-                        <FieldDescription>
-                          Username cannot be changed after the account is
-                          created.
-                        </FieldDescription>
-                      ) : null}
-                      {isInvalid ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
-                    </Field>
-                  )
-                }}
-              </form.Field>
-
-              <form.Field name="gender">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel>Gender</FieldLabel>
+                      <FieldLabel>Status</FieldLabel>
                       <Select
                         items={[
-                          { value: 'male', label: USER_GENDER_LABELS.male },
-                          { value: 'female', label: USER_GENDER_LABELS.female },
+                          {
+                            value: 'active',
+                            label: USER_STATUS_LABELS.active,
+                          },
+                          {
+                            value: 'inactive',
+                            label: USER_STATUS_LABELS.inactive,
+                          },
                         ]}
                         value={field.state.value}
                         onValueChange={(value) =>
-                          field.handleChange(value as UserFormValues['gender'])
+                          field.handleChange(value as UserFormValues['status'])
                         }
                         disabled={disabled}
                       >
@@ -479,15 +568,15 @@ export function UserForm({
                           aria-invalid={isInvalid}
                           className="w-full"
                         >
-                          <SelectValue placeholder="Select gender" />
+                          <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="male">
-                              {USER_GENDER_LABELS.male}
+                            <SelectItem value="active">
+                              {USER_STATUS_LABELS.active}
                             </SelectItem>
-                            <SelectItem value="female">
-                              {USER_GENDER_LABELS.female}
+                            <SelectItem value="inactive">
+                              {USER_STATUS_LABELS.inactive}
                             </SelectItem>
                           </SelectGroup>
                         </SelectContent>
@@ -499,51 +588,67 @@ export function UserForm({
                   )
                 }}
               </form.Field>
+            ) : null}
+          </FieldGroup>
+        </UserFormSection>
 
-              <form.Field name="roleType">
+        {isDialog ? <Separator /> : null}
+
+        <UserFormSection
+          layout={layout}
+          icon={ListChecksIcon}
+          tone="teal"
+          title="Queue Access"
+          description={
+            isAgent
+              ? 'Choose which case queues this agent can view, and which of those they can take ownership from.'
+              : 'Queue assignments only apply to agents. This role has access to every queue.'
+          }
+        >
+          <FieldGroup
+            className={cn(
+              'grid gap-6',
+              isDialog
+                ? 'sm:grid-cols-2'
+                : 'lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2',
+            )}
+          >
+            <div className="min-w-0">
+              <form.Field name="viewQueueIds">
                 {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel>Role</FieldLabel>
-                      <Select
-                        items={roleOptions.map((role) => ({
-                          value: role,
-                          label: USER_ROLE_LABELS[role],
-                        }))}
-                        value={field.state.value}
-                        onValueChange={(value) => {
-                          const nextRole = value as UserFormValues['roleType']
-                          field.handleChange(nextRole)
-                          if (nextRole !== 'agent') {
-                            form.setFieldValue('queueViewScope', 'all')
-                            form.setFieldValue('viewQueueIds', [])
-                            form.setFieldValue('workQueueIds', [])
-                          }
+                      <FieldLabel>View Access</FieldLabel>
+                      <QueueAccessCombobox
+                        queues={queues}
+                        selectedIds={field.state.value}
+                        isAllSelected={queueViewScope === 'all'}
+                        onSelectAll={() => {
+                          form.setFieldValue('queueViewScope', 'all')
+                          field.handleChange([])
                         }}
-                        disabled={disabled || isRoleLocked}
-                      >
-                        <SelectTrigger
-                          aria-invalid={isInvalid}
-                          className="w-full"
-                        >
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {roleOptions.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {USER_ROLE_LABELS[role]}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                        onChangeSelectedIds={(value) => {
+                          const selectedQueueIdSet = new Set(value)
+                          form.setFieldValue('queueViewScope', 'selected')
+                          field.handleChange(value)
+                          form.setFieldValue(
+                            'workQueueIds',
+                            form.state.values.workQueueIds.filter((queueId) =>
+                              selectedQueueIdSet.has(queueId),
+                            ),
+                          )
+                        }}
+                        placeholder="Select view queues"
+                        disabled={disabled || !isAgent || queuesQuery.isLoading}
+                        invalid={isInvalid}
+                      />
+
                       <FieldDescription>
-                        {field.state.value === 'agent'
-                          ? 'Agents only see cases from their assigned queues.'
-                          : 'Full access to every queue, no assignment needed.'}
+                        {isAgent
+                          ? 'Agents can only see cases in queues they can view.'
+                          : 'This role can view every queue.'}
                       </FieldDescription>
                       {isInvalid ? (
                         <FieldError errors={field.state.meta.errors} />
@@ -552,177 +657,64 @@ export function UserForm({
                   )
                 }}
               </form.Field>
-
-              {mode === 'edit' ? (
-                <form.Field name="status">
-                  {(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel>Status</FieldLabel>
-                        <Select
-                          items={[
-                            {
-                              value: 'active',
-                              label: USER_STATUS_LABELS.active,
-                            },
-                            {
-                              value: 'inactive',
-                              label: USER_STATUS_LABELS.inactive,
-                            },
-                          ]}
-                          value={field.state.value}
-                          onValueChange={(value) =>
-                            field.handleChange(
-                              value as UserFormValues['status'],
-                            )
-                          }
-                          disabled={disabled}
-                        >
-                          <SelectTrigger
-                            aria-invalid={isInvalid}
-                            className="w-full"
-                          >
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectItem value="active">
-                                {USER_STATUS_LABELS.active}
-                              </SelectItem>
-                              <SelectItem value="inactive">
-                                {USER_STATUS_LABELS.inactive}
-                              </SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              ) : null}
-            </FieldGroup>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex min-w-0 items-center gap-3">
-              <SectionIcon icon={ListChecksIcon} tone="teal" />
-
-              <div className="min-w-0">
-                <CardTitle>Queue Access</CardTitle>
-                <CardDescription>
-                  {isAgent
-                    ? 'Choose which case queues this agent can view, and which of those they can take ownership from.'
-                    : 'Queue assignments only apply to agents. This role has access to every queue.'}
-                </CardDescription>
-              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <div className="min-w-0">
-                <form.Field name="viewQueueIds">
-                  {(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel>View Access</FieldLabel>
-                        <QueueAccessSelect
-                          label="View Access"
-                          queues={queues}
-                          selectedIds={field.state.value}
-                          isAllSelected={queueViewScope === 'all'}
-                          onSelectAll={() => {
-                            form.setFieldValue('queueViewScope', 'all')
-                            field.handleChange([])
-                          }}
-                          onChangeSelectedIds={(value) => {
-                            const selectedQueueIdSet = new Set(value)
-                            form.setFieldValue('queueViewScope', 'selected')
-                            field.handleChange(value)
-                            form.setFieldValue(
-                              'workQueueIds',
-                              form.state.values.workQueueIds.filter((queueId) =>
-                                selectedQueueIdSet.has(queueId),
-                              ),
-                            )
-                          }}
-                          placeholder="Select view queues"
-                          disabled={
-                            disabled || !isAgent || queuesQuery.isLoading
-                          }
-                        />
 
-                        <FieldDescription>
-                          {isAgent
-                            ? 'Agents can only see cases in queues they can view.'
-                            : 'This role can view every queue.'}
-                        </FieldDescription>
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </div>
+            <div className="min-w-0">
+              <form.Field name="workQueueIds">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel>Working Access</FieldLabel>
+                      <QueueAccessCombobox
+                        queues={visibleWorkQueues}
+                        selectedIds={field.state.value}
+                        isAllSelected={
+                          queueViewScope === 'all' &&
+                          (!isAgent || isAllWorkQueuesSelected)
+                        }
+                        onChangeSelectedIds={field.handleChange}
+                        placeholder="Select working queues"
+                        onSelectAll={
+                          queueViewScope === 'all'
+                            ? () => field.handleChange(allVisibleWorkQueueIds)
+                            : undefined
+                        }
+                        invalid={isInvalid}
+                        disabled={
+                          disabled ||
+                          !isAgent ||
+                          (queueViewScope === 'selected' &&
+                            viewQueueIds.length === 0)
+                        }
+                      />
 
-              <div className="min-w-0">
-                <form.Field name="workQueueIds">
-                  {(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel>Working Access</FieldLabel>
-                        <QueueAccessSelect
-                          label="Working Access"
-                          queues={visibleWorkQueues}
-                          selectedIds={field.state.value}
-                          isAllSelected={
-                            queueViewScope === 'all' &&
-                            (!isAgent || isAllWorkQueuesSelected)
-                          }
-                          onChangeSelectedIds={field.handleChange}
-                          placeholder="Select working queues"
-                          showAllOption={queueViewScope === 'all'}
-                          onSelectAll={() =>
-                            field.handleChange(allVisibleWorkQueueIds)
-                          }
-                          disabled={
-                            disabled ||
-                            !isAgent ||
-                            (queueViewScope === 'selected' &&
-                              viewQueueIds.length === 0)
-                          }
-                        />
-
-                        <FieldDescription>
-                          {isAgent
-                            ? 'Only these queues can be taken into ownership by this agent.'
-                            : 'This role can take ownership from every queue.'}
-                        </FieldDescription>
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
-                    )
-                  }}
-                </form.Field>
-              </div>
-            </FieldGroup>
-          </CardContent>
-        </Card>
+                      <FieldDescription>
+                        {isAgent
+                          ? 'Only these queues can be taken into ownership by this agent.'
+                          : 'This role can take ownership from every queue.'}
+                      </FieldDescription>
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+            </div>
+          </FieldGroup>
+        </UserFormSection>
       </div>
 
-      <div className="sticky bottom-0 z-10 mt-auto flex flex-wrap items-center justify-end gap-3 border-t bg-background/90 py-4 backdrop-blur-sm">
+      <div
+        className={cn(
+          'flex flex-wrap items-center justify-end gap-3 border-t',
+          isDialog
+            ? 'bg-muted/50 px-6 py-4'
+            : 'sticky bottom-0 z-10 mt-auto bg-background/90 py-4 backdrop-blur-sm',
+        )}
+      >
         <div className="mr-auto flex items-center gap-3">
           {mode === 'edit' &&
           user &&
@@ -742,14 +734,19 @@ export function UserForm({
             </Button>
           ) : null}
         </div>
-        {disabled ? (
-          <Button type="button" variant="ghost" disabled>
+        {disabled || onCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={disabled}
+            onClick={onCancel}
+          >
             Cancel
           </Button>
         ) : (
           <ButtonLink
             variant="ghost"
-            render={<Link to="/user-management/all-users" />}
+            render={<Link to="/user-management" />}
           >
             Cancel
           </ButtonLink>

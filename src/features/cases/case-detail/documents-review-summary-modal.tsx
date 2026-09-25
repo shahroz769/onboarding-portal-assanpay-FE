@@ -34,6 +34,7 @@ import type { getDocumentsReviewSummary } from './renderers/documents-review-sha
 type ReviewSummary = ReturnType<typeof getDocumentsReviewSummary>
 
 interface DocumentsReviewSummaryModalProps {
+  open: boolean
   onOpenChange: (open: boolean) => void
   caseDetail: CaseDetail
   caseId: string
@@ -41,6 +42,7 @@ interface DocumentsReviewSummaryModalProps {
 }
 
 export function DocumentsReviewSummaryModal({
+  open,
   onOpenChange,
   caseDetail,
   caseId,
@@ -263,7 +265,7 @@ export function DocumentsReviewSummaryModal({
   )
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Send for resubmission</DialogTitle>
@@ -329,10 +331,7 @@ function RejectionsList({
         {items.length} field{items.length === 1 ? '' : 's'} the client must
         update
       </p>
-      <ScrollArea
-        className="rounded-lg border"
-        viewportClassName="max-h-72"
-      >
+      <ScrollArea className="rounded-lg border" viewportClassName="max-h-72">
         <div className="flex flex-col divide-y">
           {items.map((item) => (
             <div key={item.key} className="px-3 py-2">

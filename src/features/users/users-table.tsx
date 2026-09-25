@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { MailIcon, PlusIcon } from 'lucide-react'
 
@@ -11,7 +10,7 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +46,7 @@ import {
   roleTypes,
   userStatuses,
 } from '#/schemas/users.schema'
+import { CreateUserDialog } from './create-user-dialog'
 import { createUserColumns } from './users-columns'
 
 const roleFilterOptions = roleTypes.map((roleType) => ({
@@ -61,15 +61,21 @@ const statusFilterOptions = userStatuses.map((status) => ({
 
 function CreateUserHeaderAction() {
   const portalTarget = usePageHeaderActions()
+  const [open, setOpen] = useState(false)
 
-  if (!portalTarget) return null
-
-  return createPortal(
-    <ButtonLink size="sm" render={<Link to="/user-management/user-creation" />}>
-      <PlusIcon data-icon="inline-start" />
-      Create User
-    </ButtonLink>,
-    portalTarget,
+  return (
+    <>
+      {portalTarget
+        ? createPortal(
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <PlusIcon data-icon="inline-start" />
+              Create User
+            </Button>,
+            portalTarget,
+          )
+        : null}
+      <CreateUserDialog open={open} onOpenChange={setOpen} />
+    </>
   )
 }
 

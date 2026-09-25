@@ -78,6 +78,12 @@ function AppLayout() {
         queue?: { id?: string; name?: string }
       }
     | undefined
+  const merchantDetailMatch = matches.find(
+    (match) => match.routeId === '/_app/merchants/$merchantId',
+  )
+  const merchantHeader = merchantDetailMatch?.loaderData as
+    | { businessName?: string }
+    | undefined
 
   return (
     <SidebarProvider>
@@ -122,6 +128,20 @@ function AppLayout() {
                   <BreadcrumbItem>
                     <BreadcrumbPage>
                       {caseDetail?.case?.caseNumber ?? 'Case'}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : merchantDetailMatch ? (
+                <>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink render={<Link to="/merchants" />}>
+                      Merchants
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem className="min-w-0">
+                    <BreadcrumbPage className="block max-w-64 truncate">
+                      {merchantHeader?.businessName ?? 'Merchant'}
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </>

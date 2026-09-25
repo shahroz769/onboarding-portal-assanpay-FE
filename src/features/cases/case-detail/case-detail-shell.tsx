@@ -214,9 +214,13 @@ function CaseSlaBox({ caseDetail }: { caseDetail: CaseDetail }) {
             <span className="text-sm font-semibold">SLA</span>
           </div>
           {sla.isBreached ? (
-            <Badge className={slaBadgeClasses(true)}>Breached</Badge>
+            <Badge variant="secondary" className={slaBadgeClasses(true)}>
+              Breached
+            </Badge>
           ) : (
-            <Badge className={slaBadgeClasses(false)}>On Time</Badge>
+            <Badge variant="secondary" className={slaBadgeClasses(false)}>
+              On Time
+            </Badge>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
