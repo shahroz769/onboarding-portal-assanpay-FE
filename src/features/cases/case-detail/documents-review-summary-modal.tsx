@@ -277,7 +277,7 @@ export function DocumentsReviewSummaryModal({
               : emailModeSettings.autoEnabled && emailModeSettings.manualEnabled
                 ? 'Choose to send automatically via Resend or manually via Gmail.'
                 : emailModeSettings.autoEnabled
-                  ? 'We will email the client a secure link to update only the rejected fields below.'
+                  ? 'We will email the merchant a secure link to update only the rejected fields below.'
                   : 'Copy the subject and body below to send from Gmail, then upload a screenshot as proof.'}
           </DialogDescription>
         </DialogHeader>
@@ -328,7 +328,7 @@ function RejectionsList({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium">
-        {items.length} field{items.length === 1 ? '' : 's'} the client must
+        {items.length} field{items.length === 1 ? '' : 's'} the merchant must
         update
       </p>
       <ScrollArea className="rounded-lg border" viewportClassName="max-h-72">
@@ -360,7 +360,7 @@ function EmptyState() {
       <AlertTitle>No rejected fields</AlertTitle>
       <AlertDescription>
         Reject at least one field with remarks before sending the case back to
-        the client.
+        the merchant.
       </AlertDescription>
     </Alert>
   )

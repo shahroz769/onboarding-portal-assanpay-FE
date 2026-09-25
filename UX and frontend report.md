@@ -32,9 +32,9 @@ The frontend is well above average for an internal tool: token-driven theming wi
 5. **MED-08 (prior, Medium)** — onboarding draft persists PII/bank data in plaintext localStorage with no expiry.
 6. **A11Y-01 / A11Y-02 (Medium)** — table search is placeholder-only labeled with a 24px unlabeled clear button; sort state is invisible to screen readers (`aria-sort` unused repo-wide).
 7. **RSP-01 (Medium)** — the cases table is ~1,570px wide with no sticky identifier column; row context is lost scrolling on mobile.
-8. **UX-03 (Medium)** — infinite-scroll tables show no total count and no end-of-list state.
-9. **RTE-06 (Low)** — auth guards ignore the router `preload` flag, so hovering links can fire `POST /api/auth/refresh` and speculative redirects.
-10. **QRY-01 (Low)** — `QueryClient` has zero `defaultOptions`; the app relies entirely on every query remembering to set `staleTime`.
+8. **UX-03 (Medium)** — infinite-scroll tables show no total count and no end-of-list state. ✅ Fixed
+9. **RTE-06 (Low)** — auth guards ignore the router `preload` flag, so hovering links can fire `POST /api/auth/refresh` and speculative redirects. ✅ Fixed
+10. **QRY-01 (Low)** — `QueryClient` has zero `defaultOptions`; the app relies entirely on every query remembering to set `staleTime`. ✅ Fixed
 
 ---
 
@@ -96,36 +96,42 @@ The frontend is well above average for an internal tool: token-driven theming wi
 
 ### 1.4 Tables & data display
 
-**UX-03 — Infinite-scroll tables give no sense of result size or list end** · 🟡 Medium
+**UX-03 — Infinite-scroll tables give no sense of result size or list end** · 🟡 Medium · ✅ **Fixed**
 📍 `src/features/cases/cases-table.tsx:236`, `src/features/merchants/merchants-table.tsx:176`, `src/components/data-table/data-table.tsx`
 - **What:** Both tables use `onScrollEnd` infinite scroll; the UI only ever shows a "Loading more…" spinner — no total count, no end-of-list state. The unused `DataTablePagination` shows the intended pattern (`"{totalCount} total rows"`, `data-table-pagination.tsx:34-36`).
 - **Impact:** Users can't tell whether they've seen all results or how large a queue is.
 - **Recommendation:** Add a footer/caption with the loaded count and an "end of results" marker when `hasMore` is false.
+- **Resolution (2026-09-25):** Confirmed and fixed end to end. Backend `listCases` and `listMerchants` now return `total` (filtered `COUNT(*)`, computed only on the first page — cursor pages return `null` so infinite scroll adds no extra queries). `DataTable` gets a `totalCount` prop and, on infinite-scroll tables (`onScrollEnd`), renders a bottom footer "Showing {loaded} of {total}" (falls back to "Showing N rows" if the API omits `total`). Once `hasMore` is false, an "End of results" marker fills the empty area below the last row and is centered both horizontally and vertically within it. Applies to the cases and merchants tables.
 
 ### 1.5 Feedback states
 
-**UX-07 — Sonner toasts anchored bottom-right can cover submit actions on mobile** · 🔵 Low
+**UX-07 — Sonner toasts anchored bottom-right can cover submit actions on mobile** · 🔵 Low · ✅ **Fixed**
 📍 `src/routes/__root.tsx:69`
 - **What:** `<Toaster richColors position="bottom-right" />` with no `mobileOffset` (the prop exists in sonner v2). On 360px screens bottom toasts overlay the form submit row and the sticky section nav.
 - **Impact:** Toasts can hide the very actions the user needs next.
 - **Recommendation:** Set `mobileOffset`/`offset`, or use top placement on small screens.
+- **Resolution (2026-09-25):** Confirmed. `src/routes/__root.tsx` now renders an `AppToaster` that uses `useIsMobile()` (<768px) to place toasts `top-center` on small screens and keep `bottom-right` on desktop, so toasts no longer overlay form submit rows or bottom sticky navigation.
 
 *Related (main report):* **LOW-20** — background refetch failures in tables are silent (stale rows, no error banner).
 
 ### 1.6 Copy / UX writing
 
-**UX-09 — "Client" vs "merchant" terminology split** · 🔵 Low
+**UX-09 — "Client" vs "merchant" terminology split** · 🔵 Low · ✅ **Fixed**
 📍 `src/schemas/cases.schema.ts:44` (`awaiting_client: 'Awaiting Client'`) vs `src/features/cases/case-detail/case-side-panel.tsx:150` (`'Awaiting client'`), while the product everywhere else says "merchant".
 - **Recommendation:** Pick one term.
+- **Resolution (2026-09-25):** Confirmed (~30 staff-facing strings). Standardized on "merchant": the status label is now "Awaiting Merchant", and case-detail alerts, action hints, history labels ("Merchant resubmitted"), "Send mail to merchant" buttons, toasts, the dashboard KPI card and merchant history copy all say "merchant". Backend error messages and the resubmission notification copy were updated to match. Stage names are stored in the database, so new migration `0077_rename_awaiting_client_stage.sql` renames stages still named exactly "Awaiting Client" (admin-customised names are left alone), and new queues are seeded as "Awaiting Merchant". Internal identifiers (`awaiting_client` status, `client_resubmitted` action) are API/DB values and were intentionally left unchanged.
 
-**UX-10 — "login" used as a verb** · 🔵 Low
+**UX-10 — "login" used as a verb** · 🔵 Low · ✅ **Fixed**
 📍 `src/routes/set-password.$token.tsx:69` — `toast.success('Password set successfully. You can now login.')` → should be "log in".
+- **Resolution (2026-09-25):** Confirmed. Toast now reads "You can now log in." "Back to login" links were kept (noun usage).
 
-**UX-11 — Awkward chart title** · 🔵 Low
+**UX-11 — Awkward chart title** · 🔵 Low · ✅ **Fixed**
 📍 `src/features/dashboard/dashboard-charts.tsx:39` — "Merchant go-lives"; the card's own description says "Daily merchants that went live". Suggest "Merchants live".
+- **Resolution (2026-09-25):** Confirmed. Chart title renamed to "Merchants live".
 
-**UX-12 — Internal jargon in dashboard copy** · 🔵 Low
+**UX-12 — Internal jargon in dashboard copy** · 🔵 Low · ✅ **Fixed**
 📍 `src/features/dashboard/dashboard-portal-mids.tsx:127,165,200` — "Applied portal MIDs copied", "No applied portal MIDs". Acceptable for a staff tool, but a glossary hint would help new agents.
+- **Resolution (2026-09-25):** Confirmed. Added an info (ⓘ) tooltip next to the "Portal MIDs awaiting limits" card title explaining what a MID (merchant ID) is and why MIDs wait there until limits are applied.
 
 ### 1.7 Accessibility
 
@@ -224,16 +230,18 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **Impact:** Ships more of recharts than needed.
 - **Recommendation:** Replace with named imports.
 
-**PERF-03 — TanStack devtools packages in `dependencies` instead of `devDependencies`** · 🔵 Low
+**PERF-03 — TanStack devtools packages in `dependencies` instead of `devDependencies`** · 🔵 Low · ✅ **Fixed**
 📍 `package.json:37-39`
 - **What:** `@tanstack/react-devtools`, `@tanstack/react-query-devtools`, `@tanstack/react-router-devtools` are correctly gated by `import.meta.env.DEV` (`src/routes/__root.tsx:19-21`) and verified absent from `dist/client` — but they still bloat production installs/deploys.
 - **Recommendation:** Move to `devDependencies`.
+- **Resolution (2026-09-25):** Confirmed. Moved `@tanstack/react-devtools`, `@tanstack/react-query-devtools` and `@tanstack/react-router-devtools` to `devDependencies` in `package.json` and the matching workspace section of `bun.lock`. They are only imported behind `import.meta.env.DEV`, so production builds are unaffected.
 
-**PERF-04 — Self-hosted font not preloaded** · 🔵 Low
+**PERF-04 — Self-hosted font not preloaded** · 🔵 Low · ✅ **Fixed**
 📍 `src/styles.css:7-12`, `src/routes/__root.tsx:38-44`
 - **What:** `Geist-Variable.woff2` (68 kB) is self-hosted with `font-display: swap` (good), but the root head links only include the icon and stylesheet — no `<link rel="preload" as="font">`, so the font is discovered late.
 - **Impact:** Slightly delayed first-paint typography (swap mitigates).
 - **Recommendation:** Add a preload link for `/fonts/Geist-Variable.woff2`.
+- **Resolution (2026-09-25):** Confirmed. `src/routes/__root.tsx` now adds `<link rel="preload" as="font" type="font/woff2" crossorigin>` for `/fonts/Geist-Variable.woff2` ahead of the stylesheet.
 
 **PERF-05 — DataTable has no row memoization; column defs rebuilt per render** · 🔵 Low
 📍 `src/components/data-table/data-table.tsx` (rows via `data.map`, no `memo`); `src/features/cases/cases-table-context.tsx:218` (`createCaseColumns(...)` per render, new `cell` closures)
@@ -253,23 +261,26 @@ The frontend is well above average for an internal tool: token-driven theming wi
 
 ## 3. Data-fetching findings (TanStack Query)
 
-**QRY-01 — `QueryClient` created with zero `defaultOptions`** · 🔵 Low
+**QRY-01 — `QueryClient` created with zero `defaultOptions`** · 🔵 Low · ✅ **Fixed**
 📍 `src/integrations/tanstack-query/root-provider.tsx:6` (`new QueryClient()`)
 - **What:** No global `staleTime`/`gcTime`/`retry`/`refetchOnWindowFocus` policy. It works today only because every `queryOptions` sets `staleTime` explicitly (30s standard; 5 min for queues at `use-cases-query.ts:53`; 60s for config at `use-configuration-query.ts:108-182`).
 - **Impact:** Any future query that forgets `staleTime` silently gets aggressive defaults (`staleTime: 0`, `retry: 3`, `refetchOnWindowFocus: true`).
 - **Recommendation:** Set `defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } }` as a safety net.
+- **Resolution (2026-09-25):** Confirmed. `root-provider.tsx` now sets `defaultOptions.queries`: `staleTime: 30_000`, `refetchOnWindowFocus: false`, and a `retry` function that retries once but never on 4xx responses (not found / forbidden / validation errors cannot succeed on retry). Queries that set their own options (e.g. `retry: false` on public-link and auth queries) keep them.
 
-**QRY-02 — SSE `onVisible` invalidation duplicates TanStack's focus refetch** · 🔵 Low
+**QRY-02 — SSE `onVisible` invalidation duplicates TanStack's focus refetch** · 🔵 Low · ✅ **Fixed**
 📍 `src/features/notifications/notifications-provider.tsx:45-51`
 - **What:** `syncVisibleTab` invalidates `CASE_DETAIL_KEY`, `CASE_HISTORY_KEY`, `CASES_KEY` on every `visibilitychange` → visible, while the QueryClient default `refetchOnWindowFocus: true` also refetches on focus. They converge to a single refetch (fresh data is skipped by the focus manager), so this is redundant, not buggy.
 - **Impact:** Two mechanisms doing one job; confusing for future maintainers.
 - **Recommendation:** Keep one — rely on `refetchOnWindowFocus` or keep the explicit invalidation and disable the default.
+- **Resolution (2026-09-25):** Confirmed. Kept one mechanism: `refetchOnWindowFocus` is off globally (QRY-01) and `NotificationsProvider`'s visible-tab sync is the single tab-return refresh. It force-refreshes case caches (SSE is paused while hidden and may have missed events) and refetches any other stale on-screen query in parallel (`refetchQueries({ type: 'active', stale: true }, { cancelRefetch: false })`), preserving the old focus-refetch freshness for dashboard/merchant/user screens.
 
-**QRY-03 — Inconsistent mutation error→toast mapping swallows server error detail** · 🔵 Low
+**QRY-03 — Inconsistent mutation error→toast mapping swallows server error detail** · 🔵 Low · ✅ **Fixed**
 📍 e.g. `src/hooks/use-case-detail-query.ts:223,331`, `use-cases-query.ts:75,133`, `use-merchants-query.ts:174,191,254,379`, `use-notifications-query.ts:176,194`
 - **What:** ~10 mutations use hardcoded strings (`toast.error('Failed to take ownership')`) instead of the `getApiErrorMessage(error, fallback)` helper used elsewhere (`src/lib/get-api-error-message.ts:3`).
 - **Impact:** Backend-provided error messages never reach the user on those actions.
 - **Recommendation:** Route all mutation `onError` handlers through `getApiErrorMessage`.
+- **Resolution (2026-09-25):** Confirmed (10 handlers). All listed mutations in `use-case-detail-query.ts`, `use-cases-query.ts`, `use-merchants-query.ts` and `use-notifications-query.ts` now call `toast.error(getApiErrorMessage(error, '<previous message>'))`, so backend error messages reach the user and the old text remains the fallback.
 
 **QRY-04 — SPA mode: no SSR/dehydration by design** · ⚪ Info
 📍 `vite.config.ts:9-11` (`tanstackStart({ spa: { enabled: true } })`)
@@ -308,11 +319,12 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **What:** Loader validates the token via `fetchPasswordToken`; blank public page while it resolves.
 - **Recommendation:** Add a small pending component (the route already imports `Spinner`).
 
-**RTE-04 — No path-param validation anywhere** · 🔵 Low
+**RTE-04 — No path-param validation anywhere** · 🔵 Low · ✅ **Fixed**
 📍 Repo-wide, e.g. `_app.cases.$caseId.tsx:28`, `_app.merchants.$merchantId.tsx:22`, `_app.user-management.users.$userId.tsx:16`, `set-password.$token.tsx:29`, `onboarding-form.resubmit.$token.tsx:13`
 - **What:** `params.parse`/`stringify` is unused; `$caseId`, `$merchantId`, `$userId`, `$token` flow raw into API calls. The router supports `params: { parse, stringify }` (route-options API reference).
 - **Impact:** The server validates, but client-side early rejection would avoid wasted requests and yield cleaner 404s.
 - **Recommendation:** Add `params.parse` with Zod on the `$`-param routes.
+- **Resolution (2026-09-25):** Confirmed. New `src/lib/route-params.ts` (`parseUuidParam`, `parseTokenParam`, Zod-based) is used via `params.parse` on `$caseId`, `$merchantId` (covers its child tabs), `$userId`, `set-password.$token` and `onboarding-form.resubmit.$token`. IDs must be UUIDs and tokens base64url of 32–256 chars (matching the API's own validation). Malformed params throw `notFound()` before any loader/API call and render the route's existing not-found UI; the resubmit route gained a `notFoundComponent` that reuses its "Link not found" screen.
 
 **RTE-05 — Two redirect idioms: in-component `<Navigate>` vs `beforeLoad` redirect** · 🔵 Low
 📍 `src/routes/_app.cases.index.tsx:8-10`, `_app.user-management.index.tsx:8-10` vs `_app.configuration.index.tsx`, `_app.merchants.$merchantId.index.tsx`
@@ -320,11 +332,12 @@ The frontend is well above average for an internal tool: token-driven theming wi
 - **Impact:** Minor flash + inconsistency.
 - **Recommendation:** Unify on `beforeLoad` + `throw redirect({ replace: true })`.
 
-**RTE-06 — Auth guards ignore the router `preload` flag** · 🔵 Low
+**RTE-06 — Auth guards ignore the router `preload` flag** · 🔵 Low · ✅ **Fixed**
 📍 `src/features/auth/route-guards.ts:10-28,46-63`, `src/routes/_app.cases.work-queue-cases.tsx:34`
 - **What:** Per the official Preloading guide, client-side preloading runs each route's `beforeLoad` with `preload: true`. Consequences: (1) `requireAuthSession` → `ensureAuthSession` → `queryClient.fetchQuery(...)` → `POST /api/auth/refresh` fires on **every hover/focus preload** while unauthenticated — pure network churn; (2) `requireAllowedRoles` and the work-queue role guard `throw redirect(...)` during speculative preloads.
 - **Impact:** Wasted refresh calls; redirect throws during preloads the user never committed to.
 - **Recommendation:** Early-return from guards when `preload` is true.
+- **Resolution (2026-09-25):** Confirmed for the refresh churn; fixed with a narrower change than recommended. `requireAuthSession` (`_app`) and `redirectAuthenticatedUser` (`/login`) now receive `beforeLoad`'s `preload` flag and skip `POST /api/auth/refresh` on preloads (the app guard redirects the preload to `/login` instead). Role guards were deliberately **not** changed to early-return: router-core's `preloadClientRoute` follows a redirect thrown during preload by preloading the target and never navigates, so those throws are harmless — whereas early-returning would let forbidden routes' loaders run, hit 403, and trigger the API client's clear-auth-and-go-to-login handling from a mere hover.
 
 **RTE-07 — Zero `createLazyFileRoute` usage is fine (auto-splitting verified)** · ⚪ Info
 📍 Repo-wide; extra split point at `src/hooks/use-case-detail-query.ts:107` (`import('#/features/cases/case-detail/queue-registry')`)
@@ -385,15 +398,15 @@ Effort hints: **S** = small (hours) · **M** = medium (~a day) · **L** = large 
 - [ ] **HIGH-08** (S, main report) — Repair `bun run lint` (typescript-eslint vs TS 7).
 - [ ] **MED-08** (S, main report) — Stop persisting PII/bank fields in plaintext localStorage; add draft expiry.
 - [ ] **UX-01** (S) — Implement or remove the dead `scroll-fade-x`/`shimmer` classes on the onboarding section nav.
-- [ ] **UX-03** (S) — Add loaded-count + end-of-list state to infinite-scroll tables.
+- [x] **UX-03** (S) ✅ Fixed — "Showing X of Y" footer (backend `total` on first page) + centered end-of-results marker.
 - [x] **UX-04** (S) ✅ Fixed — Merchant-detail breadcrumb parity with case detail (`Merchants › {name}`).
 - [ ] **A11Y-01** (S) — Label the table search input; accessible name + ≥32px target for the clear button.
 - [ ] **A11Y-02** (S) — `aria-sort` on table headers + sort-state labels on sort buttons.
 - [ ] **RSP-01** (S/M) — Sticky identifier column (or fewer columns) for tables on mobile.
-- [ ] **RTE-06** (S) — Early-return from auth/role guards when `preload` is true.
+- [x] **RTE-06** (S) ✅ Fixed — Skip the auth refresh call during preloads (role guards intentionally unchanged).
 - [ ] **RTE-02 / RTE-03** (S) — Add `pendingComponent` to user-detail and set-password routes.
-- [ ] **RTE-04** (S) — `params.parse` (Zod) on `$`-param routes.
-- [ ] **QRY-03** (S) — Route mutation `onError` handlers through `getApiErrorMessage`.
+- [x] **RTE-04** (S) ✅ Fixed — `params.parse` (Zod) on `$`-param routes.
+- [x] **QRY-03** (S) ✅ Fixed — Route mutation `onError` handlers through `getApiErrorMessage`.
 - [ ] **PERF-02** (S) — Named recharts imports instead of namespace import.
 - [ ] **MED-11** (S, main report) — 401 interceptor should reject with the original request's error.
 - [ ] **LOW-18** (S, main report) — `pendingComponent` on the merchant detail route.
@@ -402,14 +415,14 @@ Effort hints: **S** = small (hours) · **M** = medium (~a day) · **L** = large 
 
 - [ ] **UX-05** (S) — Standardize required-field marking (badge pattern recommended).
 - [x] **UX-06** (S) ✅ Fixed — Delete dead `DataTablePagination` (or commit to a pagination UX).
-- [ ] **UX-07** (S) — `mobileOffset` for sonner toasts.
+- [x] **UX-07** (S) ✅ Fixed — Top-center sonner placement on mobile (was `mobileOffset` suggestion).
 - [ ] **UX-08** (S) — Name failing count/section in the validation toast.
-- [ ] **UX-09–UX-12** (S) — Copy fixes (client/merchant, "log in", chart title, MIDs jargon).
+- [x] **UX-09–UX-12** (S) ✅ Fixed — Copy fixes (client/merchant, "log in", chart title, MIDs jargon).
 - [ ] **A11Y-03** (S) — `aria-pressed` on filter options. **A11Y-04** (S) — icon buttons ≥36–40px. **A11Y-05** (S) — persistent "mark as read" on touch. **A11Y-06** (S) — skip link. **A11Y-07** (S) — `aria-describedby` for field errors. **A11Y-08** (S) — fold into UX-05.
 - [ ] **RSP-02** (S) — ≥40px touch targets on mobile controls. **RSP-03** (S) — xyflow touch ergonomics (or declare desktop-first).
 - [ ] **RTE-05** (S) — Unify index redirects on `beforeLoad` + `throw redirect()`.
-- [ ] **QRY-01** (S) — `QueryClient` `defaultOptions` safety net. **QRY-02** (S) — keep one focus-refetch mechanism.
-- [ ] **PERF-03** (S) — Move TanStack devtools to `devDependencies`. **PERF-04** (S) — preload the self-hosted font. **PERF-05** (—) — no action unless tables feel janky.
+- [x] **QRY-01** (S) ✅ Fixed — `QueryClient` `defaultOptions` safety net. **QRY-02** (S) ✅ Fixed — keep one focus-refetch mechanism.
+- [x] **PERF-03** (S) ✅ Fixed — Move TanStack devtools to `devDependencies`. **PERF-04** (S) ✅ Fixed — preload the self-hosted font. **PERF-05** (—) — no action unless tables feel janky.
 - [ ] **MED-09 / LOW-16** (S, main report) — keyboard-reachable password toggle; label the hidden file input.
 - [ ] **MED-10 / LOW-19** (S, main report) — reuse Zod schemas in resubmission form; validate set-password on blur/change.
 - [ ] **LOW-08 / LOW-20** (S, main report) — invalidate case-detail on assign/priority; surface background refetch errors.

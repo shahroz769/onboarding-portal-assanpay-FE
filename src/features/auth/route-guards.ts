@@ -10,6 +10,8 @@ export async function requireAuthSession(params: {
   auth: AuthClient
   queryClient: QueryClient
   redirectTo: string
+  /** `beforeLoad`'s `preload` flag: true for hover/intent preloads. */
+  preload?: boolean
 }) {
   if (params.auth.isAuthenticated()) {
     return
@@ -17,6 +19,15 @@ export async function requireAuthSession(params: {
 
   if (import.meta.env.SSR) {
     return
+  }
+
+  // Don't call the refresh endpoint for a speculative preload. Redirecting
+  // here only makes the router preload /login instead; it never navigates.
+  if (params.preload) {
+    throw redirect({
+      to: '/login',
+      search: { redirect: sanitizeRedirect(params.redirectTo) },
+    })
   }
 
   try {
@@ -34,6 +45,8 @@ export async function redirectAuthenticatedUser(params: {
   auth: AuthClient
   queryClient: QueryClient
   redirectTo?: string
+  /** `beforeLoad`'s `preload` flag: true for hover/intent preloads. */
+  preload?: boolean
 }) {
   if (import.meta.env.SSR) {
     return
@@ -41,6 +54,11 @@ export async function redirectAuthenticatedUser(params: {
 
   if (params.auth.isAuthenticated()) {
     throw redirect({ href: sanitizeRedirect(params.redirectTo) })
+  }
+
+  // Probing the session costs a refresh request; only do it on a real visit.
+  if (params.preload) {
+    return
   }
 
   try {

@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '#/components/ui/tooltip'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
@@ -109,12 +110,18 @@ export function createMerchantColumns({
         />
       ),
       cell: (merchant) => (
-        <span
-          className="block max-w-80 truncate font-medium"
-          title={merchant.businessName}
+        <TruncatedTooltip
+          render={
+            <Link
+              to="/merchants/$merchantId/overview"
+              params={{ merchantId: merchant.id }}
+              className="block max-w-80 truncate font-medium text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+            />
+          }
+          content={merchant.businessName}
         >
           {merchant.businessName}
-        </span>
+        </TruncatedTooltip>
       ),
       width: 360,
     },

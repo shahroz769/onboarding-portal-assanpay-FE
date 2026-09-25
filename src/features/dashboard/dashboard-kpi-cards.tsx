@@ -1,14 +1,17 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
+  ArrowUpRight,
   CheckCircle2,
   Clock,
   FilePlus2,
   Gauge,
+  Hourglass,
   ShieldAlert,
   Store,
   UserCheck,
 } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
 import {
   Card,
@@ -19,7 +22,17 @@ import {
 } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
+import type { CaseFilterStatus } from '#/schemas/cases.schema'
+import {
+  MERCHANT_STATUSES,
+  type MerchantStatus,
+} from '#/schemas/merchants.schema'
 import { formatCount, formatPercent } from './dashboard-utils'
+
+/** Opens the cases or merchants list pre-filtered to the card's statuses. */
+type StatCardLink =
+  | { to: '/cases/all-cases'; statuses: ReadonlyArray<CaseFilterStatus> }
+  | { to: '/merchants'; statuses: ReadonlyArray<MerchantStatus> }
 
 type StatCardProps = {
   label: string
@@ -27,6 +40,7 @@ type StatCardProps = {
   icon: LucideIcon
   hint?: string
   accent?: 'default' | 'positive' | 'warning' | 'danger'
+  link?: StatCardLink
 }
 
 const ACCENT_CLASSES: Record<NonNullable<StatCardProps['accent']>, string> = {
@@ -42,13 +56,22 @@ function StatCard({
   icon: Icon,
   hint,
   accent = 'default',
+  link,
 }: StatCardProps) {
-  return (
-    <Card className="gap-0 py-4">
+  const card = (
+    <Card
+      className={cn(
+        'h-full gap-0 py-4',
+        link && 'transition-colors group-hover:bg-muted/40',
+      )}
+    >
       <CardHeader className="px-4">
         <CardDescription className="flex items-center gap-1.5 text-xs font-medium">
           <Icon className={cn('size-3.5', ACCENT_CLASSES[accent])} />
           {label}
+          {link ? (
+            <ArrowUpRight className="ml-auto size-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+          ) : null}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-4">
@@ -58,6 +81,19 @@ function StatCard({
         ) : null}
       </CardContent>
     </Card>
+  )
+
+  if (!link) return card
+
+  return (
+    <Link
+      to={link.to}
+      search={{ status: link.statuses.join(',') }}
+      aria-label={`${label}: ${value}. View list`}
+      className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {card}
+    </Link>
   )
 }
 
@@ -84,29 +120,43 @@ export function DashboardKpiCards({ data }: { data: DashboardResponse }) {
   return (
     <div className="flex flex-col gap-6">
       <Section title="Cases">
-        <StatCard label="New" value={formatCount(cases.new)} icon={FilePlus2} />
+        <StatCard
+          label="New"
+          value={formatCount(cases.new)}
+          icon={FilePlus2}
+          link={{ to: '/cases/all-cases', statuses: ['new'] }}
+        />
         <StatCard
           label="Working"
           value={formatCount(cases.working)}
           icon={Gauge}
+          link={{ to: '/cases/all-cases', statuses: ['working'] }}
         />
         <StatCard
           label="Closed"
           value={formatCount(cases.closed)}
           icon={CheckCircle2}
           accent="positive"
+          // The closed count includes unsuccessful closures, which the list
+          // only shows when that filter is selected explicitly.
+          link={{
+            to: '/cases/all-cases',
+            statuses: ['closed', 'unsuccessful'],
+          }}
         />
         <StatCard
           label="Pending"
-          value={formatCount(cases.pending + cases.awaitingClient)}
+          value={formatCount(cases.pending)}
           icon={Clock}
           accent="warning"
+          link={{ to: '/cases/all-cases', statuses: ['pending'] }}
         />
         <StatCard
-          label="SLA breached"
-          value={formatCount(cases.slaBreached)}
-          icon={ShieldAlert}
-          accent="danger"
+          label="Awaiting merchant"
+          value={formatCount(cases.awaitingClient)}
+          icon={Hourglass}
+          accent="warning"
+          link={{ to: '/cases/all-cases', statuses: ['awaiting_client'] }}
         />
         <StatCard
           label="Breach rate"
@@ -121,29 +171,34 @@ export function DashboardKpiCards({ data }: { data: DashboardResponse }) {
           label="Total merchants"
           value={formatCount(merchants.total)}
           icon={Store}
+          link={{ to: '/merchants', statuses: MERCHANT_STATUSES }}
         />
         <StatCard
           label="Live"
           value={formatCount(merchants.live)}
           icon={CheckCircle2}
           accent="positive"
+          link={{ to: '/merchants', statuses: ['live'] }}
         />
         <StatCard
           label="Testing"
           value={formatCount(merchants.testing)}
           icon={UserCheck}
+          link={{ to: '/merchants', statuses: ['testing'] }}
         />
         <StatCard
           label="In process"
           value={formatCount(merchants.pending)}
           icon={Clock}
           accent="warning"
+          link={{ to: '/merchants', statuses: ['pending'] }}
         />
         <StatCard
           label="Terminated"
           value={formatCount(merchants.terminated)}
           icon={ShieldAlert}
           accent="danger"
+          link={{ to: '/merchants', statuses: ['terminated'] }}
         />
         <StatCard
           label="Form submissions"

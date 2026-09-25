@@ -243,7 +243,7 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
           icon={History}
           tone="blue"
           title="Cases"
-          description="Each case groups its creation, status changes, client actions, and closing activity."
+          description="Each case groups its creation, status changes, merchant actions, and closing activity."
         >
           <div className="flex flex-col gap-5">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -436,7 +436,7 @@ function statusBadgeForAction(action: string) {
     action === 'resubmission_email_sent_manual'
   ) {
     return {
-      label: 'Awaiting client',
+      label: 'Awaiting merchant',
       className: caseStatusBadgeClasses('awaiting_client'),
     }
   }

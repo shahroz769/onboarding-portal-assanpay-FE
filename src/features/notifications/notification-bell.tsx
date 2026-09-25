@@ -8,6 +8,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { useUnreadCountQuery } from '#/hooks/use-notifications-query'
 import { cn } from '#/lib/utils'
 
@@ -22,33 +27,44 @@ export function NotificationBell() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
-          />
-        }
-      >
-        <Bell />
-        {hasUnread ? (
-          <Badge
-            className={cn(
-              'absolute -top-1 -right-1 rounded-full text-[10px] leading-none tabular-nums',
-              displayCount.length === 1 ? 'size-5 p-0' : 'h-5 min-w-5 px-1.5',
-            )}
-            variant="destructive"
-          >
-            {displayCount}
-          </Badge>
-        ) : null}
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
+                />
+              }
+            />
+          }
+        >
+          <Bell />
+          {hasUnread ? (
+            <Badge
+              className={cn(
+                'absolute -top-1 -right-1 rounded-full text-[10px] leading-none tabular-nums',
+                displayCount.length === 1 ? 'size-5 p-0' : 'h-5 min-w-5 px-1.5',
+              )}
+              variant="destructive"
+            >
+              {displayCount}
+            </Badge>
+          ) : null}
+        </TooltipTrigger>
+        <TooltipContent>
+          {hasUnread
+            ? `Notifications (${unreadCount} unread)`
+            : 'Notifications'}
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[400px] max-w-[calc(100vw-2rem)] p-0"
+        className="w-100 max-w-[calc(100vw-2rem)] p-0"
       >
         <NotificationsPopoverContent
           onNavigate={() => setOpen(false)}

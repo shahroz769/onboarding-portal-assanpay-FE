@@ -33,7 +33,7 @@ interface CasesTableState {
   hideStatusFilter: boolean
   userRole: RoleType
   isLoading: boolean
-  loadedCount: number
+  totalCount: number | null
   hasNextPage: boolean
   isFetchingNextPage: boolean
   queues: Queue[]
@@ -173,7 +173,7 @@ function CasesTableProviderState({
 
   const flatData = data?.pages.flatMap((page) => page.cases) ?? []
 
-  const loadedCount = flatData.length
+  const totalCount = data?.pages[0]?.total ?? null
   const assignableIds =
     userRole === 'super_admin' || userRole === 'admin'
       ? flatData.flatMap((item) =>
@@ -269,7 +269,7 @@ function CasesTableProviderState({
     hideStatusFilter,
     userRole,
     isLoading: isTableLoading,
-    loadedCount,
+    totalCount,
     hasNextPage,
     isFetchingNextPage,
     queues,

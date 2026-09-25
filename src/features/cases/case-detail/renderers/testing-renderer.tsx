@@ -257,7 +257,7 @@ export default function TestingRenderer({
           <AlertTitle>Limits have not been applied</AlertTitle>
           <AlertDescription>
             Apply limits from the dashboard before sending credentials to the
-            client.
+            merchant.
           </AlertDescription>
         </Alert>
       ) : credentialsEmailSent ? (
@@ -326,7 +326,7 @@ export default function TestingRenderer({
                   )}
                   {sendCredentialsEmail.isPending
                     ? 'Sending mail'
-                    : 'Send mail to client'}
+                    : 'Send mail to merchant'}
                 </Button>
               </DialogFooter>
             }

@@ -26,7 +26,8 @@ import { showNotificationToast } from './notification-toast'
  * - Opens an SSE connection to receive live notifications for the current user.
  * - Pushes incoming events into the TanStack Query cache.
  * - Fires a Sonner toast for each live event.
- * - On tab visible, reconnects SSE and refreshes notification/case caches.
+ * - On tab visible, reconnects SSE and refreshes case caches plus any stale
+ *   on-screen query (the app-wide replacement for refetchOnWindowFocus).
  */
 export function NotificationsProvider() {
   const auth = useAuth()
@@ -43,11 +44,21 @@ export function NotificationsProvider() {
     ])
   })
 
+  // The single tab-return refresh (the QueryClient disables
+  // refetchOnWindowFocus). Case data is force-refreshed because SSE is paused
+  // while hidden and may have missed updates; everything else on screen is
+  // refetched only if stale, matching TanStack's focus-refetch behaviour.
   const syncVisibleTab = useEffectEvent(() => {
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: CASE_DETAIL_KEY }),
       queryClient.invalidateQueries({ queryKey: CASE_HISTORY_KEY }),
       queryClient.invalidateQueries({ queryKey: CASES_KEY }),
+      // Runs after the invalidations above have started, so it joins those
+      // in-flight fetches (cancelRefetch: false) instead of restarting them.
+      queryClient.refetchQueries(
+        { type: 'active', stale: true },
+        { cancelRefetch: false },
+      ),
     ])
   })
 

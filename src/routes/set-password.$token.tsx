@@ -31,9 +31,13 @@ import {
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { parseTokenParam } from '#/lib/route-params'
 import { setPasswordSchema } from '#/schemas/users.schema'
 
 export const Route = createFileRoute('/set-password/$token')({
+  params: {
+    parse: ({ token }) => ({ token: parseTokenParam(token) }),
+  },
   loader: async ({ params }) => {
     try {
       return await fetchPasswordToken(params.token)
@@ -66,7 +70,7 @@ function RouteComponent() {
     mutationFn: (value: { password: string; confirmPassword: string }) =>
       setPasswordRequest(token, value),
     onSuccess: async () => {
-      toast.success('Password set successfully. You can now login.')
+      toast.success('Password set successfully. You can now log in.')
       await queryClient.invalidateQueries({ queryKey: ['users'] })
       await navigate({ to: '/login' })
     },

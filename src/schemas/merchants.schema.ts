@@ -77,6 +77,8 @@ const merchantListResponseSchema = z.object({
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
   limit: z.number(),
+  // Filtered total; only sent on the first page (null on cursor pages).
+  total: z.number().nullable().optional(),
 })
 
 export type MerchantListResponse = z.infer<typeof merchantListResponseSchema>

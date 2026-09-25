@@ -10,11 +10,12 @@ const loginSearchSchema = z.object({
 
 export const Route = createFileRoute('/login')({
   validateSearch: loginSearchSchema,
-  beforeLoad: async ({ search, context }) => {
+  beforeLoad: async ({ search, context, preload }) => {
     await redirectAuthenticatedUser({
       auth: context.auth,
       queryClient: context.queryClient,
       redirectTo: search.redirect,
+      preload,
     })
   },
   component: LoginRoute,

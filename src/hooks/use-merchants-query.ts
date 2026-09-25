@@ -170,8 +170,8 @@ export function useUpdateMerchantLimitsMdrMutation(merchantId: string) {
         queryKey: merchantDetailKey(merchantId),
       })
     },
-    onError: () => {
-      toast.error('Failed to update limits and MDR.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update limits and MDR.'))
     },
   })
 }
@@ -187,8 +187,8 @@ export function useResetMerchantLimitsMdrMutation(merchantId: string) {
         queryKey: merchantDetailKey(merchantId),
       })
     },
-    onError: () => {
-      toast.error('Failed to reset limits and MDR.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to reset limits and MDR.'))
     },
   })
 }
@@ -245,13 +245,13 @@ export function useUpdatePriorityMutation() {
 
       return { previous }
     },
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous) {
         for (const [queryKey, data] of context.previous) {
           queryClient.setQueryData(queryKey, data)
         }
       }
-      toast.error('Failed to update priority.')
+      toast.error(getApiErrorMessage(error, 'Failed to update priority.'))
     },
     onSuccess: (updatedMerchant) => {
       updateMerchantInMerchantLists(
@@ -375,8 +375,8 @@ export function useBulkPriorityMutation() {
       toast.success('Priority updated for selected merchants.')
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
-    onError: () => {
-      toast.error('Failed to update priority.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update priority.'))
     },
   })
 }

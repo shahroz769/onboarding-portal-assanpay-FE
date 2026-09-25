@@ -33,7 +33,7 @@ interface MerchantsTableState {
   filters: MerchantRouteSearch
   userRole: RoleType
   isLoading: boolean
-  loadedCount: number
+  totalCount: number | null
   hasNextPage: boolean
   isFetchingNextPage: boolean
   priorityTarget: MerchantPriorityTarget | null
@@ -195,7 +195,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
   const flatData = data?.pages.flatMap((page) => page.merchants) ?? []
 
-  const loadedCount = flatData.length
+  const totalCount = data?.pages[0]?.total ?? null
   const allIds = flatData.map((merchant) => merchant.id)
 
   const handleSelectRow = (id: string, selected: boolean) => {
@@ -340,7 +340,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     filters,
     userRole,
     isLoading: isTableLoading,
-    loadedCount,
+    totalCount,
     hasNextPage,
     isFetchingNextPage,
     priorityTarget,

@@ -1,15 +1,14 @@
-import { Handle, Position } from '@xyflow/react'
+import { Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 
 import { Play } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 
+import { HintedHandle } from './hinted-handle'
+
 import type { SubmissionFlowNode } from '../workflow-graph-types'
-import {
-  QUEUE_NODE_HEIGHT,
-  SUBMISSION_NODE_WIDTH,
-} from '../workflow-layout'
+import { QUEUE_NODE_HEIGHT, SUBMISSION_NODE_WIDTH } from '../workflow-layout'
 
 export function SubmissionNode({
   data,
@@ -38,13 +37,13 @@ export function SubmissionNode({
           </p>
         </div>
       </div>
-      <Handle
+      <HintedHandle
         id="s-start"
         type="source"
         position={Position.Right}
         style={{ top: '50%' }}
-        className="!size-2.5 !border-2 !border-background !bg-emerald-500 transition-transform hover:!scale-125"
-        title="Start rule — drag to the first queue to open"
+        className="size-2.5! border-2! border-background! bg-emerald-500! transition-transform hover:scale-125!"
+        hint="Start rule — drag to the first queue to open"
       />
     </div>
   )

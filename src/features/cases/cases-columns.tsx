@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import { cn } from '#/lib/utils'
@@ -223,14 +224,28 @@ export function createCaseColumns({
         />
       ),
       cell: (item) => (
-        <div className="flex max-w-50 flex-col gap-0.5">
-          <span className="truncate font-medium">{item.merchantName}</span>
+        <TruncatedTooltip
+          render={<div className="flex max-w-50 flex-col gap-0.5" />}
+          content={
+            <>
+              {item.merchantName}
+              {item.subMerchantName ? ` · ${item.subMerchantName}` : null}
+            </>
+          }
+        >
+          <Link
+            to="/merchants/$merchantId/overview"
+            params={{ merchantId: item.merchantId }}
+            className="block truncate font-medium text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+          >
+            {item.merchantName}
+          </Link>
           {item.subMerchantName ? (
             <span className="truncate text-xs text-muted-foreground">
               {item.subMerchantName}
             </span>
           ) : null}
-        </div>
+        </TruncatedTooltip>
       ),
       width: 200,
     },
@@ -255,13 +270,12 @@ export function createCaseColumns({
       header: 'Queue',
       cell: (item) => (
         <div className="flex min-w-0 max-w-full">
-          <Badge
-            variant="secondary"
-            className="max-w-full"
-            title={item.queueName}
+          <TruncatedTooltip
+            render={<Badge variant="secondary" className="max-w-full" />}
+            content={item.queueName}
           >
             <span className="truncate">{item.queueName}</span>
-          </Badge>
+          </TruncatedTooltip>
         </div>
       ),
       width: 130,

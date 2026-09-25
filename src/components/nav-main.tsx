@@ -164,7 +164,7 @@ function NavItem({
                 {showGroupLabel ? (
                   <li
                     className={cn(
-                      'px-2 pb-0.5 text-xs font-medium text-sidebar-foreground/60',
+                      'truncate px-2 pb-0.5 text-xs font-medium text-sidebar-foreground/60',
                       index === 0 ? 'pt-1' : 'pt-3',
                     )}
                   >

@@ -12,7 +12,7 @@ import type { MerchantHeader } from '#/schemas/merchants.schema'
 import { MERCHANT_DETAIL_TABS } from './merchant-detail-tabs'
 
 const merchantDetailTabClassName =
-  "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+  'relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0'
 
 type MerchantDetailsLayoutProps = {
   merchantId: string
@@ -21,9 +21,11 @@ type MerchantDetailsLayoutProps = {
 export function MerchantDetailsLayout({
   merchantId,
 }: MerchantDetailsLayoutProps) {
-  const { data: header, error, isError } = useQuery(
-    merchantHeaderQueryOptions(merchantId),
-  )
+  const {
+    data: header,
+    error,
+    isError,
+  } = useQuery(merchantHeaderQueryOptions(merchantId))
 
   if (isError && !header) {
     throw error
@@ -39,7 +41,7 @@ export function MerchantDetailsLayout({
       <div className="flex flex-col gap-6">
         <nav
           aria-label="Merchant sections"
-          className="grid h-auto w-full grid-cols-2 rounded-lg bg-muted p-[3px] text-muted-foreground sm:inline-flex sm:w-fit"
+          className="grid h-auto w-full grid-cols-2 rounded-lg bg-muted p-0.75 text-muted-foreground sm:inline-flex sm:w-fit"
         >
           {MERCHANT_DETAIL_TABS.map((tab) => (
             <Link
@@ -49,7 +51,8 @@ export function MerchantDetailsLayout({
               activeOptions={{ exact: true }}
               className={merchantDetailTabClassName}
               activeProps={{
-                className: 'bg-background font-medium text-foreground shadow-sm',
+                className:
+                  'bg-background font-medium text-foreground shadow-sm',
               }}
             >
               <tab.icon />
@@ -80,8 +83,7 @@ function MerchantDetailsHeader({ header }: { header: MerchantHeader }) {
                 variant="secondary"
                 className={merchantStatusBadgeClasses(header.status)}
               >
-                {header.status.charAt(0).toUpperCase() +
-                  header.status.slice(1)}
+                {header.status.charAt(0).toUpperCase() + header.status.slice(1)}
               </Badge>
               {header.priority === 'high' ? (
                 <Badge variant="default">High priority</Badge>
@@ -122,9 +124,18 @@ function MerchantDetailsHeaderSkeleton() {
 export function MerchantOverviewSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <MerchantSectionSkeleton fieldCount={6} columns="sm:grid-cols-2 lg:grid-cols-3" />
-      <MerchantSectionSkeleton fieldCount={4} columns="sm:grid-cols-2 lg:grid-cols-3" />
-      <MerchantSectionSkeleton fieldCount={5} columns="sm:grid-cols-2 lg:grid-cols-3" />
+      <MerchantSectionSkeleton
+        fieldCount={6}
+        columns="sm:grid-cols-2 lg:grid-cols-3"
+      />
+      <MerchantSectionSkeleton
+        fieldCount={4}
+        columns="sm:grid-cols-2 lg:grid-cols-3"
+      />
+      <MerchantSectionSkeleton
+        fieldCount={5}
+        columns="sm:grid-cols-2 lg:grid-cols-3"
+      />
       <Card>
         <CardHeader>
           <MerchantSectionHeaderSkeleton />
@@ -345,7 +356,11 @@ function MerchantRateRowSkeleton() {
   )
 }
 
-function MerchantLimitFieldsSkeleton({ fieldCount = 2 }: { fieldCount?: number }) {
+function MerchantLimitFieldsSkeleton({
+  fieldCount = 2,
+}: {
+  fieldCount?: number
+}) {
   return (
     <Card>
       <CardHeader>

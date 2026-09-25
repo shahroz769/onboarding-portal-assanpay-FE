@@ -27,6 +27,7 @@ import {
   CollapsibleTrigger,
 } from '#/components/ui/collapsible'
 import { Separator } from '#/components/ui/separator'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
 import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { cn } from '#/lib/utils'
@@ -231,7 +232,7 @@ export function RejectionRoundsCard({ caseId }: RejectionRoundsCardProps) {
           <div className="min-w-0 flex-1">
             <CardTitle className="text-sm">Rejection rounds</CardTitle>
             <CardDescription className="mt-1">
-              Resubmission requests and client updates for this case.
+              Resubmission requests and merchant updates for this case.
             </CardDescription>
           </div>
           <CardAction className="static row-auto col-auto">
@@ -365,7 +366,7 @@ function RoundStatusBadge({ round }: { round: Round }) {
     return <Badge variant="secondary">Resubmitted</Badge>
   }
 
-  return <Badge variant="outline">Awaiting client</Badge>
+  return <Badge variant="outline">Awaiting merchant</Badge>
 }
 
 function RoundDetails({
@@ -410,8 +411,8 @@ function RoundDetails({
           icon={Inbox}
           label={
             resubmittedAt
-              ? `Client submitted ${resubmittedAt}`
-              : 'Client submitted'
+              ? `Merchant submitted ${resubmittedAt}`
+              : 'Merchant submitted'
           }
           title={`${round.fieldsUpdated.length} field${
             round.fieldsUpdated.length === 1 ? '' : 's'
@@ -449,12 +450,10 @@ function TimelineDetailBlock({
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         {title ? (
-          <p className="mt-1 break-words text-sm font-medium [overflow-wrap:anywhere]">
-            {title}
-          </p>
+          <p className="mt-1 wrap-anywhere text-sm font-medium">{title}</p>
         ) : null}
         {description ? (
-          <p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
+          <p className="mt-1 wrap-anywhere text-xs text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -468,14 +467,15 @@ function InlineItemList({ items }: { items: Array<string> }) {
   return (
     <div className="flex min-w-0 flex-wrap gap-2">
       {items.map((item) => (
-        <Badge
+        <TruncatedTooltip
           key={item}
-          variant="outline"
-          className="min-w-0 max-w-full truncate"
-          title={item}
+          render={
+            <Badge variant="outline" className="min-w-0 max-w-full truncate" />
+          }
+          content={item}
         >
           {item}
-        </Badge>
+        </TruncatedTooltip>
       ))}
     </div>
   )
@@ -557,9 +557,7 @@ function ValueBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border bg-background px-2.5 py-2">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 break-words text-sm [overflow-wrap:anywhere]">
-        {value || 'Empty'}
-      </p>
+      <p className="mt-1 wrap-anywhere text-sm">{value || 'Empty'}</p>
     </div>
   )
 }

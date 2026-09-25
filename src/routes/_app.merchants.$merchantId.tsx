@@ -11,8 +11,12 @@ import {
   merchantHeaderQueryOptions,
 } from '#/hooks/use-merchants-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { parseUuidParam } from '#/lib/route-params'
 
 export const Route = createFileRoute('/_app/merchants/$merchantId')({
+  params: {
+    parse: ({ merchantId }) => ({ merchantId: parseUuidParam(merchantId) }),
+  },
   staticData: {
     title: 'Merchant Details',
     hidePageShell: true,

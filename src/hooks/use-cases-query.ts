@@ -71,8 +71,8 @@ export function useCreateCaseMutation() {
       toast.success(`Case ${createdCase.caseNumber} created.`)
       await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to create case.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to create case.'))
     },
   })
 }
@@ -129,8 +129,8 @@ export function useUpdateCasePriorityMutation() {
       toast.success('Case priority updated.')
       await queryClient.invalidateQueries({ queryKey: CASES_KEY })
     },
-    onError: () => {
-      toast.error('Failed to update case priority.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update case priority.'))
     },
   })
 }

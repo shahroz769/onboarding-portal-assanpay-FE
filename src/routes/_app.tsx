@@ -26,16 +26,22 @@ import {
   SidebarTrigger,
 } from '#/components/ui/sidebar'
 import { Separator } from '#/components/ui/separator'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { PageHeaderActionsContext } from '#/hooks/use-page-header-actions'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
-  beforeLoad: async ({ location, context }) => {
+  beforeLoad: async ({ location, context, preload }) => {
     await requireAuthSession({
       auth: context.auth,
       queryClient: context.queryClient,
       redirectTo: location.href,
+      preload,
     })
   },
   component: AppLayout,
@@ -82,8 +88,7 @@ function AppLayout() {
     (match) => match.routeId === '/_app/merchants/$merchantId',
   )
   const merchantHeader = merchantDetailMatch?.loaderData as
-    | { businessName?: string }
-    | undefined
+    { businessName?: string } | undefined
 
   return (
     <SidebarProvider>
@@ -91,7 +96,12 @@ function AppLayout() {
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden bg-muted/30">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
+          <Tooltip>
+            <TooltipTrigger render={<SidebarTrigger className="-ml-1" />} />
+            <TooltipContent side="bottom">
+              Toggle sidebar (Ctrl+B)
+            </TooltipContent>
+          </Tooltip>
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"

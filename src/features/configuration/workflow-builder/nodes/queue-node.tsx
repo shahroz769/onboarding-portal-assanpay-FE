@@ -1,15 +1,17 @@
-import { Handle, Position } from '@xyflow/react'
+import { Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 
 import { Badge } from '#/components/ui/badge'
 
 import { cn } from '#/lib/utils'
 
+import { HintedHandle } from './hinted-handle'
+
 import type { QueueFlowNode } from '../workflow-graph-types'
 import { QUEUE_NODE_HEIGHT, QUEUE_NODE_WIDTH } from '../workflow-layout'
 
 const HANDLE_BASE =
-  '!size-2.5 !border-2 !border-background transition-transform hover:!scale-125'
+  'size-2.5! border-2! border-background! transition-transform hover:scale-125!'
 
 const WORKFLOW_TYPE_LABELS: Record<string, string> = {
   generic: 'Generic',
@@ -61,59 +63,59 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         ) : null}
       </div>
 
-      <Handle
+      <HintedHandle
         id="t-blocked"
         type="target"
         position={Position.Left}
         style={{ top: '24%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-amber-500')}
-        title="Close requirement: this case cannot close until the other closes"
+        className={cn(HANDLE_BASE, 'bg-amber-500!')}
+        hint="Close requirement: this case cannot close until the other closes"
       />
-      <Handle
+      <HintedHandle
         id="t-flow"
         type="target"
         position={Position.Left}
         style={{ top: '50%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-blue-500')}
-        title="Opens when the connected case closes"
+        className={cn(HANDLE_BASE, 'bg-blue-500!')}
+        hint="Opens when the connected case closes"
       />
-      <Handle
+      <HintedHandle
         id="t-require"
         type="target"
         position={Position.Left}
         style={{ top: '76%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-violet-500')}
-        title="Creation requirement: this case needs the other closed first"
+        className={cn(HANDLE_BASE, 'bg-violet-500!')}
+        hint="Creation requirement: this case needs the other closed first"
       />
-      <Handle
+      <HintedHandle
         id="s-prereq-close"
         type="source"
         position={Position.Right}
         style={{ top: '24%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-amber-500')}
-        title="Drag to a queue whose closing this one must precede"
+        className={cn(HANDLE_BASE, 'bg-amber-500!')}
+        hint="Drag to a queue whose closing this one must precede"
       />
-      <Handle
+      <HintedHandle
         id="s-close"
         type="source"
         position={Position.Right}
         style={{ top: '50%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-blue-500')}
-        title="Close trigger — drag to the queue that opens next"
+        className={cn(HANDLE_BASE, 'bg-blue-500!')}
+        hint="Close trigger — drag to the queue that opens next"
       />
-      <Handle
+      <HintedHandle
         id="s-prereq-create"
         type="source"
         position={Position.Right}
         style={{ top: '76%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, '!bg-violet-500')}
-        title="Drag to a queue that requires this one closed before creation"
+        className={cn(HANDLE_BASE, 'bg-violet-500!')}
+        hint="Drag to a queue that requires this one closed before creation"
       />
     </div>
   )

@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ClipboardCopy,
   Eye,
+  Info,
   ListChecks,
   ShieldCheck,
 } from 'lucide-react'
@@ -36,6 +37,11 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { ScrollArea } from '#/components/ui/scroll-area'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import {
   Select,
   SelectContent,
@@ -163,6 +169,25 @@ export function DashboardPortalMids({ data }: { data: DashboardResponse }) {
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <CardTitle>Portal MIDs awaiting limits</CardTitle>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="What is a portal MID?"
+                      className="text-muted-foreground"
+                    />
+                  }
+                >
+                  <Info />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-72">
+                  A MID (merchant ID) is the merchant's account ID on the
+                  payment portal. MIDs from successful MID Creation cases wait
+                  here until their limits are applied.
+                </TooltipContent>
+              </Tooltip>
               <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
                 {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
                 {pending.length}

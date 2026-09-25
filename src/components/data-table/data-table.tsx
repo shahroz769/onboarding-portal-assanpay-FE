@@ -98,6 +98,8 @@ interface DataTableProps<TData> {
   isFetchingMore?: boolean
   /** Whether there are more pages to fetch */
   hasMore?: boolean
+  /** Total rows matching the current filters, when the API reports it */
+  totalCount?: number | null
   /** Extra classes for the outer container (e.g. cap height in cards) */
   className?: string
 }
@@ -112,8 +114,10 @@ export function DataTable<TData>({
   onScrollEnd,
   isFetchingMore = false,
   hasMore = false,
+  totalCount = null,
   className,
 }: DataTableProps<TData>) {
+  const showEndOfResults = !!onScrollEnd && !hasMore && !isFetchingMore
   const sentinelRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -245,6 +249,9 @@ export function DataTable<TData>({
       <ScrollArea
         className="min-h-0 flex-1"
         viewportRef={viewportRef}
+        viewportClassName={
+          showEndOfResults ? 'flex flex-col' : undefined
+        }
         onScroll={syncHeaderScroll}
       >
         <Table className="table-fixed">
@@ -289,7 +296,23 @@ export function DataTable<TData>({
             )}
           </TableBody>
         </Table>
+        {/* Fills the space below the last row so the marker sits centered in it */}
+        {showEndOfResults && (
+          <div className="flex flex-1 items-center justify-center px-4 py-6 text-sm text-muted-foreground">
+            End of results
+          </div>
+        )}
       </ScrollArea>
+      {onScrollEnd && (
+        <div
+          aria-live="polite"
+          className="shrink-0 border-t bg-muted/40 px-3 py-2 text-xs text-muted-foreground tabular-nums"
+        >
+          {totalCount === null
+            ? `Showing ${data.length} ${data.length === 1 ? 'row' : 'rows'}`
+            : `Showing ${data.length} of ${totalCount}`}
+        </div>
+      )}
     </div>
   )
 }

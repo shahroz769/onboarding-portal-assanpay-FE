@@ -16,8 +16,12 @@ import {
 } from '#/features/cases/case-detail'
 import { preloadCaseDetailPageQueries } from '#/hooks/use-case-detail-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { parseUuidParam } from '#/lib/route-params'
 
 export const Route = createFileRoute('/_app/cases/$caseId')({
+  params: {
+    parse: ({ caseId }) => ({ caseId: parseUuidParam(caseId) }),
+  },
   staticData: {
     title: 'Case Details',
     hidePageShell: true,

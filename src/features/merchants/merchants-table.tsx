@@ -2,7 +2,6 @@ import { AlertTriangleIcon, BanIcon, Store } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { EmptyState } from '#/components/empty-state'
-import { Skeleton } from '#/components/ui/skeleton'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
   DataTable,
@@ -98,13 +97,6 @@ function Toolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         )}
-        {state.isLoading ? (
-          <Skeleton className="h-5 w-32" />
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            Loaded {state.loadedCount} Merchants
-          </span>
-        )}
       </DataTableToolbar.Actions>
     </DataTableToolbar>
   )
@@ -177,6 +169,7 @@ function Grid() {
       onScrollEnd={actions.fetchNextPage}
       isFetchingMore={state.isFetchingNextPage}
       hasMore={state.hasNextPage}
+      totalCount={state.totalCount}
       emptyContent={
         <EmptyState
           icon={Store}

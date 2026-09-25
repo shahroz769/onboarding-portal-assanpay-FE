@@ -36,7 +36,7 @@ export function DashboardCharts({ data }: { data: DashboardResponse }) {
         config={submissionsChartConfig}
       />
       <DailyCountBarChart
-        title="Merchant go-lives"
+        title="Merchants live"
         description="Daily merchants that went live"
         data={data.trends.merchantsLive}
         config={merchantsLiveChartConfig}

@@ -11,6 +11,11 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -59,18 +64,25 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Theme: ${selectedTheme.label}`}
-          />
-        }
-      >
-        <SelectedIcon />
-        <span className="sr-only">{selectedTheme.label}</span>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Theme: ${selectedTheme.label}`}
+                />
+              }
+            />
+          }
+        >
+          <SelectedIcon />
+          <span className="sr-only">{selectedTheme.label}</span>
+        </TooltipTrigger>
+        <TooltipContent>Theme: {selectedTheme.label}</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuGroup>
           <DropdownMenuRadioGroup

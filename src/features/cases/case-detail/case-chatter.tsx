@@ -31,6 +31,11 @@ import { Popover, PopoverContent } from '#/components/ui/popover'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { EmptyState } from '#/components/empty-state'
 import {
   caseCommentsQueryOptions,
@@ -168,7 +173,7 @@ function renderCommentText(content: string) {
 }
 
 const composerTypographyClassName =
-  'text-base leading-6 break-words whitespace-pre-wrap [overflow-wrap:anywhere] md:text-sm'
+  'text-base leading-6 wrap-anywhere whitespace-pre-wrap md:text-sm'
 
 function renderComposerText(
   content: string,
@@ -430,15 +435,23 @@ export function CaseChatter({
                     Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
                     {replyTarget.content}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="ml-auto"
-                    onClick={() => setIsClosingReplyTarget(true)}
-                  >
-                    <X />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="ml-auto"
+                          onClick={() => setIsClosingReplyTarget(true)}
+                          aria-label="Cancel reply"
+                        />
+                      }
+                    >
+                      <X />
+                    </TooltipTrigger>
+                    <TooltipContent>Cancel reply</TooltipContent>
+                  </Tooltip>
                 </div>
               ) : null}
 

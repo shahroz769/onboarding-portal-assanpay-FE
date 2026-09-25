@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import {
   fetchNotifications,
@@ -130,21 +131,21 @@ export function applyIncomingNotificationToCache(
   const prepend =
     (incrementUnreadCount: boolean) =>
     (cache: ListCache | undefined): ListCache | undefined => {
-    if (!cache) return cache
-    const [first, ...rest] = cache.pages
-    // Avoid duplicates if id already present (e.g. event arrives during refetch)
-    if (first.items.some((n) => n.id === notification.id)) return cache
-    return {
-      ...cache,
-      pages: [
-        {
-          ...first,
-          items: [notification, ...first.items],
-          unreadCount: first.unreadCount + (incrementUnreadCount ? 1 : 0),
-        },
-        ...rest,
-      ],
-    }
+      if (!cache) return cache
+      const [first, ...rest] = cache.pages
+      // Avoid duplicates if id already present (e.g. event arrives during refetch)
+      if (first.items.some((n) => n.id === notification.id)) return cache
+      return {
+        ...cache,
+        pages: [
+          {
+            ...first,
+            items: [notification, ...first.items],
+            unreadCount: first.unreadCount + (incrementUnreadCount ? 1 : 0),
+          },
+          ...rest,
+        ],
+      }
     }
 
   qc.setQueryData<ListCache>(
@@ -172,8 +173,10 @@ export function useMarkNotificationReadMutation() {
     onMutate: async (id) => {
       applyMarkReadToCache(qc, id)
     },
-    onError: () => {
-      toast.error('Failed to mark notification as read.')
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to mark notification as read.'),
+      )
       // Refetch to recover
       void qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
     },
@@ -190,8 +193,8 @@ export function useMarkAllNotificationsReadMutation() {
     onSuccess: () => {
       toast.success('All notifications marked as read.')
     },
-    onError: () => {
-      toast.error('Failed to mark all as read.')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to mark all as read.'))
       void qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
     },
   })

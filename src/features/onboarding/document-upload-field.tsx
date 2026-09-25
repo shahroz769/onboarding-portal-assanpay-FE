@@ -4,6 +4,11 @@ import { FileText, Upload, X } from 'lucide-react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
 } from '#/schemas/merchant-onboarding.schema'
@@ -126,16 +131,23 @@ export function DocumentUploadField({
               {formatFileSize(file.size)}
             </span>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-7 shrink-0"
-            onClick={handleRemove}
-          >
-            <X />
-            <span className="sr-only">Remove {label}</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 shrink-0"
+                  onClick={handleRemove}
+                />
+              }
+            >
+              <X />
+              <span className="sr-only">Remove {label}</span>
+            </TooltipTrigger>
+            <TooltipContent>Remove file</TooltipContent>
+          </Tooltip>
         </div>
       ) : (
         <Button

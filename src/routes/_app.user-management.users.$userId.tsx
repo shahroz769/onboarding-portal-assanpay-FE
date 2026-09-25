@@ -9,8 +9,12 @@ import {
   useUpdateUserMutation,
 } from '#/hooks/use-users-query'
 import type { UserFormValues } from '#/schemas/users.schema'
+import { parseUuidParam } from '#/lib/route-params'
 
 export const Route = createFileRoute('/_app/user-management/users/$userId')({
+  params: {
+    parse: ({ userId }) => ({ userId: parseUuidParam(userId) }),
+  },
   staticData: {
     title: 'Edit User',
     subtitle: 'Update employee details, status, and queue access.',

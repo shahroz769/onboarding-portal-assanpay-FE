@@ -369,16 +369,23 @@ function DraftFileDropzone({
                 </p>
               </div>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={disabled}
-              onClick={onClear}
-              aria-label="Remove file"
-            >
-              <X />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={disabled}
+                    onClick={onClear}
+                    aria-label="Remove file"
+                  />
+                }
+              >
+                <X />
+              </TooltipTrigger>
+              <TooltipContent>Remove file</TooltipContent>
+            </Tooltip>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">

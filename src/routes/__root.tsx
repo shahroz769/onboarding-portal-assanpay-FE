@@ -10,6 +10,7 @@ import {
 import { ThemeProvider } from '#/components/theme-provider'
 import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
+import { useIsMobile } from '#/hooks/use-mobile'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
@@ -45,6 +46,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         href: '/favicon.svg',
       },
       {
+        // Fetch the self-hosted font alongside the CSS instead of after it
+        // is parsed. crossOrigin is required for font preloads to be reused.
+        rel: 'preload',
+        href: '/fonts/Geist-Variable.woff2',
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
         rel: 'stylesheet',
         href: appCss,
       },
@@ -53,6 +63,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   notFoundComponent: NotFoundPage,
   shellComponent: RootDocument,
 })
+
+// Bottom-anchored toasts cover form submit rows and sticky nav on small
+// screens, so mobile toasts drop in from the top instead.
+function AppToaster() {
+  const isMobile = useIsMobile()
+
+  return (
+    <Toaster richColors position={isMobile ? 'top-center' : 'bottom-right'} />
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
@@ -66,7 +86,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       >
         <ThemeProvider>
           {children}
-          <Toaster richColors position="bottom-right" />
+          <AppToaster />
           {AppTanStackDevtools ? (
             <ClientOnly>
               <Suspense fallback={null}>

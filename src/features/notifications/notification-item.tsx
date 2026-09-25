@@ -4,6 +4,11 @@ import { Check } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import { Button } from '#/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { useMarkNotificationReadMutation } from '#/hooks/use-notifications-query'
 import { cn } from '#/lib/utils'
 import type { Notification } from '#/schemas/notifications.schema'
@@ -103,19 +108,26 @@ export function NotificationItem({
       )}
 
       {!notification.isRead ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2.5 right-3 size-6 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            markRead.mutate(notification.id)
-          }}
-          aria-label="Mark as read"
-        >
-          <Check className="size-3.5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2.5 right-3 size-6 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  markRead.mutate(notification.id)
+                }}
+                aria-label="Mark as read"
+              />
+            }
+          >
+            <Check className="size-3.5" />
+          </TooltipTrigger>
+          <TooltipContent side="left">Mark as read</TooltipContent>
+        </Tooltip>
       ) : null}
     </div>
   )

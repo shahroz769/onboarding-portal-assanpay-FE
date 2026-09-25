@@ -140,13 +140,6 @@ function Toolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         ) : null}
-        {state.isLoading ? (
-          <Skeleton className="h-5 w-28" />
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            Loaded {state.loadedCount} Cases
-          </span>
-        )}
       </DataTableToolbar.Actions>
     </DataTableToolbar>
   )
@@ -238,6 +231,7 @@ function Grid() {
       onScrollEnd={actions.fetchNextPage}
       isFetchingMore={state.isFetchingNextPage}
       hasMore={state.hasNextPage}
+      totalCount={state.totalCount}
     />
   )
 }

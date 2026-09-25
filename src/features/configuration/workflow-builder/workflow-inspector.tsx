@@ -26,6 +26,11 @@ import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
 
 import { Switch } from '#/components/ui/switch'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 
 import { cn } from '#/lib/utils'
 
@@ -181,33 +186,37 @@ function EdgeInspector({
                     ignoreEdgeId: edge.id,
                   }) !== null
                 return (
-                  <button
-                    key={kind}
-                    type="button"
-                    disabled={unavailable}
-                    onClick={() => onUpdateEdge(edge.id, { kind })}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition-colors',
-                      kind === edge.data.kind
-                        ? 'border-primary bg-accent font-medium'
-                        : 'hover:border-foreground/40',
-                      unavailable && 'cursor-not-allowed opacity-50',
-                    )}
-                    title={
-                      unavailable
+                  <Tooltip key={kind}>
+                    {/* Wrapper is the hover target: disabled buttons emit no pointer events */}
+                    <TooltipTrigger render={<div className="flex" />}>
+                      <button
+                        type="button"
+                        disabled={unavailable}
+                        onClick={() => onUpdateEdge(edge.id, { kind })}
+                        className={cn(
+                          'flex flex-1 items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition-colors',
+                          kind === edge.data.kind
+                            ? 'border-primary bg-accent font-medium'
+                            : 'hover:border-foreground/40',
+                          unavailable && 'pointer-events-none opacity-50',
+                        )}
+                      >
+                        <span
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: kindMeta.color }}
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          {kindMeta.label}
+                        </span>
+                        <KindOptionIcon className="size-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-60">
+                      {unavailable
                         ? 'This relation already exists between these queues.'
-                        : kindMeta.description
-                    }
-                  >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: kindMeta.color }}
-                    />
-                    <span className="min-w-0 flex-1 truncate">
-                      {kindMeta.label}
-                    </span>
-                    <KindOptionIcon className="size-4 shrink-0 text-muted-foreground" />
-                  </button>
+                        : kindMeta.description}
+                    </TooltipContent>
+                  </Tooltip>
                 )
               })}
             </div>
@@ -449,14 +458,20 @@ function EdgeRuleRow({
         className="size-2.5 shrink-0 rounded-full"
         style={{ backgroundColor: meta.color }}
       />
-      <button
-        type="button"
-        onClick={onSelect}
-        className="min-w-0 flex-1 truncate text-left hover:underline"
-        title="Select this rule on the canvas"
-      >
-        {describeEdge(edge, perspectiveNodeId, nodes)}
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              onClick={onSelect}
+              className="min-w-0 flex-1 truncate text-left hover:underline"
+            />
+          }
+        >
+          {describeEdge(edge, perspectiveNodeId, nodes)}
+        </TooltipTrigger>
+        <TooltipContent>Select this rule on the canvas</TooltipContent>
+      </Tooltip>
       <Switch
         checked={edge.data.isActive}
         onCheckedChange={onToggle}

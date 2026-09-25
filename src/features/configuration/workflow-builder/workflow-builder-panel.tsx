@@ -53,6 +53,12 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 
 import { Textarea } from '#/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import { cn } from '#/lib/utils'
 
 import {
   caseFlowConfigurationQueryOptions,
@@ -518,45 +524,48 @@ export function WorkflowBuilderPanel() {
           <span className="text-sm text-muted-foreground">Unsaved changes</span>
         ) : null}
 
-        <Select
-          items={base.versions.map((version) => ({
-            value: String(version.id),
-            label: `v${version.id}${version.id === base.activeVersionId ? ' - Current' : ' - History'} (${new Date(version.publishedAt).toLocaleDateString()})`,
-          }))}
-          value={String(base.versionId)}
-          disabled={dirty || mutation.isPending}
-          onValueChange={(value) => {
-            setChangeNote('')
-            setBackfillTriggerId(null)
-            setSelectedVersionId(Number(value))
-          }}
-        >
-          <SelectTrigger
-            size="sm"
-            className="w-56"
-            aria-label="Flow version"
-            title={
-              dirty
-                ? 'Publish or discard changes to switch versions.'
-                : undefined
-            }
-          >
-            <SelectValue placeholder="Select flow version" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false} align="end">
-            <SelectGroup>
-              {[...base.versions].reverse().map((version) => (
-                <SelectItem key={version.id} value={String(version.id)}>
-                  v{version.id}
-                  {version.id === base.activeVersionId
-                    ? ' - Current'
-                    : ' - History'}{' '}
-                  ({new Date(version.publishedAt).toLocaleDateString()})
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        {/* The select is disabled while dirty, so the hover target is a wrapper */}
+        <Tooltip disabled={!dirty}>
+          <TooltipTrigger render={<span className="inline-flex" />}>
+            <Select
+              items={base.versions.map((version) => ({
+                value: String(version.id),
+                label: `v${version.id}${version.id === base.activeVersionId ? ' - Current' : ' - History'} (${new Date(version.publishedAt).toLocaleDateString()})`,
+              }))}
+              value={String(base.versionId)}
+              disabled={dirty || mutation.isPending}
+              onValueChange={(value) => {
+                setChangeNote('')
+                setBackfillTriggerId(null)
+                setSelectedVersionId(Number(value))
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className={cn('w-56', dirty && 'pointer-events-none')}
+                aria-label="Flow version"
+              >
+                <SelectValue placeholder="Select flow version" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false} align="end">
+                <SelectGroup>
+                  {[...base.versions].reverse().map((version) => (
+                    <SelectItem key={version.id} value={String(version.id)}>
+                      v{version.id}
+                      {version.id === base.activeVersionId
+                        ? ' - Current'
+                        : ' - History'}{' '}
+                      ({new Date(version.publishedAt).toLocaleDateString()})
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </TooltipTrigger>
+          <TooltipContent>
+            Publish or discard changes to switch versions.
+          </TooltipContent>
+        </Tooltip>
 
         {dirty ? (
           <Button
@@ -609,7 +618,7 @@ export function WorkflowBuilderPanel() {
       ) : null}
 
       <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1 xl:flex-row">
-        <div className="h-[60vh] min-h-[420px] min-w-0 overflow-hidden rounded-lg border bg-muted/20 xl:h-auto xl:min-h-0 xl:flex-1">
+        <div className="h-[60vh] min-h-105 min-w-0 overflow-hidden rounded-lg border bg-muted/20 xl:h-auto xl:min-h-0 xl:flex-1">
           <WorkflowCanvas
             readOnly={readOnly || mutation.isPending}
 
@@ -633,7 +642,7 @@ export function WorkflowBuilderPanel() {
 
         <FieldSet
           disabled={readOnly || mutation.isPending}
-          className="min-w-0 shrink-0 xl:min-h-0 xl:w-[340px] xl:overflow-y-auto"
+          className="min-w-0 shrink-0 xl:min-h-0 xl:w-85 xl:overflow-y-auto"
         >
           <WorkflowInspector
             className="shrink-0"

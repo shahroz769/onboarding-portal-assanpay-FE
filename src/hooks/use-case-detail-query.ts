@@ -219,8 +219,8 @@ export function useTakeOwnership(caseId: string) {
       )
       toast.success('Ownership taken successfully')
     },
-    onError: () => {
-      toast.error('Failed to take ownership')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to take ownership'))
     },
     onSettled: () => {
       void invalidateCaseWorkflowQueries(queryClient, caseId)
@@ -327,8 +327,8 @@ export function useCreateComment(caseId: string) {
         queryKey: [...CASE_COMMENTS_KEY, caseId],
       })
     },
-    onError: () => {
-      toast.error('Failed to post comment')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to post comment'))
     },
   })
 }
@@ -343,7 +343,7 @@ export function useSendForResubmission(caseId: string) {
       await invalidateCaseWorkflowQueries(queryClient, caseId)
 
       if (data.status === 'sent') {
-        toast.success('Email sent — case moved to Awaiting Client')
+        toast.success('Email sent — case moved to Awaiting Merchant')
       } else {
         toast.error(
           data.error

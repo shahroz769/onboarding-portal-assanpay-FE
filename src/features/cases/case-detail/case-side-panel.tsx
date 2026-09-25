@@ -147,9 +147,9 @@ function getPrimaryActionCopy(
 
   if (status === 'awaiting_client') {
     return {
-      title: 'Awaiting client',
+      title: 'Awaiting merchant',
       description:
-        'A resubmission email was sent to the client. The case will return to working once they submit the requested updates.',
+        'A resubmission email was sent to the merchant. The case will return to working once they submit the requested updates.',
       actionLabel: null,
       actionKind: 'awaiting-client' as const,
     }
@@ -175,7 +175,7 @@ function getPrimaryActionCopy(
         ? 'Final Agreement ready'
         : 'Final Agreement required',
       description: options.hasAgreementFinal
-        ? 'Open the Agreement workspace, review the final agreement, then send mail to the client.'
+        ? 'Open the Agreement workspace, review the final agreement, then send mail to the merchant.'
         : 'Upload the Final Agreement in the Agreement workspace before sending mail.',
       actionLabel: null,
       actionKind: 'agreement' as const,
@@ -277,7 +277,7 @@ function getPrimaryActionCopy(
     return {
       title: 'Review required',
       description:
-        'Open the review summary, confirm the rejected fields, and email the client to request a resubmission.',
+        'Open the review summary, confirm the rejected fields, and email the merchant to request a resubmission.',
       actionLabel: 'Review',
       actionKind: 'review' as const,
     }
@@ -576,7 +576,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         : 'Closed unsuccessfully'}
                     </AlertTitle>
                     {caseDetail.case.closeReason ? (
-                      <AlertDescription className="min-w-0 break-words">
+                      <AlertDescription className="min-w-0 wrap-break-word">
                         {caseDetail.case.closeReason}
                       </AlertDescription>
                     ) : null}
@@ -591,10 +591,10 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                           ? 'Take ownership first to move the case into active review.'
                           : primaryAction.actionKind === 'review'
                             ? isCaseOwner
-                              ? 'Review the rejected fields and email the client to request a resubmission.'
+                              ? 'Review the rejected fields and email the merchant to request a resubmission.'
                               : 'Only the current case owner can review rejected fields and request a resubmission.'
                             : primaryAction.actionKind === 'awaiting-client'
-                              ? 'Waiting for the client to update the requested fields.'
+                              ? 'Waiting for the merchant to update the requested fields.'
                               : primaryAction.actionKind === 'sub-merchant-form'
                                 ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
                                 : primaryAction.actionKind === 'mid-creation'
@@ -664,8 +664,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                   <AwaitingClientAlert
                     caseId={caseId}
                     actionSet={DOCUMENT_REVIEW_LINK_ACTIONS}
-                    title="Awaiting client resubmission"
-                    description="We emailed the client a secure link to update the rejected fields. The case will return to working as soon as they submit."
+                    title="Awaiting merchant resubmission"
+                    description="We emailed the merchant a secure link to update the rejected fields. The case will return to working as soon as they submit."
                     canRegenerate={isCaseOwner}
                   />
                 ) : null}

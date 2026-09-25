@@ -41,7 +41,7 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   qc: 'QC',
   error: 'Error',
   closed: 'Closed',
-  awaiting_client: 'Awaiting Client',
+  awaiting_client: 'Awaiting Merchant',
 }
 
 export const CASE_FILTER_STATUSES = [...CASE_STATUSES, 'unsuccessful'] as const
@@ -123,6 +123,8 @@ const caseListResponseSchema = z.object({
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
   limit: z.number(),
+  // Filtered total; only sent on the first page (null on cursor pages).
+  total: z.number().nullable().optional(),
 })
 
 export type CaseListResponse = z.infer<typeof caseListResponseSchema>

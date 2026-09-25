@@ -320,7 +320,8 @@ export default function LiveRenderer({
           <DialogHeader>
             <DialogTitle>Review email</DialogTitle>
             <DialogDescription>
-              Confirm the live activation email before sending it to the client.
+              Confirm the live activation email before sending it to the
+              merchant.
             </DialogDescription>
           </DialogHeader>
 
@@ -358,7 +359,7 @@ export default function LiveRenderer({
                   )}
                   {sendLiveEmail.isPending
                     ? 'Sending mail'
-                    : 'Send mail to client'}
+                    : 'Send mail to merchant'}
                 </Button>
               </DialogFooter>
             }

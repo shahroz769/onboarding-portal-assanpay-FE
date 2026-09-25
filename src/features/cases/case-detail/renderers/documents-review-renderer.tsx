@@ -56,6 +56,11 @@ import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { cn } from '#/lib/utils'
 import { statusTint } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
@@ -603,11 +608,11 @@ export default function DocumentsReviewRenderer({
             {isAwaitingClient ? (
               <Alert variant="warning">
                 <Info />
-                <AlertTitle>Awaiting client resubmission</AlertTitle>
+                <AlertTitle>Awaiting merchant resubmission</AlertTitle>
                 <AlertDescription>
-                  Rejection changes are locked until the client submits updated
-                  details. You can reject items again after the case returns to
-                  working.
+                  Rejection changes are locked until the merchant submits
+                  updated details. You can reject items again after the case
+                  returns to working.
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -783,13 +788,19 @@ function UpdatedBadge({ resubmittedAt }: { resubmittedAt: string }) {
     /* keep fallback label */
   }
   return (
-    <Badge
-      variant="secondary"
-      className={cn('border-transparent', statusTint('blue'))}
-      title={label}
-    >
-      Updated
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Badge
+            variant="secondary"
+            className={cn('border-transparent', statusTint('blue'))}
+          />
+        }
+      >
+        Updated
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   )
 }
 

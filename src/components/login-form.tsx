@@ -25,6 +25,11 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 
 function getErrorMessage(error: unknown) {
   if (error instanceof AxiosError) {
@@ -160,23 +165,34 @@ export function LoginForm({
                           className="pr-10"
                         />
 
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                          onClick={() => setShowPassword((v) => !v)}
-                          aria-label={
-                            showPassword ? 'Hide password' : 'Show password'
-                          }
-                          tabIndex={-1}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                                onClick={() => setShowPassword((v) => !v)}
+                                aria-label={
+                                  showPassword
+                                    ? 'Hide password'
+                                    : 'Show password'
+                                }
+                                tabIndex={-1}
+                              />
+                            }
+                          >
+                            {showPassword ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {showPassword ? 'Hide password' : 'Show password'}
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />

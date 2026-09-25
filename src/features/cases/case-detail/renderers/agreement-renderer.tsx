@@ -341,7 +341,7 @@ export default function AgreementRenderer({
       {agreement?.finalAgreement ? (
         <AgreementFileCard
           title="Final Agreement"
-          description="The Google Drive link for this agreement will be emailed to the client."
+          description="The Google Drive link for this agreement will be emailed to the merchant."
           file={agreement.finalAgreement}
           action={
             canReviewFinal ? (
@@ -390,7 +390,7 @@ export default function AgreementRenderer({
           <AlertTitle>Owner action required</AlertTitle>
           <AlertDescription>
             Only the current case owner can upload the final agreement and send
-            it to the client.
+            it to the merchant.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -441,7 +441,7 @@ export default function AgreementRenderer({
                     preview: null,
                   }))
                 }}
-                placeholder="Optional message for the client."
+                placeholder="Optional message for the merchant."
                 className="min-h-28"
               />
 

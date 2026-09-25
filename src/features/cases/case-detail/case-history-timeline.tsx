@@ -19,6 +19,7 @@ import {
 
 import { Badge } from '#/components/ui/badge'
 import { ButtonLink } from '#/components/ui/button'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { EmptyState } from '#/components/empty-state'
 import {
   Card,
@@ -142,7 +143,7 @@ const ACTION_META: Record<
       'border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60',
   },
   client_resubmitted: {
-    label: 'Client resubmitted',
+    label: 'Merchant resubmitted',
     icon: RotateCcw,
     iconClassName: 'text-teal-700 dark:text-teal-300',
     iconWrapperClassName:
@@ -448,19 +449,23 @@ export function CaseHistoryTimeline({
                           {entry.actorName ?? 'System'}
                         </p>
                         {detailsText ? (
-                          <p className="break-words whitespace-pre-wrap text-sm leading-6 text-muted-foreground [overflow-wrap:anywhere]">
+                          <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                             {detailsText}
                           </p>
                         ) : null}
                         {proofFile ? (
                           <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="min-w-0 max-w-full truncate"
-                              title={proofFile.originalName}
+                            <TruncatedTooltip
+                              render={
+                                <Badge
+                                  variant="outline"
+                                  className="min-w-0 max-w-full truncate"
+                                />
+                              }
+                              content={proofFile.originalName}
                             >
                               {proofFile.originalName}
-                            </Badge>
+                            </TruncatedTooltip>
                             <ButtonLink
                               variant="outline"
                               size="sm"
@@ -481,13 +486,17 @@ export function CaseHistoryTimeline({
                       </div>
                     </div>
                     <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
-                      <Badge
-                        variant="secondary"
-                        className="min-w-0 max-w-full truncate"
-                        title={meta.label}
+                      <TruncatedTooltip
+                        render={
+                          <Badge
+                            variant="secondary"
+                            className="min-w-0 max-w-full truncate"
+                          />
+                        }
+                        content={meta.label}
                       >
                         {meta.label}
-                      </Badge>
+                      </TruncatedTooltip>
                       <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                         {formatDateTime(entry.createdAt)}
                       </span>
@@ -657,7 +666,7 @@ function formatDetails(
     } else if (total > 0) {
       parts.push(`${total} item${total === 1 ? '' : 's'} resubmitted`)
     } else {
-      parts.push('Client submitted the requested updates')
+      parts.push('Merchant submitted the requested updates')
     }
   }
 

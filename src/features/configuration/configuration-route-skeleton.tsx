@@ -130,13 +130,13 @@ export function WorkflowBuilderSkeleton() {
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <Skeleton className="h-5 w-96 max-w-full" />
       <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1 xl:flex-row">
-        <div className="relative h-[60vh] min-h-[420px] min-w-0 overflow-hidden rounded-lg border bg-muted/20 xl:h-auto xl:min-h-0 xl:flex-1">
-          <Skeleton className="absolute top-6 left-6 h-[76px] w-[208px] rounded-lg" />
-          <Skeleton className="absolute top-24 left-[38%] h-[76px] w-[236px] rounded-lg" />
-          <Skeleton className="absolute top-48 left-[38%] h-[76px] w-[236px] rounded-lg" />
-          <Skeleton className="absolute top-36 right-[8%] h-[76px] w-[236px] rounded-lg" />
+        <div className="relative h-[60vh] min-h-105 min-w-0 overflow-hidden rounded-lg border bg-muted/20 xl:h-auto xl:min-h-0 xl:flex-1">
+          <Skeleton className="absolute top-6 left-6 h-19 w-52 rounded-lg" />
+          <Skeleton className="absolute top-24 left-[38%] h-19 w-59 rounded-lg" />
+          <Skeleton className="absolute top-48 left-[38%] h-19 w-59 rounded-lg" />
+          <Skeleton className="absolute top-36 right-[8%] h-19 w-59 rounded-lg" />
         </div>
-        <Card className="shrink-0 xl:w-[340px]">
+        <Card className="shrink-0 xl:w-85">
           <CardHeader>
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-4 w-52" />

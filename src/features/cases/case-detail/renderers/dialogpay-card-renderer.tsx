@@ -29,6 +29,11 @@ import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Separator } from '#/components/ui/separator'
 import { Textarea } from '#/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { cn } from '#/lib/utils'
 import {
   BASE_DOCUMENTS,
@@ -488,15 +493,22 @@ function ReadOnlyCopyField({ item }: { item: ReviewItem }) {
     <Field className={item.className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <FieldLabel className="min-w-0">{item.label}</FieldLabel>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => copyValue(item.label, item.displayValue)}
-        >
-          <Clipboard />
-          <span className="sr-only">Copy {item.label}</span>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => copyValue(item.label, item.displayValue)}
+              />
+            }
+          >
+            <Clipboard />
+            <span className="sr-only">Copy {item.label}</span>
+          </TooltipTrigger>
+          <TooltipContent>Copy {item.label}</TooltipContent>
+        </Tooltip>
       </div>
 
       {item.kind === 'textarea' ? (
