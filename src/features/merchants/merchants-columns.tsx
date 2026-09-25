@@ -110,13 +110,13 @@ export function createMerchantColumns({
       ),
       cell: (merchant) => (
         <span
-          className="block max-w-52 truncate font-medium"
+          className="block max-w-80 truncate font-medium"
           title={merchant.businessName}
         >
           {merchant.businessName}
         </span>
       ),
-      width: 240,
+      width: 360,
     },
 
     // Business Scope
