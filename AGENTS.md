@@ -10,6 +10,8 @@ Tailwind v4 syntax only:
 - `wrap-break-word` / `wrap-anywhere`, not `break-words` / `[overflow-wrap:anywhere]`
 - never put two classes that set the same property on one element
 
+The current DB is a test DB and can be used for read/write tests, verifications, etc
+
 
 <!-- intent-skills:start -->
 
