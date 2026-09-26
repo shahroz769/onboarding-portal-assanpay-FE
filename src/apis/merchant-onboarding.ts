@@ -103,12 +103,9 @@ export type ResubmissionRejection = {
 }
 
 export type ResubmissionContext = {
-  caseId: string
   caseNumber: string
   expiresAt: string
   merchantName: string
-  merchantId: string
-  ownerId: string | null
   merchantOwnerName: string
   rejections: Array<ResubmissionRejection>
 }

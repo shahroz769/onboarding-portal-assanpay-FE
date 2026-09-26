@@ -559,6 +559,7 @@ export function useConfirmAgreementEmailManual(caseId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: {
+      tokenId: string
       remarks?: string | null
       file: File
       channel?: ManualCommunicationChannel

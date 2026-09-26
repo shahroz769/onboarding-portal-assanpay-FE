@@ -343,7 +343,7 @@ export interface EmailPreviewResult {
 
 export type AgreementEmailPreviewResult = Pick<
   EmailPreviewResult,
-  'recipient' | 'subject' | 'body'
+  'recipient' | 'subject' | 'body' | 'tokenId'
 >
 
 export interface ManualEmailConfirmResult {
@@ -418,12 +418,14 @@ export async function fetchAgreementEmailPreview(
 
 export async function confirmAgreementEmailManual({
   caseId,
+  tokenId,
   remarks,
   file,
   channel,
   recipientEmailType,
 }: {
   caseId: string
+  tokenId: string
   remarks?: string | null
   file: File
   channel?: ManualCommunicationChannel
@@ -431,6 +433,7 @@ export async function confirmAgreementEmailManual({
 }): Promise<ManualEmailConfirmResult> {
   const formData = new FormData()
   formData.append('file', file)
+  formData.append('tokenId', tokenId)
   if (remarks) formData.append('remarks', remarks)
   if (channel) formData.append('channel', channel)
   formData.append('recipientEmailType', recipientEmailType)

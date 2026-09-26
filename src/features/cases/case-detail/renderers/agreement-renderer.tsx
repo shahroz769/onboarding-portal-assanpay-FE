@@ -233,6 +233,7 @@ export default function AgreementRenderer({
     if (!preview) return
     const trimmedRemarks = remarks.trim()
     await confirmManual.mutateAsync({
+      tokenId: preview.tokenId,
       remarks: trimmedRemarks || null,
       file,
       channel,
