@@ -3,25 +3,22 @@ import { useState } from 'react'
 import {
   CheckCircle2,
   Globe,
+  IdCard,
   Info,
   Landmark,
+  Percent,
   Save,
   Send,
   ShieldCheck,
+  UserCog,
   Wallet,
 } from 'lucide-react'
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
@@ -54,6 +51,7 @@ import { MERCHANT_PORTAL_ROLES } from '#/schemas/cases.schema'
 import type { MerchantPortalRole } from '#/schemas/cases.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 const DEFAULT_METHODS: PaymentMethodSettings = []
@@ -100,7 +98,7 @@ const midDetailsSchema = z.object({
     .trim()
     .min(1, 'Email is required.')
     .max(255, 'Email is too long.')
-    .email('Enter a valid email.'),
+    .pipe(z.email('Enter a valid email.')),
   branchCode: z
     .string()
     .trim()
@@ -111,7 +109,7 @@ const midDetailsSchema = z.object({
     .trim()
     .min(1, 'Internal email is required.')
     .max(255, 'Internal email is too long.')
-    .email('Enter a valid internal email.'),
+    .pipe(z.email('Enter a valid internal email.')),
   internalBranchCode: z
     .string()
     .trim()
@@ -352,19 +350,18 @@ export default function MerchantIdRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Merchant Platform</CardTitle>
-              <CardDescription>
-                Website platform / CMS submitted by the merchant during
-                onboarding.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <Globe />
-              {platformLabel}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Globe}
+            tone="sky"
+            title="Merchant Platform"
+            description="Website platform / CMS submitted by the merchant during onboarding."
+            action={
+              <Badge variant="secondary">
+                <Globe />
+                {platformLabel}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -399,18 +396,18 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Financial Information</CardTitle>
-              <CardDescription>
-                Settlement bank account details submitted by the merchant.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <Landmark />
-              Settlement account
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Landmark}
+            tone="teal"
+            title="Financial Information"
+            description="Settlement bank account details submitted by the merchant."
+            action={
+              <Badge variant="secondary">
+                <Landmark />
+                Settlement account
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -430,10 +427,12 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <CardTitle>Payout Rate</CardTitle>
-          <CardDescription>
-            Standard payout commission applied to this merchant.
-          </CardDescription>
+          <CaseCardHeading
+            icon={Percent}
+            tone="orange"
+            title="Payout Rate"
+            description="Standard payout commission applied to this merchant."
+          />
         </CardHeader>
         <CardContent>
           <div className="max-w-xl">
@@ -448,19 +447,18 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Role</CardTitle>
-              <CardDescription>
-                Select the merchant portal role. Payout method is assigned from
-                this role.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <ShieldCheck />
-              Portal
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={UserCog}
+            tone="violet"
+            title="Role"
+            description="Select the merchant portal role. Payout method is assigned from this role."
+            action={
+              <Badge variant="secondary">
+                <ShieldCheck />
+                Portal
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -499,19 +497,18 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>
-                Select collection methods and adjust their default commissions
-                for this merchant.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <Wallet />
-              Collection
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Wallet}
+            tone="green"
+            title="Payment Methods"
+            description="Select collection methods and adjust their default commissions for this merchant."
+            action={
+              <Badge variant="secondary">
+                <Wallet />
+                Collection
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <MethodList
@@ -532,19 +529,18 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Payout Methods</CardTitle>
-              <CardDescription>
-                Payout method is auto-selected from the merchant role. Adjust
-                its default commission for this merchant.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <Send />
-              Payout
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Send}
+            tone="rose"
+            title="Payout Methods"
+            description="Payout method is auto-selected from the merchant role. Adjust its default commission for this merchant."
+            action={
+              <Badge variant="secondary">
+                <Send />
+                Payout
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <MethodList
@@ -564,20 +560,18 @@ export default function MerchantIdRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Merchant IDs</CardTitle>
-              <CardDescription>
-                Save both IDs created on the merchant platform before closing
-                this case successfully. The temporary password is generated only
-                when credentials are sent.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">
-              <ShieldCheck />
-              Owner only
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={IdCard}
+            tone="indigo"
+            title="Merchant IDs"
+            description="Save both IDs created on the merchant platform before closing this case successfully. The temporary password is generated only when credentials are sent."
+            action={
+              <Badge variant="secondary">
+                <ShieldCheck />
+                Owner only
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>

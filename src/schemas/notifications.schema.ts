@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 export const notificationTypeValues = [
   'case_assigned',
@@ -8,8 +8,6 @@ export const notificationTypeValues = [
   'comment_thread',
   'case_resubmitted',
 ] as const
-
-export type NotificationType = (typeof notificationTypeValues)[number]
 
 export const notificationSchema = z.object({
   id: z.uuid(),

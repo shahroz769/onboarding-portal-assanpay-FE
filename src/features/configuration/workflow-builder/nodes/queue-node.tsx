@@ -20,7 +20,6 @@ const WORKFLOW_TYPE_LABELS: Record<string, string> = {
   mid: 'MID',
   testing: 'Testing',
   wordpress: 'WordPress',
-  card: 'Card',
   live: 'Live',
   sub_merchant_form: 'Sub-merchant form',
 }

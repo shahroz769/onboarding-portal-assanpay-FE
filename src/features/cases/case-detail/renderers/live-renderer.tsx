@@ -1,18 +1,19 @@
 import { useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Info, Mail, MailCheck, Rocket } from 'lucide-react'
+import {
+  CheckCircle2,
+  Info,
+  Mail,
+  MailCheck,
+  MailOpen,
+  Rocket,
+} from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Checkbox } from '#/components/ui/checkbox'
 import {
   Dialog,
@@ -50,6 +51,7 @@ import {
 import type { EmailPreviewResult } from '#/apis/cases'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 function getMerchantString(
@@ -169,18 +171,18 @@ export default function LiveRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Live Limits</CardTitle>
-              <CardDescription>
-                Confirm the merchant live limits before closing this case.
-              </CardDescription>
-            </div>
-            <Badge variant={limitsAppliedAt ? 'secondary' : 'outline'}>
-              {limitsAppliedAt ? <CheckCircle2 /> : <Rocket />}
-              {limitsAppliedAt ? 'Applied' : 'Pending'}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Rocket}
+            tone="emerald"
+            title="Live Limits"
+            description="Confirm the merchant live limits before closing this case."
+            action={
+              <Badge variant={limitsAppliedAt ? 'secondary' : 'outline'}>
+                {limitsAppliedAt ? <CheckCircle2 /> : <Rocket />}
+                {limitsAppliedAt ? 'Applied' : 'Pending'}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -264,18 +266,18 @@ export default function LiveRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Send Live Mail</CardTitle>
-              <CardDescription>
-                Tell the merchant they are live and share the live limits.
-              </CardDescription>
-            </div>
-            <Badge variant={liveEmailSent ? 'secondary' : 'outline'}>
-              {liveEmailSent ? <MailCheck /> : <Mail />}
-              {liveEmailSent ? 'Sent' : 'Ready'}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={MailOpen}
+            tone="blue"
+            title="Send Live Mail"
+            description="Tell the merchant they are live and share the live limits."
+            action={
+              <Badge variant={liveEmailSent ? 'secondary' : 'outline'}>
+                {liveEmailSent ? <MailCheck /> : <Mail />}
+                {liveEmailSent ? 'Sent' : 'Ready'}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>

@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { CASE_STATUSES } from './cases.schema'
 import { MERCHANT_STATUSES } from './merchants.schema'
@@ -63,8 +63,55 @@ const appliedPortalMidLimitSchema = z.object({
   category: z.enum(['custom_wordpress', 'shopify', 'internal']),
 })
 
-export type DashboardAppliedPortalMidLimit = z.infer<
-  typeof appliedPortalMidLimitSchema
+const pendingPortalMidCountsSchema = z.object({
+  total: z.number(),
+  portal: z.number(),
+  internal: z.number(),
+})
+
+export const pendingPortalMidsPageSchema = z.object({
+  data: z.array(pendingPortalMidLimitSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+  limit: z.number(),
+  // Only sent with the first page.
+  counts: pendingPortalMidCountsSchema.nullable(),
+})
+
+export type PendingPortalMidsPage = z.infer<typeof pendingPortalMidsPageSchema>
+
+export const pendingPortalMidValuesSchema = z.object({
+  mids: z.array(z.number()),
+  csv: z.string(),
+})
+
+export type PendingPortalMidKind = DashboardPendingPortalMidLimit['midKind']
+
+const awaitingPhysicalAgreementSchema = z.object({
+  caseId: z.string(),
+  caseNumber: z.string(),
+  merchantId: z.string(),
+  merchantName: z.string(),
+  emailRecipient: z.string().nullable(),
+  ownerName: z.string().nullable(),
+  emailSentAt: z.string(),
+})
+
+export type AwaitingPhysicalAgreement = z.infer<
+  typeof awaitingPhysicalAgreementSchema
+>
+
+export const awaitingPhysicalAgreementsPageSchema = z.object({
+  data: z.array(awaitingPhysicalAgreementSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+  limit: z.number(),
+  // Only sent with the first page.
+  total: z.number().nullable(),
+})
+
+export type AwaitingPhysicalAgreementsPage = z.infer<
+  typeof awaitingPhysicalAgreementsPageSchema
 >
 
 export const dashboardResponseSchema = z.object({
@@ -118,9 +165,8 @@ export const dashboardResponseSchema = z.object({
     merchantsLive: z.array(z.object({ date: z.string(), count: z.number() })),
   }),
   portalMids: z.object({
-    pendingLimits: z.array(pendingPortalMidLimitSchema),
+    pendingCounts: pendingPortalMidCountsSchema,
     appliedLimits: z.array(appliedPortalMidLimitSchema),
-    csv: z.string(),
     appliedCsv: z.string(),
   }),
 })

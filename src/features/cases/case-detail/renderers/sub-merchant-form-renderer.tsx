@@ -1,11 +1,14 @@
 import { useId, useRef, useState } from 'react'
 import {
   CheckCircle2,
+  ClipboardList,
   Copy,
   Download,
   ExternalLink,
+  FileCheck2,
   FileText,
   Image,
+  Mail,
   MailCheck,
   Save,
   Upload,
@@ -14,13 +17,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button, ButtonLink } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import {
   Field,
   FieldDescription,
@@ -45,6 +42,7 @@ import { cn } from '#/lib/utils'
 import { KIN_RELATIONS } from '#/schemas/merchant-onboarding.schema'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 const ACCEPTED_FINAL_FORM_EXTENSIONS = ['.pdf', '.doc', '.docx'] as const
@@ -280,26 +278,25 @@ export default function SubMerchantFormRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>EP Sub-Merchant Form</CardTitle>
-              <CardDescription>
-                Open the inherited sub-merchant draft, then upload the completed
-                Final Form.
-              </CardDescription>
-            </div>
-            {details?.emailStatus === 'sent' ? (
-              <Badge variant="secondary">
-                <MailCheck />
-                Proof saved
-              </Badge>
-            ) : details?.finalForm ? (
-              <Badge variant="secondary">
-                <CheckCircle2 />
-                Ready for Gmail
-              </Badge>
-            ) : null}
-          </div>
+          <CaseCardHeading
+            icon={ClipboardList}
+            tone="cyan"
+            title="EP Sub-Merchant Form"
+            description="Open the inherited sub-merchant draft, then upload the completed Final Form."
+            action={
+              details?.emailStatus === 'sent' ? (
+                <Badge variant="secondary">
+                  <MailCheck />
+                  Proof saved
+                </Badge>
+              ) : details?.finalForm ? (
+                <Badge variant="secondary">
+                  <CheckCircle2 />
+                  Ready for Gmail
+                </Badge>
+              ) : null
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -371,10 +368,12 @@ export default function SubMerchantFormRenderer({
       {details?.finalForm ? (
         <Card>
           <CardHeader>
-            <CardTitle>Uploaded Final Form</CardTitle>
-            <CardDescription>
-              This is the saved form that will be attached to the manual email.
-            </CardDescription>
+            <CaseCardHeading
+              icon={FileCheck2}
+              tone="green"
+              title="Uploaded Final Form"
+              description="This is the saved form that will be attached to the manual email."
+            />
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">
@@ -408,21 +407,20 @@ export default function SubMerchantFormRenderer({
       {details?.finalForm ? (
         <Card>
           <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-col gap-1">
-                <CardTitle>Manual Email Details</CardTitle>
-                <CardDescription>
-                  Copy this email into Gmail, download the attachments, then
-                  upload the sent-mail screenshot below.
-                </CardDescription>
-              </div>
-              {details.emailProof ? (
-                <Badge variant="secondary">
-                  <MailCheck />
-                  Proof saved
-                </Badge>
-              ) : null}
-            </div>
+            <CaseCardHeading
+              icon={Mail}
+              tone="blue"
+              title="Manual Email Details"
+              description="Copy this email into Gmail, download the attachments, then upload the sent-mail screenshot below."
+              action={
+                details.emailProof ? (
+                  <Badge variant="secondary">
+                    <MailCheck />
+                    Proof saved
+                  </Badge>
+                ) : null
+              }
+            />
           </CardHeader>
           <CardContent>
             <FieldGroup>

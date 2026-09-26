@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 import {
   paymentMethodSettingsSchema,
   payoutMethodSettingsSchema,
@@ -40,9 +40,6 @@ export const MERCHANT_STATUS_DISPLAY: Record<MerchantStatus, string> = {
 export const DEFAULT_MERCHANT_STATUS_FILTER = MERCHANT_STATUSES.filter(
   (status) => status !== 'terminated',
 ).join(',')
-
-export type MerchantStatusDisplay =
-  (typeof MERCHANT_STATUS_DISPLAY)[MerchantStatus]
 
 export const MERCHANT_SORTABLE_COLUMNS = [
   'merchantNumber',
@@ -102,7 +99,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
         value === undefined ||
         value.split(',').every((item) => allowedValues.has(item)),
       {
-        message: 'Invalid filter value.',
+        error: 'Invalid filter value.',
       },
     )
 }
@@ -166,8 +163,6 @@ export const merchantDetailRecordSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 })
-
-export type MerchantDetailRecord = z.infer<typeof merchantDetailRecordSchema>
 
 const merchantHeaderSchema = z.object({
   id: z.string(),
@@ -334,7 +329,9 @@ const merchantLimitsResponseSchema = z.object({
   payoutMethods: payoutMethodSettingsSchema,
 })
 
-export type MerchantLimitsResponse = z.infer<typeof merchantLimitsResponseSchema>
+export type MerchantLimitsResponse = z.infer<
+  typeof merchantLimitsResponseSchema
+>
 
 const merchantHistoryResponseSchema = z.object({
   merchant: z.object({

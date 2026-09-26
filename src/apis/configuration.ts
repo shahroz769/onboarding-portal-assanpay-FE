@@ -75,14 +75,6 @@ export async function fetchEmailSendingMode(): Promise<EmailSendingMode> {
   return emailSendingModeSchema.parse(response.data)
 }
 
-export async function updateLimitsAndMdr(input: LimitsAndMdrSettings) {
-  const response = await apiClient.put(
-    '/api/configuration/limits-and-mdr',
-    input,
-  )
-  return response.data
-}
-
 export async function updateLinkDeadlines(input: LinkDeadlineSettings) {
   const response = await apiClient.put(
     '/api/configuration/link-deadlines',
@@ -308,7 +300,6 @@ export async function createQueue(input: {
     | 'mid'
     | 'testing'
     | 'wordpress'
-    | 'card'
     | 'live'
     | 'sub_merchant_form'
   lifecycle?: 'draft' | 'inactive'

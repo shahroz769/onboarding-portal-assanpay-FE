@@ -106,8 +106,6 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
   return pageContent
 }
 
-export { CaseDetailShellSkeleton } from './case-detail-skeletons'
-
 function CaseStagesBlock({
   stages,
   currentStageId,
@@ -147,7 +145,6 @@ function CaseStagesBlock({
           const showCompletedIcon =
             isPassed ||
             (isCurrent && stage.slug === 'closed' && !isClosedUnsuccessfully)
-
 
           return (
             <div key={stage.id} className="min-w-0">

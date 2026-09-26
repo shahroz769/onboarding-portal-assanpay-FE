@@ -11,13 +11,6 @@ import { sanitizeRedirect } from '#/features/auth/redirect'
 import { loginSchema } from '#/schemas/auth.schema'
 import { Button } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import {
   Field,
   FieldError,
   FieldGroup,
@@ -102,124 +95,118 @@ export function LoginForm({
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in with your email or username to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              form.handleSubmit()
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-semibold md:text-2xl">Sign in</h1>
+        <p className="text-sm text-muted-foreground">
+          Use your email or username to continue.
+        </p>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+      >
+        <FieldGroup className="gap-5">
+          <form.Field name="identifier">
+            {(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid
+              return (
+                <Field data-invalid={isInvalid || undefined}>
+                  <FieldLabel htmlFor={field.name}>
+                    Email or Username
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="text"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid || undefined}
+                    autoComplete="username"
+                  />
+
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              )
             }}
-          >
-            <FieldGroup>
-              <form.Field name="identifier">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid || undefined}>
-                      <FieldLabel htmlFor={field.name}>
-                        Email or Username
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid || undefined}
-                        autoComplete="username"
-                      />
+          </form.Field>
 
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  )
-                }}
-              </form.Field>
+          <form.Field name="password">
+            {(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid
+              return (
+                <Field data-invalid={isInvalid || undefined}>
+                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <div className="relative">
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type={showPassword ? 'text' : 'password'}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid || undefined}
+                      autoComplete="current-password"
+                      className="pr-10"
+                    />
 
-              <form.Field name="password">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid || undefined}>
-                      <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                      <div className="relative">
-                        <Input
-                          id={field.name}
-                          name={field.name}
-                          type={showPassword ? 'text' : 'password'}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          aria-invalid={isInvalid || undefined}
-                          autoComplete="current-password"
-                          className="pr-10"
-                        />
-
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-0 top-0 h-full px-3 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                                onClick={() => setShowPassword((v) => !v)}
-                                aria-label={
-                                  showPassword
-                                    ? 'Hide password'
-                                    : 'Show password'
-                                }
-                                tabIndex={-1}
-                              />
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                            onClick={() => setShowPassword((v) => !v)}
+                            aria-label={
+                              showPassword ? 'Hide password' : 'Show password'
                             }
-                          >
-                            {showPassword ? (
-                              <EyeOff className="size-4" />
-                            ) : (
-                              <Eye className="size-4" />
-                            )}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {showPassword ? 'Hide password' : 'Show password'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  )
-                }}
-              </form.Field>
+                            tabIndex={-1}
+                          />
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {showPassword ? 'Hide password' : 'Show password'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              )
+            }}
+          </form.Field>
 
-              <form.Subscribe
-                selector={(state) => ({
-                  isSubmitting: state.isSubmitting,
-                })}
-              >
-                {({ isSubmitting }) => (
-                  <Field>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting && <Spinner data-icon="inline-start" />}
-                      {isSubmitting ? 'Logging in...' : 'Login'}
-                    </Button>
-                  </Field>
-                )}
-              </form.Subscribe>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+          <form.Subscribe
+            selector={(state) => ({
+              isSubmitting: state.isSubmitting,
+            })}
+          >
+            {({ isSubmitting }) => (
+              <Field>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  {isSubmitting && <Spinner data-icon="inline-start" />}
+                  {isSubmitting ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </Field>
+            )}
+          </form.Subscribe>
+        </FieldGroup>
+      </form>
     </div>
   )
 }

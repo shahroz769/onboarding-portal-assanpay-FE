@@ -18,7 +18,6 @@ const registry: Record<QueueWorkflowType, QueueRendererLoader> = {
   mid: () => import('./renderers/merchant-id-renderer'),
   testing: () => import('./renderers/testing-renderer'),
   wordpress: () => import('./renderers/wordpress-website-renderer'),
-  card: () => import('./renderers/dialogpay-card-renderer'),
   live: () => import('./renderers/live-renderer'),
   generic: () => import('./renderers/generic-renderer'),
 }
@@ -31,7 +30,6 @@ const legacySlugWorkflowMap: Record<string, QueueWorkflowType> = {
   'merchant-id': 'mid',
   testing: 'testing',
   'wordpress-website': 'wordpress',
-  'dialogpay-card': 'card',
   live: 'live',
 }
 
@@ -42,7 +40,6 @@ const QUEUE_WORKFLOW_TYPE_SET = new Set<string>([
   'mid',
   'testing',
   'wordpress',
-  'card',
   'live',
   'sub_merchant_form',
 ])
@@ -60,16 +57,6 @@ export function resolveQueueWorkflowType(queue: {
     return legacySlugWorkflowMap[queue.slug]
   }
   return 'generic'
-}
-
-export async function preloadQueueRenderer(workflowTypeOrSlug: string) {
-  const workflowType = resolveQueueWorkflowType({
-    workflowType: QUEUE_WORKFLOW_TYPE_SET.has(workflowTypeOrSlug)
-      ? (workflowTypeOrSlug as QueueWorkflowType)
-      : undefined,
-    slug: workflowTypeOrSlug,
-  })
-  await registry[workflowType]()
 }
 
 export function getQueueRenderer(

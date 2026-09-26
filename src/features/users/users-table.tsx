@@ -48,10 +48,12 @@ import {
 } from '#/schemas/users.schema'
 import { CreateUserDialog } from './create-user-dialog'
 import { createUserColumns } from './users-columns'
+import { USER_ROLE_ICONS } from './user-role-icons'
 
 const roleFilterOptions = roleTypes.map((roleType) => ({
   label: USER_ROLE_LABELS[roleType],
   value: roleType,
+  icon: USER_ROLE_ICONS[roleType],
 }))
 
 const statusFilterOptions = userStatuses.map((status) => ({

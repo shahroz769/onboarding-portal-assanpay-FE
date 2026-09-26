@@ -1,18 +1,19 @@
 import { useState } from 'react'
 
-import { CheckCircle2, FlaskConical, Info, Mail, MailCheck } from 'lucide-react'
+import {
+  CheckCircle2,
+  FlaskConical,
+  Info,
+  KeyRound,
+  Mail,
+  MailCheck,
+} from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ import {
 import type { EmailPreviewResult } from '#/apis/cases'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 export default function TestingRenderer({
@@ -137,19 +139,18 @@ export default function TestingRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Testing Limits</CardTitle>
-              <CardDescription>
-                Testing limits must be applied from the dashboard before
-                credentials can be sent.
-              </CardDescription>
-            </div>
-            <Badge variant={limitsAppliedAt ? 'secondary' : 'outline'}>
-              {limitsAppliedAt ? <CheckCircle2 /> : <FlaskConical />}
-              {limitsAppliedAt ? 'Applied' : 'Pending'}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={FlaskConical}
+            tone="amber"
+            title="Testing Limits"
+            description="Testing limits must be applied from the dashboard before credentials can be sent."
+            action={
+              <Badge variant={limitsAppliedAt ? 'secondary' : 'outline'}>
+                {limitsAppliedAt ? <CheckCircle2 /> : <FlaskConical />}
+                {limitsAppliedAt ? 'Applied' : 'Pending'}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -199,19 +200,18 @@ export default function TestingRenderer({
 
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Send Credentials</CardTitle>
-              <CardDescription>
-                Send the saved merchant portal credentials and testing
-                instructions by auto Resend, manual Gmail, or WhatsApp.
-              </CardDescription>
-            </div>
-            <Badge variant={credentialsEmailSent ? 'secondary' : 'outline'}>
-              {credentialsEmailSent ? <MailCheck /> : <Mail />}
-              {credentialsEmailSent ? 'Sent' : 'Ready'}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={KeyRound}
+            tone="blue"
+            title="Send Credentials"
+            description="Send the saved merchant portal credentials and testing instructions by auto Resend, manual Gmail, or WhatsApp."
+            action={
+              <Badge variant={credentialsEmailSent ? 'secondary' : 'outline'}>
+                {credentialsEmailSent ? <MailCheck /> : <Mail />}
+                {credentialsEmailSent ? 'Sent' : 'Ready'}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>

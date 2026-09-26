@@ -27,6 +27,7 @@ import {
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
+  useComboboxAnchor,
 } from '#/components/ui/combobox'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
@@ -329,6 +330,9 @@ export default function DocumentsReviewRenderer({
     'save' | 'delete' | null
   >(null)
   const [subMerchantError, setSubMerchantError] = useState<string | null>(null)
+  // Anchor the dropdown to the whole chips field, not the input, which
+  // shrinks as chips are added.
+  const subMerchantAnchor = useComboboxAnchor()
   const subMerchants = subMerchantOptionsQuery.data ?? []
   const selectedSubMerchantIdSet = new Set(selectedSubMerchantIds)
   const selectedSubMerchants = subMerchants.filter((item) =>
@@ -544,7 +548,7 @@ export default function DocumentsReviewRenderer({
                       subMerchants.length === 0
                     }
                   >
-                    <ComboboxChips className="w-full">
+                    <ComboboxChips ref={subMerchantAnchor} className="w-full">
                       <ComboboxValue>
                         {(value: SubMerchantOption[]) => (
                           <>
@@ -570,10 +574,7 @@ export default function DocumentsReviewRenderer({
                         )}
                       </ComboboxValue>
                     </ComboboxChips>
-                    <ComboboxContent
-                      align="start"
-                      className="w-(--anchor-width)"
-                    >
+                    <ComboboxContent anchor={subMerchantAnchor}>
                       <ComboboxEmpty>No sub-merchants found.</ComboboxEmpty>
                       <ComboboxList>
                         {(subMerchant: SubMerchantOption) => (

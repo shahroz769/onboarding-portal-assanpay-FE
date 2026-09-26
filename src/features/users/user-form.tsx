@@ -59,6 +59,7 @@ import {
 import { cn } from '#/lib/utils'
 import type { StatusTint } from '#/lib/status-styles'
 import { SectionIcon } from '#/components/section-icon'
+import { USER_ROLE_ICONS } from './user-role-icons'
 
 function RequiredMark() {
   return (
@@ -516,11 +517,15 @@ export function UserForm({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {roleOptions.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {USER_ROLE_LABELS[role]}
-                            </SelectItem>
-                          ))}
+                          {roleOptions.map((role) => {
+                            const RoleIcon = USER_ROLE_ICONS[role]
+                            return (
+                              <SelectItem key={role} value={role}>
+                                <RoleIcon />
+                                {USER_ROLE_LABELS[role]}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -744,10 +749,7 @@ export function UserForm({
             Cancel
           </Button>
         ) : (
-          <ButtonLink
-            variant="ghost"
-            render={<Link to="/user-management" />}
-          >
+          <ButtonLink variant="ghost" render={<Link to="/user-management" />}>
             Cancel
           </ButtonLink>
         )}

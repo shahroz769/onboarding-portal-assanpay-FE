@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { roleTypes } from '#/types/auth'
 
@@ -26,10 +26,6 @@ export const queueViewScopes = ['all', 'selected'] as const
 export const ASSANPAY_EMAIL_DOMAIN = '@assanpay.com'
 export const ASSANPAY_EMAIL_MESSAGE = 'Email must use the @assanpay.com domain.'
 
-export type UserStatus = (typeof userStatuses)[number]
-export type UserGender = (typeof userGenders)[number]
-export type QueueViewScope = (typeof queueViewScopes)[number]
-
 function normalizeOptionalString(value: string | undefined) {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
@@ -53,7 +49,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
         value === undefined ||
         value.split(',').every((item) => allowedValues.has(item)),
       {
-        message: 'Invalid filter value.',
+        error: 'Invalid filter value.',
       },
     )
 }
@@ -134,12 +130,12 @@ export const userFormSchema = z
       .string()
       .trim()
       .toLowerCase()
-      .email('Enter a valid email')
       .max(255)
+      .pipe(z.email('Enter a valid email'))
       .refine(isAssanPayEmail, ASSANPAY_EMAIL_MESSAGE),
     username: z.string().trim().min(2, 'Username is required').max(64),
-    gender: z.enum(userGenders, { message: 'Select gender.' }),
-    roleType: z.enum(roleTypes, { message: 'Select role.' }),
+    gender: z.enum(userGenders, { error: 'Select gender.' }),
+    roleType: z.enum(roleTypes, { error: 'Select role.' }),
     status: z.enum(userStatuses),
     queueViewScope: z.enum(queueViewScopes),
     viewQueueIds: z.array(z.string()),
@@ -171,7 +167,7 @@ export const setPasswordSchema = z
   })
   .refine((value) => value.password === value.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'Passwords do not match.',
+    error: 'Passwords do not match.',
   })
 
 export type SetPasswordValues = z.infer<typeof setPasswordSchema>

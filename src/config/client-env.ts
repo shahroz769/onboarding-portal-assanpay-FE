@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 const API_BASE_URL_FALLBACK = import.meta.env.DEV
   ? 'http://localhost:3000'
@@ -7,7 +7,7 @@ const API_BASE_URL_FALLBACK = import.meta.env.DEV
 const apiBaseUrlSchema = z
   .string()
   .trim()
-  .url()
+  .pipe(z.url())
   .transform((url) => url.replace(/\/+$/, ''))
 
 export const API_BASE_URL = apiBaseUrlSchema.parse(

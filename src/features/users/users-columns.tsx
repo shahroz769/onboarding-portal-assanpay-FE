@@ -2,13 +2,19 @@ import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 
-import { cn } from '#/lib/utils'
+import {
+  passwordStatusBadgeClasses,
+  userRoleBadgeClasses,
+  userStatusBadgeClasses,
+} from '#/lib/status-styles'
+import { getUserAvatarSrc, getUserInitials } from '#/lib/user-avatar'
 import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import { Checkbox } from '#/components/ui/checkbox'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type { UserListItem } from '#/schemas/users.schema'
 import { USER_ROLE_LABELS, USER_STATUS_LABELS } from '#/schemas/users.schema'
+import { USER_ROLE_ICONS } from './user-role-icons'
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-'
@@ -16,22 +22,14 @@ function formatDate(dateStr: string | null) {
 }
 
 function UserIdentityCell({ user }: { user: UserListItem }) {
-  const avatarSrc =
-    user.gender === 'female'
-      ? '/assets/avatar-female.webp'
-      : '/assets/avatar-male.webp'
-  const initials = user.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const avatarSrc = getUserAvatarSrc(user.gender)
+  const initials = getUserInitials(user.name)
 
   return (
     <div className="flex min-w-0 items-center gap-3">
       <Avatar className="size-9">
         <AvatarImage src={avatarSrc} alt="" />
-        <AvatarFallback>{initials || 'U'}</AvatarFallback>
+        <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
         <Link
@@ -136,22 +134,28 @@ export function createUserColumns({
     {
       id: 'roleType',
       header: 'Role',
-      cell: (user) => (
-        <Badge variant="outline">{USER_ROLE_LABELS[user.roleType]}</Badge>
-      ),
-      width: 120,
+      cell: (user) => {
+        const RoleIcon = USER_ROLE_ICONS[user.roleType]
+        return (
+          <Badge
+            variant="secondary"
+            className={userRoleBadgeClasses(user.roleType) || undefined}
+          >
+            <RoleIcon />
+            {USER_ROLE_LABELS[user.roleType]}
+          </Badge>
+        )
+      },
+      width: 130,
     },
     {
       id: 'status',
       header: 'Status',
       cell: (user) => (
-        <Badge variant="outline" className="gap-1.5">
-          <span
-            className={cn(
-              'size-1.5 rounded-full',
-              user.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400',
-            )}
-          />
+        <Badge
+          variant="secondary"
+          className={userStatusBadgeClasses(user.status) || undefined}
+        >
           {USER_STATUS_LABELS[user.status]}
         </Badge>
       ),
@@ -161,13 +165,12 @@ export function createUserColumns({
       id: 'passwordStatus',
       header: 'Password',
       cell: (user) => (
-        <Badge variant="outline" className="gap-1.5">
-          <span
-            className={cn(
-              'size-1.5 rounded-full',
-              user.hasSetPassword ? 'bg-emerald-500' : 'bg-amber-500',
-            )}
-          />
+        <Badge
+          variant="secondary"
+          className={
+            passwordStatusBadgeClasses(user.hasSetPassword) || undefined
+          }
+        >
           {user.hasSetPassword ? 'Set' : 'Not set'}
         </Badge>
       ),

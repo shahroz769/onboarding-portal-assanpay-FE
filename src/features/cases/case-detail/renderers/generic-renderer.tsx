@@ -1,11 +1,8 @@
+import { Workflow } from 'lucide-react'
+
 import { Badge } from '#/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 export default function GenericRenderer({ caseDetail }: QueueRendererProps) {
@@ -16,11 +13,12 @@ export default function GenericRenderer({ caseDetail }: QueueRendererProps) {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>{caseDetail.queue.name}</CardTitle>
-          <CardDescription>
-            Generic queue workflow. Use take-ownership, stage advancement,
-            comments, and history from the case side panel.
-          </CardDescription>
+          <CaseCardHeading
+            icon={Workflow}
+            tone="blue"
+            title={caseDetail.queue.name}
+            description="Generic queue workflow. Use take-ownership, stage advancement, comments, and history from the case side panel."
+          />
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">

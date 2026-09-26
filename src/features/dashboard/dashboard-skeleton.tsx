@@ -7,6 +7,7 @@ import {
 } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
+import { DashboardAwaitingAgreements } from './dashboard-awaiting-agreements'
 import { DashboardPortalMids } from './dashboard-portal-mids'
 import { DASHBOARD_CHARTS } from './dashboard-utils'
 
@@ -87,7 +88,11 @@ export function DashboardSkeleton() {
     <div className="flex flex-col gap-6">
       <DashboardKpiCards />
       <DashboardChartsSkeleton />
-      <DashboardPortalMids />
+      {/* Two columns, matching the chart grid above. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DashboardPortalMids />
+        <DashboardAwaitingAgreements />
+      </div>
     </div>
   )
 }

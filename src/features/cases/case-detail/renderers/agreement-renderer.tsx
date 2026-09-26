@@ -1,10 +1,13 @@
 import { useId, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode, SVGProps } from 'react'
 import {
   CheckCircle2,
   ExternalLink,
+  FileCheck2,
+  FileSignature,
   FileText,
   MailCheck,
+  ScanLine,
   Upload,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -12,13 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button, ButtonLink } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -55,6 +52,8 @@ import { cn } from '#/lib/utils'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 import { MERCHANT_TYPES } from '#/schemas/merchant-onboarding.schema'
 
+import type { StatusTint } from '#/lib/status-styles'
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 const ACCEPTED_AGREEMENT_EXTENSIONS = ['.pdf', '.doc', '.docx'] as const
@@ -248,32 +247,30 @@ export default function AgreementRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>Agreement</CardTitle>
-              <CardDescription>
-                Review the merchant business type, prepare the final agreement,
-                send its link to the merchant, then upload the scanned physical
-                copy when it arrives at the office.
-              </CardDescription>
-            </div>
-            {caseDetail.case.status === 'awaiting_client' ? (
-              <Badge variant="secondary">
-                <MailCheck />
-                Awaiting physical copy
-              </Badge>
-            ) : agreement?.receivedAgreement ? (
-              <Badge variant="secondary">
-                <CheckCircle2 />
-                Received
-              </Badge>
-            ) : agreement?.finalAgreement ? (
-              <Badge variant="secondary">
-                <CheckCircle2 />
-                Ready for review
-              </Badge>
-            ) : null}
-          </div>
+          <CaseCardHeading
+            icon={FileSignature}
+            tone="violet"
+            title="Agreement"
+            description="Review the merchant business type, prepare the final agreement, send its link to the merchant, then upload the scanned physical copy when it arrives at the office."
+            action={
+              caseDetail.case.status === 'awaiting_client' ? (
+                <Badge variant="secondary">
+                  <MailCheck />
+                  Awaiting physical copy
+                </Badge>
+              ) : agreement?.receivedAgreement ? (
+                <Badge variant="secondary">
+                  <CheckCircle2 />
+                  Received
+                </Badge>
+              ) : agreement?.finalAgreement ? (
+                <Badge variant="secondary">
+                  <CheckCircle2 />
+                  Ready for review
+                </Badge>
+              ) : null
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -341,6 +338,8 @@ export default function AgreementRenderer({
 
       {agreement?.finalAgreement ? (
         <AgreementFileCard
+          icon={FileText}
+          tone="blue"
           title="Final Agreement"
           description="The Google Drive link for this agreement will be emailed to the merchant."
           file={agreement.finalAgreement}
@@ -357,6 +356,8 @@ export default function AgreementRenderer({
 
       {agreement?.receivedAgreement ? (
         <AgreementFileCard
+          icon={FileCheck2}
+          tone="green"
           title="Received Physical Agreement Scan"
           description="Scanned copy of the signed physical agreement received by the office."
           file={agreement.receivedAgreement}
@@ -366,13 +367,12 @@ export default function AgreementRenderer({
       {canUploadReceived ? (
         <Card>
           <CardHeader>
-            <CardTitle>Upload Scanned Physical Agreement</CardTitle>
-            <CardDescription>
-              The merchant has been asked to courier the signed physical
-              agreement to the office. Once it arrives, scan the complete copy
-              and upload it here. The case will return to Working and can then
-              be closed successfully.
-            </CardDescription>
+            <CaseCardHeading
+              icon={ScanLine}
+              tone="amber"
+              title="Upload Scanned Physical Agreement"
+              description="The merchant has been asked to courier the signed physical agreement to the office. Once it arrives, scan the complete copy and upload it here. The case will return to Working and can then be closed successfully."
+            />
           </CardHeader>
           <CardContent>
             <AgreementUpload
@@ -535,11 +535,15 @@ export default function AgreementRenderer({
 }
 
 function AgreementFileCard({
+  icon,
+  tone,
   title,
   description,
   file,
   action,
 }: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  tone: StatusTint
   title: string
   description: string
   file: {
@@ -552,13 +556,13 @@ function AgreementFileCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-          {action}
-        </div>
+        <CaseCardHeading
+          icon={icon}
+          tone={tone}
+          title={title}
+          description={description}
+          action={action}
+        />
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">

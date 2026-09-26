@@ -28,9 +28,12 @@ export function TeamSwitcher({
             <AvatarImage src={activeTeam.logo} alt={activeTeam.name} />
             <AvatarFallback className="rounded-lg">AP</AvatarFallback>
           </Avatar>
-          <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-medium">{activeTeam.name}</span>
-            <span className="truncate text-xs text-muted-foreground">
+          {/* Same brand lockup as the login page, scaled for the sidebar. */}
+          <div className="grid flex-1 gap-1 text-left font-brand group-data-[collapsible=icon]:hidden">
+            <span className="truncate text-base leading-none font-medium tracking-tight text-foreground/80">
+              {activeTeam.name}
+            </span>
+            <span className="truncate pl-px text-xs leading-none text-muted-foreground">
               {activeTeam.plan}
             </span>
           </div>

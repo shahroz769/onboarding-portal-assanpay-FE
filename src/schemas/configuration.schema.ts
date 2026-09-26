@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
 const limitRangeSchema = z.object({
@@ -192,18 +192,18 @@ export const emailSendingModeSchema = z
     manualEnabled: z.boolean(),
   })
   .refine((v) => v.autoEnabled || v.manualEnabled, {
-    message: 'At least one email sending mode must be enabled.',
+    error: 'At least one email sending mode must be enabled.',
     path: ['autoEnabled'],
   })
 
 export const merchantPortalSettingsSchema = z.object({
-  loginUrl: z.string().trim().url(),
+  loginUrl: z.string().trim().pipe(z.url()),
   serverBaseUrl: z
     .string()
     .trim()
     .max(2048)
     .refine((value) => value === '' || z.url().safeParse(value).success, {
-      message: 'Enter a valid server base URL.',
+      error: 'Enter a valid server base URL.',
     })
     .default(''),
   serverCallbackIp: z
@@ -215,7 +215,7 @@ export const merchantPortalSettingsSchema = z.object({
         value === '' ||
         z.ipv4().safeParse(value).success ||
         z.ipv6().safeParse(value).success,
-      { message: 'Enter a valid IPv4 or IPv6 address.' },
+      { error: 'Enter a valid IPv4 or IPv6 address.' },
     )
     .default(''),
   officeAddress: z.string().trim().max(1000).default(''),
@@ -232,7 +232,7 @@ export const merchantPortalSettingsSchema = z.object({
     .refine(
       (value) => value === '' || emailAddressSchema.safeParse(value).success,
       {
-        message: 'Enter a valid support email.',
+        error: 'Enter a valid support email.',
       },
     )
     .default(''),
@@ -243,7 +243,7 @@ export const merchantPortalSettingsSchema = z.object({
     .refine(
       (value) => value === '' || emailAddressSchema.safeParse(value).success,
       {
-        message: 'Enter a valid legal email.',
+        error: 'Enter a valid legal email.',
       },
     )
     .default(''),
@@ -260,7 +260,7 @@ const collectionMethodLimitSchema = z
     max: z.coerce.number().min(0),
   })
   .refine((value) => value.max >= value.min, {
-    message: 'Maximum must be greater than or equal to minimum.',
+    error: 'Maximum must be greater than or equal to minimum.',
     path: ['max'],
   })
 
@@ -315,7 +315,6 @@ export type MerchantPortalSettings = z.infer<
 export type PaymentMethodSettings = z.infer<typeof paymentMethodSettingsSchema>
 export type PaymentMethod = PaymentMethodSettings[number]
 export type PayoutMethodSettings = z.infer<typeof payoutMethodSettingsSchema>
-export type PayoutMethod = PayoutMethodSettings[number]
 export type AgreementDraft = z.infer<typeof agreementDraftSchema>
 export type SubMerchantDraft = z.infer<typeof subMerchantDraftSchema>
 export type SubMerchantOption = z.infer<typeof subMerchantOptionSchema>

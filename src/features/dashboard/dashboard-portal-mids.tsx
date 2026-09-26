@@ -1,15 +1,19 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 
 import {
+  Check,
   CheckCircle2,
+  ChevronDown,
   ClipboardCopy,
-  Eye,
+  Copy,
+  History,
   Info,
   ListChecks,
   ShieldCheck,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
@@ -29,6 +33,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
 import {
   Field,
   FieldDescription,
@@ -56,11 +68,17 @@ import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
 import { useAuth } from '#/features/auth/auth-client'
-import { useApplyPortalMidLimits } from '#/hooks/use-dashboard-query'
+import { fetchPendingPortalMidValues } from '#/apis/dashboard'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import {
+  pendingPortalMidsInfiniteQueryOptions,
+  useApplyPortalMidLimits,
+} from '#/hooks/use-dashboard-query'
 import type {
   ApplyPortalMidLimitsInput,
   DashboardPendingPortalMidLimit,
   DashboardResponse,
+  PendingPortalMidKind,
 } from '#/schemas/dashboard.schema'
 
 const pastedMidsSchema = z
@@ -95,23 +113,28 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
       id: 'portalMid',
       header: <span className="block text-right">Portal MID</span>,
       width: 130,
-      cell: (item) => (
-        <span className="block text-right font-mono font-medium tabular-nums">
-          {item.portalMid}
-        </span>
-      ),
+      cell: (item) => <CopyMidButton mid={item.portalMid} />,
     },
   ]
 
 const EMPTY_PENDING: DashboardPendingPortalMidLimit[] = []
+const EMPTY_COUNTS = { total: 0, portal: 0, internal: 0 }
 const EMPTY_APPLIED: DashboardResponse['portalMids']['appliedLimits'] = []
 
 /** Without `data`, renders the loading state with the exact loaded layout. */
 export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   const { user } = useAuth()
   const applyLimits = useApplyPortalMidLimits()
+  const pendingQuery = useInfiniteQuery(pendingPortalMidsInfiniteQueryOptions())
   const isLoading = !data
-  const pending = data?.portalMids.pendingLimits ?? EMPTY_PENDING
+  const pending = pendingQuery.data
+    ? pendingQuery.data.pages.flatMap((page) => page.data)
+    : EMPTY_PENDING
+  // The first page carries fresh totals; fall back to the dashboard summary.
+  const counts =
+    pendingQuery.data?.pages[0]?.counts ??
+    data?.portalMids.pendingCounts ??
+    EMPTY_COUNTS
   const appliedCsv = data?.portalMids.appliedCsv ?? ''
   const appliedLimits = data?.portalMids.appliedLimits ?? EMPTY_APPLIED
   const appliedCount = appliedLimits.length
@@ -171,72 +194,80 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <CardTitle>Portal MIDs awaiting limits</CardTitle>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label="What is a portal MID?"
-                      className="text-muted-foreground"
-                    />
-                  }
-                >
-                  <Info />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-72">
-                  A MID (merchant ID) is the merchant's account ID on the
-                  payment portal. MIDs from successful MID Creation cases wait
-                  here until their limits are applied.
-                </TooltipContent>
-              </Tooltip>
-              {isLoading ? (
-                // h-5.5 = Badge height (py-0.5 + text-xs line + border)
-                <Skeleton className="h-5.5 w-9 rounded-full" />
-              ) : (
-                <Badge variant={pending.length > 0 ? 'outline' : 'secondary'}>
-                  {pending.length > 0 ? <ListChecks /> : <CheckCircle2 />}
-                  {pending.length}
-                </Badge>
-              )}
-            </div>
-            <CardDescription>
-              Successful MID Creation cases pending Portal MID and internal MID
-              limits.
-            </CardDescription>
+        {/* min-h-8 = action button height; the agreements card uses the same so both tables start level. */}
+        <div className="flex min-h-8 flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <CardTitle>Portal MIDs awaiting limits</CardTitle>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="What is a portal MID?"
+                    className="text-muted-foreground"
+                  />
+                }
+              >
+                <Info />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-72">
+                A MID (merchant ID) is the merchant's account ID on the payment
+                portal. MIDs from successful MID Creation cases wait here until
+                their limits are applied.
+              </TooltipContent>
+            </Tooltip>
+            {isLoading ? (
+              // h-5.5 = Badge height (py-0.5 + text-xs line + border)
+              <Skeleton className="h-5.5 w-9 rounded-full" />
+            ) : (
+              <Badge variant={counts.total > 0 ? 'outline' : 'secondary'}>
+                {counts.total > 0 ? <ListChecks /> : <CheckCircle2 />}
+                {counts.total}
+              </Badge>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <CopyMidsMenu counts={counts} disabled={isLoading} />
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setAppliedOpen(true)}
               disabled={isLoading}
             >
-              <Eye data-icon="inline-start" />
-              Applied Previously
+              <History data-icon="inline-start" />
+              Applied
             </Button>
             <Button
+              size="sm"
               onClick={() => handleOpenChange(true)}
               disabled={isLoading || !canApply}
             >
               <ShieldCheck data-icon="inline-start" />
-              Apply Limits
+              Apply limits
             </Button>
           </div>
         </div>
+        <CardDescription>
+          MIDs from successful MID Creation cases waiting for limits.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
         <DataTable
           columns={pendingMidColumns}
           data={pending}
           getRowId={(item) =>
             `${item.caseId}-${item.midKind}-${item.portalMid}`
           }
-          isLoading={isLoading}
-          className="h-auto max-h-72"
+          isLoading={isLoading || pendingQuery.isPending}
+          error={pendingQuery.error}
+          onRetry={() => void pendingQuery.refetch()}
+          onScrollEnd={() => void pendingQuery.fetchNextPage()}
+          hasMore={pendingQuery.hasNextPage}
+          isFetchingMore={pendingQuery.isFetchingNextPage}
+          totalCount={counts.total}
+          // Fixed base height, grows to match the neighbouring card.
+          className="h-80 flex-1"
           emptyContent={
             <EmptyState
               icon={CheckCircle2}
@@ -247,14 +278,10 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
           }
         />
         {!canApply ? (
-          <Alert variant="warning">
-            <ShieldCheck />
-            <AlertTitle>Super Admin or Admin required</AlertTitle>
-            <AlertDescription>
-              Only Super Admins and Admins can mark portal MID limits as applied
-              or pre-applied.
-            </AlertDescription>
-          </Alert>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="size-3.5" />
+            Only Super Admins and Admins can apply or pre-apply limits.
+          </p>
         ) : null}
       </CardContent>
 
@@ -395,6 +422,152 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
         </DialogContent>
       </Dialog>
     </Card>
+  )
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    toast.error('Could not copy to the clipboard')
+    return false
+  }
+}
+
+/** Shows a check for a moment after a successful copy. */
+function useCopiedFlag() {
+  const [copied, setCopied] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), [])
+
+  function flag() {
+    setCopied(true)
+    clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => setCopied(false), 1500)
+  }
+
+  return [copied, flag] as const
+}
+
+function CopyMidButton({ mid }: { mid: number }) {
+  const [copied, flagCopied] = useCopiedFlag()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            aria-label={`Copy MID ${mid}`}
+            className="group/mid ml-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono font-medium tabular-nums transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            onClick={async () => {
+              if (await copyText(String(mid))) flagCopied()
+            }}
+          />
+        }
+      >
+        {copied ? (
+          <Check className="size-3.5 text-primary" />
+        ) : (
+          <Copy className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/mid:opacity-100 group-focus-visible/mid:opacity-100" />
+        )}
+        {mid}
+      </TooltipTrigger>
+      <TooltipContent>{copied ? 'Copied' : 'Copy MID'}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+const COPY_OPTIONS = [
+  { key: 'all', label: 'All pending', midKind: undefined },
+  { key: 'internal', label: 'Internal', midKind: 'internal' },
+  { key: 'portal', label: 'Standard', midKind: 'portal' },
+] as const satisfies readonly {
+  key: 'all' | PendingPortalMidKind
+  label: string
+  midKind?: PendingPortalMidKind
+}[]
+
+/** Copies every pending MID of a kind from the DB, not just the loaded rows. */
+function CopyMidsMenu({
+  counts,
+  disabled,
+}: {
+  counts: { total: number; portal: number; internal: number }
+  disabled: boolean
+}) {
+  const [isCopying, setIsCopying] = useState(false)
+  const [copied, flagCopied] = useCopiedFlag()
+
+  async function handleCopy(option: (typeof COPY_OPTIONS)[number]) {
+    setIsCopying(true)
+    try {
+      const mids = await fetchPendingPortalMidValues(option.midKind)
+      if (mids.length === 0) {
+        toast.info(`No ${option.label.toLowerCase()} MIDs to copy`)
+        return
+      }
+      if (await copyText(mids.join(','))) {
+        flagCopied()
+        const kind = option.midKind ? `${option.label.toLowerCase()} ` : ''
+        toast.success(
+          `${mids.length} ${kind}MID${mids.length === 1 ? '' : 's'} copied`,
+        )
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not load MIDs to copy'))
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
+  const countFor = (key: (typeof COPY_OPTIONS)[number]['key']) =>
+    key === 'all' ? counts.total : counts[key]
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={disabled || isCopying || counts.total === 0}
+          />
+        }
+      >
+        {isCopying ? (
+          <Spinner data-icon="inline-start" />
+        ) : copied ? (
+          <Check data-icon="inline-start" className="text-primary" />
+        ) : (
+          <Copy data-icon="inline-start" />
+        )}
+        Copy MIDs
+        <ChevronDown data-icon="inline-end" className="text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Copy pending MIDs
+          </DropdownMenuLabel>
+          {COPY_OPTIONS.map((option) => (
+            <DropdownMenuItem
+              key={option.key}
+              disabled={countFor(option.key) === 0}
+              onClick={() => void handleCopy(option)}
+            >
+              <Copy />
+              {option.label}
+              <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                {countFor(option.key)}
+              </span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AppSidebar } from '#/components/app-sidebar'
+import { NavUser } from '#/components/nav-user'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
   NotificationBell,
@@ -175,6 +176,7 @@ function AppLayout() {
           <div className="ml-auto flex items-center gap-1">
             <NotificationBell />
             <ThemeToggle />
+            <NavUser />
           </div>
         </header>
 

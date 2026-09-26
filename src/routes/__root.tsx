@@ -49,7 +49,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         // Fetch the self-hosted font alongside the CSS instead of after it
         // is parsed. crossOrigin is required for font preloads to be reused.
         rel: 'preload',
-        href: '/fonts/Geist-Variable.woff2',
+        href: '/fonts/Geist-Latin.woff2',
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
+        // Headings and the login wordmark.
+        rel: 'preload',
+        href: '/fonts/Outfit-Latin.woff2',
         as: 'font',
         type: 'font/woff2',
         crossOrigin: 'anonymous',

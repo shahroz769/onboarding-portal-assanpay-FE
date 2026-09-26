@@ -121,6 +121,30 @@ export function merchantStatusBadgeClasses(status: string): string {
   return TINTS[MERCHANT_STATUS_TINTS[status] ?? 'neutral']
 }
 
+// ─── User role / status ─────────────────────────────────────────────────────
+
+// 'plain' = the untinted secondary badge.
+const USER_ROLE_TINTS: Record<string, StatusTint | 'plain'> = {
+  super_admin: 'violet',
+  admin: 'blue',
+  agent: 'plain',
+}
+
+export function userRoleBadgeClasses(roleType: string): string {
+  const tint = USER_ROLE_TINTS[roleType] ?? 'neutral'
+  return tint === 'plain' ? '' : TINTS[tint]
+}
+
+// Inactive renders as the neutral secondary badge.
+export function userStatusBadgeClasses(status: string): string {
+  return status === 'active' ? TINTS.emerald : ''
+}
+
+// A missing password needs follow-up, so only that state is tinted.
+export function passwordStatusBadgeClasses(hasSetPassword: boolean): string {
+  return hasSetPassword ? '' : TINTS.amber
+}
+
 // ─── Priority ───────────────────────────────────────────────────────────────
 
 // Normal priority renders as the default neutral secondary badge.

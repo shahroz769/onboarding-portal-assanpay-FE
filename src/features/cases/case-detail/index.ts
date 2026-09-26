@@ -1,6 +1,2 @@
 export { CaseDetailShell } from './case-detail-shell'
 export { CaseDetailShellSkeleton } from './case-detail-skeletons'
-export { CaseChatter } from './case-chatter'
-export { CaseHistoryTimeline } from './case-history-timeline'
-export { CaseSidePanel } from './case-side-panel'
-export { getQueueRenderer } from './queue-registry'

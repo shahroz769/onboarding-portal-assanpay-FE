@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 import {
   limitsAndMdrSettingsSchema,
   paymentMethodSettingsSchema,
@@ -7,8 +7,6 @@ import {
 import { QUEUE_LIFECYCLES, QUEUE_WORKFLOW_TYPES } from './queue-workflow.schema'
 
 export {
-  QUEUE_LIFECYCLES,
-  QUEUE_WORKFLOW_TYPES,
   type QueueLifecycle,
   type QueueWorkflowType,
 } from './queue-workflow.schema'
@@ -67,11 +65,6 @@ export const CASE_SORTABLE_COLUMNS = [
 export type CaseSortableColumn = (typeof CASE_SORTABLE_COLUMNS)[number]
 
 // ─── Case Owner ─────────────────────────────────────────────────────────────
-
-export interface CaseOwner {
-  id: string
-  name: string
-}
 
 // ─── Queue Schema ───────────────────────────────────────────────────────────
 
@@ -150,7 +143,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
         value === undefined ||
         value.split(',').every((item) => allowedValues.has(item)),
       {
-        message: 'Invalid filter value.',
+        error: 'Invalid filter value.',
       },
     )
 }
@@ -183,8 +176,6 @@ export const STAGE_CATEGORIES = [
   'error',
   'closed',
 ] as const
-export type StageCategory = (typeof STAGE_CATEGORIES)[number]
-
 // ─── Queue Stage ────────────────────────────────────────────────────────────
 
 export const queueStageSchema = z.object({
@@ -516,14 +507,6 @@ const createCommentInputSchema = z.object({
 
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>
 
-const selectSubMerchantFormInputSchema = z.object({
-  subMerchantKey: z.string().min(1),
-})
-
-export type SelectSubMerchantFormInput = z.infer<
-  typeof selectSubMerchantFormInputSchema
->
-
 export type AgreementEmailResponse = {
   status: 'sent' | 'failed'
   emailLogId: string
@@ -533,9 +516,9 @@ export type AgreementEmailResponse = {
 const saveMidCreationDetailsInputSchema = z.object({
   portalMid: z.coerce.number().int().positive(),
   internalPortalMid: z.coerce.number().int().positive(),
-  email: z.string().trim().email(),
+  email: z.string().trim().pipe(z.email()),
   branchCode: z.string().trim().min(1).max(100),
-  internalEmail: z.string().trim().email(),
+  internalEmail: z.string().trim().pipe(z.email()),
   internalBranchCode: z.string().trim().min(1).max(100),
   merchantRole: z.enum(MERCHANT_PORTAL_ROLES),
   paymentMethods: paymentMethodSettingsSchema.min(
@@ -590,7 +573,7 @@ export type MidCreationEmailResponse = {
 }
 
 const saveWordpressWebsiteInputSchema = z.object({
-  clonedWebsiteLink: z.string().trim().url(),
+  clonedWebsiteLink: z.string().trim().pipe(z.url()),
 })
 
 export type SaveWordpressWebsiteInput = z.infer<

@@ -1,5 +1,5 @@
 import { notFound } from '@tanstack/react-router'
-import { z } from 'zod'
+import * as z from 'zod'
 
 // Record ids are Postgres UUIDs; public link tokens are base64url strings
 // (the API accepts 32-256 characters).

@@ -27,7 +27,6 @@ import {
   updateMerchantPortal,
   updatePaymentMethods,
   updatePayoutMethods,
-  updateLimitsAndMdr,
   updateLinkDeadlines,
   updateQueue,
   updateQueueSla,
@@ -39,7 +38,6 @@ import { CASES_KEY, QUEUES_KEY } from '#/hooks/use-cases-query'
 import type {
   CaseFlowConfiguration,
   EmailSendingMode,
-  LimitsAndMdrSettings,
   LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
@@ -181,20 +179,6 @@ export function caseFlowConfigurationQueryOptions(versionId?: number) {
       : CASE_FLOW_CONFIGURATION_KEY,
     queryFn: () => fetchCaseFlowConfiguration(versionId),
     staleTime: 60_000,
-  })
-}
-
-export function useUpdateLimitsAndMdrMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: LimitsAndMdrSettings) => updateLimitsAndMdr(input),
-    onSuccess: async () => {
-      toast.success('Limits and MDR saved.')
-      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to save limits and MDR.'))
-    },
   })
 }
 

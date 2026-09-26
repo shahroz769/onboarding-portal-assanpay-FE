@@ -1,4 +1,5 @@
 import {
+  infiniteQueryOptions,
   keepPreviousData,
   queryOptions,
   useMutation,
@@ -6,7 +7,12 @@ import {
 } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { applyPortalMidLimits, fetchDashboard } from '#/apis/dashboard'
+import {
+  applyPortalMidLimits,
+  fetchAwaitingPhysicalAgreements,
+  fetchDashboard,
+  fetchPendingPortalMids,
+} from '#/apis/dashboard'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type {
   ApplyPortalMidLimitsInput,
@@ -22,6 +28,37 @@ export function dashboardQueryOptions(search: DashboardRouteSearch) {
     queryKey: [...DASHBOARD_KEY, search],
     queryFn: () => fetchDashboard(search),
     placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+}
+
+const DASHBOARD_LIST_PAGE_SIZE = 30
+
+// Nested under DASHBOARD_KEY so refresh and apply-limits invalidate it too.
+export function pendingPortalMidsInfiniteQueryOptions() {
+  return infiniteQueryOptions({
+    queryKey: [...DASHBOARD_KEY, 'portal-mids', 'pending'],
+    queryFn: ({ pageParam }) =>
+      fetchPendingPortalMids({
+        cursor: pageParam,
+        limit: DASHBOARD_LIST_PAGE_SIZE,
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    staleTime: 30_000,
+  })
+}
+
+export function awaitingPhysicalAgreementsInfiniteQueryOptions() {
+  return infiniteQueryOptions({
+    queryKey: [...DASHBOARD_KEY, 'agreements', 'awaiting-physical'],
+    queryFn: ({ pageParam }) =>
+      fetchAwaitingPhysicalAgreements({
+        cursor: pageParam,
+        limit: DASHBOARD_LIST_PAGE_SIZE,
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
   })
 }

@@ -4,12 +4,60 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Self-hosted variable fonts, split into unicode-range subsets so browsers
+   only download what a page actually renders. Latin files are preloaded in
+   __root.tsx; Latin Extended loads on demand (accented names etc.). */
+
+/* Body, UI and data. */
 @font-face {
   font-family: 'Geist';
-  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  src: url('/fonts/Geist-Latin.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-LatinExt.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* IDs, MIDs and case numbers (font-mono). */
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* Brand wordmark and headings (see --font-heading). Latin only; other
+   characters fall back to Geist. */
+@font-face {
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-Latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -33,7 +81,8 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.871 0.006 286.286);
+  /* Softened brand tint: focus borders/rings read lighter than solid --primary. */
+  --ring: color-mix(in oklab, var(--primary) 55%, var(--background));
   /* Chart palette — chart-1 is the brand teal; 2-5 harmonize with it for
      multi-series use. */
   --chart-1: var(--primary);
@@ -52,7 +101,7 @@
   --sidebar-accent: color-mix(in oklab, var(--primary) 10%, transparent);
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.871 0.006 286.286);
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
@@ -76,7 +125,8 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.274 0.006 286.033);
   --input: oklch(0.274 0.006 286.033);
-  --ring: oklch(0.442 0.017 285.786);
+  /* Softened brand tint: focus borders/rings read lighter than solid --primary. */
+  --ring: color-mix(in oklab, var(--primary) 55%, var(--background));
   --chart-1: var(--primary);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -89,11 +139,19 @@
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.274 0.006 286.033);
-  --sidebar-ring: oklch(0.442 0.017 285.786);
+  --sidebar-ring: var(--ring);
+}
+
+/* Not inline, so --font-mono is emitted for Tailwind's code/kbd/pre base styles. */
+@theme {
+  --font-mono:
+    'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
 @theme inline {
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Outfit', var(--font-sans);
+  --font-heading: var(--font-brand);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -145,6 +203,41 @@ body,
   body {
     @apply bg-background text-foreground;
     margin: 0;
+  }
+  /* Headings use the brand face; body, forms, tables and data stay on
+     Geist. In the base layer so a component can opt out with font-sans. */
+  :is(h1, h2, h3),
+  :is(
+    [data-slot='card-title'],
+    [data-slot='dialog-title'],
+    [data-slot='alert-dialog-title'],
+    [data-slot='sheet-title'],
+    [data-slot='popover-title']
+  ) {
+    font-family: var(--font-heading);
+  }
+  html {
+    /* Brand tint instead of the default grey/blue flash on mobile taps. */
+    -webkit-tap-highlight-color: color-mix(
+      in oklab,
+      var(--primary) 15%,
+      transparent
+    );
+  }
+  /* Browsers paint autofilled fields with a forced light-blue/yellow
+     background. An inset shadow paints above it; using Tailwind's
+     inset-shadow slot keeps the component's own shadow and focus ring. */
+  input:autofill,
+  textarea:autofill,
+  select:autofill {
+    --tw-inset-shadow: inset 0 0 0 100vmax
+      color-mix(in oklab, var(--primary) 8%, var(--background));
+    box-shadow:
+      var(--tw-inset-shadow), var(--tw-inset-ring-shadow, 0 0 #0000),
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow, 0 0 #0000);
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
   }
 }
 
@@ -250,6 +343,55 @@ body,
   }
 }
 
+/* Tooltip enter/exit. Fades, grows from 94% and slides 4px out of the
+   trigger (towards the side it opens on), anchored at the trigger via
+   --transform-origin. Transitions, not keyframes, so a quick hover in/out
+   reverses mid-flight. Moving between adjacent tooltips opens the next one
+   instantly (Base UI sets data-instant). */
+[data-slot='tooltip-content'] {
+  transform-origin: var(--transform-origin);
+  transition-property: opacity, scale, translate;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-out);
+}
+
+[data-slot='tooltip-content']:is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+  scale: 0.94;
+}
+
+[data-slot='tooltip-content'][data-side='top']:is(
+    [data-starting-style],
+    [data-ending-style]
+  ) {
+  translate: 0 4px;
+}
+
+[data-slot='tooltip-content'][data-side='bottom']:is(
+    [data-starting-style],
+    [data-ending-style]
+  ) {
+  translate: 0 -4px;
+}
+
+[data-slot='tooltip-content']:is(
+    [data-side='left'],
+    [data-side='inline-start']
+  ):is([data-starting-style], [data-ending-style]) {
+  translate: 4px 0;
+}
+
+[data-slot='tooltip-content']:is(
+    [data-side='right'],
+    [data-side='inline-end']
+  ):is([data-starting-style], [data-ending-style]) {
+  translate: -4px 0;
+}
+
+[data-slot='tooltip-content'][data-instant] {
+  transition-duration: 0ms;
+}
+
 /* Ctrl/Cmd+B toggles the sidebar without animating (keyboard actions should
    feel instant); sidebar.tsx sets this attribute for two frames. */
 [data-sidebar-instant]
@@ -274,6 +416,11 @@ body,
     [data-slot='tooltip-content']
   ) {
     scale: none !important;
+  }
+
+  /* Tooltips also drop their slide (dialogs use translate to centre). */
+  [data-slot='tooltip-content'] {
+    translate: none !important;
   }
 
   /* The sheet fades in place instead of sliding across the screen. */

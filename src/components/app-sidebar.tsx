@@ -1,12 +1,10 @@
 import * as React from 'react'
 
 import { NavMain } from '#/components/nav-main'
-import { NavUser } from '#/components/nav-user'
 import { TeamSwitcher } from '#/components/team-switcher'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
 } from '#/components/ui/sidebar'
@@ -29,12 +27,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     Boolean(user?.workQueueIds.length),
   )
 
-  const sidebarUser = {
-    name: user?.name ?? 'User',
-    email: user?.email ?? '',
-    avatar: '/favicon.svg',
-  }
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -43,9 +35,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={navItems} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={sidebarUser} />
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

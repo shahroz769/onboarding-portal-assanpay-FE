@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 // ── Enum Constants ──────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ export const merchantOnboardingSchema = z.object({
   email: z
     .string()
     .min(1, 'Submitter email is required.')
-    .email('Must be a valid email address.'),
+    .pipe(z.email('Must be a valid email address.')),
   activeWhatsappNumber: localMobileNumberSchema,
 
   // Section 2: Owner
@@ -112,12 +112,12 @@ export const merchantOnboardingSchema = z.object({
   businessEmail: z
     .string()
     .min(1, 'Business email is required.')
-    .email('Must be a valid email address.'),
+    .pipe(z.email('Must be a valid email address.')),
   businessAddress: z.string().min(1, 'Business address is required.'),
   businessWebsite: z
     .string()
     .min(1, 'Business website is required.')
-    .url('Must be a valid URL (include https://).'),
+    .pipe(z.url('Must be a valid URL (include https://).')),
   websiteCms: z.enum(websiteCmsValues, 'Please select a website platform.'),
   businessDescription: z.string().min(1, 'Business description is required.'),
   businessRegistrationDate: z
@@ -244,11 +244,7 @@ export const MERCHANT_SPECIFIC_DOCUMENTS: Record<
     optional: ['authority_letter', 'taxpayer_registration_certificate'],
   },
   private_limited_company: {
-    required: [
-      'company_ntn',
-      'company_incorporation_certificate',
-      'form_a',
-    ],
+    required: ['company_ntn', 'company_incorporation_certificate', 'form_a'],
     optional: [
       'memorandum_articles',
       'form_ii',

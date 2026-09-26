@@ -2,12 +2,18 @@ import { apiClient } from '#/lib/api-client'
 import type {
   ApplyPortalMidLimitsInput,
   ApplyPortalMidLimitsResponse,
+  AwaitingPhysicalAgreementsPage,
   DashboardResponse,
   DashboardRouteSearch,
+  PendingPortalMidKind,
+  PendingPortalMidsPage,
 } from '#/schemas/dashboard.schema'
 import {
   applyPortalMidLimitsResponseSchema,
+  awaitingPhysicalAgreementsPageSchema,
   dashboardResponseSchema,
+  pendingPortalMidValuesSchema,
+  pendingPortalMidsPageSchema,
 } from '#/schemas/dashboard.schema'
 
 export async function fetchDashboard(
@@ -32,4 +38,44 @@ export async function applyPortalMidLimits(
     input,
   )
   return applyPortalMidLimitsResponseSchema.parse(response.data)
+}
+
+export async function fetchPendingPortalMids(params: {
+  cursor: string | null
+  limit: number
+}): Promise<PendingPortalMidsPage> {
+  const response = await apiClient.get('/api/dashboard/portal-mids/pending', {
+    params: {
+      limit: params.limit,
+      ...(params.cursor ? { cursor: params.cursor } : {}),
+    },
+  })
+  return pendingPortalMidsPageSchema.parse(response.data)
+}
+
+/** Every pending MID in the DB (not just loaded rows); all kinds when omitted. */
+export async function fetchPendingPortalMidValues(
+  midKind?: PendingPortalMidKind,
+): Promise<number[]> {
+  const response = await apiClient.get(
+    '/api/dashboard/portal-mids/pending/mids',
+    { params: midKind ? { midKind } : {} },
+  )
+  return pendingPortalMidValuesSchema.parse(response.data).mids
+}
+
+export async function fetchAwaitingPhysicalAgreements(params: {
+  cursor: string | null
+  limit: number
+}): Promise<AwaitingPhysicalAgreementsPage> {
+  const response = await apiClient.get(
+    '/api/dashboard/agreements/awaiting-physical',
+    {
+      params: {
+        limit: params.limit,
+        ...(params.cursor ? { cursor: params.cursor } : {}),
+      },
+    },
+  )
+  return awaitingPhysicalAgreementsPageSchema.parse(response.data)
 }

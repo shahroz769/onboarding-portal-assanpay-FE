@@ -4,23 +4,18 @@ import {
   ExternalLink,
   FileImage,
   Globe,
+  Images,
   Info,
   LinkIcon,
   Upload,
   X,
 } from 'lucide-react'
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import {
   Field,
   FieldDescription,
@@ -40,6 +35,7 @@ import { useSaveWordpressWebsiteCase } from '#/hooks/use-case-detail-query'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
+import { CaseCardHeading } from '../case-section'
 import type { QueueRendererProps } from '../queue-registry'
 
 const SCREENSHOT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -49,7 +45,7 @@ const formSchema = z.object({
     .string()
     .trim()
     .min(1, 'WordPress website link is required.')
-    .url('Enter a valid URL.'),
+    .pipe(z.url('Enter a valid URL.')),
 })
 
 function getMerchantString(
@@ -244,19 +240,18 @@ export default function WordpressWebsiteRenderer({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-              <CardTitle>WordPress Website</CardTitle>
-              <CardDescription>
-                Review the submitted business website, then save the cloned
-                WordPress link and screenshots.
-              </CardDescription>
-            </div>
-            <Badge variant={isComplete ? 'secondary' : 'outline'}>
-              {isComplete ? <CheckCircle2 /> : <Globe />}
-              {isComplete ? 'Ready to close' : 'Pending'}
-            </Badge>
-          </div>
+          <CaseCardHeading
+            icon={Globe}
+            tone="blue"
+            title="WordPress Website"
+            description="Review the submitted business website, then save the cloned WordPress link and screenshots."
+            action={
+              <Badge variant={isComplete ? 'secondary' : 'outline'}>
+                {isComplete ? <CheckCircle2 /> : <Globe />}
+                {isComplete ? 'Ready to close' : 'Pending'}
+              </Badge>
+            }
+          />
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -424,10 +419,12 @@ export default function WordpressWebsiteRenderer({
       savedCheckoutScreenshots.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Saved Evidence</CardTitle>
-            <CardDescription>
-              Current cloned website link and screenshots attached to this case.
-            </CardDescription>
+            <CaseCardHeading
+              icon={Images}
+              tone="violet"
+              title="Saved Evidence"
+              description="Current cloned website link and screenshots attached to this case."
+            />
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {savedLink ? (

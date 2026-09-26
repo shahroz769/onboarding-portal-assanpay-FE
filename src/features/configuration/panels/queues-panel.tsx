@@ -93,10 +93,6 @@ const WORKFLOW_OPTIONS: Array<{
     label: 'WordPress',
   },
   {
-    value: 'card',
-    label: 'Card',
-  },
-  {
     value: 'live',
     label: 'Live',
   },
