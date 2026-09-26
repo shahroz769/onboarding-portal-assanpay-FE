@@ -7,6 +7,9 @@ type Listener = (notification: Notification) => void
 
 const INITIAL_CONNECT_DELAY_MS = import.meta.env.DEV ? 250 : 0
 
+/** A stream that stayed open this long resets the reconnect backoff. */
+const STABLE_STREAM_MS = 30_000
+
 interface SubscribeOptions {
   getAccessToken: () => string | null
   refreshAccessToken: () => Promise<string>
@@ -31,6 +34,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let initialConnectTimer: ReturnType<typeof setTimeout> | null = null
   let attempts = 0
+  let connectedAt: number | null = null
   let invalidEventReported = false
 
   function reportInvalidEvent() {
@@ -41,6 +45,12 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
 
   function scheduleReconnect() {
     if (stopped || paused) return
+    // Only a stream that stayed up resets the backoff, so a server or proxy
+    // that keeps cutting streams short can't cause a fast reconnect loop.
+    if (connectedAt !== null && Date.now() - connectedAt >= STABLE_STREAM_MS) {
+      attempts = 0
+    }
+    connectedAt = null
     const delay = Math.min(30_000, 1000 * Math.pow(2, attempts))
     attempts += 1
     if (reconnectTimer) clearTimeout(reconnectTimer)
@@ -111,7 +121,7 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         throw new Error(`SSE connect failed: ${response.status}`)
       }
 
-      attempts = 0
+      connectedAt = Date.now()
       invalidEventReported = false
       options.onOpen?.()
 
