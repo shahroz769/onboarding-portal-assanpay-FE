@@ -32,6 +32,7 @@ import {
   updateQueue,
   updateQueueSla,
   updateQueueStatus,
+  updateSubMerchantDraft,
   uploadAgreementDraft,
 } from '#/apis/configuration'
 import { CASES_KEY, QUEUES_KEY } from '#/hooks/use-cases-query'
@@ -362,6 +363,20 @@ export function useCreateSubMerchantDraftMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to add sub-merchant.'))
+    },
+  })
+}
+
+export function useUpdateSubMerchantDraftMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateSubMerchantDraft,
+    onSuccess: async () => {
+      toast.success('Sub-merchant updated.')
+      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update sub-merchant.'))
     },
   })
 }

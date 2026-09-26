@@ -106,8 +106,11 @@ export function NotificationsProvider() {
       onOpen: syncNotificationsFromServer,
       onInvalidEvent: syncNotificationsFromServer,
       onVisible: syncVisibleTab,
+      // The SSE client reconnects on its own; only surface errors in dev.
       onError: (err) => {
-        console.warn('[notifications] SSE error', err)
+        if (import.meta.env.DEV) {
+          console.warn('[notifications] SSE error', err)
+        }
       },
     })
 

@@ -296,12 +296,7 @@ function CreateQueueDialog() {
         workflowType,
         lifecycle: 'draft',
       },
-      {
-        onSuccess: () => {
-          setOpen(false)
-          reset()
-        },
-      },
+      { onSuccess: () => setOpen(false) },
     )
   }
   return (
@@ -310,6 +305,9 @@ function CreateQueueDialog() {
       onOpenChange={(next) => {
         if (createQueue.isPending) return
         setOpen(next)
+      }}
+      // Reset after the exit animation so the form doesn't blank out mid-fade.
+      onOpenChangeComplete={(next) => {
         if (!next) reset()
       }}
     >
@@ -468,8 +466,10 @@ function QueueEditorDialog({
     <>
       <Dialog
         open={open}
-        onOpenChange={(nextOpen) => {
-          setOpen(nextOpen)
+        onOpenChange={setOpen}
+        // Drop the draft after the exit animation so edited stages don't
+        // snap back to the saved ones while the dialog fades out.
+        onOpenChangeComplete={(nextOpen) => {
           if (!nextOpen) setStageDraft(null)
         }}
       >

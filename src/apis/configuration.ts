@@ -236,6 +236,33 @@ export async function createSubMerchantDraft({
   return response.data
 }
 
+export async function updateSubMerchantDraft({
+  id,
+  name,
+  sellerCode,
+  file,
+}: {
+  id: string
+  name: string
+  sellerCode: string
+  file: File | null
+}) {
+  const formData = new FormData()
+  formData.append('name', name)
+  formData.append('sellerCode', sellerCode)
+  if (file) formData.append('file', file)
+  const response = await apiClient.patch(
+    `/api/configuration/sub-merchants/${id}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  )
+  return response.data
+}
+
 export async function updateQueueStatus({
   queueId,
   isActive,

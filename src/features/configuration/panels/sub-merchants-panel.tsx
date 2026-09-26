@@ -2,7 +2,16 @@ import { useId, useRef, useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import { ExternalLink, FileText, Plus, Store, Upload, X } from 'lucide-react'
+import {
+  ExternalLink,
+  FileText,
+  Pencil,
+  Plus,
+  Save,
+  Store,
+  Upload,
+  X,
+} from 'lucide-react'
 
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
@@ -18,11 +27,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '#/components/ui/dialog'
 
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -43,22 +52,36 @@ import { cn } from '#/lib/utils'
 import {
   subMerchantDraftsQueryOptions,
   useCreateSubMerchantDraftMutation,
+  useUpdateSubMerchantDraftMutation,
 } from '#/hooks/use-configuration-query'
+import { useRetainedValue } from '#/hooks/use-retained-value'
+import type { SubMerchantDraft } from '#/schemas/configuration.schema'
 
 import { ConfigurationHeaderActions } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
+
+type SubMerchantEditor =
+  | { mode: 'create' }
+  | { mode: 'edit'; subMerchant: SubMerchantDraft }
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {
   const { data, isPending, error, refetch } = useQuery(
     subMerchantDraftsQueryOptions(),
   )
-  type SubMerchant = NonNullable<typeof data>[number]
-  const existingNames = new Set(
-    (data ?? []).map((item) => item.name.trim().toLowerCase()),
-  )
+  const [editor, setEditor] = useState<SubMerchantEditor | null>(null)
+  // Bumped on every open so the form starts fresh.
+  const [editorKey, setEditorKey] = useState(0)
+  // Keep the last editor target through the dialog exit animation.
+  const shownEditor = useRetainedValue(editor)
+  const subMerchants = data ?? []
 
-  const columns: DataTableColumnDef<SubMerchant>[] = [
+  const openEditor = (next: SubMerchantEditor) => {
+    setEditorKey((key) => key + 1)
+    setEditor(next)
+  }
+
+  const columns: DataTableColumnDef<SubMerchantDraft>[] = [
     {
       id: 'name',
       header: 'Name',
@@ -86,9 +109,27 @@ export function SubMerchantsPanel() {
     {
       id: 'actions',
       header: <span className="block text-right">Actions</span>,
-      width: 80,
+      width: 100,
       cell: (item) => (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() =>
+                    openEditor({ mode: 'edit', subMerchant: item })
+                  }
+                />
+              }
+            >
+              <Pencil className="size-4" />
+              <span className="sr-only">Edit {item.name}</span>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -119,11 +160,14 @@ export function SubMerchantsPanel() {
   return (
     <>
       <ConfigurationHeaderActions>
-        <AddSubMerchantDialog existingNames={existingNames} />
+        <Button size="sm" onClick={() => openEditor({ mode: 'create' })}>
+          <Plus data-icon="inline-start" />
+          Add Sub-Merchant
+        </Button>
       </ConfigurationHeaderActions>
       <DataTable
         columns={columns}
-        data={data ?? []}
+        data={subMerchants}
         getRowId={(item) => item.id}
         isLoading={isPending}
         error={error}
@@ -136,21 +180,45 @@ export function SubMerchantsPanel() {
           />
         }
       />
+
+      <SubMerchantDialog
+        key={editorKey}
+        open={editor !== null}
+        subMerchant={
+          shownEditor?.mode === 'edit' ? shownEditor.subMerchant : null
+        }
+        subMerchants={subMerchants}
+        onOpenChange={(open) => {
+          if (!open) setEditor(null)
+        }}
+      />
     </>
   )
 }
 
-function AddSubMerchantDialog({
-  existingNames,
+function SubMerchantDialog({
+  open,
+  subMerchant,
+  subMerchants,
+  onOpenChange,
 }: {
-  existingNames: Set<string>
+  open: boolean
+  subMerchant: SubMerchantDraft | null
+  subMerchants: SubMerchantDraft[]
+  onOpenChange: (open: boolean) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [sellerCode, setSellerCode] = useState('')
+  const isEdit = subMerchant !== null
+  const [name, setName] = useState(subMerchant?.name ?? '')
+  const [sellerCode, setSellerCode] = useState(subMerchant?.sellerCode ?? '')
   const [file, setFile] = useState<File | null>(null)
-  const [touched, setTouched] = useState(false)
+  // Errors appear only after the first submit attempt, so blurring a field
+  // (e.g. by clicking outside to close) never flashes validation messages.
+  const [submitted, setSubmitted] = useState(false)
   const createDraft = useCreateSubMerchantDraftMutation()
+  const updateDraft = useUpdateSubMerchantDraftMutation()
+  const isPending = createDraft.isPending || updateDraft.isPending
+  const others = subMerchants.filter((item) => item.id !== subMerchant?.id)
+
   const trimmedName = name.trim()
   const nameError = !trimmedName
     ? 'Name is required.'
@@ -158,136 +226,161 @@ function AddSubMerchantDialog({
       ? 'Name must be at least 2 characters.'
       : trimmedName.length > 80
         ? 'Name must be 80 characters or fewer.'
-        : existingNames.has(trimmedName.toLowerCase())
+        : others.some(
+              (item) =>
+                item.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+            )
           ? 'A sub-merchant with this name already exists.'
           : null
-  const fileError = file
-    ? getDraftFileError(file)
-    : 'Please attach a draft file.'
   const trimmedSellerCode = sellerCode.trim()
   const sellerCodeError = !trimmedSellerCode
     ? 'Seller Code is required.'
     : trimmedSellerCode.length > 80
       ? 'Seller Code must be 80 characters or fewer.'
-      : null
-  const showNameError = touched && nameError
-  const showSellerCodeError = touched && sellerCodeError
-  const showFileError = touched && fileError
-  function reset() {
-    setName('')
-    setSellerCode('')
-    setFile(null)
-    setTouched(false)
-  }
+      : others.some(
+            (item) =>
+              item.sellerCode.trim().toLowerCase() ===
+              trimmedSellerCode.toLowerCase(),
+          )
+        ? 'A sub-merchant with this Seller Code already exists.'
+        : null
+  const fileError = file
+    ? getDraftFileError(file)
+    : isEdit
+      ? null
+      : 'Please attach a draft file.'
+  const showNameError = submitted ? nameError : null
+  const showSellerCodeError = submitted ? sellerCodeError : null
+  // A rejected file type is reported as soon as it is picked.
+  const showFileError = submitted || file ? fileError : null
+
   function handleSubmit() {
-    setTouched(true)
-    if (nameError || sellerCodeError || fileError || !file) return
+    setSubmitted(true)
+    if (nameError || sellerCodeError || fileError) return
+    const onSuccess = () => onOpenChange(false)
+    if (subMerchant) {
+      updateDraft.mutate(
+        {
+          id: subMerchant.id,
+          name: trimmedName,
+          sellerCode: trimmedSellerCode,
+          file,
+        },
+        { onSuccess },
+      )
+      return
+    }
+    if (!file) return
     createDraft.mutate(
       { name: trimmedName, sellerCode: trimmedSellerCode, file },
-      {
-        onSuccess: () => {
-          reset()
-          setOpen(false)
-        },
-      },
+      { onSuccess },
     )
   }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (createDraft.isPending) return
-        setOpen(next)
-        if (!next) reset()
+        if (isPending) return
+        onOpenChange(next)
       }}
     >
-      <DialogTrigger render={<Button size="sm" />}>
-        <Plus data-icon="inline-start" />
-        Add Sub-Merchant
-      </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Sub-Merchant</DialogTitle>
+          <DialogTitle>
+            {isEdit ? 'Edit Sub-Merchant' : 'Add Sub-Merchant'}
+          </DialogTitle>
           <DialogDescription>
-            Add a sub-merchant name and draft form. Files are stored under
-            Configuration / Sub-Merchants.
+            {isEdit
+              ? 'Update the name or Seller Code, or upload a new draft form to replace the current one.'
+              : 'Add a sub-merchant name and draft form. Files are stored under Configuration / Sub-Merchants.'}
           </DialogDescription>
         </DialogHeader>
 
-        <FieldGroup>
-          <Field data-invalid={Boolean(showNameError)}>
-            <FieldLabel htmlFor="add-sub-merchant-name">Name</FieldLabel>
-            <Input
-              id="add-sub-merchant-name"
-              value={name}
-              autoFocus
-              placeholder="e.g. Acme Holdings"
-              aria-invalid={Boolean(showNameError)}
-              disabled={createDraft.isPending}
-              onChange={(event) => setName(event.target.value)}
-              onBlur={() => setTouched(true)}
-            />
+        <form
+          id="sub-merchant-form"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault()
+            handleSubmit()
+          }}
+        >
+          <FieldGroup>
+            <Field data-invalid={Boolean(showNameError)}>
+              <FieldLabel htmlFor="sub-merchant-name">Name</FieldLabel>
+              <Input
+                id="sub-merchant-name"
+                value={name}
+                autoFocus
+                placeholder="e.g. Acme Holdings"
+                aria-invalid={Boolean(showNameError)}
+                disabled={isPending}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <FieldError>{showNameError}</FieldError>
+            </Field>
 
-            <FieldError>{showNameError ? nameError : null}</FieldError>
-          </Field>
+            <Field data-invalid={Boolean(showSellerCodeError)}>
+              <FieldLabel htmlFor="sub-merchant-seller-code">
+                Seller Code
+              </FieldLabel>
+              <Input
+                id="sub-merchant-seller-code"
+                value={sellerCode}
+                placeholder="e.g. MST-715012"
+                aria-invalid={Boolean(showSellerCodeError)}
+                disabled={isPending}
+                onChange={(event) => setSellerCode(event.target.value)}
+              />
+              <FieldError>{showSellerCodeError}</FieldError>
+            </Field>
 
-          <Field data-invalid={Boolean(showSellerCodeError)}>
-            <FieldLabel htmlFor="add-sub-merchant-seller-code">
-              Seller Code
-            </FieldLabel>
-            <Input
-              id="add-sub-merchant-seller-code"
-              value={sellerCode}
-              placeholder="e.g. MST-715012"
-              aria-invalid={Boolean(showSellerCodeError)}
-              disabled={createDraft.isPending}
-              onChange={(event) => setSellerCode(event.target.value)}
-              onBlur={() => setTouched(true)}
-            />
-
-            <FieldError>
-              {showSellerCodeError ? sellerCodeError : null}
-            </FieldError>
-          </Field>
-
-          <Field data-invalid={Boolean(showFileError)}>
-            <FieldLabel htmlFor="add-sub-merchant-draft">Draft form</FieldLabel>
-            <DraftFileDropzone
-              file={file}
-              error={showFileError ? fileError : null}
-              disabled={createDraft.isPending}
-              onSelect={(next) => {
-                setFile(next)
-                setTouched(true)
-              }}
-              onClear={() => setFile(null)}
-            />
-          </Field>
-        </FieldGroup>
+            <Field data-invalid={Boolean(showFileError)}>
+              <FieldLabel>
+                {isEdit ? 'Replace draft form' : 'Draft form'}
+              </FieldLabel>
+              {subMerchant ? (
+                <FieldDescription>
+                  Current draft:{' '}
+                  <a
+                    href={subMerchant.googleDriveWebViewLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium underline underline-offset-4"
+                  >
+                    {subMerchant.originalName}
+                  </a>
+                  . Leave empty to keep it.
+                </FieldDescription>
+              ) : null}
+              <DraftFileDropzone
+                file={file}
+                error={showFileError}
+                disabled={isPending}
+                onSelect={setFile}
+                onClear={() => setFile(null)}
+              />
+            </Field>
+          </FieldGroup>
+        </form>
 
         <DialogFooter>
           <DialogClose
             render={
-              <Button
-                type="button"
-                variant="outline"
-                disabled={createDraft.isPending}
-              />
+              <Button type="button" variant="outline" disabled={isPending} />
             }
           >
             Cancel
           </DialogClose>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={createDraft.isPending}
-          >
-            {createDraft.isPending ? (
+          <Button type="submit" form="sub-merchant-form" disabled={isPending}>
+            {isPending ? (
               <Spinner data-icon="inline-start" />
+            ) : isEdit ? (
+              <Save data-icon="inline-start" />
             ) : (
               <Plus data-icon="inline-start" />
             )}
-            Add
+            {isEdit ? 'Save' : 'Add'}
           </Button>
         </DialogFooter>
       </DialogContent>

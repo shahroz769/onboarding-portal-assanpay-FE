@@ -274,6 +274,14 @@ function formatDateValue(value: string) {
   return DOCUMENT_DATE_FORMATTER.format(date)
 }
 
+const CLOSED_REJECT_DIALOG = {
+  open: false,
+  item: null,
+  isRejected: false,
+  remarks: '',
+  error: null,
+}
+
 export default function DocumentsReviewRenderer({
   caseDetail,
   caseId,
@@ -312,14 +320,11 @@ export default function DocumentsReviewRenderer({
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean
     item: { key: string; label: string } | null
+    // Captured on open so the copy and footer don't flip after a save.
+    isRejected: boolean
     remarks: string
     error: string | null
-  }>({
-    open: false,
-    item: null,
-    remarks: '',
-    error: null,
-  })
+  }>(CLOSED_REJECT_DIALOG)
   const [rejectDialogAction, setRejectDialogAction] = useState<
     'save' | 'delete' | null
   >(null)
@@ -408,19 +413,17 @@ export default function DocumentsReviewRenderer({
     setRejectDialog({
       open: true,
       item,
+      isRejected: existing?.status === 'rejected',
       remarks: existing?.remarks ?? '',
       error: null,
     })
   }
 
+  // Only flips `open`; the content is cleared in onOpenChangeComplete so the
+  // dialog keeps its item through the exit animation.
   function closeRejectDialog() {
     setRejectDialogAction(null)
-    setRejectDialog({
-      open: false,
-      item: null,
-      remarks: '',
-      error: null,
-    })
+    setRejectDialog((current) => ({ ...current, open: false }))
   }
 
   async function confirmReject() {
@@ -487,9 +490,7 @@ export default function DocumentsReviewRenderer({
       .finally(() => setRejectDialogAction(null))
   }
 
-  const isRejectedItem = rejectDialog.item
-    ? draftReviews[rejectDialog.item.key]?.status === 'rejected'
-    : false
+  const isRejectedItem = rejectDialog.isRejected
   const isSavingReject =
     saveFieldReviews.isPending && rejectDialogAction === 'save'
   const isDeletingReject =
@@ -571,7 +572,7 @@ export default function DocumentsReviewRenderer({
                     </ComboboxChips>
                     <ComboboxContent
                       align="start"
-                      className="w-[var(--anchor-width)]"
+                      className="w-(--anchor-width)"
                     >
                       <ComboboxEmpty>No sub-merchants found.</ComboboxEmpty>
                       <ComboboxList>
@@ -704,7 +705,12 @@ export default function DocumentsReviewRenderer({
 
       <Dialog
         open={rejectDialog.open}
-        onOpenChange={(open) => !open && closeRejectDialog()}
+        onOpenChange={(open) => {
+          if (!open && !saveFieldReviews.isPending) closeRejectDialog()
+        }}
+        onOpenChangeComplete={(open) => {
+          if (!open) setRejectDialog(CLOSED_REJECT_DIALOG)
+        }}
       >
         <DialogContent>
           <DialogHeader>

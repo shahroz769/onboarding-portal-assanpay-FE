@@ -42,6 +42,7 @@ import {
   useCreateComment,
 } from '#/hooks/use-case-detail-query'
 import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
+import { cn } from '#/lib/utils'
 import type { CaseComment } from '#/schemas/cases.schema'
 
 interface CaseChatterProps {
@@ -295,6 +296,11 @@ export function CaseChatter({
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
   const threads = buildCommentThreads(comments)
+  // Comments present when the thread first renders appear instantly; only
+  // ones added afterwards (posted or pushed live) animate in.
+  const [initialCommentIds] = useState(
+    () => new Set(comments.map((comment) => comment.id)),
+  )
   const validUsernames = new Set(
     users.map((user) => user.username.toLowerCase()),
   )
@@ -580,6 +586,7 @@ export function CaseChatter({
                 key={comment.id}
                 comment={comment}
                 childrenByParent={threads.childrenByParent}
+                initialCommentIds={initialCommentIds}
                 onReply={canPost ? handleSelectReply : undefined}
               />
             ))}
@@ -618,22 +625,39 @@ export function CaseChatter({
 function CommentThread({
   comment,
   childrenByParent,
+  initialCommentIds,
   onReply,
 }: {
   comment: CaseComment
   childrenByParent: Map<string, CaseComment[]>
+  initialCommentIds: Set<string>
   onReply?: (comment: CaseComment) => void
 }) {
   const replies = getThreadReplies(comment.id, childrenByParent)
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-3">
+    <div
+      className={cn(
+        'flex w-full min-w-0 flex-col gap-3',
+        !initialCommentIds.has(comment.id) && 'motion-list-item',
+      )}
+      data-motion={initialCommentIds.has(comment.id) ? undefined : 'entering'}
+    >
       <CommentCard comment={comment} onReply={onReply} />
 
       {replies.length > 0 ? (
         <div className="relative ml-3 flex min-w-0 flex-col gap-3 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
           {replies.map((reply) => (
-            <div key={reply.id} className="relative min-w-0">
+            <div
+              key={reply.id}
+              className={cn(
+                'relative min-w-0',
+                !initialCommentIds.has(reply.id) && 'motion-list-item',
+              )}
+              data-motion={
+                initialCommentIds.has(reply.id) ? undefined : 'entering'
+              }
+            >
               <div className="absolute -left-5.25 top-5 hidden h-px w-4 bg-border sm:block" />
               <CommentCard comment={reply} onReply={onReply} nested />
             </div>

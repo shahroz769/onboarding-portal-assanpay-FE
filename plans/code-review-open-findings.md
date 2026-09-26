@@ -1,4 +1,4 @@
-# AssanPay Onboarding Portal — Code Review Report
+# AssanPay Onboarding Portal — Code Review: Open Findings
 
 **Date:** 2026-09-25 (reorganized edition)
 **Scope:** read-only review — no code was modified, committed, or pushed in either repository.
@@ -13,25 +13,24 @@
 
 The AssanPay onboarding portal is a genuinely well-architected internal ops tool: a Bun/Hono REST API backed by Postgres (Drizzle ORM, 34 tables, 81 migrations) with a React 19 + TanStack frontend on Cloudflare. Auth hygiene is strong (httpOnly refresh cookies, rotation, hashed tokens, atomic single-use claims), the case-workflow engine uses proper row locking with race guards, and the FE↔BE contract is remarkably tight — **~95 frontend API calls cross-checked with zero missing endpoints and zero request/response field mismatches**.
 
-That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low**. The critical items are data-loss bugs in KYC document handling; the high items are dominated by security and workflow-integrity flaws. Nothing here looks unfixable, but the P0 items should block any production use with real customer data.
+That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 21 Low** (fixed items have been removed from this report). The critical items are data-loss bugs in KYC document handling; the high items are dominated by security and workflow-integrity flaws. Nothing here looks unfixable, but the P0 items should block any production use with real customer data.
 
 ### Findings at a glance
 
 | Severity | Backend | Frontend | Integration | Database | **Total** |
 |---|---|---|---|---|---|
 | 🔴 Critical | 3 | 0 | 0 | 0 | **3** |
-| 🟠 High | 6 | 2 | 0 | 0 | **8** |
+| 🟠 High | 4 | 1 | 0 | 0 | **5** |
 | 🟡 Medium | 7 | 4 | 2 | 0 | **13** |
-| 🔵 Low | 7 | 14 | 2 | 3 | **26** |
-| **Total** | **23** | **20** | **4** | **3** | **50** |
+| 🔵 Low | 5 | 11 | 2 | 3 | **21** |
+| **Total** | **19** | **16** | **4** | **3** | **42** |
 
-### Top 5 risks
+### Top 4 risks
 
 1. **KYC document loss (CRT-01, CRT-02, CRT-03)** — three flows can irreversibly delete customer KYC files from Google Drive while the database still references them.
 2. **Derivable merchant portal password (HIGH-01)** — the credential is computable from information the merchant already receives by email.
-3. **Trivial login DoS (HIGH-02)** — every user on the internet shares one rate-limit bucket by default.
-4. **Authorization gaps (HIGH-03, MED-07)** — queue work-access is never enforced on case mutations; any agent can read all merchant KYC.
-5. **Workflow bypass (HIGH-04)** — cases can be jumped straight to "closed / successful" without the compliance validations the workflow exists to enforce.
+3. **Authorization gap (MED-07)** — any agent can read all merchant KYC.
+4. **Workflow bypass (HIGH-04)** — cases can be jumped straight to "closed / successful" without the compliance validations the workflow exists to enforce.
 
 ---
 
@@ -85,29 +84,6 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 - **Impact:** Anyone who knows the merchant's email local-part and (sequential) merchant number — both present in emails the merchant receives — can derive the password without ever seeing the credential email. No randomness, no forced first-login rotation, and it's recomputed on demand so it can never be rotated. Effectively a publicly-computable credential guarding a financial portal.
 - **Fix:** Generate a random secret, store it hashed, force rotation on first login.
 
-**HIGH-02 — One shared rate-limit bucket for all users by default (trivial DoS)** · 🟠 High · Backend · ✅ **Fixed**
-📍 `be/src/lib/client-ip.ts:6-8`, `be/src/index.ts:45-55`, `be/src/modules/auth/auth.routes.ts:43-52`
-- **What:** `getClientIp()` returns the constant `'untrusted-proxy'` when `TRUST_PROXY_HEADERS` is false (the documented default), and both the public limiter (60/15min) and login limiter (15/15min) key on it — so every client on the internet shares one 15-request login bucket. Additionally, `hono-rate-limiter` uses an in-memory `MemoryStore`, so multi-process deployments get per-process buckets: the limit is neither global nor correct.
-- **Impact:** One aggressive client locks *everyone* out of login and public submission. Multi-instance deployments have no coherent limiting at all.
-- **Fix:** Default to the connecting socket IP (or key by authenticated user); use a shared store (Redis) for multi-instance.
-- **Resolution (2026-09-25):** Confirmed live on staging: two clients with different IPs drew from one counter. Fixed in the backend:
-  - `getClientIp()` now uses the socket IP (`getConnInfo` from `hono/bun`) when proxy headers aren't trusted, or when no proxy header is present, instead of the shared `'untrusted-proxy'` / `'unknown'` strings. Session audit IPs are fixed as a side effect.
-  - `TRUST_PROXY_HEADERS` now defaults to `true`, because production sits behind Cloudflare (`CF-Connecting-IP`). Requests with no proxy header still fall back to the socket IP.
-  - Login gets a second per-account limit: 10 failed attempts per 15 min, successful sign-ins not counted.
-  - Verified: separate clients now get separate counters.
-  - **Remaining:** limit counters are still in memory, so a shared Redis store is needed before running more than one instance. The origin should accept only Cloudflare IP ranges, or `CF-Connecting-IP` can be spoofed by calling the server directly.
-
-**HIGH-03 — Queue *work access* is imported but never enforced on case mutations** · 🟠 High · Backend · ✅ **Fixed**
-📍 `be/src/modules/cases/case-access.service.ts:60-78` (helper) — imported unused in 9 workflow service files; only `be/src/modules/cases/case-comments.service.ts:190` calls it
-- **What:** The repo's own rule (AGENTS.md) is "mutations require queue work access + ownership". Mutations check only ownership (`case-communications.service.ts:275,403`; `case-documents-review.service.ts:626`; `case-stage.service.ts:225-230,305-307`). Only `takeOwnership` enforces work access (`case-assignment.service.ts:760`).
-- **Impact:** If an agent's queue work access is revoked while they remain case owner (normal off-boarding), they keep full mutation power — sending credential emails, saving MIDs, uploading proofs — until manually unassigned.
-- **Fix:** Enforce `assertCanWorkCase` / `requireWorkAccess` on all case mutations; centralize into a single `authorize(caseId, action)` entry point.
-- **Resolution (2026-09-25):** Confirmed: 17 owner-only checks across 9 case services, and `updateUser` replaced queue access without touching owned cases. Fixed in the backend:
-  - `assertCanWorkCase(caseId, userId)` now runs after every one of the 17 ownership checks (stage/status/close, MID and limits saves, credential/live/resubmission emails, field reviews, and so on). Agents without work access get 403; admins are unaffected.
-  - `updateUser` now rejects (409, naming the queues and case counts) any role or queue-access change that would leave an agent owning open cases in queues they can no longer work. Deactivation is always allowed.
-  - Staging was checked: no existing agent owns open cases outside their work access.
-  - **Not done:** consolidating into one `authorize(caseId, action)` entry point. **Before deploying**, run the same stranded-case query on production.
-
 **HIGH-04 — Generic status endpoint allows jumps that bypass workflow close validation** · 🟠 High · Backend
 📍 `be/src/modules/cases/cases.schemas.ts:45-64`, `be/src/modules/cases/case-transition.service.ts:~190-197`
 - **What:** `isValidStatusTransition()` allows *any* forward jump (`if (nextIdx > currentIdx) return true`, L58), so `PATCH /api/cases/:id/status` lets an owner jump `new → closed` directly. That path runs only cross-queue close blockers, not the workflow-internal validations `advanceStage()` enforces (document_review: must be `working` + ≥1 sub-merchant + zero rejected fields; sub_merchant_form: Final Form *and* sent-email proof uploaded). Closing auto-sets `closeOutcome='successful'` when omitted — a case can be closed "successful" without the compliance artifacts the workflow exists to require. Separately, `awaiting_client` is ordered *after* terminal states in `statusOrder`, treating a resubmission-loop state as "later than closed".
@@ -125,12 +101,6 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 - **What:** `sendForResubmission()` is a four-step saga: (1) case → `awaiting_client` (L722–730, race-safe); (2) token issued in a *separate* transaction (L733–737); (3) email sent, with compensation on *returned* failure (L739–761); (4) history recorded (L805–830). A crash/OOM between steps 2 and 3 leaves the case in `awaiting_client` with a valid token the merchant never received — and re-sending is impossible because the endpoint requires `status === 'working'` (L626).
 - **Impact:** Stranded cases recoverable only by manual DB intervention; merchants silently stuck.
 - **Fix:** Add a recovery/retry path (re-issue endpoint or watchdog job that detects issued-but-unemailed tokens); consider a single transaction or explicit saga compensation.
-
-**HIGH-07 — Logout/session-expiry leaves the entire TanStack Query cache populated (cross-user data leak)** · 🟠 High · Frontend
-📍 `fe/src/features/auth/auth-query.ts:60-70`, `fe/src/features/auth/session-refresh.ts:24-34`
-- **What:** On logout only the `['auth','refresh']` query is removed; on terminal refresh failure the user is navigated to `/login` — but all cached `['cases']`, `['merchants']`, `['dashboard']`, `['users']`, `['notifications']`, case-detail and configuration queries remain.
-- **Impact:** On a shared workstation, the next employee to log in briefly sees the previous user's cases, merchants, and notifications (until `staleTime: 30s` refetches; `queues` cache is 5 min; `keepPreviousData` keeps stale rows across filter changes).
-- **Fix:** `queryClient.clear()` on logout and on terminal session expiry; ensure the SSE client is stopped.
 
 **HIGH-08 — `bun run lint` is completely broken (linter never runs)** · 🟠 High · Frontend
 📍 `fe/package.json:61`, `fe/eslint.config.js`
@@ -224,10 +194,6 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 📍 `be/src/index.ts:84-117`
 - Exposes worker readiness, cycle timings, and retrying/failed/blocked job counts without auth. Put behind auth or IP allowlisting.
 
-**LOW-02 — Dead `midGoLiveTokens` subsystem** · 🔵 Low · Backend
-📍 `be/src/db/schema.ts`, `be/drizzle/0018_mid_go_live_tokens.sql`
-- Table + migration exist, imported by ~10 case service modules, but no code reads or writes it (`tokenMatchesGoLiveAvailability()` likewise imported-but-unused). Drop it in a new migration or implement the go-live link-expiry feature it was meant for.
-
 **LOW-03 — HTML-escaping applied before persistence corrupts stored data** · 🔵 Low · Backend
 📍 `be/src/modules/merchants/merchants.schemas.ts:199-203,522-535`
 - `sanitizedStringSchema` escapes `&<>"'` via Zod `.transform()` on the way *into* the DB (`Smith & Sons` → `Smith &amp; Sons` at rest); any correctly-escaping renderer double-encodes. Escaping is an output concern — store raw, escape on render.
@@ -244,10 +210,6 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 📍 `be/src/modules/notifications/notifications.events.ts:1-60` (file itself documents: "single-process only; for multi-instance, swap with Redis pub/sub")
 - Horizontal scaling silently breaks live notifications for clients connected to other processes. Swap to Redis pub/sub before scaling.
 
-**LOW-07 — `users.deletedAt` is a dead column** · 🔵 Low · Backend
-📍 Checked via `isNull(users.deletedAt)` in auth/user queries but never written; deactivation goes through `status`.
-- Implement soft-delete consistently or drop the column.
-
 **LOW-08 — Assign/priority mutations don't invalidate the open case-detail query** · 🔵 Low · Frontend
 📍 `fe/src/hooks/use-cases-query.ts:76-117`
 - Only `CASES_KEY` is invalidated, not `[...CASE_DETAIL_KEY, caseId]` → stale owner/priority on a detail page open in another tab.
@@ -259,16 +221,6 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 **LOW-10 — `dangerouslySetInnerHTML` in chart theme injection** · 🔵 Low · Frontend
 📍 `fe/src/components/ui/chart.tsx:88-103`
 - Standard shadcn pattern with developer-controlled ids → minimal practical risk, and it's the only usage in the app. Add a comment/guard.
-
-**LOW-11 — Dead code: `motion-swap.tsx` has zero importers** · 🔵 Low · Frontend
-📍 `fe/src/components/ui/motion-swap.tsx` — remove it.
-
-**LOW-12 — Unused dependency + dead test infrastructure** · 🔵 Low · Frontend
-📍 `fe/package.json`
-- `"shadcn": "^4.21.0"` in `dependencies` but never imported (it's the CLI). `vitest`/`jsdom`/`@testing-library/*` installed yet **zero test files exist** (`bun run test` runs nothing). Remove the deps or write the tests.
-
-**LOW-13 — `console.warn` left in production path** · 🔵 Low · Frontend
-📍 `fe/src/features/notifications/notifications-provider.tsx:87` — the only console statement in `src`; gate behind a debug flag.
 
 **LOW-14 — API/hook layering inconsistency** · 🔵 Low · Frontend
 📍 `fe/src/apis/merchant-onboarding.ts:72-88,154-172`
@@ -319,7 +271,7 @@ That said, the review found **50 findings: 3 Critical, 8 High, 13 Medium, 26 Low
 ## 4. Thematic analysis
 
 ### 4.1 Security posture
-The fundamentals are solid: no hardcoded secrets, httpOnly refresh cookies with rotation, hashed at-rest tokens, `Bun.password` hashing, atomic single-use token claims, strict Zod schemas on write bodies, CORS allowlist, Resend idempotency keys. The holes are all *above* that foundation: derivable credentials (HIGH-01), missing authorization checks (HIGH-03, MED-07), a bypassable workflow (HIGH-04), DoS-able rate limiting (HIGH-02), and client-side data leaks (HIGH-07, MED-08). Fixing the High items would leave a genuinely defensible posture.
+The fundamentals are solid: no hardcoded secrets, httpOnly refresh cookies with rotation, hashed at-rest tokens, `Bun.password` hashing, atomic single-use token claims, strict Zod schemas on write bodies, CORS allowlist, Resend idempotency keys. The holes are all *above* that foundation: derivable credentials (HIGH-01), missing authorization checks (MED-07), a bypassable workflow (HIGH-04), and client-side data leaks (MED-08). Fixing the High items would leave a genuinely defensible posture.
 
 ### 4.2 Data integrity & transaction discipline
 CRT-01/02/03 are one pattern: external side effects (Drive) and DB transactions are interleaved instead of sequenced. The codebase already contains the right pattern — the outbox table `caseFlowCloseJobs` (`SKIP LOCKED` + advisory locks + bounded backoff) — it just isn't applied to file-lifecycle transitions. Adopting "side effects after commit, via outbox" as a team rule eliminates the entire Critical class.
@@ -328,10 +280,10 @@ CRT-01/02/03 are one pattern: external side effects (Drive) and DB transactions 
 Remarkably good: zero missing endpoints and zero request/response field mismatches across ~95 calls; auth token format, refresh flow shapes, and error envelopes all compatible. The only actionable drift is MED-12 (missing enum value), LOW-22 (type-only field lie), and the deployment-wiring items MED-13/LOW-23. **Unused backend surface** (not bugs, but surface to justify or remove): `GET /api/cases/owners`, `PATCH /api/cases/:id/status`, `PUT /api/cases/:id/sub-merchant-form/selection`, `GET /api/configuration/`, queue stage CRUD, flow-jobs admin routes, `DELETE /api/merchants/:id`, `POST /api/merchants/bulk-delete`, `POST /api/auth/register-super-admin`, `GET /health/db`.
 
 ### 4.4 Database health
-34 tables, 81 forward-only sequential migrations — good hygiene, and a `db:audit` script exists for duplicate indexes / FK coverage. Issues are: dead schema (`midGoLiveTokens`, LOW-02; `users.deletedAt`, LOW-07), corrupted-at-rest data from pre-persistence HTML escaping (LOW-03), unverified money types (LOW-24) and indexes (LOW-25), and no retention story (LOW-26).
+34 tables, 81 forward-only sequential migrations — good hygiene, and a `db:audit` script exists for duplicate indexes / FK coverage. Issues are: corrupted-at-rest data from pre-persistence HTML escaping (LOW-03), unverified money types (LOW-24) and indexes (LOW-25), and no retention story (LOW-26).
 
 ### 4.5 Toolchain & CI readiness
-Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (HIGH-08), **zero test files exist in either repo** despite vitest being installed (LOW-12), the router ships a 1,465 kB chunk, and `db:audit` isn't in CI. Priority toolchain fixes: repair lint, add contract/saga/idempotency tests, code-split the router bundle, CI running typecheck + lint + tests + `db:audit`.
+Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (HIGH-08), **zero test files exist in either repo**, the router ships a 1,465 kB chunk, and `db:audit` isn't in CI. Priority toolchain fixes: repair lint, add contract/saga/idempotency tests, code-split the router bundle, CI running typecheck + lint + tests + `db:audit`.
 
 ---
 
@@ -352,15 +304,14 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 
 ### 6.1 UI/UX improvements
 1. Code-split the router bundle (1,465 kB / 310.9 kB gzip) — route-level lazy loading for heavy panels (configuration, flow designer, dashboard charts).
-2. Clear query cache + stop SSE on logout/expiry (HIGH-07); add a visible "logged out" confirmation.
-3. Onboarding draft: 24–48h expiry, exclude bank/PII fields or move to `sessionStorage` (MED-08); add explicit discard affordance.
-4. Validate set-password on blur/change, not submit-only (LOW-19); reuse shared Zod schemas in the resubmission form (MED-10).
-5. Add `pendingComponent` to merchant detail route (LOW-18); surface background refetch failures as a banner with retry (LOW-20).
-6. Accessibility: keyboard-focusable password toggle (MED-09), label the hidden file input (LOW-16), audit modal focus-trap/return-focus and color contrast.
-7. Responsiveness: verify tables, the @xyflow flow designer, and dashboard charts at 360px widths.
-8. Surface `awaiting_client` cases with issued-but-unconsumed tokens and their age in the UI (operational visibility for HIGH-06).
-9. Deduplicate error-message extraction via the shared helper (LOW-09); fix 401 error attribution (MED-11); invalidate case-detail on assign/priority mutations (LOW-08).
-10. The internal `fe/composition-patterns-todo.md` lists 15 refactor items (4 High, 11 Medium) — treat as tech-debt prioritization input, not defects.
+2. Onboarding draft: 24–48h expiry, exclude bank/PII fields or move to `sessionStorage` (MED-08); add explicit discard affordance.
+3. Validate set-password on blur/change, not submit-only (LOW-19); reuse shared Zod schemas in the resubmission form (MED-10).
+4. Add `pendingComponent` to merchant detail route (LOW-18); surface background refetch failures as a banner with retry (LOW-20).
+5. Accessibility: keyboard-focusable password toggle (MED-09), label the hidden file input (LOW-16), audit modal focus-trap/return-focus and color contrast.
+6. Responsiveness: verify tables, the @xyflow flow designer, and dashboard charts at 360px widths.
+7. Surface `awaiting_client` cases with issued-but-unconsumed tokens and their age in the UI (operational visibility for HIGH-06).
+8. Deduplicate error-message extraction via the shared helper (LOW-09); fix 401 error attribution (MED-11); invalidate case-detail on assign/priority mutations (LOW-08).
+9. The internal `fe/composition-patterns-todo.md` lists 15 refactor items (4 High, 11 Medium) — treat as tech-debt prioritization input, not defects.
 
 ### 6.2 Missing features (for a production onboarding portal)
 1. Idempotency for public submission (HIGH-05) + duplicate-merchant detection (fuzzy match on CNIC/phone/business name with a review queue).
@@ -377,24 +328,22 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 ### 6.3 Architecture improvements
 1. **Outbox for all external side effects** — extend the `caseFlowCloseJobs` pattern to Drive file-lifecycle transitions and email sends (eliminates the CRT-01/02/03 class).
 2. **Saga/recovery for multi-step flows** — resubmission (HIGH-06) and user-invite (MED-01) need single-transaction designs or explicit compensation + watchdog sweepers.
-3. **Centralize authorization** — one `authorize(caseId, action)` entry point; enforce work-access on mutations (HIGH-03) and queue scoping on merchant reads (MED-07).
+3. **Centralize authorization** — one `authorize(caseId, action)` entry point for case mutations, plus queue scoping on merchant reads (MED-07).
 4. **Close the workflow bypass** — make `PATCH /:id/status` a thin wrapper over `advanceStage` validation (HIGH-04).
 5. **Shared API contract** — generate OpenAPI from BE Zod schemas (or a monorepo `packages/contracts`) and consume it in FE, with a CI drift check (would have caught MED-12/LOW-22 automatically).
-6. **Rate-limiting overhaul** — per-client/per-user buckets, shared Redis store, documented fail-open/fail-closed policy per route (HIGH-02).
+6. **Rate-limiting store** — move limiter counters to a shared Redis store, accept origin traffic only from Cloudflare IP ranges (so `CF-Connecting-IP` can't be spoofed), and document a fail-open/fail-closed policy per route.
 7. **Split-deployment config** — prod-profile cookie settings (MED-13) and a single canonical prod API URL (LOW-15, LOW-23).
 8. **Validation consistency** — shared Zod param validation → 400s everywhere (MED-02, MED-03).
-9. **Multi-instance readiness** — Redis-backed rate limiting (HIGH-02) and Redis pub/sub for SSE (LOW-06) before horizontal scaling.
-10. **Kill dead architecture** — `midGoLiveTokens` (LOW-02), `users.deletedAt` (LOW-07), `motion-swap.tsx` (LOW-11), unused deps (LOW-12).
+9. **Multi-instance readiness** — Redis-backed rate limiting and Redis pub/sub for SSE (LOW-06) before horizontal scaling.
 
 ### 6.4 Database improvements
-1. Drop or implement dead schema: `midGoLiveTokens` (LOW-02), `users.deletedAt` (LOW-07).
-2. Stop HTML-escaping before persistence; store raw, escape on render (LOW-03).
-3. Paginate `GET /api/users` (MED-04); cap bulk-assign ids at 100 (MED-05).
-4. Validate enum filters → 400 instead of silent-drop/500 (MED-03).
-5. Audit money/rate column types — `numeric`/minor-units, never float (LOW-24).
-6. Run `bun run db:audit` on a migrated staging DB; add missing covering indexes (LOW-25).
-7. Adopt retention/purge policy with legal hold + deletion audit log (LOW-26).
-8. Resubmission token lifecycle: single transaction or recovery sweeper (HIGH-06).
+1. Stop HTML-escaping before persistence; store raw, escape on render (LOW-03).
+2. Paginate `GET /api/users` (MED-04); cap bulk-assign ids at 100 (MED-05).
+3. Validate enum filters → 400 instead of silent-drop/500 (MED-03).
+4. Audit money/rate column types — `numeric`/minor-units, never float (LOW-24).
+5. Run `bun run db:audit` on a migrated staging DB; add missing covering indexes (LOW-25).
+6. Adopt retention/purge policy with legal hold + deletion audit log (LOW-26).
+7. Resubmission token lifecycle: single transaction or recovery sweeper (HIGH-06).
 
 ---
 
@@ -404,14 +353,11 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 - [ ] **CRT-01 / CRT-02:** Narrow `try/catch` in `createMerchantSubmission` and public resubmission so post-commit bookkeeping can never trigger Drive file deletion. Add regression tests.
 - [ ] **CRT-03:** Move Google Drive deletions after transaction commit in `permanentlyDeleteMerchant`.
 - [ ] **HIGH-01:** Replace deterministic portal password with a random secret (hashed at rest, forced rotation on first login).
-- [x] **HIGH-02:** ✅ Fixed — per-client keys (socket IP / `CF-Connecting-IP`, trusted by default) plus a per-account failed-login limit. Shared store for multi-instance still to do.
 - [ ] **HIGH-05:** Add idempotency to `POST /api/public/merchant-form`.
 
 ### P1 — Fix before scaling / shortly after launch
-- [x] **HIGH-03:** ✅ Fixed — work access enforced on all 17 case mutations; access changes that would strand an agent's open cases are rejected.
 - [ ] **HIGH-04:** Restrict `PATCH /api/cases/:id/status` to validated transitions; fix `statusOrder` for `awaiting_client`.
 - [ ] **HIGH-06:** Add recovery/retry path + watchdog for stuck `awaiting_client` resubmissions.
-- [ ] **HIGH-07:** `queryClient.clear()` + stop SSE on logout/session expiry.
 - [ ] **MED-08:** Stop persisting PII/bank fields in plaintext localStorage; add draft expiry.
 - [ ] **MED-13:** Prod cookie settings (`Secure`/`SameSite=None`) for the split deployment; verify `VITE_API_URL` ↔ `CORS_ORIGIN` wiring (LOW-23).
 - [ ] **MED-07:** Add queue-access scoping to merchant read endpoints (or document the intentional exception).
@@ -424,7 +370,6 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 - [ ] **MED-06:** Bind manual-email confirmations to a real single-use preview token.
 - [ ] **MED-12:** Add `'physical_agreement'` to FE workflow-type union. **LOW-22:** Fix `Queue.createdAt` type.
 - [ ] **LOW-01:** Put `/health/db` behind auth/IP allowlist.
-- [ ] **LOW-02 / LOW-07 / LOW-11 / LOW-12:** Remove dead `midGoLiveTokens`, `users.deletedAt` (or implement), `motion-swap.tsx`, unused deps — or write the tests.
 - [ ] **LOW-03:** Stop HTML-escaping before persistence. **LOW-05:** Refresh-on-401 for Drive tokens. **LOW-06:** Redis pub/sub for SSE before scaling.
 - [ ] **LOW-24 / LOW-25 / LOW-26:** Audit money types, add covering indexes, adopt retention policy.
 - [ ] **Frontend polish:** code-split router bundle; fix 401 error attribution (MED-11); keyboard-accessible password toggle (MED-09); reuse Zod schemas in resubmission form (MED-10); invalidate case-detail on assign/priority (LOW-08); `pendingComponent` on merchant detail (LOW-18); surface background refetch errors (LOW-20); dedupe error extraction (LOW-09); label hidden file input (LOW-16); single API-URL source of truth (LOW-15).
@@ -440,6 +385,6 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 | Typecheck (`tsc --noEmit`) | ✅ exit 0 | ✅ exit 0 |
 | Lint (`bun run lint`) | ✅ OK | ❌ crashes before linting (HIGH-08) |
 | Build | n/a (Bun runtime) | ✅ ~5.1s — router chunk 1,465 kB (310.9 kB gzip) |
-| Tests | no test files | no test files (vitest installed, LOW-12) |
+| Tests | no test files | no test files |
 
 *End of report. All analysis was read-only; no code was modified, committed, or pushed in either repository.*

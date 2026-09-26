@@ -60,14 +60,14 @@ function OwnerCell({
   const ownerName = item.ownerName ?? 'AP System'
 
   if (!canEdit) {
-    return <span className="text-sm font-medium text-primary">{ownerName}</span>
+    return <span className="text-sm font-medium text-foreground">{ownerName}</span>
   }
 
   return (
     <Button
       type="button"
       variant="ghost"
-      className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+      className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-foreground no-underline hover:bg-transparent hover:text-foreground hover:underline hover:decoration-dashed hover:underline-offset-4"
       onClick={() => onOpenAssignOwner(item)}
     >
       {ownerName}
@@ -205,7 +205,7 @@ export function createCaseColumns({
         <Link
           to="/cases/$caseId"
           params={{ caseId: item.id }}
-          className="font-mono text-sm font-medium tabular-nums text-primary no-underline hover:underline hover:decoration-dashed hover:underline-offset-4"
+          className="font-mono text-sm font-medium tabular-nums text-foreground no-underline hover:underline hover:decoration-dashed hover:underline-offset-4"
         >
           {item.caseNumber}
         </Link>
@@ -236,7 +236,7 @@ export function createCaseColumns({
           <Link
             to="/merchants/$merchantId/overview"
             params={{ merchantId: item.merchantId }}
-            className="block truncate font-medium text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+            className="block truncate font-medium text-foreground hover:underline hover:decoration-dashed hover:underline-offset-4"
           >
             {item.merchantName}
           </Link>

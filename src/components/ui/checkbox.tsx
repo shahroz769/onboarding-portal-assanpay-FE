@@ -17,9 +17,12 @@ function Checkbox({
       )}
       {...props}
     >
+      {/* Kept mounted so unchecking can fade out too. Deliberately tiny: this
+          is toggled tens of times a day in bulk selection. */}
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        keepMounted
+        className="grid place-content-center text-current transition-[opacity,scale] duration-100 ease-out data-unchecked:opacity-0 data-unchecked:scale-90 data-starting-style:opacity-0 data-starting-style:scale-90 motion-reduce:transition-opacity"
       >
         <CheckIcon className="size-3.5 group-data-indeterminate/checkbox:hidden" />
         <MinusIcon className="hidden size-3.5 group-data-indeterminate/checkbox:block" />

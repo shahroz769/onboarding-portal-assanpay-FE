@@ -115,7 +115,7 @@ export function createMerchantColumns({
             <Link
               to="/merchants/$merchantId/overview"
               params={{ merchantId: merchant.id }}
-              className="block max-w-80 truncate font-medium text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+              className="block max-w-80 truncate font-medium text-foreground hover:underline hover:decoration-dashed hover:underline-offset-4"
             />
           }
           content={merchant.businessName}
