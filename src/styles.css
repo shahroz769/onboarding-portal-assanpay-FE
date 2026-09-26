@@ -276,6 +276,170 @@ body,
   }
 }
 
+/* App boot loader (AppShellPending). CSS keyframes, not JS, so the motion
+   stays smooth while the client bundle loads and hydrates.
+
+   Story: the two halves fly in along the bolt's axis and lock together, then
+   the mark turns in half steps. The speed trails stream out while it moves
+   and retract as it settles, like motion blur. The trail cycle (1200ms) is
+   exactly one half turn of the spin cycle (2400ms), so they stay in sync.
+   The spin runs two half turns per cycle because the halves are two-tone. */
+.app-shell-logo-spin {
+  transform-origin: center;
+  animation: app-shell-logo-spin 2400ms var(--ease-in-out) 600ms infinite;
+}
+
+/* Motion trail: six flat, softly blurred silhouettes run the same spin in
+   22ms steps, so mid-turn they blend into one smear fanning out behind the
+   mark. Each fades in with its own turn and out before the rest, so nothing
+   (not even the blur halo) shows while the mark is still. Only transform and
+   opacity animate here; the blur is static, so it stays on the compositor. */
+.app-shell-logo-ghost {
+  --ghost-delay: calc(600ms + var(--ghost) * 22ms);
+  transform-origin: center;
+  animation:
+    app-shell-logo-ghost-pulse 1200ms linear var(--ghost-delay) infinite both,
+    app-shell-logo-spin 2400ms var(--ease-in-out) var(--ghost-delay) infinite;
+}
+
+.app-shell-logo-ghost > svg {
+  opacity: calc(0.34 - var(--ghost) * 0.045);
+  filter: blur(calc(var(--ghost) * 0.35px));
+}
+
+/* Each half flies in from behind its own trails, along the bolt's 60° axis
+   (the half's local y axis, rotated 30°). */
+.app-shell-logo-half {
+  --enter-from: -8.1% 14.1%;
+  animation: app-shell-logo-half-enter 600ms var(--ease-out) both;
+}
+
+.app-shell-logo-half-b {
+  --enter-from: 8.1% -14.1%;
+}
+
+/* Trails are dashes on long lines: the dash length is the visible trail.
+   Staggered 40ms inner to outer so the outer trails lag like a real streak. */
+.app-shell-logo-trail {
+  stroke-dasharray: var(--len) 999px;
+  animation:
+    app-shell-logo-trail-enter 600ms var(--ease-out)
+      calc(var(--i) * 40ms) both,
+    app-shell-logo-trail-flare 1200ms var(--ease-in-out)
+      calc(600ms + var(--i) * 40ms) infinite;
+}
+
+.app-shell-logo-dot {
+  animation:
+    app-shell-logo-dot-enter 500ms var(--ease-out)
+      calc(150ms + var(--i) * 40ms) both,
+    app-shell-logo-dot-flare 1200ms var(--ease-in-out)
+      calc(600ms + var(--i) * 40ms) infinite;
+}
+
+@keyframes app-shell-logo-spin {
+  0% {
+    rotate: 0deg;
+  }
+  40%,
+  50% {
+    rotate: 180deg;
+  }
+  90%,
+  100% {
+    rotate: 360deg;
+  }
+}
+
+/* Tracks the ghost's own half turn: strongest at 40%, its fastest point. */
+@keyframes app-shell-logo-ghost-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes app-shell-logo-half-enter {
+  from {
+    opacity: 0;
+    translate: var(--enter-from);
+  }
+}
+
+@keyframes app-shell-logo-trail-enter {
+  from {
+    stroke-dasharray: calc(var(--len) + 48px) 999px;
+  }
+}
+
+/* Peaks at 40%, the fastest point of the eased half turn. */
+@keyframes app-shell-logo-trail-flare {
+  0%,
+  80%,
+  100% {
+    stroke-dasharray: var(--len) 999px;
+  }
+  40% {
+    stroke-dasharray: calc(var(--len) + 26px) 999px;
+  }
+}
+
+@keyframes app-shell-logo-dot-enter {
+  from {
+    opacity: 0;
+    transform: translate(0, 24px);
+  }
+}
+
+/* The dots get flung off the end of the trail, then drift back in. */
+@keyframes app-shell-logo-dot-flare {
+  0%,
+  80%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  40% {
+    opacity: 0;
+    transform: translate(0, 26px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell-logo-ghost {
+    display: none;
+  }
+
+  .app-shell-logo-spin {
+    animation: app-shell-logo-pulse 1600ms ease-in-out infinite alternate;
+  }
+
+  .app-shell-logo-half {
+    animation-name: app-shell-logo-fade;
+  }
+
+  .app-shell-logo-trail,
+  .app-shell-logo-dot {
+    animation: none;
+  }
+}
+
+@keyframes app-shell-logo-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes app-shell-logo-pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+
 /* Purposeful motion for occasional and first-time state changes. */
 .motion-success-enter {
   transition:

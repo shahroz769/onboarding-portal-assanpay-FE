@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { AppShellPending } from '#/components/app-shell-pending'
 import { AppSidebar } from '#/components/app-sidebar'
 import { NavUser } from '#/components/nav-user'
 import { ThemeToggle } from '#/components/theme-toggle'
@@ -48,6 +49,8 @@ export const Route = createFileRoute('/_app')({
       preload,
     })
   },
+  // Server-rendered in place of this ssr:false route (see AppShellPending).
+  pendingComponent: AppShellPending,
   component: AppLayout,
 })
 
