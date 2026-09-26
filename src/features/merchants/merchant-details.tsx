@@ -1,18 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, Outlet } from '@tanstack/react-router'
+import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { format } from 'date-fns'
 
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
+import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { cn } from '#/lib/utils'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 import type { MerchantHeader } from '#/schemas/merchants.schema'
 import { MERCHANT_DETAIL_TABS } from './merchant-detail-tabs'
 
-const merchantDetailTabClassName =
-  'relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors hover:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0'
+function useActiveMerchantTab() {
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const segment = pathname.replace(/\/+$/, '').split('/').pop()
+  return (
+    MERCHANT_DETAIL_TABS.find((tab) => tab.to.endsWith(`/${segment}`)) ??
+    MERCHANT_DETAIL_TABS[0]
+  ).to
+}
 
 type MerchantDetailsLayoutProps = {
   merchantId: string
@@ -26,6 +33,7 @@ export function MerchantDetailsLayout({
     error,
     isError,
   } = useQuery(merchantHeaderQueryOptions(merchantId))
+  const activeTab = useActiveMerchantTab()
 
   if (isError && !header) {
     throw error
@@ -38,30 +46,29 @@ export function MerchantDetailsLayout({
       ) : (
         <MerchantDetailsHeaderSkeleton />
       )}
-      <div className="flex flex-col gap-6">
-        <nav
+      {/* Morph UI Tabs: the indicator glides to the picked tab and the panel
+          slides the same way (tab-next / tab-prev in route-transitions.ts). */}
+      <Tabs value={activeTab} className="gap-6">
+        <TabsList
           aria-label="Merchant sections"
-          className="grid h-auto w-full grid-cols-2 rounded-lg bg-muted p-0.75 text-muted-foreground sm:inline-flex sm:w-fit"
+          className="grid w-full grid-cols-2 group-data-[orientation=horizontal]/tabs:h-auto sm:inline-flex sm:w-fit"
         >
           {MERCHANT_DETAIL_TABS.map((tab) => (
-            <Link
+            <TabsTrigger
               key={tab.to}
-              to={tab.to}
-              params={{ merchantId }}
-              activeOptions={{ exact: true }}
-              className={merchantDetailTabClassName}
-              activeProps={{
-                className:
-                  'bg-background font-medium text-foreground shadow-sm',
-              }}
+              value={tab.to}
+              nativeButton={false}
+              render={<Link to={tab.to} params={{ merchantId }} />}
             >
               <tab.icon />
               {tab.label}
-            </Link>
+            </TabsTrigger>
           ))}
-        </nav>
-        <Outlet />
-      </div>
+        </TabsList>
+        <div data-vt="merchant-tab-panel" className="min-w-0">
+          <Outlet />
+        </div>
+      </Tabs>
     </div>
   )
 }

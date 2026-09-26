@@ -1,4 +1,10 @@
-import { useEffect, useRef } from 'react'
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  ViewTransition,
+} from 'react'
 import { BellOff } from 'lucide-react'
 
 import { EmptyState } from '#/components/empty-state'
@@ -54,57 +60,74 @@ export function NotificationList({
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const items = data?.pages.flatMap((page) => page.items) ?? []
+  // Morph UI Animated List: new notifications rise in, removed ones fade out
+  // and the rest glide into place. Query data lands as a synchronous
+  // update, and <ViewTransition> only animates Transitions: the deferred
+  // list re-renders the rows in one.
+  const loadedItems = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  )
+  const items = useDeferredValue(loadedItems)
 
   return (
     <div ref={scrollRef} className="h-120">
-      <ScrollArea className="size-full">
-        {isLoading ? <NotificationListSkeleton /> : null}
+      {/* vt-scroll + view-transition-group: contain clip moving rows to the
+          scroll area, so they never slide over the popover's edges. */}
+      <ViewTransition update="vt-scroll">
+        <ScrollArea className="size-full [view-transition-group:contain]">
+          {isLoading ? <NotificationListSkeleton /> : null}
 
-        {isError ? (
-          <div className="px-4 py-6 text-center text-sm text-destructive">
-            Failed to load notifications.
-          </div>
-        ) : null}
+          {isError ? (
+            <div className="px-4 py-6 text-center text-sm text-destructive">
+              Failed to load notifications.
+            </div>
+          ) : null}
 
-        {!isLoading && !isError && items.length === 0 ? (
-          <EmptyState
-            icon={BellOff}
-            tone="success"
-            title="You're all caught up."
-            description="New notifications will appear here."
-          />
-        ) : null}
+          {!isLoading && !isError && items.length === 0 ? (
+            <EmptyState
+              icon={BellOff}
+              tone="success"
+              title="You're all caught up."
+              description="New notifications will appear here."
+            />
+          ) : null}
 
-        {items.length > 0 ? (
-          <ul className="flex flex-col">
-            {items.map((notification) => (
-              <li key={notification.id}>
-                <NotificationItem
-                  notification={notification}
-                  onNavigate={onNavigate}
-                />
-              </li>
-            ))}
-          </ul>
-        ) : null}
+          {items.length > 0 ? (
+            <ul className="flex flex-col">
+              {items.map((notification) => (
+                <ViewTransition
+                  key={notification.id}
+                  default="vt-move vt-presence"
+                >
+                  <li>
+                    <NotificationItem
+                      notification={notification}
+                      onNavigate={onNavigate}
+                    />
+                  </li>
+                </ViewTransition>
+              ))}
+            </ul>
+          ) : null}
 
-        {hasNextPage ? (
-          <div
-            ref={sentinelRef}
-            className="flex items-center justify-center py-3 text-xs text-muted-foreground"
-          >
-            {isFetchingNextPage ? (
-              <span className="flex items-center gap-1.5">
-                <Spinner className="size-3.5" />
-                Loading…
-              </span>
-            ) : (
-              <span className="opacity-0">Scroll for more</span>
-            )}
-          </div>
-        ) : null}
-      </ScrollArea>
+          {hasNextPage ? (
+            <div
+              ref={sentinelRef}
+              className="flex items-center justify-center py-3 text-xs text-muted-foreground"
+            >
+              {isFetchingNextPage ? (
+                <span className="flex items-center gap-1.5">
+                  <Spinner className="size-3.5" />
+                  Loading…
+                </span>
+              ) : (
+                <span className="opacity-0">Scroll for more</span>
+              )}
+            </div>
+          ) : null}
+        </ScrollArea>
+      </ViewTransition>
     </div>
   )
 }

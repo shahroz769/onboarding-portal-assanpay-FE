@@ -16,6 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '#/components/ui/tooltip'
+import {
+  skipActiveViewTransition,
+  startViewTransition,
+} from '#/lib/view-transition'
 
 type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -51,14 +55,18 @@ export function ThemeToggle() {
   const SelectedIcon = selectedTheme.icon
 
   const updateTheme = (nextTheme: ThemeMode) => {
-    const apply = () => setTheme(nextTheme)
-    const startViewTransition = Reflect.get(document, 'startViewTransition') as
-      undefined | ((callback: () => void) => void)
-
-    if (startViewTransition) {
-      startViewTransition.call(document, apply)
+    // morph.css opts the root out of view transitions; opt it back in so
+    // the whole page crossfades between themes (see styles.css).
+    const root = document.documentElement
+    skipActiveViewTransition()
+    root.setAttribute('data-vt-root', '')
+    const transition = startViewTransition(() => setTheme(nextTheme))
+    if (transition) {
+      void transition.finished.finally(() =>
+        root.removeAttribute('data-vt-root'),
+      )
     } else {
-      apply()
+      root.removeAttribute('data-vt-root')
     }
   }
 

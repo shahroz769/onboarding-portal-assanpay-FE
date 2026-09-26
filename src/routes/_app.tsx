@@ -183,14 +183,22 @@ function AppLayout() {
           </div>
         </header>
 
+        {/* data-vt="page": the content column that page and stack route
+            transitions animate. data-vt-section and data-vt-outlet mark the
+            sections that rise in one by one on a page change (styles.css,
+            lib/route-transitions.ts). display: contents keeps the outlet
+            wrappers out of the layout. */}
         <div
+          data-vt="page"
           className={cn(
             'flex min-h-0 flex-1 flex-col p-4 md:p-6',
             fitViewport ? 'overflow-hidden' : 'overflow-y-auto',
           )}
         >
           {hidePageShell ? (
-            <Outlet />
+            <div data-vt-outlet className="contents">
+              <Outlet />
+            </div>
           ) : (
             <PageHeaderActionsContext.Provider value={headerActionsEl}>
               <div
@@ -199,7 +207,10 @@ function AppLayout() {
                   fitViewport ? 'flex-1' : 'min-h-full shrink-0',
                 )}
               >
-                <div className="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3">
+                <div
+                  data-vt-section
+                  className="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3"
+                >
                   <div className="min-w-0">
                     <h1 className="text-2xl font-semibold tracking-tight">
                       {title}
@@ -216,7 +227,9 @@ function AppLayout() {
                     className="flex shrink-0 items-center gap-2"
                   />
                 </div>
-                <Outlet />
+                <div data-vt-outlet className="contents">
+                  <Outlet />
+                </div>
               </div>
             </PageHeaderActionsContext.Provider>
           )}

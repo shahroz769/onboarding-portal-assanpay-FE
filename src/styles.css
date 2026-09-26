@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'shadcn/tailwind.css';
 @import 'tw-animate-css';
+@import './morph.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -262,7 +263,115 @@ body,
   color: var(--primary-foreground);
 }
 
-/* Smooth dark mode transition via View Transitions API */
+/* ── View transitions ─────────────────────────────────────────
+   Motion classes (vt-blur, vt-push, vt-slide, …) come from morph.css,
+   vendored from Morph UI. Route changes get view transition types from
+   routeTransitionTypes (lib/route-transitions.ts); these elements only get
+   a view-transition-name while their type is active, so component-level
+   transitions (lists, number flips) never capture them. */
+
+/* Page transition: the old page blurs out while the new page's sections
+   rise in one after another (Morph UI's blur + stagger). The sections are
+   named only in the new snapshot (data-vt-entering is set once the old one
+   is taken, see trackRouteTransitions), so they rise in fresh instead of
+   pairing with the old page's sections. Sections: the page header, then the
+   route's top-level blocks. */
+:root:active-view-transition-type(page) [data-vt='page'] {
+  view-transition-name: page;
+  view-transition-class: vt-blur;
+}
+
+:root[data-vt-entering]:active-view-transition-type(page) {
+  & [data-vt-section] {
+    view-transition-name: page-section-0;
+    view-transition-class: vt-rise;
+  }
+  & [data-vt-outlet] > * > :nth-child(1) {
+    view-transition-name: page-section-1;
+    view-transition-class: vt-rise vt-delay-1;
+  }
+  & [data-vt-outlet] > * > :nth-child(2) {
+    view-transition-name: page-section-2;
+    view-transition-class: vt-rise vt-delay-2;
+  }
+  & [data-vt-outlet] > * > :nth-child(3) {
+    view-transition-name: page-section-3;
+    view-transition-class: vt-rise vt-delay-3;
+  }
+  & [data-vt-outlet] > * > :nth-child(4) {
+    view-transition-name: page-section-4;
+    view-transition-class: vt-rise vt-delay-4;
+  }
+  & [data-vt-outlet] > * > :nth-child(5) {
+    view-transition-name: page-section-5;
+    view-transition-class: vt-rise vt-delay-5;
+  }
+  & [data-vt-outlet] > * > :nth-child(6) {
+    view-transition-name: page-section-6;
+    view-transition-class: vt-rise vt-delay-6;
+  }
+}
+
+/* Morphing Popover / Morph Dialog (hooks/use-morph.ts): a relaxed pace, so
+   the button visibly grows into the panel; closing is a little quicker. */
+::view-transition-group(.vt-morph-open) {
+  animation-duration: 560ms;
+}
+
+::view-transition-old(.vt-morph-open),
+::view-transition-new(.vt-morph-open) {
+  animation-duration: 380ms;
+}
+
+::view-transition-group(.vt-morph-close) {
+  animation-duration: 440ms;
+}
+
+::view-transition-old(.vt-morph-close),
+::view-transition-new(.vt-morph-close) {
+  animation-duration: 300ms;
+}
+
+/* Stack navigator: user detail pushes over the users list, and pops back. */
+:root:active-view-transition-type(stack-push) [data-vt='page'] {
+  view-transition-name: page;
+  view-transition-class: vt-push vt-forward;
+}
+
+:root:active-view-transition-type(stack-pop) [data-vt='page'] {
+  view-transition-name: page;
+  view-transition-class: vt-push vt-back;
+}
+
+/* Keep sliding pages inside the content column, over its own surface, so
+   the outgoing page never slides across the sidebar or shows through. */
+::view-transition-group(page) {
+  overflow: clip;
+}
+
+::view-transition-old(.vt-push),
+::view-transition-new(.vt-push) {
+  background-color: color-mix(in oklab, var(--muted) 30%, var(--background));
+}
+
+/* Tabs: the merchant detail panel slides toward the picked tab. */
+:root:active-view-transition-type(tab-next) [data-vt='merchant-tab-panel'] {
+  view-transition-name: merchant-tab-panel;
+  view-transition-class: vt-slide vt-quick vt-clip vt-forward;
+}
+
+:root:active-view-transition-type(tab-prev) [data-vt='merchant-tab-panel'] {
+  view-transition-name: merchant-tab-panel;
+  view-transition-class: vt-slide vt-quick vt-clip vt-back;
+}
+
+/* Theme switch crossfades the whole page. morph.css opts the root out of
+   view transitions (so pages stay clickable while parts animate); the theme
+   toggle opts it back in for its own transition. */
+:root[data-vt-root] {
+  view-transition-name: root;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.35s;
@@ -490,21 +599,6 @@ body,
   transition:
     opacity 160ms var(--ease-out),
     transform 160ms var(--ease-out);
-}
-
-/* A value that changed in place (e.g. a KPI after a range switch): a short
-   opacity-only fade so it reads as updated. Runs when the element is
-   inserted. Not for content replacing a skeleton: the skeleton vanishes
-   instantly while this starts at 0, which flashes empty; those swap
-   instantly (the skeletons are layout-exact). */
-.motion-content-enter {
-  transition: opacity 150ms var(--ease-out);
-}
-
-@starting-style {
-  .motion-content-enter {
-    opacity: 0;
-  }
 }
 
 /* Tooltip enter/exit. Fades, grows from 94% and slides 4px out of the

@@ -148,10 +148,10 @@ export function DataTableFilter({
                       : 'opacity-50 [&_svg]:invisible',
                   )}
                 >
-                  <CheckIcon />
+                  <CheckIcon className="size-3" />
                 </div>
                 {option.icon && (
-                  <option.icon className="text-muted-foreground" />
+                  <option.icon className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 <span>{option.label}</span>
               </button>
@@ -222,7 +222,9 @@ function SearchableDataTableFilter({
         <ComboboxList className="max-h-72">
           {(option: FilterOption) => (
             <ComboboxItem key={option.value} value={option}>
-              {option.icon && <option.icon className="text-muted-foreground" />}
+              {option.icon && (
+                <option.icon className="size-4 shrink-0 text-muted-foreground" />
+              )}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
             </ComboboxItem>
           )}

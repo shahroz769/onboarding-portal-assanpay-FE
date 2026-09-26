@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
+import { NumberFlip } from '#/components/number-flip'
 import {
   Card,
   CardContent,
@@ -39,7 +39,8 @@ type StatCardLink =
 type StatCardProps = {
   label: string
   /** null while the dashboard is loading: renders a same-size skeleton. */
-  value: string | null
+  value: number | null
+  format?: (value: number) => string
   icon: LucideIcon
   hint?: string
   accent?: 'default' | 'positive' | 'warning' | 'danger'
@@ -56,21 +57,12 @@ const ACCENT_CLASSES: Record<NonNullable<StatCardProps['accent']>, string> = {
 function StatCard({
   label,
   value,
+  format = formatCount,
   icon: Icon,
   hint,
   accent = 'default',
   link,
 }: StatCardProps) {
-  // Fade a number only when an already-shown value changes (e.g. a range
-  // switch), never when it first replaces the skeleton: that would flash
-  // empty between the two.
-  const [shownValue, setShownValue] = useState(value)
-  const [hasChanged, setHasChanged] = useState(false)
-  if (value !== shownValue) {
-    setHasChanged(shownValue !== null && value !== null)
-    setShownValue(value)
-  }
-
   const card = (
     <Card
       className={cn(
@@ -94,13 +86,9 @@ function StatCard({
           {value === null ? (
             <Skeleton className="h-lh w-10" />
           ) : (
-            // Keyed on the value so a changed number remounts (and fades).
-            <span
-              key={value}
-              className={hasChanged ? 'motion-content-enter' : undefined}
-            >
-              {value}
-            </span>
+            // Changed digits roll when the value changes (e.g. a range
+            // switch); the first value replaces the skeleton as is.
+            <NumberFlip value={value} format={format} />
           )}
         </CardTitle>
         {hint ? (
@@ -116,7 +104,7 @@ function StatCard({
     <Link
       to={link.to}
       search={{ status: link.statuses.join(',') }}
-      aria-label={`${label}: ${value}. View list`}
+      aria-label={`${label}: ${format(value)}. View list`}
       className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       {card}
@@ -145,8 +133,7 @@ function Section({
 export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
   const cases = data?.cases
   const merchants = data?.merchants
-  const count = (value: number | undefined) =>
-    value === undefined ? null : formatCount(value)
+  const count = (value: number | undefined) => value ?? null
 
   return (
     <div className="flex flex-col gap-6">
@@ -191,7 +178,8 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
         />
         <StatCard
           label="Breach rate"
-          value={cases ? formatPercent(cases.breachRate) : null}
+          value={cases ? cases.breachRate : null}
+          format={formatPercent}
           icon={AlertTriangle}
           accent={cases && cases.breachRate > 10 ? 'danger' : 'default'}
         />

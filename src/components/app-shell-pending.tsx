@@ -56,6 +56,9 @@ export function AppShellPending() {
   )
 }
 
+// The brand logo's colour, from `public/favicon.svg`.
+const BRAND_COLOR = '#e09145'
+
 /**
  * A loader-only take on the AssanPay mark (the brand logo itself lives in
  * `public/favicon.svg`). The two halves are identical and sit 180° apart
@@ -74,7 +77,7 @@ function LoaderMark() {
         className="app-shell-logo-half absolute inset-0 size-full"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <MarkHalf color="#f68c23" />
+        <MarkHalf color={BRAND_COLOR} />
       </svg>
       <svg
         viewBox="15 15 345 345"
@@ -84,7 +87,7 @@ function LoaderMark() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <g transform="rotate(180 187.5 187.5)">
-          <MarkHalf color="#f26d0d" />
+          <MarkHalf color={BRAND_COLOR} />
         </g>
       </svg>
     </div>
@@ -109,7 +112,7 @@ function GhostMark({ ghost }: { ghost: number }) {
         overflow="visible"
         aria-hidden="true"
         className="size-full"
-        fill="#f47d1a"
+        fill={BRAND_COLOR}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path transform={HALF_FRAME} d={HALF_BODY} />

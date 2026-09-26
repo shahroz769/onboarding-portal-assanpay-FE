@@ -14,6 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '#/components/ui/chart'
+import { NumberFlip } from '#/components/number-flip'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useReducedMotion } from '#/hooks/use-reduced-motion'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
@@ -42,13 +43,17 @@ export function DashboardCharts({ data }: { data: DashboardResponse }) {
   )
 }
 
+const formatAverage = (value: number) => value.toFixed(1)
+
 function HeaderStat({
   label,
   value,
+  format,
   hint,
 }: {
   label: string
-  value: string
+  value: number
+  format: (value: number) => string
   hint?: string
 }) {
   return (
@@ -56,9 +61,12 @@ function HeaderStat({
       <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
         {label}
       </span>
-      <span className="text-lg leading-none font-semibold tabular-nums">
-        {value}
-      </span>
+      {/* Digits roll on a range or granularity change, like the KPI cards. */}
+      <NumberFlip
+        value={value}
+        format={format}
+        className="justify-end text-lg leading-none font-semibold"
+      />
       {hint ? (
         <span className="text-[11px] leading-none text-muted-foreground">
           {hint}
@@ -115,15 +123,17 @@ function DailyCountBarChart({
             </TabsList>
           </Tabs>
           <div className="flex items-start gap-5 text-right">
-            <HeaderStat label="Total" value={formatCount(total)} />
+            <HeaderStat label="Total" value={total} format={formatCount} />
             <HeaderStat
               label={granularity === 'weekly' ? 'Weekly avg' : 'Daily avg'}
-              value={average.toFixed(1)}
+              value={average}
+              format={formatAverage}
             />
             {peak ? (
               <HeaderStat
                 label="Peak"
-                value={formatCount(peak.count)}
+                value={peak.count}
+                format={formatCount}
                 hint={formatDay(peak.date)}
               />
             ) : null}

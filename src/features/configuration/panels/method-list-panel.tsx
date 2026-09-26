@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 import type { ComponentType, SVGProps } from 'react'
 
@@ -39,6 +39,7 @@ import {
   FieldGroup,
   FieldLabel,
   FieldLegend,
+  FieldSeparator,
   FieldSet,
 } from '#/components/ui/field'
 
@@ -405,8 +406,11 @@ function MethodEditorDialog({
           }}
         >
           <FieldGroup className="gap-5">
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem]">
-              <Field data-invalid={Boolean(visibleErrors.label)}>
+            <div className="grid gap-4 sm:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)]">
+              <Field
+                data-invalid={Boolean(visibleErrors.label)}
+                className="sm:col-span-2"
+              >
                 <FieldLabel htmlFor="method-label">Name</FieldLabel>
                 <Input
                   id="method-label"
@@ -433,27 +437,32 @@ function MethodEditorDialog({
               />
             </div>
 
-            <LimitFieldSet
-              legend="Testing limit"
-              prefix="testing"
-              min={draft.testingMin}
-              max={draft.testingMax}
-              minError={visibleErrors.testingMin}
-              maxError={visibleErrors.testingMax}
+            <FieldSeparator />
+
+            <LimitsFieldSet
               disabled={mutation.isPending}
-              onMinChange={(value) => set('testingMin', value)}
-              onMaxChange={(value) => set('testingMax', value)}
-            />
-            <LimitFieldSet
-              legend="Live limit"
-              prefix="live"
-              min={draft.liveMin}
-              max={draft.liveMax}
-              minError={visibleErrors.liveMin}
-              maxError={visibleErrors.liveMax}
-              disabled={mutation.isPending}
-              onMinChange={(value) => set('liveMin', value)}
-              onMaxChange={(value) => set('liveMax', value)}
+              rows={[
+                {
+                  label: 'Testing',
+                  prefix: 'testing',
+                  min: draft.testingMin,
+                  max: draft.testingMax,
+                  minError: visibleErrors.testingMin,
+                  maxError: visibleErrors.testingMax,
+                  onMinChange: (value) => set('testingMin', value),
+                  onMaxChange: (value) => set('testingMax', value),
+                },
+                {
+                  label: 'Live',
+                  prefix: 'live',
+                  min: draft.liveMin,
+                  max: draft.liveMax,
+                  minError: visibleErrors.liveMin,
+                  maxError: visibleErrors.liveMax,
+                  onMinChange: (value) => set('liveMin', value),
+                  onMaxChange: (value) => set('liveMax', value),
+                },
+              ]}
             />
 
             {formError ? (
@@ -490,53 +499,76 @@ function MethodEditorDialog({
   )
 }
 
-function LimitFieldSet({
-  legend,
-  prefix,
-  min,
-  max,
-  minError,
-  maxError,
-  disabled,
-  onMinChange,
-  onMaxChange,
-}: {
-  legend: string
+type LimitRow = {
+  label: string
   prefix: string
   min: string
   max: string
   minError?: string
   maxError?: string
-  disabled: boolean
   onMinChange: (value: string) => void
   onMaxChange: (value: string) => void
+}
+
+/**
+ * Testing and live limits as one grid: the Minimum / Maximum headers show
+ * once, and each environment is a row. Its columns match the Name /
+ * Commission row above (Name spans the first two, Commission sits over
+ * Maximum).
+ */
+function LimitsFieldSet({
+  rows,
+  disabled,
+}: {
+  rows: LimitRow[]
+  disabled: boolean
 }) {
   return (
-    <FieldSet className="gap-0">
-      <FieldLegend variant="label" className="mb-2">
-        {legend}
+    <FieldSet className="gap-3">
+      <FieldLegend variant="label" className="mb-0">
+        Transaction limits
       </FieldLegend>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField
-          id={`${prefix}-min`}
-          label="Minimum"
-          suffix="PKR"
-          subtle
-          value={min}
-          error={minError}
-          disabled={disabled}
-          onChange={onMinChange}
-        />
-        <NumberField
-          id={`${prefix}-max`}
-          label="Maximum"
-          suffix="PKR"
-          subtle
-          value={max}
-          error={maxError}
-          disabled={disabled}
-          onChange={onMaxChange}
-        />
+      <div className="grid grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-x-4 gap-y-3">
+        <span aria-hidden="true" />
+        <span
+          aria-hidden="true"
+          className="text-xs font-medium text-muted-foreground"
+        >
+          Minimum
+        </span>
+        <span
+          aria-hidden="true"
+          className="text-xs font-medium text-muted-foreground"
+        >
+          Maximum
+        </span>
+        {rows.map((row) => (
+          <Fragment key={row.prefix}>
+            <span className="flex h-9 items-center text-sm text-muted-foreground">
+              {row.label}
+            </span>
+            <NumberField
+              id={`${row.prefix}-min`}
+              label={`${row.label} minimum`}
+              hideLabel
+              suffix="PKR"
+              value={row.min}
+              error={row.minError}
+              disabled={disabled}
+              onChange={row.onMinChange}
+            />
+            <NumberField
+              id={`${row.prefix}-max`}
+              label={`${row.label} maximum`}
+              hideLabel
+              suffix="PKR"
+              value={row.max}
+              error={row.maxError}
+              disabled={disabled}
+              onChange={row.onMaxChange}
+            />
+          </Fragment>
+        ))}
       </div>
     </FieldSet>
   )
@@ -551,7 +583,7 @@ function NumberField({
   disabled,
   step = '1',
   max,
-  subtle = false,
+  hideLabel = false,
   onChange,
 }: {
   id: string
@@ -562,15 +594,13 @@ function NumberField({
   disabled: boolean
   step?: string
   max?: number
-  subtle?: boolean
+  /** Labels the input for screen readers only (a grid header shows it). */
+  hideLabel?: boolean
   onChange: (value: string) => void
 }) {
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel
-        htmlFor={id}
-        className={subtle ? 'text-xs text-muted-foreground' : undefined}
-      >
+      <FieldLabel htmlFor={id} className={hideLabel ? 'sr-only' : undefined}>
         {label}
       </FieldLabel>
       <InputGroup>

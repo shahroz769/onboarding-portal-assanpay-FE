@@ -43,6 +43,7 @@ import {
   useSaveDocumentReviewSubMerchant,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
+import { useMorph } from '#/hooks/use-morph'
 import type { CaseDetail } from '#/schemas/cases.schema'
 import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 
@@ -345,7 +346,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
 
   const [closeReason, setCloseReason] = useState('')
-  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  // Morph Dialog: the review modal grows out of the Review button.
+  const reviewModal = useMorph()
   // Bumped on every open so the modal starts fresh, while staying mounted
   // after close so its exit animation can play.
   const [reviewModalKey, setReviewModalKey] = useState(0)
@@ -452,8 +454,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     if (primaryAction.actionKind === 'review') {
       await saveChangedSubMerchantBeforeReview()
         .then(() => {
-          setReviewModalKey((key) => key + 1)
-          setReviewModalOpen(true)
+          reviewModal.setOpen(true, {
+            alongside: () => setReviewModalKey((key) => key + 1),
+          })
         })
         .catch(() => {
           // Mutation hook already surfaces the backend error via toast.
@@ -609,6 +612,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                       </p>
                       {showPrimaryActionButton ? (
                         <Button
+                          {...(primaryAction.actionKind === 'review'
+                            ? reviewModal.triggerProps
+                            : null)}
                           onClick={handlePrimaryAction}
                           disabled={
                             actionPending ||
@@ -780,8 +786,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       {isDocumentReviewCase && reviewModalKey > 0 ? (
         <DocumentsReviewSummaryModal
           key={reviewModalKey}
-          open={reviewModalOpen}
-          onOpenChange={setReviewModalOpen}
+          open={reviewModal.open}
+          onOpenChange={reviewModal.onOpenChange}
+          popupProps={reviewModal.popupProps}
           caseDetail={caseDetail}
           caseId={caseId}
           reviewSummary={reviewSummary}

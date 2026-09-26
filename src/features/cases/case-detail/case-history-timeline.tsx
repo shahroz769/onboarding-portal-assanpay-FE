@@ -1,3 +1,4 @@
+import { useDeferredValue, ViewTransition } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   CheckCircle2,
@@ -392,7 +393,13 @@ export function CaseHistoryTimeline({
   caseId,
   embedded = false,
 }: CaseHistoryTimelineProps) {
-  const { data: history } = useSuspenseQuery(caseHistoryQueryOptions(caseId))
+  const { data: loadedHistory } = useSuspenseQuery(
+    caseHistoryQueryOptions(caseId),
+  )
+  // Morph UI Animated List: new entries rise in and the rest glide down.
+  // Query data lands as a synchronous update, and <ViewTransition> only
+  // animates Transitions: the deferred list re-renders the entries in one.
+  const history = useDeferredValue(loadedHistory)
   const content = (
     <>
       {embedded ? (
@@ -427,83 +434,85 @@ export function CaseHistoryTimeline({
             const proofLabel = getHistoryProofLabel(entry.action)
 
             return (
-              <div key={entry.id} className="relative min-w-0 pl-8">
-                {index > 0 ? (
-                  <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
-                ) : null}
-                {index < history.length - 1 ? (
-                  <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
-                ) : null}
+              <ViewTransition key={entry.id} default="vt-move vt-presence">
+                <div className="relative min-w-0 pl-8">
+                  {index > 0 ? (
+                    <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
+                  ) : null}
+                  {index < history.length - 1 ? (
+                    <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
+                  ) : null}
 
-                <div
-                  className={`absolute left-3.5 top-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border ${meta.iconWrapperClassName}`}
-                >
-                  <Icon className={`size-4 ${meta.iconClassName}`} />
-                </div>
+                  <div
+                    className={`absolute left-3.5 top-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border ${meta.iconWrapperClassName}`}
+                  >
+                    <Icon className={`size-4 ${meta.iconClassName}`} />
+                  </div>
 
-                <div className="relative min-w-0 rounded-xl border bg-background p-4">
-                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 flex-col gap-2">
-                        <p className="truncate text-sm font-semibold tracking-tight">
-                          {entry.actorName ?? 'System'}
-                        </p>
-                        {detailsText ? (
-                          <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                            {detailsText}
+                  <div className="relative min-w-0 rounded-xl border bg-background p-4">
+                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <p className="truncate text-sm font-semibold tracking-tight">
+                            {entry.actorName ?? 'System'}
                           </p>
-                        ) : null}
-                        {proofFile ? (
-                          <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <TruncatedTooltip
-                              render={
-                                <Badge
-                                  variant="outline"
-                                  className="min-w-0 max-w-full truncate"
-                                />
-                              }
-                              content={proofFile.originalName}
-                            >
-                              {proofFile.originalName}
-                            </TruncatedTooltip>
-                            <ButtonLink
-                              variant="outline"
-                              size="sm"
-                              className="max-w-full"
-                              render={
-                                <a
-                                  href={proofFile.googleDriveWebViewLink}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                />
-                              }
-                            >
-                              <ExternalLink data-icon="inline-start" />
-                              <span className="truncate">{proofLabel}</span>
-                            </ButtonLink>
-                          </div>
-                        ) : null}
+                          {detailsText ? (
+                            <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                              {detailsText}
+                            </p>
+                          ) : null}
+                          {proofFile ? (
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <TruncatedTooltip
+                                render={
+                                  <Badge
+                                    variant="outline"
+                                    className="min-w-0 max-w-full truncate"
+                                  />
+                                }
+                                content={proofFile.originalName}
+                              >
+                                {proofFile.originalName}
+                              </TruncatedTooltip>
+                              <ButtonLink
+                                variant="outline"
+                                size="sm"
+                                className="max-w-full"
+                                render={
+                                  <a
+                                    href={proofFile.googleDriveWebViewLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  />
+                                }
+                              >
+                                <ExternalLink data-icon="inline-start" />
+                                <span className="truncate">{proofLabel}</span>
+                              </ButtonLink>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
-                      <TruncatedTooltip
-                        render={
-                          <Badge
-                            variant="secondary"
-                            className="min-w-0 max-w-full truncate"
-                          />
-                        }
-                        content={meta.label}
-                      >
-                        {meta.label}
-                      </TruncatedTooltip>
-                      <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        {formatDateTime(entry.createdAt)}
-                      </span>
+                      <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
+                        <TruncatedTooltip
+                          render={
+                            <Badge
+                              variant="secondary"
+                              className="min-w-0 max-w-full truncate"
+                            />
+                          }
+                          content={meta.label}
+                        >
+                          {meta.label}
+                        </TruncatedTooltip>
+                        <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {formatDateTime(entry.createdAt)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </ViewTransition>
             )
           })}
         </div>

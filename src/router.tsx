@@ -4,6 +4,10 @@ import { routeTree } from './routeTree.gen'
 
 import { DefaultRouteError } from '#/components/default-route-error'
 import { setApiClientRouter } from '#/lib/api-client'
+import {
+  routeTransitionTypes,
+  trackRouteTransitions,
+} from '#/lib/route-transitions'
 import { getContext } from './integrations/tanstack-query/root-provider'
 
 export function getRouter() {
@@ -16,6 +20,10 @@ export function getRouter() {
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultRouteError,
+    // Morph UI page, stack and tab motion on route changes. Types
+    // only apply where the browser supports them; elsewhere there's no
+    // animation (see routeTransitionTypes and styles.css).
+    defaultViewTransition: { types: routeTransitionTypes },
     Wrap: ({ children }) => (
       <QueryClientProvider client={context.queryClient}>
         {children}
@@ -24,6 +32,7 @@ export function getRouter() {
   })
 
   setApiClientRouter(router)
+  if (typeof document !== 'undefined') trackRouteTransitions(router)
 
   return router
 }
