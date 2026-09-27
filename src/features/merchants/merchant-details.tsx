@@ -65,7 +65,7 @@ export function MerchantDetailsLayout({
             </TabsTrigger>
           ))}
         </TabsList>
-        <div data-vt="merchant-tab-panel" className="min-w-0">
+        <div data-vt="tab-panel" className="min-w-0">
           <Outlet />
         </div>
       </Tabs>

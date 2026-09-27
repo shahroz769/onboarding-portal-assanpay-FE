@@ -214,22 +214,55 @@ function SwitchCardSkeleton({
   )
 }
 
+/**
+ * A section in the email sending dialog: title and description stacked above
+ * the controls.
+ */
+function DialogSectionSkeleton({
+  descriptionLines,
+  children,
+}: {
+  descriptionLines: number
+  children: ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <Skeleton className="h-5 w-32" />
+        <div className="flex flex-col">
+          {Array.from({ length: descriptionLines }).map((_, index) => (
+            <div key={index} className="flex h-5 items-center">
+              <Skeleton
+                className={
+                  index === descriptionLines - 1 ? 'h-4 w-3/5' : 'h-4 w-full'
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/** The email sending dialog's body while its settings load. */
 export function EmailSendingSkeleton() {
   return (
-    <PanelSkeleton>
-      <SectionSkeleton descriptionLines={3}>
+    <>
+      <DialogSectionSkeleton descriptionLines={1}>
         <div className="grid gap-3 md:grid-cols-2">
           <SwitchCardSkeleton descriptionLines={2} />
           <SwitchCardSkeleton descriptionLines={2} />
         </div>
-      </SectionSkeleton>
-      <SectionSkeleton descriptionLines={2}>
+      </DialogSectionSkeleton>
+      <DialogSectionSkeleton descriptionLines={1}>
         <div className="flex flex-col gap-3">
           <SwitchCardSkeleton descriptionLines={1} />
           <SwitchCardSkeleton descriptionLines={1} />
         </div>
-      </SectionSkeleton>
-      <SectionSkeleton descriptionLines={5}>
+      </DialogSectionSkeleton>
+      <DialogSectionSkeleton descriptionLines={2}>
         {/* CC / BCC / reply-to: label and count, the chips input (min-h-9)
             and a one-line description each. */}
         <FieldGroup>
@@ -246,11 +279,8 @@ export function EmailSendingSkeleton() {
             </Field>
           ))}
         </FieldGroup>
-      </SectionSkeleton>
-      <SectionSkeleton descriptionLines={2}>
-        <Skeleton className="h-44 w-full rounded-lg" />
-      </SectionSkeleton>
-    </PanelSkeleton>
+      </DialogSectionSkeleton>
+    </>
   )
 }
 

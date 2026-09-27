@@ -1,14 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { EmailSendingSkeleton } from '#/features/configuration/configuration-route-skeleton'
-import { EmailSendingModePanel } from '#/features/configuration/panels/email-sending-mode-panel'
-
+// Email sending settings moved into a dialog on the Email Templates page;
+// old links land there.
 export const Route = createFileRoute('/_app/configuration/email-sending')({
-  staticData: {
-    title: 'Email Sending',
-    subtitle: 'Manage email sending modes and who else receives case emails.',
+  beforeLoad: () => {
+    throw redirect({ to: '/configuration/email-templates', replace: true })
   },
-  pendingMs: 0,
-  pendingComponent: EmailSendingSkeleton,
-  component: EmailSendingModePanel,
 })

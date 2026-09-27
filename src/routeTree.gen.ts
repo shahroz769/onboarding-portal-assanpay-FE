@@ -29,6 +29,7 @@ import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configu
 import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
 import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
 import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.configuration.email-sending'
+import { Route as AppConfigurationEmailTemplatesRouteImport } from './routes/_app.configuration.email-templates'
 import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
 import { Route as AppConfigurationMerchantPortalRouteImport } from './routes/_app.configuration.merchant-portal'
 import { Route as AppConfigurationPaymentMethodsRouteImport } from './routes/_app.configuration.payment-methods'
@@ -149,6 +150,12 @@ const AppConfigurationEmailSendingRoute =
     path: '/email-sending',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
+const AppConfigurationEmailTemplatesRoute =
+  AppConfigurationEmailTemplatesRouteImport.update({
+    id: '/email-templates',
+    path: '/email-templates',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
 const AppConfigurationLimitsAndMdrRoute =
   AppConfigurationLimitsAndMdrRouteImport.update({
     id: '/limits-and-mdr',
@@ -207,15 +214,15 @@ const OnboardingFormResubmitTokenRoute =
   } as any)
 const AppConfigurationEmailTemplatesIndexRoute =
   AppConfigurationEmailTemplatesIndexRouteImport.update({
-    id: '/email-templates/',
-    path: '/email-templates/',
-    getParentRoute: () => AppConfigurationRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppConfigurationEmailTemplatesRoute,
   } as any)
 const AppConfigurationEmailTemplatesTemplateKeyRoute =
   AppConfigurationEmailTemplatesTemplateKeyRouteImport.update({
-    id: '/email-templates/$templateKey',
-    path: '/email-templates/$templateKey',
-    getParentRoute: () => AppConfigurationRoute,
+    id: '/$templateKey',
+    path: '/$templateKey',
+    getParentRoute: () => AppConfigurationEmailTemplatesRoute,
   } as any)
 const AppMerchantsMerchantIdIndexRoute =
   AppMerchantsMerchantIdIndexRouteImport.update({
@@ -266,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
   '/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
+  '/configuration/email-templates': typeof AppConfigurationEmailTemplatesRouteWithChildren
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
   '/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/_app/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/_app/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
   '/_app/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
+  '/_app/configuration/email-templates': typeof AppConfigurationEmailTemplatesRouteWithChildren
   '/_app/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
   '/_app/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
   '/_app/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/configuration/agreements'
     | '/configuration/case-flow-rules'
     | '/configuration/email-sending'
+    | '/configuration/email-templates'
     | '/configuration/limits-and-mdr'
     | '/configuration/merchant-portal'
     | '/configuration/payment-methods'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/_app/configuration/agreements'
     | '/_app/configuration/case-flow-rules'
     | '/_app/configuration/email-sending'
+    | '/_app/configuration/email-templates'
     | '/_app/configuration/limits-and-mdr'
     | '/_app/configuration/merchant-portal'
     | '/_app/configuration/payment-methods'
@@ -619,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfigurationEmailSendingRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
+    '/_app/configuration/email-templates': {
+      id: '/_app/configuration/email-templates'
+      path: '/email-templates'
+      fullPath: '/configuration/email-templates'
+      preLoaderRoute: typeof AppConfigurationEmailTemplatesRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
     '/_app/configuration/limits-and-mdr': {
       id: '/_app/configuration/limits-and-mdr'
       path: '/limits-and-mdr'
@@ -691,17 +709,17 @@ declare module '@tanstack/react-router' {
     }
     '/_app/configuration/email-templates/': {
       id: '/_app/configuration/email-templates/'
-      path: '/email-templates'
+      path: '/'
       fullPath: '/configuration/email-templates/'
       preLoaderRoute: typeof AppConfigurationEmailTemplatesIndexRouteImport
-      parentRoute: typeof AppConfigurationRoute
+      parentRoute: typeof AppConfigurationEmailTemplatesRoute
     }
     '/_app/configuration/email-templates/$templateKey': {
       id: '/_app/configuration/email-templates/$templateKey'
-      path: '/email-templates/$templateKey'
+      path: '/$templateKey'
       fullPath: '/configuration/email-templates/$templateKey'
       preLoaderRoute: typeof AppConfigurationEmailTemplatesTemplateKeyRouteImport
-      parentRoute: typeof AppConfigurationRoute
+      parentRoute: typeof AppConfigurationEmailTemplatesRoute
     }
     '/_app/merchants/$merchantId/': {
       id: '/_app/merchants/$merchantId/'
@@ -763,10 +781,29 @@ const AppCasesRouteWithChildren = AppCasesRoute._addFileChildren(
   AppCasesRouteChildren,
 )
 
+interface AppConfigurationEmailTemplatesRouteChildren {
+  AppConfigurationEmailTemplatesTemplateKeyRoute: typeof AppConfigurationEmailTemplatesTemplateKeyRoute
+  AppConfigurationEmailTemplatesIndexRoute: typeof AppConfigurationEmailTemplatesIndexRoute
+}
+
+const AppConfigurationEmailTemplatesRouteChildren: AppConfigurationEmailTemplatesRouteChildren =
+  {
+    AppConfigurationEmailTemplatesTemplateKeyRoute:
+      AppConfigurationEmailTemplatesTemplateKeyRoute,
+    AppConfigurationEmailTemplatesIndexRoute:
+      AppConfigurationEmailTemplatesIndexRoute,
+  }
+
+const AppConfigurationEmailTemplatesRouteWithChildren =
+  AppConfigurationEmailTemplatesRoute._addFileChildren(
+    AppConfigurationEmailTemplatesRouteChildren,
+  )
+
 interface AppConfigurationRouteChildren {
   AppConfigurationAgreementsRoute: typeof AppConfigurationAgreementsRoute
   AppConfigurationCaseFlowRulesRoute: typeof AppConfigurationCaseFlowRulesRoute
   AppConfigurationEmailSendingRoute: typeof AppConfigurationEmailSendingRoute
+  AppConfigurationEmailTemplatesRoute: typeof AppConfigurationEmailTemplatesRouteWithChildren
   AppConfigurationLimitsAndMdrRoute: typeof AppConfigurationLimitsAndMdrRoute
   AppConfigurationMerchantPortalRoute: typeof AppConfigurationMerchantPortalRoute
   AppConfigurationPaymentMethodsRoute: typeof AppConfigurationPaymentMethodsRoute
@@ -774,14 +811,14 @@ interface AppConfigurationRouteChildren {
   AppConfigurationQueuesRoute: typeof AppConfigurationQueuesRoute
   AppConfigurationSubMerchantsRoute: typeof AppConfigurationSubMerchantsRoute
   AppConfigurationIndexRoute: typeof AppConfigurationIndexRoute
-  AppConfigurationEmailTemplatesTemplateKeyRoute: typeof AppConfigurationEmailTemplatesTemplateKeyRoute
-  AppConfigurationEmailTemplatesIndexRoute: typeof AppConfigurationEmailTemplatesIndexRoute
 }
 
 const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationAgreementsRoute: AppConfigurationAgreementsRoute,
   AppConfigurationCaseFlowRulesRoute: AppConfigurationCaseFlowRulesRoute,
   AppConfigurationEmailSendingRoute: AppConfigurationEmailSendingRoute,
+  AppConfigurationEmailTemplatesRoute:
+    AppConfigurationEmailTemplatesRouteWithChildren,
   AppConfigurationLimitsAndMdrRoute: AppConfigurationLimitsAndMdrRoute,
   AppConfigurationMerchantPortalRoute: AppConfigurationMerchantPortalRoute,
   AppConfigurationPaymentMethodsRoute: AppConfigurationPaymentMethodsRoute,
@@ -789,10 +826,6 @@ const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationQueuesRoute: AppConfigurationQueuesRoute,
   AppConfigurationSubMerchantsRoute: AppConfigurationSubMerchantsRoute,
   AppConfigurationIndexRoute: AppConfigurationIndexRoute,
-  AppConfigurationEmailTemplatesTemplateKeyRoute:
-    AppConfigurationEmailTemplatesTemplateKeyRoute,
-  AppConfigurationEmailTemplatesIndexRoute:
-    AppConfigurationEmailTemplatesIndexRoute,
 }
 
 const AppConfigurationRouteWithChildren =

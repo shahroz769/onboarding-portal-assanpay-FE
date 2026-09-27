@@ -1,11 +1,13 @@
 import type { AnyRouter, ParsedLocation } from '@tanstack/react-router'
 
+import { EMAIL_TEMPLATE_TABS } from '#/features/configuration/email-template-tabs'
 import { MERCHANT_DETAIL_TABS } from '#/features/merchants/merchant-detail-tabs'
 
 // View transition types for route changes, passed to the router as
 // `defaultViewTransition`. styles.css turns each type into Morph UI motion:
 //   page             the content column blurs between sections
-//   tab-next/prev    the merchant detail panel slides toward the new tab
+//   tab-next/prev    the merchant detail or email template panel slides
+//                    toward the new tab
 // Search-only changes (filters, sorting, paging) never animate.
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -19,12 +21,25 @@ function trimPath(pathname: string) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
 }
 
-function merchantTab(pathname: string) {
-  const match = MERCHANT_DETAIL.exec(pathname)
-  if (!match) return null
-  // The bare /merchants/$merchantId redirects to the first tab.
-  const index = match[2] ? MERCHANT_TAB_SLUGS.indexOf(match[2]) : 0
-  return index < 0 ? null : { merchantId: match[1].toLowerCase(), index }
+const EMAIL_TEMPLATES = /^\/configuration\/email-templates(?:\/([\w-]+))?$/
+
+/** The tabbed page a path is on (one per merchant) and which tab. */
+function pageTab(pathname: string) {
+  const merchant = MERCHANT_DETAIL.exec(pathname)
+  if (merchant) {
+    // The bare /merchants/$merchantId redirects to the first tab.
+    const index = merchant[2] ? MERCHANT_TAB_SLUGS.indexOf(merchant[2]) : 0
+    return index < 0 ? null : { page: merchant[1].toLowerCase(), index }
+  }
+  const template = EMAIL_TEMPLATES.exec(pathname)
+  if (template) {
+    // The bare /configuration/email-templates redirects to the first tab.
+    const index = template[1]
+      ? EMAIL_TEMPLATE_TABS.findIndex((tab) => tab.key === template[1])
+      : 0
+    return index < 0 ? null : { page: 'email-templates', index }
+  }
+  return null
 }
 
 type LocationChange = {
@@ -94,9 +109,9 @@ function pageTransitionTypes({
   const from = trimPath(fromLocation.pathname)
   const to = trimPath(toLocation.pathname)
 
-  const fromTab = merchantTab(from)
-  const toTab = merchantTab(to)
-  if (fromTab && toTab && fromTab.merchantId === toTab.merchantId) {
+  const fromTab = pageTab(from)
+  const toTab = pageTab(to)
+  if (fromTab && toTab && fromTab.page === toTab.page) {
     if (fromTab.index === toTab.index) return false
     return [toTab.index > fromTab.index ? 'tab-next' : 'tab-prev']
   }

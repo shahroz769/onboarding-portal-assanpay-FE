@@ -5,13 +5,26 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Building2Icon,
   ClipboardCopyIcon,
+  Save,
   SendIcon,
+  Settings2Icon,
   UserRoundIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { EmailChipsInput } from '#/components/email-chips-input'
 import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '#/components/ui/dialog'
 import {
   Field,
   FieldContent,
@@ -21,6 +34,7 @@ import {
   FieldLabel,
   FieldTitle,
 } from '#/components/ui/field'
+import { Spinner } from '#/components/ui/spinner'
 import { Switch } from '#/components/ui/switch'
 import { cn } from '#/lib/utils'
 
@@ -42,13 +56,7 @@ import {
 } from '#/schemas/configuration.schema'
 
 import { EmailSendingSkeleton } from '../configuration-route-skeleton'
-import {
-  ConfigurationHeaderActions,
-  ConfigurationPanel,
-  ConfigurationSaveButton,
-  ConfigurationSection,
-  ConfigurationLoadError,
-} from './configuration-panel-shared'
+import { ConfigurationLoadError } from './configuration-panel-shared'
 
 const modes = [
   {
@@ -179,7 +187,13 @@ function SwitchCard({
   )
 }
 
-function PreviewRow({ label, children }: { label: string; children: ReactNode }) {
+function PreviewRow({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
   return (
     <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-baseline gap-3 px-4 py-2.5">
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
@@ -257,8 +271,55 @@ function AddressingPreview({
   )
 }
 
+function DialogSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="text-sm text-pretty text-muted-foreground">
+          {description}
+        </p>
+      </div>
+      {children}
+    </section>
+  )
+}
+
 // ─── Email Sending ────────────────────────────────────────────────────────────
-export function EmailSendingModePanel() {
+
+/** The sending modes and case email recipients, edited in a dialog. */
+export function EmailSendingSettingsDialog() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+        <Settings2Icon data-icon="inline-start" />
+        Sending settings
+      </DialogTrigger>
+      {/* The popup unmounts when closed, so unsaved edits are dropped. */}
+      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>Email sending</DialogTitle>
+          <DialogDescription>
+            Manage email sending modes and who else receives case emails.
+          </DialogDescription>
+        </DialogHeader>
+        <EmailSendingSettingsForm onDone={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EmailSendingSettingsForm({ onDone }: { onDone: () => void }) {
   const modeQuery = useQuery(emailSendingModeQueryOptions())
   const recipientsQuery = useQuery(emailRecipientsQueryOptions())
   const modeMutation = useUpdateEmailSendingModeMutation()
@@ -307,21 +368,29 @@ export function EmailSendingModePanel() {
     })
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (hasError) return
+    const saves: Promise<unknown>[] = []
     if (modeForm && mode) {
-      modeMutation.mutate(mode, { onSuccess: () => setModeForm(null) })
+      saves.push(modeMutation.mutateAsync(mode).then(() => setModeForm(null)))
     }
     if (recipientsForm && recipientsResult?.success) {
-      recipientsMutation.mutate(recipientsResult.data, {
-        onSuccess: () => setRecipientsForm(null),
-      })
+      saves.push(
+        recipientsMutation
+          .mutateAsync(recipientsResult.data)
+          .then(() => setRecipientsForm(null)),
+      )
     }
+    // Each mutation toasts its own result. On a failure the dialog stays
+    // open with the unsaved part still in the form.
+    const results = await Promise.allSettled(saves)
+    if (results.every((result) => result.status === 'fulfilled')) onDone()
   }
 
   const loadError = modeQuery.error ?? recipientsQuery.error
+  let body: ReactNode
   if (loadError && (!modeQuery.data || !recipientsQuery.data)) {
-    return (
+    body = (
       <ConfigurationLoadError
         title="Email sending settings"
         error={loadError}
@@ -331,24 +400,12 @@ export function EmailSendingModePanel() {
         }}
       />
     )
-  }
-
-  if (!mode || !recipients) {
-    return <EmailSendingSkeleton />
-  }
-
-  return (
-    <>
-      <ConfigurationHeaderActions>
-        <ConfigurationSaveButton
-          dirty={dirty}
-          isPending={isSaving}
-          disabled={hasError}
-          onClick={handleSave}
-        />
-      </ConfigurationHeaderActions>
-      <ConfigurationPanel>
-        <ConfigurationSection
+  } else if (!mode || !recipients) {
+    body = <EmailSendingSkeleton />
+  } else {
+    body = (
+      <>
+        <DialogSection
           title="Sending modes"
           description="How agents can send case emails from the portal. At least one mode stays on."
         >
@@ -371,9 +428,9 @@ export function EmailSendingModePanel() {
               )
             })}
           </div>
-        </ConfigurationSection>
+        </DialogSection>
 
-        <ConfigurationSection
+        <DialogSection
           title="Automatic copies"
           description="People copied on every case email, worked out per email."
         >
@@ -392,9 +449,9 @@ export function EmailSendingModePanel() {
               />
             ))}
           </div>
-        </ConfigurationSection>
+        </DialogSection>
 
-        <ConfigurationSection
+        <DialogSection
           title="Fixed recipients"
           description="Addresses added to every case email sent through Resend. Manual (Gmail) previews list the same addresses. Press Enter or comma after each address, or paste a list."
         >
@@ -433,15 +490,43 @@ export function EmailSendingModePanel() {
               )
             })}
           </FieldGroup>
-        </ConfigurationSection>
+        </DialogSection>
 
-        <ConfigurationSection
+        <DialogSection
           title="Preview"
           description="How a case email is addressed with the settings above, including unsaved changes."
         >
           <AddressingPreview recipients={recipients} />
-        </ConfigurationSection>
-      </ConfigurationPanel>
+        </DialogSection>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
+        {body}
+      </div>
+      <DialogFooter className="items-center border-t px-6 py-4">
+        {dirty && !isSaving ? (
+          <span className="mr-auto hidden text-sm text-muted-foreground sm:inline">
+            Unsaved changes
+          </span>
+        ) : null}
+        <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+        <Button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={!dirty || isSaving || hasError}
+        >
+          {isSaving ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <Save data-icon="inline-start" />
+          )}
+          Save changes
+        </Button>
+      </DialogFooter>
     </>
   )
 }

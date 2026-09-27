@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react'
 import { cn } from '#/lib/utils'
 
 import { getNavSubItemPath } from '#/config/navigation'
-import type { NavItem as SidebarNavItem } from '#/config/navigation'
+import type { NavItem as SidebarNavItem, NavSubItem } from '#/config/navigation'
 import {
   Collapsible,
   CollapsibleContent,
@@ -84,6 +84,12 @@ function writeStoredNavMenuState(nextState: Record<string, boolean>) {
   }
 }
 
+/** A sub-item's page, or a page nested under it (like an email template tab). */
+function isSubItemActive(pathname: string, subItem: NavSubItem) {
+  const path = getNavSubItemPath(subItem)
+  return pathname === path || pathname.startsWith(`${path}/`)
+}
+
 function NavItem({
   item,
   pathname,
@@ -97,7 +103,7 @@ function NavItem({
       ? pathname === item.url
       : pathname === item.url || pathname.startsWith(`${activePrefix}/`)
   const hasActiveChild = Boolean(
-    item.items?.some((subItem) => pathname === getNavSubItemPath(subItem)),
+    item.items?.some((subItem) => isSubItemActive(pathname, subItem)),
   )
   const shouldBeOpen = isDirectActive || hasActiveChild
   const [open, setOpen] = useState(() => {
@@ -180,7 +186,7 @@ function NavItem({
                       // this one cannot be typed here.
                       <Link to={subItem.url} params={subItem.params as never} />
                     }
-                    isActive={pathname === subItemPath}
+                    isActive={isSubItemActive(pathname, subItem)}
                     className="w-full"
                   >
                     <span>{subItem.title}</span>

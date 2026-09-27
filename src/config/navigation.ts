@@ -30,17 +30,6 @@ export function getNavSubItemPath(item: NavSubItem): string {
   )
 }
 
-// The emails in the backend's email template catalog, in the order an
-// onboarding runs, each with its own page under Configuration.
-export const EMAIL_TEMPLATE_NAV = [
-  { key: 'document-resubmission', title: 'Resubmission Request' },
-  { key: 'mid-creation', title: 'Portal Credentials' },
-  { key: 'agreement', title: 'Agreement' },
-  { key: 'live-activation', title: 'Live Activation' },
-  { key: 'user-password-invite', title: 'Password Setup' },
-  { key: 'user-password-reset', title: 'Password Reset' },
-] as const
-
 export type NavItem = {
   title: string
   url: AppPath
@@ -140,16 +129,10 @@ const navItems: NavItem[] = [
         group: 'Case Workflow',
       },
       {
-        title: 'Email Sending',
-        url: '/configuration/email-sending',
+        title: 'Emails',
+        url: '/configuration/email-templates',
         group: 'Communication',
       },
-      ...EMAIL_TEMPLATE_NAV.map(({ key, title }) => ({
-        title,
-        url: '/configuration/email-templates/$templateKey' as const,
-        params: { templateKey: key },
-        group: 'Email Templates',
-      })),
     ],
   },
 ]

@@ -6,6 +6,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import { MonitorIcon, SmartphoneIcon } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import { Skeleton } from '#/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { emailTemplatePreviewQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
@@ -293,6 +294,9 @@ function EmailFrame({
   activeVariable: string | null
 }) {
   const [height, setHeight] = useState(640)
+  // Hidden until the email has loaded and the frame has its height, so the
+  // blank frame and the resize never show.
+  const [ready, setReady] = useState(false)
   const observerRef = useRef<ResizeObserver | null>(null)
   const activeRef = useRef(activeVariable)
 
@@ -329,6 +333,7 @@ function EmailFrame({
       )
     }
     measure()
+    setReady(true)
     observerRef.current = new ResizeObserver(measure)
     observerRef.current.observe(body)
   }
@@ -338,17 +343,24 @@ function EmailFrame({
     : PREVIEW_STYLE + html
 
   return (
-    <iframe
-      ref={ref}
-      title="Email preview"
-      srcDoc={srcDoc}
-      sandbox="allow-same-origin"
-      onLoad={handleLoad}
-      style={{ height }}
-      className={cn(
-        'mx-auto block w-full rounded-md bg-white shadow-xs transition-[max-width] duration-300 ease-out motion-reduce:transition-none',
-        width === 'mobile' ? 'max-w-94' : 'max-w-full',
-      )}
-    />
+    <div className="relative">
+      {/* Same block as EmailTemplateSkeleton, so loading carries on from it. */}
+      {!ready ? (
+        <Skeleton className="absolute inset-0 h-160 w-full rounded-md" />
+      ) : null}
+      <iframe
+        ref={ref}
+        title="Email preview"
+        srcDoc={srcDoc}
+        sandbox="allow-same-origin"
+        onLoad={handleLoad}
+        style={{ height }}
+        className={cn(
+          'mx-auto block w-full rounded-md bg-white shadow-xs transition-[max-width,opacity] duration-300 ease-out motion-reduce:transition-none',
+          width === 'mobile' ? 'max-w-94' : 'max-w-full',
+          ready ? 'opacity-100' : 'opacity-0',
+        )}
+      />
+    </div>
   )
 }
