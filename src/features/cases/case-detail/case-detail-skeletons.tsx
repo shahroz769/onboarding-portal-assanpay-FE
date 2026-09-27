@@ -1,18 +1,17 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 
 const STAGE_COUNT = 4
 const WORKSPACE_FIELD_COUNT = 3
 
+// Bar heights match the real text's line heights, so nothing moves when the
+// data replaces them: text-xs is a 16px line (h-4), text-sm a 20px line (h-5).
+
 function InfoBlockSkeleton() {
   return (
     <div className="flex flex-col gap-1 rounded-xl border bg-muted/20 px-3 py-2.5">
-      <Skeleton className="h-3 w-24" />
-      <Skeleton className="h-4 w-32 max-w-full" />
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-5 w-32 max-w-full" />
     </div>
   )
 }
@@ -48,7 +47,7 @@ function CaseSlaCardSkeleton() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Skeleton className="size-4 rounded-full" />
-            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-5 w-8" />
           </div>
           <Skeleton className="h-5 w-16 rounded-full" />
         </div>
@@ -65,9 +64,16 @@ function CaseSlaCardSkeleton() {
 export function CaseQueueWorkspaceSkeleton() {
   return (
     <Card>
+      {/* Mirrors CaseCardHeading, which every workflow panel opens with: a
+          40px icon chip beside the title (16px) and description (20px). */}
       <CardHeader>
-        <Skeleton className="h-5 w-44" />
-        <Skeleton className="h-4 w-80 max-w-full" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 shrink-0 rounded-lg" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <Skeleton className="h-4 w-44 max-w-full" />
+            <Skeleton className="h-5 w-80 max-w-full" />
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {Array.from({ length: WORKSPACE_FIELD_COUNT }).map((_, index) => (
@@ -82,6 +88,21 @@ export function CaseQueueWorkspaceSkeleton() {
   )
 }
 
+/**
+ * The Resolution tab's primary action card: a one-line hint (text-sm) above a
+ * full-width button, like the real card.
+ */
+export function ResolutionActionCardSkeleton() {
+  return (
+    <div className="rounded-xl border bg-background p-3">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-5 w-4/5" />
+        <Skeleton className="h-9 w-full rounded-md" />
+      </div>
+    </div>
+  )
+}
+
 function CaseSidePanelSkeleton() {
   return (
     <Card className="min-h-128 w-full min-w-0 max-w-full gap-4 overflow-hidden py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
@@ -93,13 +114,7 @@ function CaseSidePanelSkeleton() {
         </div>
 
         <div className="flex h-full min-h-0 flex-col gap-3">
-          <div className="rounded-xl border bg-background p-3">
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-              <Skeleton className="mt-1 h-9 w-40 rounded-md" />
-            </div>
-          </div>
+          <ResolutionActionCardSkeleton />
         </div>
       </CardContent>
     </Card>

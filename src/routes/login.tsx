@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
+import { AppShellPending } from '#/components/app-shell-pending'
 import { LoginForm } from '#/components/login-form'
 import { sanitizeRedirect } from '#/features/auth/redirect'
 import { redirectAuthenticatedUser } from '#/features/auth/route-guards'
@@ -10,6 +11,14 @@ const loginSearchSchema = z.object({
 
 export const Route = createFileRoute('/login')({
   validateSearch: loginSearchSchema,
+  // Client-only, like the signed-in app (_app): the session lives in a
+  // cookie on the API's domain, which the SSR server can't see, so a
+  // server-rendered /login always looked signed out, and the router doesn't
+  // re-run beforeLoad after hydrating it. Rendering on the client lets the
+  // check below send a signed-in visitor on instead of showing the form.
+  ssr: false,
+  // Server-rendered in place of this ssr:false route while the check runs.
+  pendingComponent: AppShellPending,
   beforeLoad: async ({ search, context, preload }) => {
     await redirectAuthenticatedUser({
       auth: context.auth,

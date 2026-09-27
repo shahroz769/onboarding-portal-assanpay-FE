@@ -59,6 +59,7 @@ import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { AgreementRoundsCard } from './agreement-rounds-card'
 import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
+import { ResolutionActionCardSkeleton } from './case-detail-skeletons'
 import { DocumentsReviewSummaryModal } from './documents-review-summary-modal'
 import { RejectionRoundsCard } from './rejection-rounds-card'
 import { resolveQueueWorkflowType } from './queue-registry'
@@ -969,18 +970,9 @@ function AwaitingClientAlert({
 function ResolutionTabSkeleton() {
   return (
     <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
-      <div className="grid min-w-0 grid-cols-[calc(var(--spacing)*4)_1fr] gap-x-3 rounded-lg border bg-card px-4 py-3">
-        <Skeleton className="mt-0.5 size-4 rounded-full" />
-        <Skeleton className="h-4 w-36 max-w-full" />
-      </div>
-
-      <div className="min-w-0 rounded-xl border bg-background p-3">
-        <div className="flex min-w-0 flex-col gap-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-4/5" />
-          <Skeleton className="mt-1 h-9 w-36 rounded-md" />
-        </div>
-      </div>
+      {/* Same card as the page skeleton's side panel, so this fallback and
+          the real card line up. */}
+      <ResolutionActionCardSkeleton />
 
       <div className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card py-4 shadow-sm">
         <div className="flex min-w-0 items-start gap-3 px-4">
@@ -1079,9 +1071,12 @@ function ChatterTabSkeleton() {
 function HistoryTabSkeleton() {
   return (
     <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden rounded-xl border bg-muted/10 p-3">
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-3 w-full max-w-72" />
+      {/* Bars match the real line heights: the heading and actor names are
+          text-sm (20px lines), details are leading-6 (24px lines). */}
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-5 w-full" />
+        <Skeleton className="h-5 w-3/5" />
       </div>
       <div className="flex min-w-0 flex-col gap-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -1095,12 +1090,18 @@ function HistoryTabSkeleton() {
             <Skeleton className="absolute left-3.5 top-1/2 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full" />
             <div className="relative rounded-xl border bg-background p-4">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <Skeleton className="h-4 w-28 max-w-full" />
-                  <Skeleton className="mt-2 h-4 w-full" />
-                  {index % 2 === 0 ? (
-                    <Skeleton className="mt-2 h-4 w-3/4" />
-                  ) : null}
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-5 w-28 max-w-full" />
+                  <div className="flex flex-col">
+                    <div className="flex h-6 items-center">
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                    {index % 2 === 0 ? (
+                      <div className="flex h-6 items-center">
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
                   <Skeleton className="h-5 w-28 max-w-full rounded-full" />

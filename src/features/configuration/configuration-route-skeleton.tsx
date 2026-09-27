@@ -1,66 +1,244 @@
+import type { ReactNode } from 'react'
+
+import { DataTable } from '#/components/data-table'
+import type { DataTableColumnDef } from '#/components/data-table'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Field } from '#/components/ui/field'
 import { Skeleton } from '#/components/ui/skeleton'
 
-function FieldSkeleton() {
+// Loading states for the configuration pages, shown while a page's code loads
+// (route pendingComponent) and again by the settings panels while their data
+// loads. Each mirrors its page's real layout so nothing shifts when the data
+// replaces it: bars take the height of the real text line (text-xs 16px,
+// text-sm 20px, text-base 24px, field labels 1lh of text-sm leading-snug).
+
+// ─── Tables ─────────────────────────────────────────────────────────────────
+
+type SkeletonColumn = { id: string; header: ReactNode; width: number }
+
+const rightAligned = (label: string) => (
+  <span className="block text-right">{label}</span>
+)
+
+/**
+ * The real DataTable in its loading state, with the page's real headers and
+ * column widths, so the skeleton, the data loading and the loaded table are
+ * one layout.
+ */
+function ConfigurationTableSkeleton({
+  columns,
+}: {
+  columns: SkeletonColumn[]
+}) {
+  const tableColumns: DataTableColumnDef<never>[] = columns.map((column) => ({
+    ...column,
+    cell: () => null,
+  }))
   return (
-    <Field>
-      <Skeleton className="h-4 w-28" />
-      <Skeleton className="h-9 w-full" />
+    <DataTable columns={tableColumns} data={[]} getRowId={() => ''} isLoading />
+  )
+}
+
+export function MethodListSkeleton() {
+  return (
+    <ConfigurationTableSkeleton
+      columns={[
+        { id: 'label', header: 'Method', width: 260 },
+        {
+          id: 'commissionRate',
+          header: rightAligned('Commission'),
+          width: 130,
+        },
+        { id: 'testing', header: rightAligned('Testing limit'), width: 220 },
+        { id: 'live', header: rightAligned('Live limit'), width: 220 },
+        { id: 'actions', header: rightAligned('Actions'), width: 110 },
+      ]}
+    />
+  )
+}
+
+export function AgreementsSkeleton() {
+  return (
+    <ConfigurationTableSkeleton
+      columns={[
+        { id: 'businessType', header: 'Business Type', width: 240 },
+        { id: 'currentDraft', header: 'Current Draft', width: 280 },
+        { id: 'folder', header: 'Folder', width: 240 },
+        { id: 'upload', header: rightAligned('Upload'), width: 280 },
+      ]}
+    />
+  )
+}
+
+export function SubMerchantsSkeleton() {
+  return (
+    <ConfigurationTableSkeleton
+      columns={[
+        { id: 'name', header: 'Name', width: 240 },
+        { id: 'sellerCode', header: 'Seller Code', width: 180 },
+        { id: 'updatedAt', header: 'Updated', width: 200 },
+        { id: 'actions', header: rightAligned('Actions'), width: 100 },
+      ]}
+    />
+  )
+}
+
+export function QueuesSkeleton() {
+  return (
+    <ConfigurationTableSkeleton
+      columns={[
+        { id: 'name', header: 'Queue', width: 220 },
+        { id: 'slug', header: 'Slug', width: 180 },
+        { id: 'workflowType', header: 'Workflow', width: 160 },
+        { id: 'prefix', header: 'Prefix', width: 100 },
+        { id: 'sla', header: 'SLA', width: 140 },
+        { id: 'status', header: 'Lifecycle', width: 120 },
+        { id: 'actions', header: rightAligned('Actions'), width: 200 },
+      ]}
+    />
+  )
+}
+
+// ─── Settings panels ────────────────────────────────────────────────────────
+
+/** ConfigurationPanel: sections stacked in one bordered card. */
+function PanelSkeleton({ children }: { children: ReactNode }) {
+  return <div className="divide-y rounded-xl border bg-card">{children}</div>
+}
+
+/**
+ * ConfigurationSection: title and description on the left (a 15rem column on
+ * large screens), the controls on the right. `descriptionLines` is how many
+ * lines the real description wraps to in that column.
+ */
+function SectionSkeleton({
+  descriptionLines,
+  children,
+}: {
+  descriptionLines: number
+  children: ReactNode
+}) {
+  return (
+    <section className="grid gap-4 p-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-10">
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-5 w-32" />
+        <div className="flex flex-col">
+          {Array.from({ length: descriptionLines }).map((_, index) => (
+            <div key={index} className="flex h-5 items-center">
+              <Skeleton
+                className={
+                  index === descriptionLines - 1 ? 'h-4 w-3/5' : 'h-4 w-full'
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  )
+}
+
+/** A labelled input: the label is one text-sm leading-snug line. */
+function FieldSkeleton({
+  className,
+  control = 'h-9',
+}: {
+  className?: string
+  control?: string
+}) {
+  return (
+    <Field className={className}>
+      <Skeleton className="h-lh w-28 text-sm leading-snug" />
+      <Skeleton className={`w-full rounded-md ${control}`} />
     </Field>
   )
 }
 
-function TableSkeleton({ columns }: { columns: number }) {
+export function MerchantPortalSkeleton() {
   return (
-    <div className="overflow-hidden rounded-md border bg-background">
-      <div
-        className="grid gap-4 border-b bg-muted px-3 py-3"
-        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` }}
-      >
-        {Array.from({ length: columns }).map((_, index) => (
-          <Skeleton key={index} className="h-4 w-24" />
-        ))}
-      </div>
-      {Array.from({ length: 6 }).map((_, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="grid h-12 items-center gap-4 border-b px-3 last:border-b-0"
-          style={{
-            gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`,
-          }}
-        >
-          {Array.from({ length: columns }).map((_, index) => (
-            <Skeleton key={index} className="h-4 w-full max-w-40" />
-          ))}
+    <PanelSkeleton>
+      <SectionSkeleton descriptionLines={2}>
+        <FieldSkeleton />
+      </SectionSkeleton>
+      <SectionSkeleton descriptionLines={2}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
         </div>
-      ))}
-    </div>
+      </SectionSkeleton>
+      <SectionSkeleton descriptionLines={2}>
+        <div className="flex flex-col gap-4">
+          {/* Office address textarea (min-h-16) */}
+          <FieldSkeleton control="h-16" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <FieldSkeleton />
+            <FieldSkeleton />
+            <FieldSkeleton />
+          </div>
+        </div>
+      </SectionSkeleton>
+    </PanelSkeleton>
   )
 }
 
-function SettingsPanelSkeleton({ sections }: { sections: number[] }) {
+export function LinkDeadlinesSkeleton() {
   return (
-    <div className="divide-y rounded-xl border bg-card">
-      {sections.map((fieldCount, index) => (
-        <div
-          key={index}
-          className="grid gap-4 p-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-10"
-        >
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-full max-w-52" />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {Array.from({ length: fieldCount }).map((_, fieldIndex) => (
-              <FieldSkeleton key={fieldIndex} />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <>
+      <PanelSkeleton>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <SectionSkeleton key={index} descriptionLines={2}>
+            <FieldSkeleton className="max-w-xs" />
+          </SectionSkeleton>
+        ))}
+      </PanelSkeleton>
+      {/* The note under the panel (text-xs) */}
+      <Skeleton className="mt-3 h-4 w-72 max-w-full" />
+    </>
   )
 }
+
+export function EmailSendingSkeleton() {
+  return (
+    <PanelSkeleton>
+      <SectionSkeleton descriptionLines={3}>
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 2 }).map((_, index) => (
+            // A checkbox card: the checkbox beside a label and a one-line
+            // description (text-sm leading-normal, 21px).
+            <div
+              key={index}
+              className="flex items-start gap-3 rounded-lg border p-4"
+            >
+              <Skeleton className="mt-0.5 size-4 shrink-0 rounded-sm" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-lh w-28 text-sm leading-snug" />
+                <div className="flex h-5.25 items-center">
+                  <Skeleton className="h-4 w-4/5" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionSkeleton>
+    </PanelSkeleton>
+  )
+}
+
+export function CaseTriggeringSkeleton() {
+  return (
+    <PanelSkeleton>
+      <SectionSkeleton descriptionLines={3}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
+        </div>
+      </SectionSkeleton>
+    </PanelSkeleton>
+  )
+}
+
+// ─── Limits & MDR ───────────────────────────────────────────────────────────
 
 export function LimitsAndMdrSkeleton() {
   return (
@@ -75,55 +253,50 @@ export function LimitsAndMdrSkeleton() {
   )
 }
 
+/** MethodGroup: an eyebrow and title, then one card per method. */
 function MethodPricingGroupSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-3 w-24" />
-      <Skeleton className="h-5 w-40" />
-      {Array.from({ length: 2 }).map((_, index) => (
-        <div key={index} className="rounded-md border bg-muted/20 p-3">
-          <Skeleton className="h-4 w-36" />
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
+    <section className="flex flex-col gap-3">
+      <div className="border-b pb-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-1 h-6 w-40" />
+      </div>
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <MethodPricingCardSkeleton key={index} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** MethodPricingCard: name and commission box, then two limit boxes. */
+function MethodPricingCardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <Skeleton className="h-6 w-32" />
+        <div className="flex flex-col items-end rounded-md bg-background px-3 py-2 ring-1 ring-border">
+          <Skeleton className="h-4 w-18" />
+          <Skeleton className="h-6 w-10" />
         </div>
-      ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded-md bg-background p-3 ring-1 ring-border"
+          >
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-1 h-6 w-40 max-w-full" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-export function MethodListSkeleton() {
-  return <TableSkeleton columns={5} />
-}
-
-export function AgreementsSkeleton() {
-  return <TableSkeleton columns={4} />
-}
-
-export function SubMerchantsSkeleton() {
-  return <TableSkeleton columns={4} />
-}
-
-export function QueuesSkeleton() {
-  return <TableSkeleton columns={5} />
-}
-
-export function MerchantPortalSkeleton() {
-  return <SettingsPanelSkeleton sections={[1, 2, 4]} />
-}
-
-export function LinkDeadlinesSkeleton() {
-  return <SettingsPanelSkeleton sections={[1, 1, 1]} />
-}
-
-export function EmailSendingSkeleton() {
-  return <SettingsPanelSkeleton sections={[2]} />
-}
-
-export function CaseTriggeringSkeleton() {
-  return <SettingsPanelSkeleton sections={[2]} />
-}
+// ─── Case flow rules ────────────────────────────────────────────────────────
 
 export function WorkflowBuilderSkeleton() {
   return (
