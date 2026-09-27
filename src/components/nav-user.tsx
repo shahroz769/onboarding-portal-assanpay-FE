@@ -20,6 +20,14 @@ import {
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 
+/** First letters of the first and last name, e.g. "Jane Q Doe" -> "JD". */
+function getFirstLastInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'U'
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : ''
+  return (parts[0][0] + last).toUpperCase()
+}
+
 /** Account menu at the right end of the top bar. */
 export function NavUser() {
   const { user } = useAuth()
@@ -51,17 +59,14 @@ export function NavUser() {
       <DropdownMenuTrigger
         render={
           <Button
-            variant="ghost"
+            variant="secondary"
             size="icon"
-            className="rounded-full"
+            className="text-xs font-medium hover:bg-foreground/10 dark:hover:bg-foreground/15"
             aria-label={`Account: ${user.name}`}
           />
         }
       >
-        <Avatar className="size-7">
-          <AvatarImage src={avatarSrc} alt="" />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
+        {getFirstLastInitials(user.name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-64">
         <DropdownMenuGroup>

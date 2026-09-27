@@ -78,8 +78,9 @@ export function ThemeToggle() {
             <DropdownMenuTrigger
               render={
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="icon"
+                  className="hover:bg-foreground/10 dark:hover:bg-foreground/15"
                   aria-label={`Theme: ${selectedTheme.label}`}
                 />
               }

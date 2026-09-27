@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { cloneElement, useEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
@@ -9,6 +9,11 @@ import { useTheme } from 'next-themes'
 import { Badge } from '#/components/ui/badge'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { emailTemplatePreviewQueryOptions } from '#/hooks/use-configuration-query'
 import { cn } from '#/lib/utils'
 import type { EmailTemplatePreview } from '#/schemas/configuration.schema'
@@ -47,6 +52,9 @@ function EmailTemplateView({ template }: { template: EmailTemplatePreview }) {
   const [width, setWidth] = useState<PreviewWidth>('desktop')
   const [activeVariable, setActiveVariable] = useState<string | null>(null)
   const frameRef = useRef<HTMLIFrameElement>(null)
+  const descriptions = new Map(
+    template.variables.map((variable) => [variable.name, variable.description]),
+  )
 
   /** Scrolls the first place a variable appears into view. */
   function revealVariable(name: string) {
@@ -109,6 +117,7 @@ function EmailTemplateView({ template }: { template: EmailTemplatePreview }) {
             <TokenText
               text={template.subject}
               activeVariable={activeVariable}
+              descriptions={descriptions}
             />
           </dd>
         </dl>
@@ -119,6 +128,7 @@ function EmailTemplateView({ template }: { template: EmailTemplatePreview }) {
               html={template.html}
               width={width}
               activeVariable={activeVariable}
+              descriptions={descriptions}
             />
           ) : (
             <pre
@@ -130,6 +140,7 @@ function EmailTemplateView({ template }: { template: EmailTemplatePreview }) {
               <TokenText
                 text={template.plainText ?? ''}
                 activeVariable={activeVariable}
+                descriptions={descriptions}
                 markPlainText
               />
             </pre>
@@ -245,43 +256,53 @@ const TOKEN_SPLIT = /(\{\{[\w.]+\}\})/g
 function TokenText({
   text,
   activeVariable,
+  descriptions,
   markPlainText = false,
 }: {
   text: string
   activeVariable: string | null
+  descriptions: ReadonlyMap<string, string>
   /** Tag tokens so a click in the variables list can scroll to them. */
   markPlainText?: boolean
 }) {
   return text.split(TOKEN_SPLIT).map((part, index) => {
     if (index % 2 === 0) return part
     const name = part.slice(2, -2)
-    return (
+    const token = (
       <span
-        key={index}
         data-plain-var={markPlainText ? name : undefined}
         className={cn(
           'rounded-sm bg-primary/10 px-0.75 font-semibold text-primary transition-[background-color,box-shadow] duration-150',
           activeVariable === name && 'bg-primary/20 ring-2 ring-primary',
         )}
-      >
-        {part}
-      </span>
+      />
+    )
+    const description = descriptions.get(name)
+    if (!description) return cloneElement(token, { key: index }, part)
+    return (
+      <Tooltip key={index}>
+        <TooltipTrigger render={token}>{part}</TooltipTrigger>
+        <TooltipContent className="max-w-64">{description}</TooltipContent>
+      </Tooltip>
     )
   })
 }
 
 // Links point at `{{variable}}` placeholders, so clicking them would only
-// break the frame. The hovered variable gets the same ring as TokenText, in
-// the theme's --primary.
+// break the frame. Variables inside links still take the pointer for their
+// tooltip; EmailFrame cancels the click. The hovered variable gets the same
+// ring as TokenText, in the theme's --primary.
 const PREVIEW_STYLE = {
   light: `<style>
 a{pointer-events:none;cursor:default;}
-[data-var]{transition:background-color .15s,box-shadow .15s;}
+a [data-var]{pointer-events:auto;}
+[data-var]{cursor:default;transition:background-color .15s,box-shadow .15s;}
 [data-var][data-active]{background-color:rgba(74,109,101,.22)!important;box-shadow:0 0 0 2px rgb(74,109,101);}
 </style>`,
   dark: `<style>
 a{pointer-events:none;cursor:default;}
-[data-var]{background-color:rgba(106,174,159,.16)!important;color:rgb(106,174,159)!important;transition:background-color .15s,box-shadow .15s;}
+a [data-var]{pointer-events:auto;}
+[data-var]{cursor:default;background-color:rgba(106,174,159,.16)!important;color:rgb(106,174,159)!important;transition:background-color .15s,box-shadow .15s;}
 [data-var][data-active]{background-color:rgba(106,174,159,.28)!important;box-shadow:0 0 0 2px rgb(106,174,159);}
 </style>`,
 }
@@ -311,12 +332,16 @@ function EmailFrame({
   html,
   width,
   activeVariable,
+  descriptions,
 }: {
   ref: RefObject<HTMLIFrameElement | null>
   html: string
   width: PreviewWidth
   activeVariable: string | null
+  descriptions: ReadonlyMap<string, string>
 }) {
+  // The token under the pointer inside the frame, for the tooltip.
+  const [hovered, setHovered] = useState<HTMLElement | null>(null)
   const [height, setHeight] = useState(640)
   // Hidden until the email has loaded and the frame has its height, so the
   // blank frame and the resize never show.
@@ -343,6 +368,14 @@ function EmailFrame({
     const body = doc?.body
     if (!doc || !body) return
     markActive(doc, activeRef.current)
+    // Listeners from this page still run in the script-less frame; a reload
+    // replaces the document, so they never stack.
+    doc.addEventListener('mouseover', (event) => {
+      const target = event.target as Element | null
+      setHovered(target?.closest<HTMLElement>('[data-var]') ?? null)
+    })
+    doc.addEventListener('mouseleave', () => setHovered(null))
+    doc.addEventListener('click', (event) => event.preventDefault())
     observerRef.current?.disconnect()
     // The body, not the document: the document is never shorter than the
     // frame, so it could grow the frame but never shrink it back.
@@ -361,6 +394,27 @@ function EmailFrame({
     observerRef.current = new ResizeObserver(measure)
     observerRef.current.observe(body)
   }
+
+  const description = hovered
+    ? descriptions.get(hovered.dataset.var ?? '')
+    : undefined
+  // The token's box is relative to the frame, so shift it by the frame's own
+  // position. contextElement lets the tooltip follow page scrolls.
+  const anchor = hovered
+    ? {
+        contextElement: ref.current ?? undefined,
+        getBoundingClientRect: () => {
+          const token = hovered.getBoundingClientRect()
+          const frame = ref.current?.getBoundingClientRect()
+          return new DOMRect(
+            token.x + (frame?.x ?? 0),
+            token.y + (frame?.y ?? 0),
+            token.width,
+            token.height,
+          )
+        },
+      }
+    : null
 
   const { resolvedTheme } = useTheme()
   const srcDoc = themeEmailHtml(
@@ -387,6 +441,11 @@ function EmailFrame({
           ready ? 'opacity-100' : 'opacity-0',
         )}
       />
+      <Tooltip open={anchor !== null && description !== undefined}>
+        <TooltipContent anchor={anchor} className="max-w-64">
+          {description}
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }
