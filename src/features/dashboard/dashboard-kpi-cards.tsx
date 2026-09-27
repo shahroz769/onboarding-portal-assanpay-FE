@@ -163,18 +163,11 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
           }}
         />
         <StatCard
-          label="Pending"
-          value={count(cases?.pending)}
-          icon={Clock}
-          accent="warning"
-          link={{ to: '/cases/all-cases', statuses: ['pending'] }}
-        />
-        <StatCard
           label="Awaiting merchant"
-          value={count(cases?.awaitingClient)}
+          value={count(cases?.awaitingMerchant)}
           icon={Hourglass}
           accent="warning"
-          link={{ to: '/cases/all-cases', statuses: ['awaiting_client'] }}
+          link={{ to: '/cases/all-cases', statuses: ['awaiting_merchant'] }}
         />
         <StatCard
           label="Breach rate"

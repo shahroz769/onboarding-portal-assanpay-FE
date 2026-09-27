@@ -7,7 +7,6 @@ import { AxiosError } from 'axios'
 import { toast } from 'sonner'
 
 import {
-  createQueue,
   createSubMerchantDraft,
   createMissingCloseTriggerCases,
   fetchAgreementDrafts,
@@ -19,7 +18,6 @@ import {
   fetchMerchantPortal,
   fetchPaymentMethods,
   fetchPayoutMethods,
-  fetchQueueDetail,
   fetchSubMerchantDrafts,
   fetchSubMerchantOptions,
   previewMissingCloseTriggerCases,
@@ -29,9 +27,7 @@ import {
   updateMerchantPortal,
   updatePaymentMethods,
   updatePayoutMethods,
-  updateQueue,
   updateQueueSla,
-  updateQueueStatus,
   updateSubMerchantDraft,
   uploadAgreementDraft,
 } from '#/apis/configuration'
@@ -379,23 +375,6 @@ export function useUpdateSubMerchantDraftMutation() {
   })
 }
 
-export function useUpdateQueueStatusMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: updateQueueStatus,
-    onSuccess: async () => {
-      toast.success('Queue status updated.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY }),
-        queryClient.invalidateQueries({ queryKey: QUEUES_KEY }),
-      ])
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to update queue status.'))
-    },
-  })
-}
-
 export function useUpdateQueueSlaMutation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -411,70 +390,4 @@ export function useUpdateQueueSlaMutation() {
       toast.error(getApiErrorMessage(error, 'Failed to update queue SLA.'))
     },
   })
-}
-
-export function useCreateQueueMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: createQueue,
-    onSuccess: async () => {
-      toast.success('Queue created as draft.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY }),
-        queryClient.invalidateQueries({ queryKey: QUEUES_KEY }),
-        queryClient.invalidateQueries({
-          queryKey: CASE_FLOW_CONFIGURATION_KEY,
-        }),
-      ])
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to create queue.'))
-    },
-  })
-}
-
-export function useUpdateQueueMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: updateQueue,
-    onSuccess: async (_data, variables) => {
-      toast.success('Queue updated.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY }),
-        queryClient.invalidateQueries({ queryKey: QUEUES_KEY }),
-        queryClient.invalidateQueries({
-          queryKey: ['queue-detail', variables.queueId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: CASE_FLOW_CONFIGURATION_KEY,
-        }),
-      ])
-    },
-    onError: (error) => {
-      if (isQueueRevisionConflict(error)) return
-      toast.error(getApiErrorMessage(error, 'Failed to update queue.'))
-    },
-  })
-}
-
-export function queueDetailQueryOptions(queueId: string) {
-  return queryOptions({
-    queryKey: ['queue-detail', queueId] as const,
-    queryFn: () => fetchQueueDetail(queueId),
-    staleTime: 30_000,
-    enabled: Boolean(queueId),
-  })
-}
-
-export function isQueueRevisionConflict(error: unknown) {
-  if (!(error instanceof AxiosError) || error.response?.status !== 409) {
-    return false
-  }
-  const data = error.response.data
-  return (
-    Boolean(data) &&
-    typeof data === 'object' &&
-    'revision' in data &&
-    typeof data.revision === 'number'
-  )
 }

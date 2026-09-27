@@ -302,7 +302,7 @@ export default function DocumentsReviewRenderer({
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
   const isWorkingCase = caseDetail.case.status === 'working'
-  const isAwaitingClient = caseDetail.case.status === 'awaiting_client'
+  const isAwaitingMerchant = caseDetail.case.status === 'awaiting_merchant'
   const isEditable =
     isCaseOwner &&
     isWorkingCase &&
@@ -607,7 +607,7 @@ export default function DocumentsReviewRenderer({
               </FieldGroup>
             </div>
 
-            {isAwaitingClient ? (
+            {isAwaitingMerchant ? (
               <Alert variant="warning">
                 <Info />
                 <AlertTitle>Awaiting merchant resubmission</AlertTitle>

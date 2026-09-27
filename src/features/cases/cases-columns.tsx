@@ -42,7 +42,6 @@ function formatDate(dateStr: string | null): string {
 function isCaseClosed(item: CaseListItem) {
   return (
     item.status === 'closed' ||
-    item.status === 'error' ||
     !!item.closeOutcome ||
     !!item.closedAt
   )

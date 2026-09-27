@@ -203,8 +203,7 @@ function currentStageTint(
   }
   if (stage.slug === 'new') return 'blue'
   if (stage.slug === 'working') return 'amber'
-  if (stage.slug === 'awaiting_client') return 'sky'
-  if (stage.slug.includes('pending')) return 'orange'
+  if (stage.slug === 'awaiting_merchant') return 'sky'
   if (stage.slug === 'docs_upload') return 'sky'
   if (stage.slug === 'closed') return 'emerald'
   return null

@@ -16,11 +16,8 @@ export {
 export const CASE_STATUSES = [
   'new',
   'working',
-  'pending',
-  'qc',
-  'error',
   'closed',
-  'awaiting_client',
+  'awaiting_merchant',
 ] as const
 
 export type CaseStatus = (typeof CASE_STATUSES)[number]
@@ -35,11 +32,8 @@ export type MerchantPortalRole = (typeof MERCHANT_PORTAL_ROLES)[number]
 export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   new: 'New',
   working: 'Working',
-  pending: 'Pending',
-  qc: 'QC',
-  error: 'Error',
   closed: 'Closed',
-  awaiting_client: 'Awaiting Merchant',
+  awaiting_merchant: 'Awaiting Merchant',
 }
 
 export const CASE_FILTER_STATUSES = [...CASE_STATUSES, 'unsuccessful'] as const
@@ -76,7 +70,6 @@ const queueSchema = z.object({
   workflowType: z.enum(QUEUE_WORKFLOW_TYPES).optional().default('generic'),
   lifecycle: z.enum(QUEUE_LIFECYCLES).optional(),
   revision: z.number().optional(),
-  qcEnabled: z.boolean().optional(),
   slaHours: z.number().optional(),
   isActive: z.boolean().optional(),
   createdAt: z.string(),
@@ -172,8 +165,6 @@ export type CaseFilters = z.infer<typeof caseFiltersSchema>
 export const STAGE_CATEGORIES = [
   'new',
   'in_progress',
-  'qc',
-  'error',
   'closed',
 ] as const
 // ─── Queue Stage ────────────────────────────────────────────────────────────
@@ -266,7 +257,6 @@ const caseDetailSchema = z.object({
     slug: z.string(),
     workflowType: z.enum(QUEUE_WORKFLOW_TYPES).optional().default('generic'),
     lifecycle: z.enum(QUEUE_LIFECYCLES).optional(),
-    qcEnabled: z.boolean(),
     slaHours: z.number().nullable().optional(),
   }),
   merchant: z.record(z.string(), z.unknown()),

@@ -182,7 +182,6 @@ function CasesTableProviderState({
     userRole === 'super_admin' || userRole === 'admin'
       ? flatData.flatMap((item) =>
           item.status !== 'closed' &&
-          item.status !== 'error' &&
           !item.closeOutcome &&
           !item.closedAt
             ? [item.id]

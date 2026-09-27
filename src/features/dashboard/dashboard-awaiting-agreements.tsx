@@ -106,7 +106,7 @@ const columns: DataTableColumnDef<AwaitingPhysicalAgreement>[] = [
 ]
 
 /**
- * Agreement cases on Awaiting Client: the agreement was emailed but the
+ * Agreement cases on Awaiting Merchant: the agreement was emailed but the
  * signed physical copy has not reached the office yet.
  */
 export function DashboardAwaitingAgreements() {
@@ -136,7 +136,7 @@ export function DashboardAwaitingAgreements() {
               <Info />
             </TooltipTrigger>
             <TooltipContent className="max-w-72">
-              Agreement cases on Awaiting Client where the agreement email was
+              Agreement cases on Awaiting Merchant where the agreement email was
               sent but the signed physical copy has not been uploaded. Sorted by
               longest waiting.
             </TooltipContent>

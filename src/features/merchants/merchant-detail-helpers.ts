@@ -53,7 +53,7 @@ export { caseStatusBadgeClasses } from '#/lib/status-styles'
 // ─── Open / Closed classification ───────────────────────────────────────────
 
 export function isCaseOpen(status: string, stageCategory: string | null) {
-  return status !== 'closed' && status !== 'error' && stageCategory !== 'closed'
+  return status !== 'closed' && stageCategory !== 'closed'
 }
 
 // ─── Formatters ─────────────────────────────────────────────────────────────

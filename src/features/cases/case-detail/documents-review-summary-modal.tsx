@@ -101,7 +101,7 @@ export function DocumentsReviewSummaryModal({
       hasRecipient &&
       isCaseOwner &&
       isDocumentsReviewCase &&
-      caseDetail.case.status === 'awaiting_client')
+      caseDetail.case.status === 'awaiting_merchant')
 
   async function handleAutoConfirm() {
     if (!canTrigger || isConfirmingRef.current) return

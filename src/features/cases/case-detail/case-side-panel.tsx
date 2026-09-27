@@ -136,9 +136,7 @@ function getPrimaryActionCopy(
   const category = caseDetail.currentStage?.category ?? null
   const hasOwner = Boolean(caseDetail.owner)
   const isClosed =
-    status === 'error' ||
     status === 'closed' ||
-    category === 'error' ||
     category === 'closed' ||
     Boolean(caseDetail.case.closedAt) ||
     Boolean(caseDetail.case.closeOutcome)
@@ -153,7 +151,7 @@ function getPrimaryActionCopy(
     }
   }
 
-  if (options.isAgreementCase && status === 'awaiting_client') {
+  if (options.isAgreementCase && status === 'awaiting_merchant') {
     return {
       title: 'Awaiting physical signed copy',
       description:
@@ -163,13 +161,13 @@ function getPrimaryActionCopy(
     }
   }
 
-  if (status === 'awaiting_client') {
+  if (status === 'awaiting_merchant') {
     return {
       title: 'Awaiting merchant',
       description:
         'A resubmission email was sent to the merchant. The case will return to working once they submit the requested updates.',
       actionLabel: null,
-      actionKind: 'awaiting-client' as const,
+      actionKind: 'awaiting-merchant' as const,
     }
   }
 
@@ -305,30 +303,7 @@ function getPrimaryActionCopy(
     return {
       title: 'Working stage',
       description:
-        'Finish the active review work for this case, then move it into pending for the next checkpoint.',
-      actionLabel: 'Move to pending',
-      actionKind: 'mark-successful' as const,
-    }
-  }
-
-  if (status === 'pending') {
-    return {
-      title: 'Pending decision',
-      description: caseDetail.queue.qcEnabled
-        ? 'This case is waiting for its next checkpoint. Send it to QC when the review is ready.'
-        : 'This case is ready for a final successful closure.',
-      actionLabel: caseDetail.queue.qcEnabled
-        ? 'Send to QC'
-        : 'Mark as successful',
-      actionKind: 'mark-successful' as const,
-    }
-  }
-
-  if (status === 'qc') {
-    return {
-      title: 'QC review',
-      description:
-        'Quality control is the final checkpoint. Close the case successfully when QC is complete, or use the resolution tab to close it unsuccessfully.',
+        'Finish the active review work for this case, then close it successfully.',
       actionLabel: 'Mark as successful',
       actionKind: 'mark-successful' as const,
     }
@@ -419,11 +394,11 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
-  const isClosed = category === 'closed' || category === 'error'
+  const isClosed = category === 'closed'
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
   const showPrimaryActionButton =
-    primaryAction.actionKind !== 'awaiting-client' &&
+    primaryAction.actionKind !== 'awaiting-merchant' &&
     primaryAction.actionKind !== 'sub-merchant-form' &&
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'testing' &&
@@ -621,7 +596,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         caseId={caseId}
                         delivery={caseDetail.emailDelivery}
                         canMoveBackToWorking={
-                          isCaseOwner && status === 'awaiting_client'
+                          isCaseOwner && status === 'awaiting_merchant'
                         }
                       />
                     ) : null}
@@ -636,7 +611,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                 ? isCaseOwner
                                   ? 'Review the rejected fields and email the merchant to request a resubmission.'
                                   : 'Only the current case owner can review rejected fields and request a resubmission.'
-                                : primaryAction.actionKind === 'awaiting-client'
+                                : primaryAction.actionKind === 'awaiting-merchant'
                                   ? 'Waiting for the merchant to update the requested fields.'
                                   : primaryAction.actionKind ===
                                       'sub-merchant-form'
@@ -715,8 +690,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
                     {isDocumentReviewCase &&
                     hasOwner &&
-                    status === 'awaiting_client' ? (
-                      <AwaitingClientAlert
+                    status === 'awaiting_merchant' ? (
+                      <AwaitingMerchantAlert
                         caseId={caseId}
                         actionSet={DOCUMENT_REVIEW_LINK_ACTIONS}
                         title="Awaiting merchant resubmission"
@@ -728,8 +703,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
 
                     {isAgreementCase &&
                     hasOwner &&
-                    status === 'awaiting_client' ? (
-                      <AwaitingClientAlert
+                    status === 'awaiting_merchant' ? (
+                      <AwaitingMerchantAlert
                         caseId={caseId}
                         actionSet={AGREEMENT_LINK_ACTIONS}
                         title="Awaiting physical signed copy"
@@ -854,7 +829,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   )
 }
 
-function AwaitingClientAlert({
+function AwaitingMerchantAlert({
   caseId,
   actionSet,
   title,

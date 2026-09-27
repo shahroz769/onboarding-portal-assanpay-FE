@@ -6,7 +6,7 @@ import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { useAuth } from '#/features/auth/auth-client'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
-const CLOSED_CASES_STATUS_FILTER = ['closed', 'error', 'unsuccessful'].join(',')
+const CLOSED_CASES_STATUS_FILTER = ['closed', 'unsuccessful'].join(',')
 
 export const Route = createFileRoute('/_app/cases/my-closed-cases')({
   staticData: {

@@ -257,24 +257,6 @@ export async function updateSubMerchantDraft({
   return response.data
 }
 
-export async function updateQueueStatus({
-  queueId,
-  isActive,
-  lifecycle,
-  revision,
-}: {
-  queueId: string
-  isActive?: boolean
-  lifecycle?: 'draft' | 'active' | 'inactive'
-  revision?: number
-}) {
-  const response = await apiClient.patch(`/api/queues/${queueId}/status`, {
-    ...(lifecycle ? { lifecycle } : { isActive }),
-    ...(revision != null ? { revision } : {}),
-  })
-  return response.data
-}
-
 export async function updateQueueSla({
   queueId,
   slaHours,
@@ -288,78 +270,6 @@ export async function updateQueueSla({
     slaHours,
     ...(revision != null ? { revision } : {}),
   })
-  return response.data
-}
-
-export async function createQueue(input: {
-  name: string
-  slug: string
-  prefix: string
-  workflowType:
-    | 'generic'
-    | 'document_review'
-    | 'agreement'
-    | 'mid'
-    | 'testing'
-    | 'wordpress'
-    | 'live'
-    | 'sub_merchant_form'
-  lifecycle?: 'draft' | 'inactive'
-  qcEnabled?: boolean
-  slaHours?: number
-  stageTemplate?: string
-}) {
-  const response = await apiClient.post('/api/queues', input)
-  return response.data
-}
-
-export async function fetchQueueDetail(queueId: string) {
-  const response = await apiClient.get(`/api/queues/${queueId}`)
-  return response.data as {
-    id: string
-    name: string
-    slug: string
-    prefix: string
-    workflowType: string
-    lifecycle: 'draft' | 'active' | 'inactive'
-    revision: number
-    qcEnabled: boolean
-    slaHours: number
-    isActive: boolean
-    stages: Array<{
-      id: string
-      name: string
-      slug: string
-      order: number
-      category: string
-      isActive: boolean
-      capabilities: Record<string, unknown> | null
-    }>
-    activation: {
-      ready: boolean
-      issues: Array<{ code: string; message: string }>
-    }
-  }
-}
-
-export async function updateQueue(input: {
-  queueId: string
-  revision: number
-  name?: string
-  prefix?: string
-  lifecycle?: 'draft' | 'active' | 'inactive'
-  slaHours?: number
-  qcEnabled?: boolean
-  stages?: Array<{
-    name: string
-    slug: string
-    order: number
-    category: 'new' | 'in_progress' | 'qc' | 'error' | 'closed'
-    isActive?: boolean
-  }>
-}) {
-  const { queueId, ...body } = input
-  const response = await apiClient.patch(`/api/queues/${queueId}`, body)
   return response.data
 }
 

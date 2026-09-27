@@ -186,7 +186,7 @@ export default function AgreementRenderer({
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
   const isWorking = caseDetail.case.status === 'working'
-  const isAwaitingClient = caseDetail.case.status === 'awaiting_client'
+  const isAwaitingMerchant = caseDetail.case.status === 'awaiting_merchant'
   const canEdit = isCaseOwner && isWorking
   const hasReceivedAgreement = Boolean(agreement?.receivedAgreement)
   const canUploadFinal = canEdit && agreement?.emailStatus !== 'sent'
@@ -194,7 +194,7 @@ export default function AgreementRenderer({
     canUploadFinal &&
     Boolean(agreement?.finalAgreement) &&
     !hasReceivedAgreement
-  const canUploadReceived = isCaseOwner && isAwaitingClient
+  const canUploadReceived = isCaseOwner && isAwaitingMerchant
 
   function openReview() {
     setReview((current) => ({
@@ -253,7 +253,7 @@ export default function AgreementRenderer({
             title="Agreement"
             description="Review the merchant business type, prepare the final agreement, send its link to the merchant, then upload the scanned physical copy when it arrives at the office."
             action={
-              caseDetail.case.status === 'awaiting_client' ? (
+              caseDetail.case.status === 'awaiting_merchant' ? (
                 <Badge variant="secondary">
                   <MailCheck />
                   Awaiting physical copy

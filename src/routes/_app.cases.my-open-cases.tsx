@@ -7,7 +7,7 @@ import { useAuth } from '#/features/auth/auth-client'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter(
-  (status) => status !== 'closed' && status !== 'error',
+  (status) => status !== 'closed',
 )
 const OPEN_CASES_STATUS_FILTER = OPEN_CASE_STATUSES.join(',')
 

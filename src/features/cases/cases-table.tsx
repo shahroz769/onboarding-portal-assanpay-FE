@@ -37,10 +37,7 @@ import {
 const CASE_STATUS_FILTER_ORDER = [
   'new',
   'working',
-  'awaiting_client',
-  'pending',
-  'qc',
-  'error',
+  'awaiting_merchant',
   'closed',
   'unsuccessful',
 ] as const satisfies ReadonlyArray<CaseFilterStatus>
@@ -261,7 +258,6 @@ function Dialogs() {
           currentOwnerId={assignOwnerCase.ownerId}
           isClosed={
             assignOwnerCase.status === 'closed' ||
-            assignOwnerCase.status === 'error' ||
             !!assignOwnerCase.closedAt
           }
         />

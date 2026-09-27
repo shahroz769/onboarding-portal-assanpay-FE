@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
+import { statusTint } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
 import type {
   MerchantCase,
@@ -437,13 +438,13 @@ function statusBadgeForAction(action: string) {
   ) {
     return {
       label: 'Awaiting merchant',
-      className: caseStatusBadgeClasses('awaiting_client'),
+      className: caseStatusBadgeClasses('awaiting_merchant'),
     }
   }
   if (action === 'rejections_prepared') {
     return {
       label: 'Pending review',
-      className: caseStatusBadgeClasses('pending'),
+      className: statusTint('orange'),
     }
   }
   return undefined

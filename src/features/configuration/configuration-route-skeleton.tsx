@@ -91,7 +91,6 @@ export function QueuesSkeleton() {
         { id: 'workflowType', header: 'Workflow', width: 190 },
         { id: 'prefix', header: 'Prefix', width: 100 },
         { id: 'sla', header: 'SLA', width: 140 },
-        { id: 'qc', header: 'QC', width: 90 },
         { id: 'status', header: 'Lifecycle', width: 130 },
         { id: 'createdAt', header: 'Created', width: 140 },
         { id: 'actions', header: rightAligned('Actions'), width: 110 },

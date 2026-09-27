@@ -90,10 +90,7 @@ export function statusTintDeep(tint: StatusTint): string {
 const CASE_STATUS_TINTS: Record<string, StatusTint | 'plain'> = {
   new: 'blue',
   working: 'amber',
-  awaiting_client: 'sky',
-  pending: 'orange',
-  qc: 'purple',
-  error: 'red',
+  awaiting_merchant: 'sky',
   closed: 'plain',
 }
 
