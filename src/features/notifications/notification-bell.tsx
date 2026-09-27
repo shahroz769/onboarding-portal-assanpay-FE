@@ -35,7 +35,7 @@ export function NotificationBell() {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="relative hover:bg-foreground/10 dark:hover:bg-foreground/15"
+                  className="relative rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
                   aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
                 />
               }

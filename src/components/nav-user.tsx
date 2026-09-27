@@ -61,7 +61,7 @@ export function NavUser() {
           <Button
             variant="secondary"
             size="icon"
-            className="text-xs font-medium hover:bg-foreground/10 dark:hover:bg-foreground/15"
+            className="text-xs font-medium rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
             aria-label={`Account: ${user.name}`}
           />
         }

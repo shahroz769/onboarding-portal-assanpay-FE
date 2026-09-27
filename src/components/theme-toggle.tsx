@@ -80,7 +80,7 @@ export function ThemeToggle() {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="hover:bg-foreground/10 dark:hover:bg-foreground/15"
+                  className="rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
                   aria-label={`Theme: ${selectedTheme.label}`}
                 />
               }
