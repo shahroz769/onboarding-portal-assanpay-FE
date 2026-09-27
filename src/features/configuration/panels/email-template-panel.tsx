@@ -4,6 +4,7 @@ import type { ReactNode, RefObject } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { MonitorIcon, SmartphoneIcon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 import { Badge } from '#/components/ui/badge'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -271,12 +272,35 @@ function TokenText({
 
 // Links point at `{{variable}}` placeholders, so clicking them would only
 // break the frame. The hovered variable gets the same ring as TokenText, in
-// the light theme's --primary since emails always render light.
-const PREVIEW_STYLE = `<style>
+// the theme's --primary.
+const PREVIEW_STYLE = {
+  light: `<style>
 a{pointer-events:none;cursor:default;}
 [data-var]{transition:background-color .15s,box-shadow .15s;}
 [data-var][data-active]{background-color:rgba(74,109,101,.22)!important;box-shadow:0 0 0 2px rgb(74,109,101);}
-</style>`
+</style>`,
+  dark: `<style>
+a{pointer-events:none;cursor:default;}
+[data-var]{background-color:rgba(106,174,159,.16)!important;color:rgb(106,174,159)!important;transition:background-color .15s,box-shadow .15s;}
+[data-var][data-active]{background-color:rgba(106,174,159,.28)!important;box-shadow:0 0 0 2px rgb(106,174,159);}
+</style>`,
+}
+
+// The email's dark styles sit behind `prefers-color-scheme: dark`, which in
+// the frame follows the OS. Rewrite it so the preview follows the portal
+// theme instead.
+const DARK_SCHEME_QUERY = /\(\s*prefers-color-scheme\s*:\s*dark\s*\)/g
+
+function themeEmailHtml(html: string, theme: 'light' | 'dark') {
+  const style = PREVIEW_STYLE[theme]
+  const themed = html.replace(
+    DARK_SCHEME_QUERY,
+    theme === 'dark' ? 'all' : 'not all',
+  )
+  return themed.includes('</head>')
+    ? themed.replace('</head>', `${style}</head>`)
+    : style + themed
+}
 
 /**
  * The rendered email in a sandboxed frame (no scripts), grown to the email's
@@ -338,9 +362,11 @@ function EmailFrame({
     observerRef.current.observe(body)
   }
 
-  const srcDoc = html.includes('</head>')
-    ? html.replace('</head>', `${PREVIEW_STYLE}</head>`)
-    : PREVIEW_STYLE + html
+  const { resolvedTheme } = useTheme()
+  const srcDoc = themeEmailHtml(
+    html,
+    resolvedTheme === 'dark' ? 'dark' : 'light',
+  )
 
   return (
     <div className="relative">
@@ -356,7 +382,7 @@ function EmailFrame({
         onLoad={handleLoad}
         style={{ height }}
         className={cn(
-          'mx-auto block w-full rounded-md bg-white shadow-xs transition-[max-width,opacity] duration-300 ease-out motion-reduce:transition-none',
+          'mx-auto block w-full rounded-md bg-white shadow-xs dark:bg-transparent transition-[max-width,opacity] duration-300 ease-out motion-reduce:transition-none',
           width === 'mobile' ? 'max-w-94' : 'max-w-full',
           ready ? 'opacity-100' : 'opacity-0',
         )}

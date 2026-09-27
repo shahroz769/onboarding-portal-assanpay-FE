@@ -251,9 +251,9 @@ export function EmailSendingSkeleton() {
   return (
     <>
       <DialogSectionSkeleton descriptionLines={1}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <SwitchCardSkeleton descriptionLines={2} />
-          <SwitchCardSkeleton descriptionLines={2} />
+        <div className="flex flex-col gap-3">
+          <SwitchCardSkeleton descriptionLines={1} />
+          <SwitchCardSkeleton descriptionLines={1} />
         </div>
       </DialogSectionSkeleton>
       <DialogSectionSkeleton descriptionLines={1}>

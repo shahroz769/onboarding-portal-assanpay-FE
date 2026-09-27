@@ -409,7 +409,7 @@ function EmailSendingSettingsForm({ onDone }: { onDone: () => void }) {
           title="Sending modes"
           description="How agents can send case emails from the portal. At least one mode stays on."
         >
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="flex flex-col gap-3">
             {modes.map((option) => {
               const checked = mode[option.field]
               return (
