@@ -69,6 +69,13 @@ export function NotificationList({
     [data],
   )
   const items = useDeferredValue(loadedItems)
+  // Row content (e.g. read state) comes from the latest data, outside the
+  // Transition, so in-place changes don't crossfade the row. Only
+  // insertions, removals and reorders go through the deferred list.
+  const latestById = useMemo(
+    () => new Map(loadedItems.map((n) => [n.id, n])),
+    [loadedItems],
+  )
 
   return (
     <div ref={scrollRef} className="h-120">
@@ -94,7 +101,7 @@ export function NotificationList({
           ) : null}
 
           {items.length > 0 ? (
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-1 px-2 pb-2">
               {items.map((notification) => (
                 <ViewTransition
                   key={notification.id}
@@ -102,7 +109,9 @@ export function NotificationList({
                 >
                   <li>
                     <NotificationItem
-                      notification={notification}
+                      notification={
+                        latestById.get(notification.id) ?? notification
+                      }
                       onNavigate={onNavigate}
                     />
                   </li>

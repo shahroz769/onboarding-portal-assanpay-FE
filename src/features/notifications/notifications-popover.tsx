@@ -18,7 +18,10 @@ export function NotificationsPopoverContent({
   onNavigate,
   unreadCount,
 }: NotificationsPopoverContentProps) {
-  const [filter, setFilter] = useState<NotificationFilter>('all')
+  // Open on what needs attention; fall back to history when nothing does.
+  const [filter, setFilter] = useState<NotificationFilter>(
+    unreadCount > 0 ? 'unread' : 'all',
+  )
   const markAll = useMarkAllNotificationsReadMutation()
 
   return (
