@@ -301,7 +301,7 @@ export function EmailSendingSettingsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+      <DialogTrigger render={<Button size="sm" />}>
         <Settings2Icon data-icon="inline-start" />
         Sending settings
       </DialogTrigger>
