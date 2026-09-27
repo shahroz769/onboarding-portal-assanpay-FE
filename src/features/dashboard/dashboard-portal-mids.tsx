@@ -253,30 +253,33 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
-        <DataTable
-          columns={pendingMidColumns}
-          data={pending}
-          getRowId={(item) =>
-            `${item.caseId}-${item.midKind}-${item.portalMid}`
-          }
-          isLoading={isLoading || pendingQuery.isPending}
-          error={pendingQuery.error}
-          onRetry={() => void pendingQuery.refetch()}
-          onScrollEnd={() => void pendingQuery.fetchNextPage()}
-          hasMore={pendingQuery.hasNextPage}
-          isFetchingMore={pendingQuery.isFetchingNextPage}
-          totalCount={counts.total}
-          // Fixed base height, grows to match the neighbouring card.
-          className="h-80 flex-1"
-          emptyContent={
-            <EmptyState
-              icon={CheckCircle2}
-              tone="success"
-              title="All eligible portal MIDs are complete"
-              description="No successful MID Creation cases are waiting for testing or limit application. You can still pre-apply limits for MIDs before onboarding."
-            />
-          }
-        />
+        {/* Absolute table: rows never size the grid row, so it scrolls at a
+            fixed base height and only grows to match the neighbouring card. */}
+        <div className="relative min-h-80 flex-1">
+          <DataTable
+            columns={pendingMidColumns}
+            data={pending}
+            getRowId={(item) =>
+              `${item.caseId}-${item.midKind}-${item.portalMid}`
+            }
+            isLoading={isLoading || pendingQuery.isPending}
+            error={pendingQuery.error}
+            onRetry={() => void pendingQuery.refetch()}
+            onScrollEnd={() => void pendingQuery.fetchNextPage()}
+            hasMore={pendingQuery.hasNextPage}
+            isFetchingMore={pendingQuery.isFetchingNextPage}
+            totalCount={counts.total}
+            className="absolute inset-0"
+            emptyContent={
+              <EmptyState
+                icon={CheckCircle2}
+                tone="success"
+                title="All eligible portal MIDs are complete"
+                description="No successful MID Creation cases are waiting for testing or limit application. You can still pre-apply limits for MIDs before onboarding."
+              />
+            }
+          />
+        </div>
         {!canApply ? (
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="size-3.5" />

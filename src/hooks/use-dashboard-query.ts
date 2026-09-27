@@ -32,7 +32,7 @@ export function dashboardQueryOptions(search: DashboardRouteSearch) {
   })
 }
 
-const DASHBOARD_LIST_PAGE_SIZE = 30
+const DASHBOARD_LIST_PAGE_SIZE = 15
 
 // Nested under DASHBOARD_KEY so refresh and apply-limits invalidate it too.
 export function pendingPortalMidsInfiniteQueryOptions() {

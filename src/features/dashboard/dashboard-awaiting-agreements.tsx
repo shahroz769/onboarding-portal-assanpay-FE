@@ -156,28 +156,30 @@ export function DashboardAwaitingAgreements() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col">
-        <DataTable
-          columns={columns}
-          data={rows}
-          getRowId={(item) => item.caseId}
-          isLoading={query.isPending}
-          error={query.error}
-          onRetry={() => void query.refetch()}
-          onScrollEnd={() => void query.fetchNextPage()}
-          hasMore={query.hasNextPage}
-          isFetchingMore={query.isFetchingNextPage}
-          totalCount={total}
-          // Fixed base height, grows to match the neighbouring card.
-          className="h-80 flex-1"
-          emptyContent={
-            <EmptyState
-              icon={CheckCircle2}
-              tone="success"
-              title="All physical agreements received"
-              description="No sent agreements are waiting on a signed physical copy."
-            />
-          }
-        />
+        {/* Absolute table: rows never size the grid row (see portal MIDs card). */}
+        <div className="relative min-h-80 flex-1">
+          <DataTable
+            columns={columns}
+            data={rows}
+            getRowId={(item) => item.caseId}
+            isLoading={query.isPending}
+            error={query.error}
+            onRetry={() => void query.refetch()}
+            onScrollEnd={() => void query.fetchNextPage()}
+            hasMore={query.hasNextPage}
+            isFetchingMore={query.isFetchingNextPage}
+            totalCount={total}
+            className="absolute inset-0"
+            emptyContent={
+              <EmptyState
+                icon={CheckCircle2}
+                tone="success"
+                title="All physical agreements received"
+                description="No sent agreements are waiting on a signed physical copy."
+              />
+            }
+          />
+        </div>
       </CardContent>
     </Card>
   )
