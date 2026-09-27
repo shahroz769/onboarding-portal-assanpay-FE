@@ -434,7 +434,17 @@ export function CaseHistoryTimeline({
             const proofLabel = getHistoryProofLabel(entry.action)
 
             return (
-              <ViewTransition key={entry.id} default="vt-move vt-presence">
+              <ViewTransition
+                key={entry.id}
+                // Entries animate on their own when the list changes, but
+                // not while the side panel's tab slides (they'd rise in one
+                // by one as the History tab appears).
+                default={{
+                  'tab-next': 'none',
+                  'tab-prev': 'none',
+                  default: 'vt-move vt-presence',
+                }}
+              >
                 <div className="relative min-w-0 pl-8">
                   {index > 0 ? (
                     <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />

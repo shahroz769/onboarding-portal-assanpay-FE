@@ -1,4 +1,5 @@
 import {
+  infiniteQueryOptions,
   keepPreviousData,
   queryOptions,
   useMutation,
@@ -24,12 +25,17 @@ export const USER_KEY = ['user'] as const
 export const USER_DIRECTORY_KEY = ['users', 'directory'] as const
 const EMPTY_USER_FILTERS: Partial<UserRouteSearch> = {}
 
-export function usersQueryOptions(
+export const USERS_PAGE_SIZE = 30
+
+export function usersInfiniteQueryOptions(
   filters: Partial<UserRouteSearch> = EMPTY_USER_FILTERS,
 ) {
-  return queryOptions({
+  return infiniteQueryOptions({
     queryKey: [...USERS_KEY, 'list', filters],
-    queryFn: () => fetchUsers(filters),
+    queryFn: ({ pageParam }) =>
+      fetchUsers({ ...filters, cursor: pageParam, limit: USERS_PAGE_SIZE }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   })

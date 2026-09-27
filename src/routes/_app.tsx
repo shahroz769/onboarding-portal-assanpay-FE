@@ -61,6 +61,11 @@ function AppLayout() {
   const matches = useRouterState({
     select: (state) => state.matches,
   })
+  // A route's skeleton is on screen: styles.css animates its arrival (see
+  // trackRouteTransitions in lib/route-transitions.ts).
+  const showsPendingFallback = matches.some(
+    (match) => match.status === 'pending',
+  )
   const isCaseDetailRoute = matches.some(
     (match) => match.routeId === '/_app/cases/$caseId',
   )
@@ -183,13 +188,14 @@ function AppLayout() {
           </div>
         </header>
 
-        {/* data-vt="page": the content column that page and stack route
-            transitions animate. data-vt-section and data-vt-outlet mark the
+        {/* data-vt="page": the content column that page route transitions
+            animate. data-vt-section and data-vt-outlet mark the
             sections that rise in one by one on a page change (styles.css,
             lib/route-transitions.ts). display: contents keeps the outlet
             wrappers out of the layout. */}
         <div
           data-vt="page"
+          data-route-pending={showsPendingFallback || undefined}
           className={cn(
             'flex min-h-0 flex-1 flex-col p-4 md:p-6',
             fitViewport ? 'overflow-hidden' : 'overflow-y-auto',

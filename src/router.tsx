@@ -20,7 +20,7 @@ export function getRouter() {
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultRouteError,
-    // Morph UI page, stack and tab motion on route changes. Types
+    // Morph UI page and tab motion on route changes. Types
     // only apply where the browser supports them; elsewhere there's no
     // animation (see routeTransitionTypes and styles.css).
     defaultViewTransition: { types: routeTransitionTypes },

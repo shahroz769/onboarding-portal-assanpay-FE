@@ -46,7 +46,6 @@ import { Route as AppMerchantsMerchantIdFormRouteImport } from './routes/_app.me
 import { Route as AppMerchantsMerchantIdHistoryRouteImport } from './routes/_app.merchants.$merchantId.history'
 import { Route as AppMerchantsMerchantIdLimitsRouteImport } from './routes/_app.merchants.$merchantId.limits'
 import { Route as AppMerchantsMerchantIdOverviewRouteImport } from './routes/_app.merchants.$merchantId.overview'
-import { Route as AppUserManagementUsersUserIdRouteImport } from './routes/_app.user-management.users.$userId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -248,12 +247,6 @@ const AppMerchantsMerchantIdOverviewRoute =
     path: '/overview',
     getParentRoute: () => AppMerchantsMerchantIdRoute,
   } as any)
-const AppUserManagementUsersUserIdRoute =
-  AppUserManagementUsersUserIdRouteImport.update({
-    id: '/users/$userId',
-    path: '/users/$userId',
-    getParentRoute: () => AppUserManagementRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -291,7 +284,6 @@ export interface FileRoutesByFullPath {
   '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
-  '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
   '/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -324,7 +316,6 @@ export interface FileRoutesByTo {
   '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
-  '/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesById {
@@ -365,7 +356,6 @@ export interface FileRoutesById {
   '/_app/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/_app/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/_app/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
-  '/_app/user-management/users/$userId': typeof AppUserManagementUsersUserIdRoute
   '/_app/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -406,7 +396,6 @@ export interface FileRouteTypes {
     | '/merchants/$merchantId/history'
     | '/merchants/$merchantId/limits'
     | '/merchants/$merchantId/overview'
-    | '/user-management/users/$userId'
     | '/merchants/$merchantId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -439,7 +428,6 @@ export interface FileRouteTypes {
     | '/merchants/$merchantId/history'
     | '/merchants/$merchantId/limits'
     | '/merchants/$merchantId/overview'
-    | '/user-management/users/$userId'
     | '/merchants/$merchantId'
   id:
     | '__root__'
@@ -479,7 +467,6 @@ export interface FileRouteTypes {
     | '/_app/merchants/$merchantId/history'
     | '/_app/merchants/$merchantId/limits'
     | '/_app/merchants/$merchantId/overview'
-    | '/_app/user-management/users/$userId'
     | '/_app/merchants/$merchantId/'
   fileRoutesById: FileRoutesById
 }
@@ -751,13 +738,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMerchantsMerchantIdOverviewRouteImport
       parentRoute: typeof AppMerchantsMerchantIdRoute
     }
-    '/_app/user-management/users/$userId': {
-      id: '/_app/user-management/users/$userId'
-      path: '/users/$userId'
-      fullPath: '/user-management/users/$userId'
-      preLoaderRoute: typeof AppUserManagementUsersUserIdRouteImport
-      parentRoute: typeof AppUserManagementRoute
-    }
   }
 }
 
@@ -854,12 +834,10 @@ const AppMerchantsRouteWithChildren = AppMerchantsRoute._addFileChildren(
 
 interface AppUserManagementRouteChildren {
   AppUserManagementIndexRoute: typeof AppUserManagementIndexRoute
-  AppUserManagementUsersUserIdRoute: typeof AppUserManagementUsersUserIdRoute
 }
 
 const AppUserManagementRouteChildren: AppUserManagementRouteChildren = {
   AppUserManagementIndexRoute: AppUserManagementIndexRoute,
-  AppUserManagementUsersUserIdRoute: AppUserManagementUsersUserIdRoute,
 }
 
 const AppUserManagementRouteWithChildren =

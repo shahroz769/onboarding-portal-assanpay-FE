@@ -743,7 +743,8 @@ export function UserForm({
           <Button
             type="button"
             variant="ghost"
-            disabled={disabled}
+            // A read-only form in a dialog can still be closed.
+            disabled={disabled && !onCancel}
             onClick={onCancel}
           >
             Cancel

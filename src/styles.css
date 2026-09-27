@@ -312,6 +312,85 @@ body,
   }
 }
 
+/* A route's skeleton arrives with the page motion: its sections rise in,
+   staggered, the moment the page changes. The router shows skeletons
+   outside its view transition, so this plays in plain CSS, and the loaded
+   page then replaces the skeleton without a transition (see
+   trackRouteTransitions). `data-vt-pending-enter` says which part of the
+   page changed: the whole page, or a merchant tab.
+   The skeleton's sections are new elements, so they rise in through
+   @starting-style (a transition, leaving the skeletons' own pulse
+   animation alone). The page header stays mounted across pages, so it
+   replays the vt-rise keyframes (morph.css) instead. */
+:root[data-vt-pending-enter='page'] [data-vt='page'][data-route-pending] {
+  & [data-vt-section] {
+    animation: vt-rise 300ms cubic-bezier(0.33, 1, 0.68, 1) both;
+  }
+  & [data-vt-outlet] > * > * {
+    transition:
+      opacity 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      translate 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      filter 300ms cubic-bezier(0.33, 1, 0.68, 1);
+    @starting-style {
+      opacity: 0;
+      translate: 0 8px;
+      filter: blur(4px);
+    }
+  }
+  & [data-vt-outlet] > * > :nth-child(2) {
+    transition-delay: 35ms;
+  }
+  & [data-vt-outlet] > * > :nth-child(3) {
+    transition-delay: 70ms;
+  }
+  & [data-vt-outlet] > * > :nth-child(4) {
+    transition-delay: 105ms;
+  }
+  & [data-vt-outlet] > * > :nth-child(n + 5) {
+    transition-delay: 140ms;
+  }
+}
+
+:root[data-vt-pending-enter='tab'] [data-vt='page'][data-route-pending] {
+  & [data-vt='merchant-tab-panel'] > * > * {
+    transition:
+      opacity 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      translate 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      filter 300ms cubic-bezier(0.33, 1, 0.68, 1);
+    @starting-style {
+      opacity: 0;
+      translate: 0 8px;
+      filter: blur(4px);
+    }
+  }
+  & [data-vt='merchant-tab-panel'] > * > :nth-child(2) {
+    transition-delay: 35ms;
+  }
+  & [data-vt='merchant-tab-panel'] > * > :nth-child(3) {
+    transition-delay: 70ms;
+  }
+  & [data-vt='merchant-tab-panel'] > * > :nth-child(n + 4) {
+    transition-delay: 105ms;
+  }
+}
+
+/* Reduced motion: the skeleton just fades in, all at once. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-vt-pending-enter] [data-vt='page'][data-route-pending] {
+    & [data-vt-section] {
+      animation-name: vt-dissolve-in;
+    }
+    & :is([data-vt-outlet], [data-vt='merchant-tab-panel']) > * > * {
+      transition-property: opacity;
+      transition-delay: 0s;
+      @starting-style {
+        translate: none;
+        filter: none;
+      }
+    }
+  }
+}
+
 /* Morphing Popover / Morph Dialog (hooks/use-morph.ts): a relaxed pace, so
    the button visibly grows into the panel; closing is a little quicker. */
 ::view-transition-group(.vt-morph-open) {
@@ -330,28 +409,6 @@ body,
 ::view-transition-old(.vt-morph-close),
 ::view-transition-new(.vt-morph-close) {
   animation-duration: 300ms;
-}
-
-/* Stack navigator: user detail pushes over the users list, and pops back. */
-:root:active-view-transition-type(stack-push) [data-vt='page'] {
-  view-transition-name: page;
-  view-transition-class: vt-push vt-forward;
-}
-
-:root:active-view-transition-type(stack-pop) [data-vt='page'] {
-  view-transition-name: page;
-  view-transition-class: vt-push vt-back;
-}
-
-/* Keep sliding pages inside the content column, over its own surface, so
-   the outgoing page never slides across the sidebar or shows through. */
-::view-transition-group(page) {
-  overflow: clip;
-}
-
-::view-transition-old(.vt-push),
-::view-transition-new(.vt-push) {
-  background-color: color-mix(in oklab, var(--muted) 30%, var(--background));
 }
 
 /* Tabs: the merchant detail panel slides toward the picked tab. */

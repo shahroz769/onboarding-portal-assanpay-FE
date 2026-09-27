@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, usePrefetchQuery } from '@tanstack/react-query'
 import { MailIcon, PlusIcon } from 'lucide-react'
 
 import {
@@ -29,17 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
-import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { queuesQueryOptions } from '#/hooks/use-cases-query'
 import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import {
-  usersQueryOptions,
+  usersInfiniteQueryOptions,
   useBulkSendUserResetPasswordsMutation,
   useBulkUpdateUserStatusMutation,
 } from '#/hooks/use-users-query'
-import type { UserRouteSearch } from '#/schemas/users.schema'
+import type { UserListItem, UserRouteSearch } from '#/schemas/users.schema'
 import {
   USER_ROLE_LABELS,
   USER_STATUS_LABELS,
@@ -47,6 +47,7 @@ import {
   userStatuses,
 } from '#/schemas/users.schema'
 import { CreateUserDialog } from './create-user-dialog'
+import { EditUserDialog } from './edit-user-dialog'
 import { createUserColumns } from './users-columns'
 import { USER_ROLE_ICONS } from './user-role-icons'
 
@@ -103,13 +104,25 @@ export function UsersTableComposed({
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState<'active' | 'inactive'>('active')
   const [resetConfirmationOpen, setResetConfirmationOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserListItem | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
   const { user: currentUser } = useAuth()
-  const usersQuery = useQuery(usersQueryOptions(filters))
+  // Infinite pages, like the cases and merchants tables: the next page loads
+  // as the table scrolls to its end, and the footer shows loaded / total.
+  const usersQuery = useInfiniteQuery(usersInfiniteQueryOptions(filters))
+  // The Create / Edit User form needs the queue list and shows a spinner
+  // until it has it; loading it with the page means the dialogs open
+  // straight into the form, without the spinner-to-form layout jump.
+  usePrefetchQuery(queuesQueryOptions())
   const bulkStatusMutation = useBulkUpdateUserStatusMutation()
   const bulkResetMutation = useBulkSendUserResetPasswordsMutation()
-  const isTableLoading = usersQuery.isLoading || usersQuery.isFetching
+  const isTableLoading =
+    usersQuery.isLoading ||
+    (usersQuery.isFetching && !usersQuery.isFetchingNextPage)
 
-  const users = usersQuery.data ?? EMPTY_USERS
+  const users =
+    usersQuery.data?.pages.flatMap((page) => page.users) ?? EMPTY_USERS
+  const totalCount = usersQuery.data?.pages[0]?.total ?? null
   const allIds = users.map((user) => user.id)
   const selectedIds = Array.from(selectedIdSet)
 
@@ -131,6 +144,10 @@ export function UsersTableComposed({
     allIds,
     onSelectRow: handleSelectRow,
     onSelectAll: handleSelectAll,
+    onEditUser: (user) => {
+      setEditingUser(user)
+      setEditOpen(true)
+    },
   })
 
   const handleSubmitBulkStatus = () => {
@@ -189,11 +206,9 @@ export function UsersTableComposed({
                 />
               </DataTableToolbar.Filters>
               <DataTableToolbar.Actions>
-                {isTableLoading ? (
-                  <Skeleton className="h-5 w-32" />
-                ) : (
+                {selectedIds.length > 0 && (
                   <span className="text-sm text-muted-foreground">
-                    Loaded {users.length} Employees
+                    {selectedIds.length} of {users.length} row(s) selected
                   </span>
                 )}
               </DataTableToolbar.Actions>
@@ -261,6 +276,14 @@ export function UsersTableComposed({
               isLoading={isTableLoading}
               error={usersQuery.error}
               onRetry={() => void usersQuery.refetch()}
+              onScrollEnd={() => {
+                if (usersQuery.hasNextPage && !usersQuery.isFetchingNextPage) {
+                  void usersQuery.fetchNextPage()
+                }
+              }}
+              isFetchingMore={usersQuery.isFetchingNextPage}
+              hasMore={usersQuery.hasNextPage}
+              totalCount={totalCount}
               emptyContent={
                 <div className="flex flex-col items-center gap-1 text-muted-foreground">
                   <p className="text-sm">No users found.</p>
@@ -273,6 +296,12 @@ export function UsersTableComposed({
           </div>
         </div>
       </TooltipProvider>
+
+      <EditUserDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        user={editingUser}
+      />
 
       <AlertDialog
         open={resetConfirmationOpen}

@@ -6,8 +6,13 @@ import type {
   UserRouteSearch,
 } from '#/schemas/users.schema'
 
-interface UsersResponse {
+/** One keyset page of the users list; `total` comes with the first page only. */
+export interface UserListResponse {
   users: UserListItem[]
+  nextCursor: string | null
+  hasMore: boolean
+  limit: number
+  total: number | null
 }
 
 interface UserDirectoryResponse {
@@ -15,12 +20,12 @@ interface UserDirectoryResponse {
 }
 
 export async function fetchUsers(
-  params: Partial<UserRouteSearch> = {},
-): Promise<UserListItem[]> {
-  const response = await apiClient.get<UsersResponse>('/api/users', {
-    params,
+  params: Partial<UserRouteSearch> & { cursor?: string | null; limit: number },
+): Promise<UserListResponse> {
+  const response = await apiClient.get<UserListResponse>('/api/users', {
+    params: { ...params, cursor: params.cursor ?? undefined },
   })
-  return response.data.users
+  return response.data
 }
 
 export async function fetchUserDirectory(): Promise<UserDirectoryItem[]> {

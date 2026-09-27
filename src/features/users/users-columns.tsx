@@ -21,7 +21,13 @@ function formatDate(dateStr: string | null) {
   return format(new Date(dateStr), 'MMM dd, yyyy h:mm a')
 }
 
-function UserIdentityCell({ user }: { user: UserListItem }) {
+function UserIdentityCell({
+  user,
+  onEdit,
+}: {
+  user: UserListItem
+  onEdit: (user: UserListItem) => void
+}) {
   const avatarSrc = getUserAvatarSrc(user.gender)
   const initials = getUserInitials(user.name)
 
@@ -31,22 +37,20 @@ function UserIdentityCell({ user }: { user: UserListItem }) {
         <AvatarImage src={avatarSrc} alt="" />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
-      <div className="min-w-0">
-        <Link
-          to="/user-management/users/$userId"
-          params={{ userId: user.id }}
-          className="block truncate text-sm font-medium text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
-        >
+      {/* Opens the Edit User dialog, like Create User. */}
+      <button
+        type="button"
+        onClick={() => onEdit(user)}
+        aria-label={`Edit ${user.name}`}
+        className="group/identity min-w-0 cursor-pointer rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <span className="block truncate text-sm font-medium text-primary group-hover/identity:underline group-hover/identity:decoration-dashed group-hover/identity:underline-offset-4">
           {user.name}
-        </Link>
-        <Link
-          to="/user-management/users/$userId"
-          params={{ userId: user.id }}
-          className="block truncate text-xs text-muted-foreground hover:text-primary"
-        >
+        </span>
+        <span className="block truncate text-xs text-muted-foreground group-hover/identity:text-primary">
           {user.email}
-        </Link>
-      </div>
+        </span>
+      </button>
     </div>
   )
 }
@@ -84,11 +88,13 @@ export function createUserColumns({
   allIds,
   onSelectRow,
   onSelectAll,
+  onEditUser,
 }: {
   selectedIds: Set<string>
   allIds: string[]
   onSelectRow: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
+  onEditUser: (user: UserListItem) => void
 }): DataTableColumnDef<UserListItem>[] {
   const isAllSelected =
     allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
@@ -118,7 +124,7 @@ export function createUserColumns({
     {
       id: 'name',
       header: 'Employee',
-      cell: (user) => <UserIdentityCell user={user} />,
+      cell: (user) => <UserIdentityCell user={user} onEdit={onEditUser} />,
       width: 260,
     },
     {
