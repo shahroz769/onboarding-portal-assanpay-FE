@@ -14,6 +14,7 @@ import {
   fetchCaseFlowConfiguration,
   fetchEmailRecipients,
   fetchEmailSendingMode,
+  fetchEmailTemplatePreview,
   fetchLimitsAndMdr,
   fetchMerchantPortal,
   fetchPaymentMethods,
@@ -81,6 +82,10 @@ export const EMAIL_SENDING_MODE_KEY = [
 export const EMAIL_RECIPIENTS_KEY = [
   ...CONFIGURATION_KEY,
   'email-recipients',
+] as const
+export const EMAIL_TEMPLATES_KEY = [
+  ...CONFIGURATION_KEY,
+  'email-templates',
 ] as const
 export const CASE_FLOW_CONFIGURATION_KEY = [
   'configuration',
@@ -161,6 +166,15 @@ export function emailSendingModeQueryOptions() {
     queryKey: EMAIL_SENDING_MODE_KEY,
     queryFn: fetchEmailSendingMode,
     staleTime: 60_000,
+  })
+}
+
+// Templates only change with a backend deploy, so a preview never goes stale.
+export function emailTemplatePreviewQueryOptions(key: string) {
+  return queryOptions({
+    queryKey: [...EMAIL_TEMPLATES_KEY, key],
+    queryFn: () => fetchEmailTemplatePreview(key),
+    staleTime: Infinity,
   })
 }
 

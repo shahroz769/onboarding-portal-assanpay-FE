@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 
 import { cn } from '#/lib/utils'
 
+import { getNavSubItemPath } from '#/config/navigation'
 import type { NavItem as SidebarNavItem } from '#/config/navigation'
 import {
   Collapsible,
@@ -96,7 +97,7 @@ function NavItem({
       ? pathname === item.url
       : pathname === item.url || pathname.startsWith(`${activePrefix}/`)
   const hasActiveChild = Boolean(
-    item.items?.some((subItem) => pathname === subItem.url),
+    item.items?.some((subItem) => pathname === getNavSubItemPath(subItem)),
   )
   const shouldBeOpen = isDirectActive || hasActiveChild
   const [open, setOpen] = useState(() => {
@@ -155,12 +156,13 @@ function NavItem({
       <CollapsibleContent className="motion-collapsible-content">
         <SidebarMenuSub>
           {item.items.map((subItem, index) => {
+            const subItemPath = getNavSubItemPath(subItem)
             const showGroupLabel =
               subItem.group !== undefined &&
               subItem.group !== item.items?.[index - 1]?.group
 
             return (
-              <Fragment key={subItem.title}>
+              <Fragment key={subItemPath}>
                 {showGroupLabel ? (
                   <li
                     className={cn(
@@ -173,8 +175,12 @@ function NavItem({
                 ) : null}
                 <SidebarMenuSubItem className="w-full">
                   <SidebarMenuSubButton
-                    render={<Link to={subItem.url} />}
-                    isActive={pathname === subItem.url}
+                    render={
+                      // `to` is a union of every route, so the params for
+                      // this one cannot be typed here.
+                      <Link to={subItem.url} params={subItem.params as never} />
+                    }
+                    isActive={pathname === subItemPath}
                     className="w-full"
                   >
                     <span>{subItem.title}</span>

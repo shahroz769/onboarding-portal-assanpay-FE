@@ -341,3 +341,53 @@ export function WorkflowBuilderSkeleton() {
     </div>
   )
 }
+
+// ─── Email templates ────────────────────────────────────────────────────────
+
+/** The template page: preview column (toolbar, envelope, email) and rail. */
+export function EmailTemplateSkeleton() {
+  return (
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="min-w-0 overflow-hidden rounded-xl border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="flex flex-col gap-0.5">
+            <div className="flex h-6 items-center">
+              <Skeleton className="h-4.5 w-44" />
+            </div>
+            <div className="flex h-5 items-center">
+              <Skeleton className="h-3.5 w-32" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-40 rounded-lg" />
+            <Skeleton className="h-9 w-20 rounded-lg" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 border-b px-5 py-4">
+          {['w-56', 'w-24', 'w-72'].map((width) => (
+            <div key={width} className="flex h-5 items-center gap-4">
+              <Skeleton className="h-3.5 w-12" />
+              <Skeleton className={`h-3.5 ${width}`} />
+            </div>
+          ))}
+        </div>
+        <div className="bg-muted/40 px-3 py-6 sm:px-8">
+          <Skeleton className="h-160 w-full rounded-md" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        {[3, 5].map((lines, index) => (
+          <div
+            key={index}
+            className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+          >
+            <Skeleton className="h-4 w-24" />
+            {Array.from({ length: lines }).map((_, line) => (
+              <Skeleton key={line} className="h-3.5 w-full" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

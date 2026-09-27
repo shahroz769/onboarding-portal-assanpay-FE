@@ -15,10 +15,31 @@ type AppPath = FileRouteTypes['to']
 export type NavSubItem = {
   title: string
   url: AppPath
+  /** Values for the `$param` segments in `url`. */
+  params?: Record<string, string>
   roles?: RoleType[]
   requiresWorkAccess?: boolean
   group?: string
 }
+
+/** Resolves a sub-item's `$param` segments into the real pathname. */
+export function getNavSubItemPath(item: NavSubItem): string {
+  return item.url.replace(
+    /\$(\w+)/g,
+    (segment: string, name: string) => item.params?.[name] ?? segment,
+  )
+}
+
+// The emails in the backend's email template catalog, in the order an
+// onboarding runs, each with its own page under Configuration.
+export const EMAIL_TEMPLATE_NAV = [
+  { key: 'document-resubmission', title: 'Resubmission Request' },
+  { key: 'mid-creation', title: 'Portal Credentials' },
+  { key: 'agreement', title: 'Agreement' },
+  { key: 'live-activation', title: 'Live Activation' },
+  { key: 'user-password-invite', title: 'Password Setup' },
+  { key: 'user-password-reset', title: 'Password Reset' },
+] as const
 
 export type NavItem = {
   title: string
@@ -123,6 +144,12 @@ const navItems: NavItem[] = [
         url: '/configuration/email-sending',
         group: 'Communication',
       },
+      ...EMAIL_TEMPLATE_NAV.map(({ key, title }) => ({
+        title,
+        url: '/configuration/email-templates/$templateKey' as const,
+        params: { templateKey: key },
+        group: 'Email Templates',
+      })),
     ],
   },
 ]

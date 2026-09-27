@@ -39,6 +39,8 @@ import { Route as AppMerchantsIndexRouteImport } from './routes/_app.merchants.i
 import { Route as AppMerchantsMerchantIdRouteImport } from './routes/_app.merchants.$merchantId'
 import { Route as AppUserManagementIndexRouteImport } from './routes/_app.user-management.index'
 import { Route as OnboardingFormResubmitTokenRouteImport } from './routes/onboarding-form.resubmit.$token'
+import { Route as AppConfigurationEmailTemplatesIndexRouteImport } from './routes/_app.configuration.email-templates.index'
+import { Route as AppConfigurationEmailTemplatesTemplateKeyRouteImport } from './routes/_app.configuration.email-templates.$templateKey'
 import { Route as AppMerchantsMerchantIdIndexRouteImport } from './routes/_app.merchants.$merchantId.index'
 import { Route as AppMerchantsMerchantIdFormRouteImport } from './routes/_app.merchants.$merchantId.form'
 import { Route as AppMerchantsMerchantIdHistoryRouteImport } from './routes/_app.merchants.$merchantId.history'
@@ -203,6 +205,18 @@ const OnboardingFormResubmitTokenRoute =
     path: '/resubmit/$token',
     getParentRoute: () => OnboardingFormRoute,
   } as any)
+const AppConfigurationEmailTemplatesIndexRoute =
+  AppConfigurationEmailTemplatesIndexRouteImport.update({
+    id: '/email-templates/',
+    path: '/email-templates/',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
+const AppConfigurationEmailTemplatesTemplateKeyRoute =
+  AppConfigurationEmailTemplatesTemplateKeyRouteImport.update({
+    id: '/email-templates/$templateKey',
+    path: '/email-templates/$templateKey',
+    getParentRoute: () => AppConfigurationRoute,
+  } as any)
 const AppMerchantsMerchantIdIndexRoute =
   AppMerchantsMerchantIdIndexRouteImport.update({
     id: '/',
@@ -264,10 +278,12 @@ export interface FileRoutesByFullPath {
   '/configuration/': typeof AppConfigurationIndexRoute
   '/merchants/': typeof AppMerchantsIndexRoute
   '/user-management/': typeof AppUserManagementIndexRoute
+  '/configuration/email-templates/$templateKey': typeof AppConfigurationEmailTemplatesTemplateKeyRoute
   '/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
   '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
+  '/configuration/email-templates/': typeof AppConfigurationEmailTemplatesIndexRoute
   '/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -294,10 +310,12 @@ export interface FileRoutesByTo {
   '/configuration': typeof AppConfigurationIndexRoute
   '/merchants': typeof AppMerchantsIndexRoute
   '/user-management': typeof AppUserManagementIndexRoute
+  '/configuration/email-templates/$templateKey': typeof AppConfigurationEmailTemplatesTemplateKeyRoute
   '/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
   '/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
+  '/configuration/email-templates': typeof AppConfigurationEmailTemplatesIndexRoute
   '/merchants/$merchantId': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRoutesById {
@@ -332,10 +350,12 @@ export interface FileRoutesById {
   '/_app/configuration/': typeof AppConfigurationIndexRoute
   '/_app/merchants/': typeof AppMerchantsIndexRoute
   '/_app/user-management/': typeof AppUserManagementIndexRoute
+  '/_app/configuration/email-templates/$templateKey': typeof AppConfigurationEmailTemplatesTemplateKeyRoute
   '/_app/merchants/$merchantId/form': typeof AppMerchantsMerchantIdFormRoute
   '/_app/merchants/$merchantId/history': typeof AppMerchantsMerchantIdHistoryRoute
   '/_app/merchants/$merchantId/limits': typeof AppMerchantsMerchantIdLimitsRoute
   '/_app/merchants/$merchantId/overview': typeof AppMerchantsMerchantIdOverviewRoute
+  '/_app/configuration/email-templates/': typeof AppConfigurationEmailTemplatesIndexRoute
   '/_app/merchants/$merchantId/': typeof AppMerchantsMerchantIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -370,10 +390,12 @@ export interface FileRouteTypes {
     | '/configuration/'
     | '/merchants/'
     | '/user-management/'
+    | '/configuration/email-templates/$templateKey'
     | '/merchants/$merchantId/form'
     | '/merchants/$merchantId/history'
     | '/merchants/$merchantId/limits'
     | '/merchants/$merchantId/overview'
+    | '/configuration/email-templates/'
     | '/merchants/$merchantId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -400,10 +422,12 @@ export interface FileRouteTypes {
     | '/configuration'
     | '/merchants'
     | '/user-management'
+    | '/configuration/email-templates/$templateKey'
     | '/merchants/$merchantId/form'
     | '/merchants/$merchantId/history'
     | '/merchants/$merchantId/limits'
     | '/merchants/$merchantId/overview'
+    | '/configuration/email-templates'
     | '/merchants/$merchantId'
   id:
     | '__root__'
@@ -437,10 +461,12 @@ export interface FileRouteTypes {
     | '/_app/configuration/'
     | '/_app/merchants/'
     | '/_app/user-management/'
+    | '/_app/configuration/email-templates/$templateKey'
     | '/_app/merchants/$merchantId/form'
     | '/_app/merchants/$merchantId/history'
     | '/_app/merchants/$merchantId/limits'
     | '/_app/merchants/$merchantId/overview'
+    | '/_app/configuration/email-templates/'
     | '/_app/merchants/$merchantId/'
   fileRoutesById: FileRoutesById
 }
@@ -663,6 +689,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingFormResubmitTokenRouteImport
       parentRoute: typeof OnboardingFormRoute
     }
+    '/_app/configuration/email-templates/': {
+      id: '/_app/configuration/email-templates/'
+      path: '/email-templates'
+      fullPath: '/configuration/email-templates/'
+      preLoaderRoute: typeof AppConfigurationEmailTemplatesIndexRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
+    '/_app/configuration/email-templates/$templateKey': {
+      id: '/_app/configuration/email-templates/$templateKey'
+      path: '/email-templates/$templateKey'
+      fullPath: '/configuration/email-templates/$templateKey'
+      preLoaderRoute: typeof AppConfigurationEmailTemplatesTemplateKeyRouteImport
+      parentRoute: typeof AppConfigurationRoute
+    }
     '/_app/merchants/$merchantId/': {
       id: '/_app/merchants/$merchantId/'
       path: '/'
@@ -734,6 +774,8 @@ interface AppConfigurationRouteChildren {
   AppConfigurationQueuesRoute: typeof AppConfigurationQueuesRoute
   AppConfigurationSubMerchantsRoute: typeof AppConfigurationSubMerchantsRoute
   AppConfigurationIndexRoute: typeof AppConfigurationIndexRoute
+  AppConfigurationEmailTemplatesTemplateKeyRoute: typeof AppConfigurationEmailTemplatesTemplateKeyRoute
+  AppConfigurationEmailTemplatesIndexRoute: typeof AppConfigurationEmailTemplatesIndexRoute
 }
 
 const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
@@ -747,6 +789,10 @@ const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationQueuesRoute: AppConfigurationQueuesRoute,
   AppConfigurationSubMerchantsRoute: AppConfigurationSubMerchantsRoute,
   AppConfigurationIndexRoute: AppConfigurationIndexRoute,
+  AppConfigurationEmailTemplatesTemplateKeyRoute:
+    AppConfigurationEmailTemplatesTemplateKeyRoute,
+  AppConfigurationEmailTemplatesIndexRoute:
+    AppConfigurationEmailTemplatesIndexRoute,
 }
 
 const AppConfigurationRouteWithChildren =

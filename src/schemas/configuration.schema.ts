@@ -362,3 +362,23 @@ export type CaseFlowBackfillPreview = z.infer<
 export type CaseFlowBackfillResult = z.infer<
   typeof caseFlowBackfillResultSchema
 >
+
+// ─── Email templates (read-only catalog) ─────────────────────────────────────
+
+export const emailTemplatePreviewSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  group: z.enum(['case', 'account']),
+  audience: z.string(),
+  from: z.string(),
+  trigger: z.string(),
+  recipients: z.string(),
+  subject: z.string(),
+  variables: z.array(z.object({ name: z.string(), description: z.string() })),
+  notes: z.array(z.string()),
+  hasPlainText: z.boolean(),
+  html: z.string(),
+  plainText: z.string().nullable(),
+})
+
+export type EmailTemplatePreview = z.infer<typeof emailTemplatePreviewSchema>

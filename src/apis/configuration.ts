@@ -6,6 +6,7 @@ import type {
   AgreementDraft,
   EmailRecipientSettings,
   EmailSendingMode,
+  EmailTemplatePreview,
   LimitsAndMdrSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
@@ -20,6 +21,7 @@ import {
   agreementDraftSchema,
   emailRecipientSettingsSchema,
   emailSendingModeSchema,
+  emailTemplatePreviewSchema,
   limitsAndMdrSettingsSchema,
   merchantPortalSettingsSchema,
   paymentMethodSettingsSchema,
@@ -359,4 +361,13 @@ export async function updateQueue(input: {
   const { queueId, ...body } = input
   const response = await apiClient.patch(`/api/queues/${queueId}`, body)
   return response.data
+}
+
+export async function fetchEmailTemplatePreview(
+  key: string,
+): Promise<EmailTemplatePreview> {
+  const response = await apiClient.get(
+    `/api/configuration/email-templates/${encodeURIComponent(key)}`,
+  )
+  return emailTemplatePreviewSchema.parse(response.data)
 }
