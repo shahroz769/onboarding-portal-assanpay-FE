@@ -14,14 +14,17 @@ import {
   CheckCircle2,
   Clock3,
   Copy,
+  Mail,
   MailCheck,
   MessageSquareMore,
   RefreshCw,
+  RotateCcw,
   Send,
   ShieldAlert,
   UserRoundPlus,
 } from 'lucide-react'
 
+import { EmailDeliveryBadge } from '#/components/case-email/email-delivery-badge'
 import { Button } from '#/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
@@ -47,11 +50,13 @@ import {
   caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
+  useMoveCaseBackToWorking,
   useRegenerateResubmissionLink,
   useSaveDocumentReviewSubMerchant,
   useTakeOwnership,
 } from '#/hooks/use-case-detail-query'
 import { useMorph } from '#/hooks/use-morph'
+import { cn } from '#/lib/utils'
 import { skipActiveViewTransition } from '#/lib/view-transition'
 import type { CaseDetail } from '#/schemas/cases.schema'
 import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
@@ -609,6 +614,18 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                       </Alert>
                     ) : null}
 
+                    {!isClosed &&
+                    caseDetail.emailDelivery &&
+                    !caseDetail.emailDelivery.supersededByManual ? (
+                      <CaseEmailDeliveryNotice
+                        caseId={caseId}
+                        delivery={caseDetail.emailDelivery}
+                        canMoveBackToWorking={
+                          isCaseOwner && status === 'awaiting_client'
+                        }
+                      />
+                    ) : null}
+
                     {!isClosed ? (
                       <div className="rounded-xl border bg-background p-3">
                         <div className="flex flex-col gap-2">
@@ -653,8 +670,13 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                   (!hasActiveRejections || !isCaseOwner)) ||
                                 (primaryAction.actionKind ===
                                   'mark-successful' &&
-                                  hasOwner &&
-                                  !isCaseOwner)
+                                  ((hasOwner && !isCaseOwner) ||
+                                    // The latest merchant email isn't
+                                    // delivered (the server refuses too).
+                                    Boolean(
+                                      caseDetail.emailDelivery
+                                        ?.closeBlockedReason,
+                                    )))
                               }
                             >
                               {/* Spinner and label both follow
@@ -698,6 +720,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                         caseId={caseId}
                         actionSet={DOCUMENT_REVIEW_LINK_ACTIONS}
                         title="Awaiting merchant resubmission"
+                        showLinkExpiry={false}
                         description="We emailed the merchant a secure link to update the rejected fields. The case will return to working as soon as they submit."
                         canRegenerate={isCaseOwner}
                       />
@@ -837,12 +860,15 @@ function AwaitingClientAlert({
   title,
   description,
   canRegenerate = false,
+  showLinkExpiry = true,
 }: {
   caseId: string
   actionSet: ReadonlySet<string>
   title: string
   description: string
   canRegenerate?: boolean
+  /** Document-review resubmission links never expire. */
+  showLinkExpiry?: boolean
 }) {
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
   const regenerateLink = useRegenerateResubmissionLink(caseId)
@@ -850,7 +876,7 @@ function AwaitingClientAlert({
 
   const expiresAt = (() => {
     const items = historyQuery.data
-    if (!items) return null
+    if (!showLinkExpiry || !items) return null
     const latest = items.find((historyEntry) =>
       actionSet.has(historyEntry.action),
     )
@@ -964,6 +990,93 @@ function AwaitingClientAlert({
         ) : null}
       </AlertDescription>
     </Alert>
+  )
+}
+
+const UNDELIVERED_STATUSES = new Set([
+  'bounced',
+  'complained',
+  'suppressed',
+  'failed',
+])
+
+/**
+ * The case's latest merchant email and its Resend delivery status. Closing
+ * successfully waits for it to be delivered; a bounce says what to do next.
+ */
+function CaseEmailDeliveryNotice({
+  caseId,
+  delivery,
+  canMoveBackToWorking,
+}: {
+  caseId: string
+  delivery: NonNullable<CaseDetail['emailDelivery']>
+  /** Owner of an Awaiting Merchant case: resending needs Working. */
+  canMoveBackToWorking: boolean
+}) {
+  const moveBackToWorking = useMoveCaseBackToWorking(caseId)
+  const undelivered = UNDELIVERED_STATUSES.has(delivery.status)
+  const showMoveBack =
+    canMoveBackToWorking &&
+    (undelivered || delivery.status === 'delivery_delayed')
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 flex-col gap-2 rounded-xl border bg-background p-3',
+        undelivered && 'border-destructive/40',
+      )}
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <Mail
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {delivery.templateLabel} email
+            </p>
+            <p className="wrap-anywhere text-xs text-muted-foreground">
+              To {delivery.recipient}
+              {delivery.cc.length > 0 ? ` · Cc ${delivery.cc.join(', ')}` : ''}
+            </p>
+          </div>
+        </div>
+        <EmailDeliveryBadge
+          status={delivery.status}
+          detail={delivery.detail}
+          updatedAt={delivery.statusUpdatedAt}
+          className="shrink-0"
+        />
+      </div>
+      {delivery.closeBlockedReason ? (
+        <p
+          className={cn(
+            'text-sm text-pretty',
+            undelivered ? 'text-destructive' : 'text-muted-foreground',
+          )}
+        >
+          {delivery.closeBlockedReason}
+        </p>
+      ) : null}
+      {showMoveBack ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="self-start"
+          disabled={moveBackToWorking.isPending}
+          onClick={() => moveBackToWorking.mutate()}
+        >
+          {moveBackToWorking.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <RotateCcw data-icon="inline-start" />
+          )}
+          Move back to Working
+        </Button>
+      ) : null}
+    </div>
   )
 }
 

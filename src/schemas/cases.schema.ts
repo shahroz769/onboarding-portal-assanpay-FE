@@ -214,6 +214,37 @@ export type FieldReview = z.infer<typeof fieldReviewSchema>
 
 // ─── Case Detail Response ───────────────────────────────────────────────────
 
+// Resend delivery status of a case email. 'sent' only means Resend accepted
+// it; webhooks move it on to delivered / bounced / …
+export const EMAIL_DELIVERY_STATUSES = [
+  'queued',
+  'sent',
+  'failed',
+  'delivered',
+  'delivery_delayed',
+  'bounced',
+  'complained',
+  'suppressed',
+] as const
+export type EmailDeliveryStatus = (typeof EMAIL_DELIVERY_STATUSES)[number]
+
+/** The case's latest merchant email and whether it blocks closing. */
+const caseEmailDeliverySchema = z.object({
+  emailLogId: z.string(),
+  template: z.string(),
+  templateLabel: z.string(),
+  recipient: z.string(),
+  cc: z.array(z.string()),
+  status: z.enum(EMAIL_DELIVERY_STATUSES),
+  detail: z.string().nullable(),
+  sentAt: z.string(),
+  statusUpdatedAt: z.string().nullable(),
+  supersededByManual: z.boolean(),
+  closeBlockedReason: z.string().nullable(),
+})
+
+export type CaseEmailDelivery = z.infer<typeof caseEmailDeliverySchema>
+
 const caseDetailSchema = z.object({
   case: z.object({
     id: z.string(),
@@ -434,6 +465,7 @@ const caseDetailSchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  emailDelivery: caseEmailDeliverySchema.nullable().optional(),
 })
 
 export type CaseDetail = z.infer<typeof caseDetailSchema>
@@ -465,6 +497,19 @@ const caseHistorySchema = z.object({
   action: z.string(),
   details: z.record(z.string(), z.unknown()).nullable(),
   createdAt: z.string(),
+  /** Live delivery of the email this entry records (details.emailLogId). */
+  emailDelivery: z
+    .object({
+      status: z.enum(EMAIL_DELIVERY_STATUSES),
+      detail: z.string().nullable(),
+      updatedAt: z.string().nullable(),
+      /** Sent while delivery was tracked; older emails stay 'sent'. */
+      tracked: z.boolean(),
+      cc: z.array(z.string()),
+      bcc: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
 })
 
 export type CaseHistory = z.infer<typeof caseHistorySchema>

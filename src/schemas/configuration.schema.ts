@@ -21,19 +21,6 @@ export const limitsAndMdrSettingsSchema = z.object({
   }),
 })
 
-export const linkDeadlineSettingsSchema = z.object({
-  passwordResetHours: z.coerce.number().int().min(1).max(8760).nullable(),
-  newPasswordSetHours: z.coerce.number().int().min(1).max(8760).nullable(),
-  agreementLinkHours: z.coerce.number().int().min(1).max(8760).nullable(),
-  documentsReviewResubmissionHours: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(8760)
-    .nullable(),
-  goLiveAvailabilityHours: z.coerce.number().int().min(1).max(8760).nullable(),
-})
-
 export const agreementDraftSchema = z.object({
   businessType: z.enum([
     'sole_proprietorship',
@@ -196,6 +183,48 @@ export const emailSendingModeSchema = z
     path: ['autoEnabled'],
   })
 
+const recipientEmailListSchema = (max: number, label: string) =>
+  z
+    .array(
+      z
+        .string()
+        .trim()
+        .toLowerCase()
+        // 254 characters is the longest address SMTP accepts (RFC 5321).
+        .max(254, { error: 'Addresses can be up to 254 characters.' })
+        .pipe(z.email({ error: 'Enter valid email addresses.' })),
+    )
+    .max(max, { error: `Add up to ${max} ${label} addresses.` })
+    .refine((emails) => new Set(emails).size === emails.length, {
+      error: 'Each address can only be listed once.',
+    })
+
+/** Extra recipients on case emails sent through Resend. */
+export const emailRecipientSettingsSchema = z.object({
+  ccSender: z.boolean(),
+  ccOtherMerchantEmail: z.boolean(),
+  cc: recipientEmailListSchema(20, 'CC'),
+  bcc: recipientEmailListSchema(20, 'BCC'),
+  replyTo: recipientEmailListSchema(5, 'reply-to'),
+})
+
+/**
+ * What a save must satisfy, matching the server: no address as both a
+ * visible and a hidden copy. Responses parse with the looser shape above.
+ */
+export const emailRecipientSettingsInputSchema =
+  emailRecipientSettingsSchema.superRefine((value, ctx) => {
+    const cc = new Set(value.cc)
+    const overlap = value.bcc.find((email) => cc.has(email))
+    if (overlap) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['bcc'],
+        message: `${overlap} is already in CC.`,
+      })
+    }
+  })
+
 export const merchantPortalSettingsSchema = z.object({
   loginUrl: z.string().trim().pipe(z.url()),
   serverBaseUrl: z
@@ -307,8 +336,10 @@ export const payoutMethodSettingsSchema = uniqueMethodSettingsSchema(
 )
 
 export type LimitsAndMdrSettings = z.infer<typeof limitsAndMdrSettingsSchema>
-export type LinkDeadlineSettings = z.infer<typeof linkDeadlineSettingsSchema>
 export type EmailSendingMode = z.infer<typeof emailSendingModeSchema>
+export type EmailRecipientSettings = z.infer<
+  typeof emailRecipientSettingsSchema
+>
 export type MerchantPortalSettings = z.infer<
   typeof merchantPortalSettingsSchema
 >

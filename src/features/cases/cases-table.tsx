@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertCircleIcon, UserIcon } from 'lucide-react'
 
@@ -93,7 +94,7 @@ function QueueSelector() {
   return createPortal(content, portalTarget)
 }
 
-function Toolbar() {
+function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const meta = useCasesTableMeta()
@@ -140,6 +141,7 @@ function Toolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         ) : null}
+        {extraActions}
       </DataTableToolbar.Actions>
     </DataTableToolbar>
   )
@@ -296,6 +298,8 @@ interface CasesTableComposedProps {
   hideOwnerFilter?: boolean
   hideStatusFilter?: boolean
   queueAccess?: 'view' | 'work'
+  /** Rendered at the right end of the toolbar, opposite the filters. */
+  toolbarActions?: ReactNode
 }
 
 export function CasesTableComposed({
@@ -305,6 +309,7 @@ export function CasesTableComposed({
   hideOwnerFilter = false,
   hideStatusFilter = false,
   queueAccess = 'view',
+  toolbarActions,
 }: CasesTableComposedProps) {
   return (
     <CasesTable.Provider
@@ -319,7 +324,7 @@ export function CasesTableComposed({
       <TooltipProvider>
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <div className="shrink-0">
-            <CasesTable.Toolbar />
+            <CasesTable.Toolbar actions={toolbarActions} />
           </div>
           <div className="shrink-0">
             <CasesTable.BulkActions />

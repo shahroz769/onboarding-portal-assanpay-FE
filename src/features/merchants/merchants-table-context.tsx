@@ -50,6 +50,7 @@ interface MerchantsTableActions {
   setFilter: (key: keyof MerchantRouteSearch, value: string | undefined) => void
   fetchNextPage: () => void
   retry: () => void
+  clearSelection: () => void
   openPriorityDialog: (merchant: MerchantListItem) => void
   closePriorityDialog: () => void
   openBulkPriorityDialog: () => void
@@ -361,6 +362,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     setFilter,
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
+    clearSelection: () => setSelectedIdSet(new Set()),
     openPriorityDialog: (merchant) => {
       if (merchant.status !== 'terminated') {
         setPriorityTarget({ type: 'single', merchant })

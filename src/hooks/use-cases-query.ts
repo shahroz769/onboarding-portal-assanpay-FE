@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 
 import {
   bulkAssignCases,
+  bulkCreateCases,
   assignCase,
   createCase,
   fetchCases,
@@ -73,6 +74,30 @@ export function useCreateCaseMutation() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Failed to create case.'))
+    },
+  })
+}
+
+export function useBulkCreateCasesMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: bulkCreateCases,
+    onSuccess: async ({ created, failed }) => {
+      if (created.length > 0) {
+        toast.success(
+          `Created ${created.length} case${created.length === 1 ? '' : 's'}.`,
+        )
+      }
+      if (failed.length > 0) {
+        toast.error(
+          `${failed.length} merchant${failed.length === 1 ? '' : 's'} skipped: ${failed[0]?.error}`,
+        )
+      }
+      await queryClient.invalidateQueries({ queryKey: CASES_KEY })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to create cases.'))
     },
   })
 }

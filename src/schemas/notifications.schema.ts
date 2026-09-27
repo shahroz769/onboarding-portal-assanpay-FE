@@ -7,6 +7,7 @@ export const notificationTypeValues = [
   'comment_reply',
   'comment_thread',
   'case_resubmitted',
+  'case_email_undelivered',
 ] as const
 
 export const notificationSchema = z.object({
@@ -26,6 +27,18 @@ export const notificationSchema = z.object({
 })
 
 export type Notification = z.infer<typeof notificationSchema>
+
+/**
+ * Stream signal: a case email's delivery status changed. Not stored and not
+ * shown in the bell; it only refreshes the case.
+ */
+export const caseEmailStatusEventSchema = z.object({
+  caseId: z.uuid(),
+  emailLogId: z.uuid(),
+  status: z.string(),
+})
+
+export type CaseEmailStatusEvent = z.infer<typeof caseEmailStatusEventSchema>
 
 export const notificationsListResponseSchema = z.object({
   items: z.array(notificationSchema),

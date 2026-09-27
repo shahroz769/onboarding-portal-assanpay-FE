@@ -1,6 +1,26 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ListOrdered, Pause, Play, Plus } from 'lucide-react'
+import { format } from 'date-fns'
+import {
+  CircleCheck,
+  CircleDashed,
+  CirclePause,
+  ClipboardList,
+  Clock3,
+  FileSearch,
+  FlaskConical,
+  Globe,
+  IdCard,
+  Layers,
+  ListOrdered,
+  Pause,
+  Play,
+  Plus,
+  Rocket,
+  ShieldCheck,
+  Signature,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -48,6 +68,11 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { cn } from '#/lib/utils'
+import {
+  queueLifecycleBadgeClasses,
+  queueWorkflowBadgeClasses,
+  statusTint,
+} from '#/lib/status-styles'
 import { DEFAULT_SLA_HOURS } from '#/lib/sla'
 import {
   isQueueRevisionConflict,
@@ -58,7 +83,11 @@ import {
   useUpdateQueueStatusMutation,
 } from '#/hooks/use-configuration-query'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
-import type { QueueLifecycle, QueueWorkflowType } from '#/schemas/cases.schema'
+import type {
+  Queue,
+  QueueLifecycle,
+  QueueWorkflowType,
+} from '#/schemas/cases.schema'
 import { ConfigurationHeaderActions } from './configuration-panel-shared'
 
 const STAGE_GRID_COLUMNS =
@@ -67,47 +96,93 @@ const STAGE_GRID_COLUMNS =
 const WORKFLOW_OPTIONS: Array<{
   value: QueueWorkflowType
   label: string
+  icon: LucideIcon
 }> = [
-  {
-    value: 'generic',
-    label: 'Generic',
-  },
-  {
-    value: 'document_review',
-    label: 'Document review',
-  },
-  {
-    value: 'agreement',
-    label: 'Agreement',
-  },
-  {
-    value: 'mid',
-    label: 'MID',
-  },
-  {
-    value: 'testing',
-    label: 'Testing',
-  },
-  {
-    value: 'wordpress',
-    label: 'WordPress',
-  },
-  {
-    value: 'live',
-    label: 'Live',
-  },
+  { value: 'generic', label: 'Generic', icon: Layers },
+  { value: 'document_review', label: 'Document review', icon: FileSearch },
+  { value: 'agreement', label: 'Agreement', icon: Signature },
+  { value: 'mid', label: 'MID', icon: IdCard },
+  { value: 'testing', label: 'Testing', icon: FlaskConical },
+  { value: 'wordpress', label: 'WordPress', icon: Globe },
+  { value: 'live', label: 'Live', icon: Rocket },
   {
     value: 'sub_merchant_form',
     label: 'Sub-merchant form',
+    icon: ClipboardList,
   },
 ]
+
+const LIFECYCLE_META: Record<
+  QueueLifecycle,
+  { label: string; icon: LucideIcon }
+> = {
+  active: { label: 'Active', icon: CircleCheck },
+  draft: { label: 'Draft', icon: CircleDashed },
+  inactive: { label: 'Inactive', icon: CirclePause },
+}
+
 function lifecycleLabel(queue: {
   lifecycle?: QueueLifecycle | null
   isActive?: boolean | null
-}) {
+}): QueueLifecycle {
   if (queue.lifecycle) return queue.lifecycle
   return queue.isActive === false ? 'inactive' : 'active'
 }
+
+type EditingQueue = { id: string; name: string }
+
+function QueueIdentityCell({
+  queue,
+  onEdit,
+}: {
+  queue: Queue
+  onEdit: (queue: EditingQueue) => void
+}) {
+  return (
+    // Opens the stage editor, like the Edit stages action.
+    <button
+      type="button"
+      onClick={() => onEdit({ id: queue.id, name: queue.name })}
+      aria-label={`Edit stages for ${queue.name}`}
+      className="group/identity block max-w-full min-w-0 cursor-pointer rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <span className="block truncate text-sm font-medium text-primary group-hover/identity:underline group-hover/identity:decoration-dashed group-hover/identity:underline-offset-4">
+        {queue.name}
+      </span>
+      <span className="block truncate font-mono text-xs text-muted-foreground group-hover/identity:text-primary">
+        {queue.slug}
+      </span>
+    </button>
+  )
+}
+
+function WorkflowBadge({ workflowType }: { workflowType: QueueWorkflowType }) {
+  const option = WORKFLOW_OPTIONS.find((item) => item.value === workflowType)
+  const Icon = option?.icon ?? Layers
+  return (
+    <Badge
+      variant="secondary"
+      className={queueWorkflowBadgeClasses(workflowType) || undefined}
+    >
+      <Icon />
+      {option?.label ?? workflowType}
+    </Badge>
+  )
+}
+
+function LifecycleBadge({ lifecycle }: { lifecycle: QueueLifecycle }) {
+  const { label, icon: Icon } = LIFECYCLE_META[lifecycle]
+  return (
+    <Badge
+      variant="secondary"
+      className={queueLifecycleBadgeClasses(lifecycle) || undefined}
+    >
+      <Icon />
+      {label}
+    </Badge>
+  )
+}
+
 export function QueuesPanel() {
   const {
     data: queues = [],
@@ -120,41 +195,36 @@ export function QueuesPanel() {
     }),
   )
   const updateStatus = useUpdateQueueStatusMutation()
-  type Queue = (typeof queues)[number]
+  // One controlled stage editor for the table; the queue stays set after
+  // close so the dialog keeps its content through the exit animation.
+  const [editingQueue, setEditingQueue] = useState<EditingQueue | null>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const openEditor = (queue: EditingQueue) => {
+    setEditingQueue(queue)
+    setEditorOpen(true)
+  }
   const columns: DataTableColumnDef<Queue>[] = [
     {
       id: 'name',
       header: 'Queue',
-      width: 220,
-      cell: (queue) => (
-        <span className="truncate font-medium">{queue.name}</span>
-      ),
-    },
-    {
-      id: 'slug',
-      header: 'Slug',
-      width: 180,
-      cell: (queue) => (
-        <span className="truncate font-mono text-xs">{queue.slug}</span>
-      ),
+      width: 260,
+      cell: (queue) => <QueueIdentityCell queue={queue} onEdit={openEditor} />,
     },
     {
       id: 'workflowType',
       header: 'Workflow',
-      width: 160,
-      cell: (queue) => (
-        <span className="truncate text-muted-foreground">
-          {WORKFLOW_OPTIONS.find(
-            (option) => option.value === queue.workflowType,
-          )?.label ?? queue.workflowType}
-        </span>
-      ),
+      width: 190,
+      cell: (queue) => <WorkflowBadge workflowType={queue.workflowType} />,
     },
     {
       id: 'prefix',
       header: 'Prefix',
       width: 100,
-      cell: (queue) => <span className="truncate">{queue.prefix}</span>,
+      cell: (queue) => (
+        <Badge variant="outline" className="font-mono tracking-wide">
+          {queue.prefix}
+        </Badge>
+      ),
     },
     {
       id: 'sla',
@@ -170,36 +240,63 @@ export function QueuesPanel() {
       ),
     },
     {
+      id: 'qc',
+      header: 'QC',
+      width: 90,
+      cell: (queue) =>
+        queue.qcEnabled ? (
+          <Badge variant="secondary" className={statusTint('purple')}>
+            <ShieldCheck />
+            On
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">Off</span>
+        ),
+    },
+    {
       id: 'status',
       header: 'Lifecycle',
-      width: 120,
-      cell: (queue) => {
-        const lifecycle = lifecycleLabel(queue)
-        return (
-          <Badge variant="outline" className="gap-1.5 capitalize">
-            <span
-              className={cn(
-                'size-1.5 rounded-full',
-                lifecycle === 'active' && 'bg-emerald-500',
-                lifecycle === 'draft' && 'bg-amber-500',
-                lifecycle === 'inactive' && 'bg-zinc-400',
-              )}
-            />
-            {lifecycle}
-          </Badge>
-        )
-      },
+      width: 130,
+      cell: (queue) => <LifecycleBadge lifecycle={lifecycleLabel(queue)} />,
+    },
+    {
+      id: 'createdAt',
+      header: 'Created',
+      width: 140,
+      cell: (queue) => (
+        <span className="text-sm text-muted-foreground">
+          {format(new Date(queue.createdAt), 'MMM dd, yyyy')}
+        </span>
+      ),
     },
     {
       id: 'actions',
       header: <span className="block text-right">Actions</span>,
-      width: 200,
+      width: 110,
       cell: (queue) => {
         const lifecycle = lifecycleLabel(queue)
         const nextLifecycle = lifecycle === 'active' ? 'inactive' : 'active'
         return (
           <div className="flex justify-end gap-1">
-            <QueueEditorDialog queueId={queue.id} queueName={queue.name} />
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={() =>
+                      openEditor({ id: queue.id, name: queue.name })
+                    }
+                  />
+                }
+              >
+                <ListOrdered className="size-4" />
+                <span className="sr-only">Edit stages</span>
+              </TooltipTrigger>
+              <TooltipContent>Edit stages</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -256,6 +353,14 @@ export function QueuesPanel() {
           />
         }
       />
+      {editingQueue ? (
+        <QueueEditorDialog
+          queueId={editingQueue.id}
+          queueName={editingQueue.name}
+          open={editorOpen}
+          onOpenChange={setEditorOpen}
+        />
+      ) : null}
     </>
   )
 }
@@ -364,6 +469,7 @@ function CreateQueueDialog() {
               <SelectContent>
                 {WORKFLOW_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
+                    <option.icon />
                     {option.label}
                   </SelectItem>
                 ))}
@@ -393,12 +499,15 @@ function CreateQueueDialog() {
 function QueueEditorDialog({
   queueId,
   queueName,
+  open,
+  onOpenChange: setOpen,
 }: {
   queueId: string
   queueName: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const queryClient = useQueryClient()
-  const [open, setOpen] = useState(false)
   const [staleOpen, setStaleOpen] = useState(false)
   const detailQuery = useQuery({
     ...queueDetailQueryOptions(queueId),
@@ -469,26 +578,6 @@ function QueueEditorDialog({
           if (!nextOpen) setStageDraft(null)
         }}
       >
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <DialogTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                  />
-                }
-              />
-            }
-          >
-            <ListOrdered className="size-4" />
-            <span className="sr-only">Edit stages</span>
-          </TooltipTrigger>
-          <TooltipContent>Edit stages</TooltipContent>
-        </Tooltip>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit stages — {queueName}</DialogTitle>
@@ -733,16 +822,19 @@ function QueueSlaCell({
   }
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      {/* A plain button, not <Button>: the button size variants add
+          `has-[>svg]:px-3`, which would indent the icon off the column edge. */}
       <DialogTrigger
         render={
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            className="h-auto cursor-pointer justify-start px-0 font-medium text-primary no-underline hover:bg-transparent hover:text-primary hover:underline hover:decoration-dashed hover:underline-offset-4"
+            className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm font-medium text-primary outline-none hover:underline hover:decoration-dashed hover:underline-offset-4 focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         }
       >
-        {slaHours} {slaHours === 1 ? 'hour' : 'hours'}
+        <Clock3 className="size-3.5 text-muted-foreground" />
+        <span className="tabular-nums">{slaHours}</span>
+        {slaHours === 1 ? 'hour' : 'hours'}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

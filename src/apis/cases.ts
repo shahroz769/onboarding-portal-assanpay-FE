@@ -57,6 +57,25 @@ export async function createCase(params: CreateCaseParams) {
   return response.data
 }
 
+interface BulkCreateCasesParams {
+  merchantIds: string[]
+  queueId: string
+  subMerchantId?: string
+}
+
+export interface BulkCreateCasesResult {
+  created: { id: string; caseNumber: string; merchantId: string }[]
+  failed: { merchantId: string; error: string }[]
+}
+
+export async function bulkCreateCases(params: BulkCreateCasesParams) {
+  const response = await apiClient.post<BulkCreateCasesResult>(
+    '/api/cases/bulk-create',
+    params,
+  )
+  return response.data
+}
+
 // ─── Update Case Status ─────────────────────────────────────────────────────
 
 // ─── Assign Case ────────────────────────────────────────────────────────────
@@ -148,6 +167,19 @@ export async function advanceStage(caseId: string) {
   return response.data
 }
 
+// ─── Move Back to Working ───────────────────────────────────────────────────
+
+/**
+ * Returns an Awaiting Merchant case to Working, e.g. after its merchant email
+ * bounced, so the email can be sent again or manually.
+ */
+export async function moveCaseBackToWorking(caseId: string) {
+  const response = await apiClient.patch(`/api/cases/${caseId}/status`, {
+    status: 'working',
+  })
+  return response.data
+}
+
 // ─── Save Field Reviews ─────────────────────────────────────────────────────
 
 export async function saveFieldReviews(
@@ -189,7 +221,6 @@ export async function closeUnsuccessful(
 
 export interface SendForResubmissionResponse {
   status: 'sent' | 'failed'
-  tokenExpiresAt: string | null
   emailLogId: string
   error?: string
 }
@@ -335,15 +366,18 @@ export async function sendLiveEmail(
 
 export interface EmailPreviewResult {
   recipient: string
+  /** CC / BCC / reply-to to add in Gmail, from Configuration → Email sending. */
+  cc?: string[]
+  bcc?: string[]
+  replyTo?: string[]
   subject: string
   body: string
   tokenId: string
-  tokenExpiresAt?: string
 }
 
 export type AgreementEmailPreviewResult = Pick<
   EmailPreviewResult,
-  'recipient' | 'subject' | 'body' | 'tokenId'
+  'recipient' | 'subject' | 'body' | 'tokenId' | 'cc' | 'bcc' | 'replyTo'
 >
 
 export interface ManualEmailConfirmResult {
@@ -353,7 +387,6 @@ export interface ManualEmailConfirmResult {
 
 export interface RegeneratedResubmissionLinkResult {
   url: string
-  expiresAt: string
   rejectedFieldCount: number
 }
 

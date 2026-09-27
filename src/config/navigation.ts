@@ -114,11 +114,6 @@ const navItems: NavItem[] = [
         group: 'Case Workflow',
       },
       {
-        title: 'Case Triggering',
-        url: '/configuration/case-triggering',
-        group: 'Case Workflow',
-      },
-      {
         title: 'Caseflow Builder',
         url: '/configuration/case-flow-rules',
         group: 'Case Workflow',
@@ -126,11 +121,6 @@ const navItems: NavItem[] = [
       {
         title: 'Email Sending',
         url: '/configuration/email-sending',
-        group: 'Communication',
-      },
-      {
-        title: 'Link Deadlines',
-        url: '/configuration/link-deadlines',
         group: 'Communication',
       },
     ],

@@ -24,7 +24,6 @@ import type {
   ResubmissionRejection,
 } from '#/apis/merchant-onboarding'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
-import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -490,10 +489,6 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const mutation = useSubmitResubmissionMutation(token)
 
-  const expiresLabel = formatExpiryLabel(context.expiresAt, (date) =>
-    format(date, 'PPP'),
-  )
-
   const groupedSections = groupRejections(context.rejections)
 
   function handleTextChange(fieldName: string, value: string) {
@@ -625,14 +620,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>Update your submission</CardTitle>
-          <CardDescription>
-            {context.merchantName}
-            {expiresLabel
-              ? expiresLabel === NO_EXPIRY_LABEL
-                ? ` - ${NO_EXPIRY_LABEL}.`
-                : ` - this secure link expires ${expiresLabel}.`
-              : '.'}
-          </CardDescription>
+          <CardDescription>{context.merchantName}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <Alert variant="warning">

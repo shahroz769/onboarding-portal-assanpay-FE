@@ -12,9 +12,9 @@ import {
   createMissingCloseTriggerCases,
   fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
+  fetchEmailRecipients,
   fetchEmailSendingMode,
   fetchLimitsAndMdr,
-  fetchLinkDeadlines,
   fetchMerchantPortal,
   fetchPaymentMethods,
   fetchPayoutMethods,
@@ -23,11 +23,11 @@ import {
   fetchSubMerchantOptions,
   previewMissingCloseTriggerCases,
   updateCaseFlowConfiguration,
+  updateEmailRecipients,
   updateEmailSendingMode,
   updateMerchantPortal,
   updatePaymentMethods,
   updatePayoutMethods,
-  updateLinkDeadlines,
   updateQueue,
   updateQueueSla,
   updateQueueStatus,
@@ -37,8 +37,8 @@ import {
 import { CASES_KEY, QUEUES_KEY } from '#/hooks/use-cases-query'
 import type {
   CaseFlowConfiguration,
+  EmailRecipientSettings,
   EmailSendingMode,
-  LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
   PayoutMethodSettings,
@@ -74,13 +74,13 @@ export const MERCHANT_PORTAL_KEY = [
   ...CONFIGURATION_KEY,
   'merchant-portal',
 ] as const
-export const LINK_DEADLINES_KEY = [
-  ...CONFIGURATION_KEY,
-  'link-deadlines',
-] as const
 export const EMAIL_SENDING_MODE_KEY = [
   ...CONFIGURATION_KEY,
   'email-sending-mode',
+] as const
+export const EMAIL_RECIPIENTS_KEY = [
+  ...CONFIGURATION_KEY,
+  'email-recipients',
 ] as const
 export const CASE_FLOW_CONFIGURATION_KEY = [
   'configuration',
@@ -156,18 +156,18 @@ export function merchantPortalQueryOptions() {
   })
 }
 
-export function linkDeadlinesQueryOptions() {
-  return queryOptions({
-    queryKey: LINK_DEADLINES_KEY,
-    queryFn: fetchLinkDeadlines,
-    staleTime: 60_000,
-  })
-}
-
 export function emailSendingModeQueryOptions() {
   return queryOptions({
     queryKey: EMAIL_SENDING_MODE_KEY,
     queryFn: fetchEmailSendingMode,
+    staleTime: 60_000,
+  })
+}
+
+export function emailRecipientsQueryOptions() {
+  return queryOptions({
+    queryKey: EMAIL_RECIPIENTS_KEY,
+    queryFn: fetchEmailRecipients,
     staleTime: 60_000,
   })
 }
@@ -179,20 +179,6 @@ export function caseFlowConfigurationQueryOptions(versionId?: number) {
       : CASE_FLOW_CONFIGURATION_KEY,
     queryFn: () => fetchCaseFlowConfiguration(versionId),
     staleTime: 60_000,
-  })
-}
-
-export function useUpdateLinkDeadlinesMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: LinkDeadlineSettings) => updateLinkDeadlines(input),
-    onSuccess: async () => {
-      toast.success('Link deadlines saved.')
-      await queryClient.invalidateQueries({ queryKey: CONFIGURATION_KEY })
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to save link deadlines.'))
-    },
   })
 }
 
@@ -208,6 +194,20 @@ export function useUpdateEmailSendingModeMutation() {
       toast.error(
         getApiErrorMessage(error, 'Failed to save email sending mode.'),
       )
+    },
+  })
+}
+
+export function useUpdateEmailRecipientsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: EmailRecipientSettings) => updateEmailRecipients(input),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(EMAIL_RECIPIENTS_KEY, saved)
+      toast.success('Email recipients saved.')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save email recipients.'))
     },
   })
 }

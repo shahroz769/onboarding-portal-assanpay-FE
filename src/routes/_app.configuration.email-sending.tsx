@@ -6,7 +6,7 @@ import { EmailSendingModePanel } from '#/features/configuration/panels/email-sen
 export const Route = createFileRoute('/_app/configuration/email-sending')({
   staticData: {
     title: 'Email Sending',
-    subtitle: 'Manage automatic and manual email modes.',
+    subtitle: 'Manage email sending modes and who else receives case emails.',
   },
   pendingMs: 0,
   pendingComponent: EmailSendingSkeleton,

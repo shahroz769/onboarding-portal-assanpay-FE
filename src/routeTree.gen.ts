@@ -28,10 +28,8 @@ import { Route as AppCasesWorkQueueCasesRouteImport } from './routes/_app.cases.
 import { Route as AppConfigurationIndexRouteImport } from './routes/_app.configuration.index'
 import { Route as AppConfigurationAgreementsRouteImport } from './routes/_app.configuration.agreements'
 import { Route as AppConfigurationCaseFlowRulesRouteImport } from './routes/_app.configuration.case-flow-rules'
-import { Route as AppConfigurationCaseTriggeringRouteImport } from './routes/_app.configuration.case-triggering'
 import { Route as AppConfigurationEmailSendingRouteImport } from './routes/_app.configuration.email-sending'
 import { Route as AppConfigurationLimitsAndMdrRouteImport } from './routes/_app.configuration.limits-and-mdr'
-import { Route as AppConfigurationLinkDeadlinesRouteImport } from './routes/_app.configuration.link-deadlines'
 import { Route as AppConfigurationMerchantPortalRouteImport } from './routes/_app.configuration.merchant-portal'
 import { Route as AppConfigurationPaymentMethodsRouteImport } from './routes/_app.configuration.payment-methods'
 import { Route as AppConfigurationPayoutMethodsRouteImport } from './routes/_app.configuration.payout-methods'
@@ -143,12 +141,6 @@ const AppConfigurationCaseFlowRulesRoute =
     path: '/case-flow-rules',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
-const AppConfigurationCaseTriggeringRoute =
-  AppConfigurationCaseTriggeringRouteImport.update({
-    id: '/case-triggering',
-    path: '/case-triggering',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
 const AppConfigurationEmailSendingRoute =
   AppConfigurationEmailSendingRouteImport.update({
     id: '/email-sending',
@@ -159,12 +151,6 @@ const AppConfigurationLimitsAndMdrRoute =
   AppConfigurationLimitsAndMdrRouteImport.update({
     id: '/limits-and-mdr',
     path: '/limits-and-mdr',
-    getParentRoute: () => AppConfigurationRoute,
-  } as any)
-const AppConfigurationLinkDeadlinesRoute =
-  AppConfigurationLinkDeadlinesRouteImport.update({
-    id: '/link-deadlines',
-    path: '/link-deadlines',
     getParentRoute: () => AppConfigurationRoute,
   } as any)
 const AppConfigurationMerchantPortalRoute =
@@ -265,10 +251,8 @@ export interface FileRoutesByFullPath {
   '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
-  '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
   '/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
-  '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
   '/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
   '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
@@ -298,10 +282,8 @@ export interface FileRoutesByTo {
   '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
-  '/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
   '/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
-  '/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
   '/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
   '/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
@@ -337,10 +319,8 @@ export interface FileRoutesById {
   '/_app/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
   '/_app/configuration/agreements': typeof AppConfigurationAgreementsRoute
   '/_app/configuration/case-flow-rules': typeof AppConfigurationCaseFlowRulesRoute
-  '/_app/configuration/case-triggering': typeof AppConfigurationCaseTriggeringRoute
   '/_app/configuration/email-sending': typeof AppConfigurationEmailSendingRoute
   '/_app/configuration/limits-and-mdr': typeof AppConfigurationLimitsAndMdrRoute
-  '/_app/configuration/link-deadlines': typeof AppConfigurationLinkDeadlinesRoute
   '/_app/configuration/merchant-portal': typeof AppConfigurationMerchantPortalRoute
   '/_app/configuration/payment-methods': typeof AppConfigurationPaymentMethodsRoute
   '/_app/configuration/payout-methods': typeof AppConfigurationPayoutMethodsRoute
@@ -377,10 +357,8 @@ export interface FileRouteTypes {
     | '/cases/work-queue-cases'
     | '/configuration/agreements'
     | '/configuration/case-flow-rules'
-    | '/configuration/case-triggering'
     | '/configuration/email-sending'
     | '/configuration/limits-and-mdr'
-    | '/configuration/link-deadlines'
     | '/configuration/merchant-portal'
     | '/configuration/payment-methods'
     | '/configuration/payout-methods'
@@ -410,10 +388,8 @@ export interface FileRouteTypes {
     | '/cases/work-queue-cases'
     | '/configuration/agreements'
     | '/configuration/case-flow-rules'
-    | '/configuration/case-triggering'
     | '/configuration/email-sending'
     | '/configuration/limits-and-mdr'
-    | '/configuration/link-deadlines'
     | '/configuration/merchant-portal'
     | '/configuration/payment-methods'
     | '/configuration/payout-methods'
@@ -448,10 +424,8 @@ export interface FileRouteTypes {
     | '/_app/cases/work-queue-cases'
     | '/_app/configuration/agreements'
     | '/_app/configuration/case-flow-rules'
-    | '/_app/configuration/case-triggering'
     | '/_app/configuration/email-sending'
     | '/_app/configuration/limits-and-mdr'
-    | '/_app/configuration/link-deadlines'
     | '/_app/configuration/merchant-portal'
     | '/_app/configuration/payment-methods'
     | '/_app/configuration/payout-methods'
@@ -612,13 +586,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfigurationCaseFlowRulesRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
-    '/_app/configuration/case-triggering': {
-      id: '/_app/configuration/case-triggering'
-      path: '/case-triggering'
-      fullPath: '/configuration/case-triggering'
-      preLoaderRoute: typeof AppConfigurationCaseTriggeringRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
     '/_app/configuration/email-sending': {
       id: '/_app/configuration/email-sending'
       path: '/email-sending'
@@ -631,13 +598,6 @@ declare module '@tanstack/react-router' {
       path: '/limits-and-mdr'
       fullPath: '/configuration/limits-and-mdr'
       preLoaderRoute: typeof AppConfigurationLimitsAndMdrRouteImport
-      parentRoute: typeof AppConfigurationRoute
-    }
-    '/_app/configuration/link-deadlines': {
-      id: '/_app/configuration/link-deadlines'
-      path: '/link-deadlines'
-      fullPath: '/configuration/link-deadlines'
-      preLoaderRoute: typeof AppConfigurationLinkDeadlinesRouteImport
       parentRoute: typeof AppConfigurationRoute
     }
     '/_app/configuration/merchant-portal': {
@@ -766,10 +726,8 @@ const AppCasesRouteWithChildren = AppCasesRoute._addFileChildren(
 interface AppConfigurationRouteChildren {
   AppConfigurationAgreementsRoute: typeof AppConfigurationAgreementsRoute
   AppConfigurationCaseFlowRulesRoute: typeof AppConfigurationCaseFlowRulesRoute
-  AppConfigurationCaseTriggeringRoute: typeof AppConfigurationCaseTriggeringRoute
   AppConfigurationEmailSendingRoute: typeof AppConfigurationEmailSendingRoute
   AppConfigurationLimitsAndMdrRoute: typeof AppConfigurationLimitsAndMdrRoute
-  AppConfigurationLinkDeadlinesRoute: typeof AppConfigurationLinkDeadlinesRoute
   AppConfigurationMerchantPortalRoute: typeof AppConfigurationMerchantPortalRoute
   AppConfigurationPaymentMethodsRoute: typeof AppConfigurationPaymentMethodsRoute
   AppConfigurationPayoutMethodsRoute: typeof AppConfigurationPayoutMethodsRoute
@@ -781,10 +739,8 @@ interface AppConfigurationRouteChildren {
 const AppConfigurationRouteChildren: AppConfigurationRouteChildren = {
   AppConfigurationAgreementsRoute: AppConfigurationAgreementsRoute,
   AppConfigurationCaseFlowRulesRoute: AppConfigurationCaseFlowRulesRoute,
-  AppConfigurationCaseTriggeringRoute: AppConfigurationCaseTriggeringRoute,
   AppConfigurationEmailSendingRoute: AppConfigurationEmailSendingRoute,
   AppConfigurationLimitsAndMdrRoute: AppConfigurationLimitsAndMdrRoute,
-  AppConfigurationLinkDeadlinesRoute: AppConfigurationLinkDeadlinesRoute,
   AppConfigurationMerchantPortalRoute: AppConfigurationMerchantPortalRoute,
   AppConfigurationPaymentMethodsRoute: AppConfigurationPaymentMethodsRoute,
   AppConfigurationPayoutMethodsRoute: AppConfigurationPayoutMethodsRoute,

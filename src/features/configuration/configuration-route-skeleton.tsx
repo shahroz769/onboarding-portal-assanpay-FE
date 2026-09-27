@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
-import { Field } from '#/components/ui/field'
+import { Field, FieldGroup } from '#/components/ui/field'
 import { Skeleton } from '#/components/ui/skeleton'
 
 // Loading states for the configuration pages, shown while a page's code loads
@@ -87,13 +87,14 @@ export function QueuesSkeleton() {
   return (
     <ConfigurationTableSkeleton
       columns={[
-        { id: 'name', header: 'Queue', width: 220 },
-        { id: 'slug', header: 'Slug', width: 180 },
-        { id: 'workflowType', header: 'Workflow', width: 160 },
+        { id: 'name', header: 'Queue', width: 260 },
+        { id: 'workflowType', header: 'Workflow', width: 190 },
         { id: 'prefix', header: 'Prefix', width: 100 },
         { id: 'sla', header: 'SLA', width: 140 },
-        { id: 'status', header: 'Lifecycle', width: 120 },
-        { id: 'actions', header: rightAligned('Actions'), width: 200 },
+        { id: 'qc', header: 'QC', width: 90 },
+        { id: 'status', header: 'Lifecycle', width: 130 },
+        { id: 'createdAt', header: 'Created', width: 140 },
+        { id: 'actions', header: rightAligned('Actions'), width: 110 },
       ]}
     />
   )
@@ -182,19 +183,34 @@ export function MerchantPortalSkeleton() {
   )
 }
 
-export function LinkDeadlinesSkeleton() {
+/**
+ * Switch cards: an icon tile, a title over a description (text-sm
+ * leading-normal, 21px a line) and the switch on the right.
+ */
+function SwitchCardSkeleton({
+  descriptionLines,
+}: {
+  descriptionLines: number
+}) {
   return (
-    <>
-      <PanelSkeleton>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <SectionSkeleton key={index} descriptionLines={2}>
-            <FieldSkeleton className="max-w-xs" />
-          </SectionSkeleton>
-        ))}
-      </PanelSkeleton>
-      {/* The note under the panel (text-xs) */}
-      <Skeleton className="mt-3 h-4 w-72 max-w-full" />
-    </>
+    <div className="flex items-start gap-3 rounded-md border p-4">
+      <Skeleton className="size-8 shrink-0 rounded-md" />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <Skeleton className="h-lh w-28 text-sm leading-snug" />
+        <div className="flex flex-col">
+          {Array.from({ length: descriptionLines }).map((_, index) => (
+            <div key={index} className="flex h-5.25 items-center">
+              <Skeleton
+                className={
+                  index === descriptionLines - 1 ? 'h-4 w-3/5' : 'h-4 w-full'
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <Skeleton className="h-[1.15rem] w-8 shrink-0 rounded-full" />
+    </div>
   )
 }
 
@@ -202,37 +218,37 @@ export function EmailSendingSkeleton() {
   return (
     <PanelSkeleton>
       <SectionSkeleton descriptionLines={3}>
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 2 }).map((_, index) => (
-            // A checkbox card: the checkbox beside a label and a one-line
-            // description (text-sm leading-normal, 21px).
-            <div
-              key={index}
-              className="flex items-start gap-3 rounded-lg border p-4"
-            >
-              <Skeleton className="mt-0.5 size-4 shrink-0 rounded-sm" />
-              <div className="flex flex-1 flex-col gap-1.5">
-                <Skeleton className="h-lh w-28 text-sm leading-snug" />
-                <div className="flex h-5.25 items-center">
-                  <Skeleton className="h-4 w-4/5" />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="grid gap-3 md:grid-cols-2">
+          <SwitchCardSkeleton descriptionLines={2} />
+          <SwitchCardSkeleton descriptionLines={2} />
         </div>
       </SectionSkeleton>
-    </PanelSkeleton>
-  )
-}
-
-export function CaseTriggeringSkeleton() {
-  return (
-    <PanelSkeleton>
-      <SectionSkeleton descriptionLines={3}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <FieldSkeleton />
-          <FieldSkeleton />
+      <SectionSkeleton descriptionLines={2}>
+        <div className="flex flex-col gap-3">
+          <SwitchCardSkeleton descriptionLines={1} />
+          <SwitchCardSkeleton descriptionLines={1} />
         </div>
+      </SectionSkeleton>
+      <SectionSkeleton descriptionLines={5}>
+        {/* CC / BCC / reply-to: label and count, the chips input (min-h-9)
+            and a one-line description each. */}
+        <FieldGroup>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Field key={index}>
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-lh w-16 text-sm leading-snug" />
+                <Skeleton className="h-3 w-10" />
+              </div>
+              <Skeleton className="h-9 w-full rounded-md" />
+              <div className="flex h-5.25 items-center">
+                <Skeleton className="h-4 w-3/5" />
+              </div>
+            </Field>
+          ))}
+        </FieldGroup>
+      </SectionSkeleton>
+      <SectionSkeleton descriptionLines={2}>
+        <Skeleton className="h-44 w-full rounded-lg" />
       </SectionSkeleton>
     </PanelSkeleton>
   )

@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
+import { TriggerCaseButton } from '#/features/cases/trigger-case-dialog'
 import {
   DEFAULT_CASE_STATUS_FILTER,
   caseRouteSearchSchema,
@@ -33,6 +34,7 @@ function RouteComponent() {
       filters={filters}
       setFilter={setFilter}
       setFilters={setFilters}
+      toolbarActions={<TriggerCaseButton />}
     />
   )
 }

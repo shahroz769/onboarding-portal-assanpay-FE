@@ -18,6 +18,7 @@ import {
   History,
 } from 'lucide-react'
 
+import { EmailDeliveryBadge } from '#/components/case-email/email-delivery-badge'
 import { Badge } from '#/components/ui/badge'
 import { ButtonLink } from '#/components/ui/button'
 import { TruncatedTooltip } from '#/components/truncated-tooltip'
@@ -30,6 +31,7 @@ import {
   CardTitle,
 } from '#/components/ui/card'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
+import type { CaseHistory } from '#/schemas/cases.schema'
 
 interface CaseHistoryTimelineProps {
   caseId: string
@@ -276,6 +278,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
+  email_undelivered: {
+    label: 'Email not delivered',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
   agreement_received_uploaded: {
     label: 'Received Agreement uploaded',
     icon: CheckCircle2,
@@ -432,6 +441,9 @@ export function CaseHistoryTimeline({
             const detailsText = formatDetails(entry.action, entry.details)
             const proofFile = getHistoryProofFile(entry.details)
             const proofLabel = getHistoryProofLabel(entry.action)
+            const emailRecipientsText = formatEmailRecipients(
+              entry.emailDelivery,
+            )
 
             return (
               <ViewTransition
@@ -501,6 +513,11 @@ export function CaseHistoryTimeline({
                               </ButtonLink>
                             </div>
                           ) : null}
+                          {emailRecipientsText ? (
+                            <p className="wrap-anywhere text-xs text-muted-foreground">
+                              {emailRecipientsText}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                       <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
@@ -515,6 +532,14 @@ export function CaseHistoryTimeline({
                         >
                           {meta.label}
                         </TruncatedTooltip>
+                        {entry.emailDelivery ? (
+                          <EmailDeliveryBadge
+                            status={entry.emailDelivery.status}
+                            detail={entry.emailDelivery.detail}
+                            updatedAt={entry.emailDelivery.updatedAt}
+                            tracked={entry.emailDelivery.tracked}
+                          />
+                        ) : null}
                         <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                           {formatDateTime(entry.createdAt)}
                         </span>
@@ -552,11 +577,42 @@ export function CaseHistoryTimeline({
   )
 }
 
+/** "Cc: a, b · Bcc: c" for an email entry, or null when there were none. */
+function formatEmailRecipients(delivery: CaseHistory['emailDelivery']) {
+  if (!delivery) return null
+  const parts = [
+    delivery.cc.length > 0 ? `Cc: ${delivery.cc.join(', ')}` : null,
+    delivery.bcc.length > 0 ? `Bcc: ${delivery.bcc.join(', ')}` : null,
+  ].filter(Boolean)
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
+const UNDELIVERED_TEXT: Record<string, string> = {
+  bounced: 'bounced',
+  complained: 'was marked as spam',
+  suppressed: 'was blocked by the suppression list',
+  failed: 'failed to send',
+}
+
 function formatDetails(
   action: string,
   details: Record<string, unknown> | null,
 ) {
   if (!details) return null
+
+  if (action === 'email_undelivered') {
+    const email =
+      typeof details.templateLabel === 'string'
+        ? `${details.templateLabel} email`
+        : 'Email'
+    const recipient =
+      typeof details.recipient === 'string' ? ` to ${details.recipient}` : ''
+    const reason =
+      typeof details.detail === 'string' && details.detail
+        ? `: ${details.detail}`
+        : '.'
+    return `${email}${recipient} ${UNDELIVERED_TEXT[String(details.status)] ?? 'was not delivered'}${reason} Send it again or send it manually before closing the case; if the case is awaiting the merchant, move it back to Working first.`
+  }
 
   if (
     [

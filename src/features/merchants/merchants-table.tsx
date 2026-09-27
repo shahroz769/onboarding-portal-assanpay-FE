@@ -1,4 +1,5 @@
-import { AlertTriangleIcon, BanIcon, Store } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangleIcon, BanIcon, Play, Store } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { EmptyState } from '#/components/empty-state'
@@ -30,6 +31,11 @@ import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { useRetainedValue } from '#/hooks/use-retained-value'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 import { MerchantDeleteDialog } from './merchant-delete-dialog'
+import {
+  TriggerCaseButton,
+  TriggerCaseDialog,
+  useCanTriggerCases,
+} from '#/features/cases/trigger-case-dialog'
 
 // ─── Filter Option Configs ──────────────────────────────────────────────────
 
@@ -97,6 +103,7 @@ function Toolbar() {
             {selectedIds.length} of {flatData.length} row(s) selected
           </span>
         )}
+        <TriggerCaseButton />
       </DataTableToolbar.Actions>
     </DataTableToolbar>
   )
@@ -115,12 +122,28 @@ function BulkActions() {
     state.selectedIds,
     state.flatData,
   )
+  const canTriggerCases = useCanTriggerCases()
+  const [triggerOpen, setTriggerOpen] = useState(false)
+  const actionableIdSet = new Set(actionableIds)
+  const triggerMerchants = state.flatData.filter((merchant) =>
+    actionableIdSet.has(merchant.id),
+  )
 
   return (
     <DataTableSelectionInfo
       selectedCount={state.selectedIds.length}
       visibleCount={state.flatData.length}
     >
+      {canTriggerCases && actionableIds.length > 0 && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setTriggerOpen(true)}
+        >
+          <Play data-icon="inline-start" />
+          Trigger Case ({actionableIds.length})
+        </Button>
+      )}
       {canEditPriority && actionableIds.length > 0 && (
         <Button
           variant="outline"
@@ -148,6 +171,12 @@ function BulkActions() {
           Terminate ({actionableIds.length})
         </Button>
       )}
+      <TriggerCaseDialog
+        open={triggerOpen}
+        onOpenChange={setTriggerOpen}
+        merchants={triggerMerchants}
+        onTriggered={actions.clearSelection}
+      />
     </DataTableSelectionInfo>
   )
 }

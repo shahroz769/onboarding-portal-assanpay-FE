@@ -15,7 +15,10 @@ import {
   NOTIFICATIONS_KEY,
   applyIncomingNotificationToCache,
 } from '#/hooks/use-notifications-query'
-import type { Notification } from '#/schemas/notifications.schema'
+import type {
+  CaseEmailStatusEvent,
+  Notification,
+} from '#/schemas/notifications.schema'
 
 import { createNotificationsSseClient } from './notifications-sse'
 import { showNotificationToast } from './notification-toast'
@@ -76,7 +79,12 @@ export function NotificationsProvider() {
 
   const handleNotification = useEffectEvent((notification: Notification) => {
     applyIncomingNotificationToCache(queryClient, notification)
-    if (notification.caseId && notification.type === 'case_resubmitted') {
+    // Refresh the case so a bounced email shows (and blocks closing) at once.
+    if (
+      notification.caseId &&
+      (notification.type === 'case_resubmitted' ||
+        notification.type === 'case_email_undelivered')
+    ) {
       void invalidateCaseWorkflowQueries(queryClient, notification.caseId)
     }
     if (
@@ -92,6 +100,21 @@ export function NotificationsProvider() {
     showNotificationToast(notification, navigate)
   })
 
+  // A case email was delivered, bounced, … : refresh that case's page so the
+  // delivery badge and the close button update without polling.
+  const handleCaseEmailStatus = useEffectEvent(
+    (event: CaseEmailStatusEvent) => {
+      void Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [...CASE_DETAIL_KEY, event.caseId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...CASE_HISTORY_KEY, event.caseId],
+        }),
+      ])
+    },
+  )
+
   useEffect(() => {
     if (!userId) return
 
@@ -103,6 +126,7 @@ export function NotificationsProvider() {
         return data.accessToken
       },
       onEvent: handleNotification,
+      onCaseEmailStatus: handleCaseEmailStatus,
       onOpen: syncNotificationsFromServer,
       onInvalidEvent: syncNotificationsFromServer,
       onVisible: syncVisibleTab,

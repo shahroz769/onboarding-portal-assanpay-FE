@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useInfiniteQuery, usePrefetchQuery } from '@tanstack/react-query'
 import { MailIcon, PlusIcon } from 'lucide-react'
 
@@ -33,7 +32,6 @@ import { Spinner } from '#/components/ui/spinner'
 import { useAuth } from '#/features/auth/auth-client'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { queuesQueryOptions } from '#/hooks/use-cases-query'
-import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import {
   usersInfiniteQueryOptions,
   useBulkSendUserResetPasswordsMutation,
@@ -62,21 +60,15 @@ const statusFilterOptions = userStatuses.map((status) => ({
   value: status,
 }))
 
-function CreateUserHeaderAction() {
-  const portalTarget = usePageHeaderActions()
+function CreateUserButton() {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      {portalTarget
-        ? createPortal(
-            <Button size="sm" onClick={() => setOpen(true)}>
-              <PlusIcon data-icon="inline-start" />
-              Create User
-            </Button>,
-            portalTarget,
-          )
-        : null}
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <PlusIcon data-icon="inline-start" />
+        Create User
+      </Button>
       <CreateUserDialog open={open} onOpenChange={setOpen} />
     </>
   )
@@ -177,7 +169,6 @@ export function UsersTableComposed({
 
   return (
     <>
-      <CreateUserHeaderAction />
       <TooltipProvider>
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <div className="shrink-0">
@@ -211,6 +202,7 @@ export function UsersTableComposed({
                     {selectedIds.length} of {users.length} row(s) selected
                   </span>
                 )}
+                <CreateUserButton />
               </DataTableToolbar.Actions>
             </DataTableToolbar>
           </div>

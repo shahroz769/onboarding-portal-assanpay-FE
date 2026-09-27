@@ -17,6 +17,7 @@ import {
   fetchCaseDetail,
   fetchCaseHistory,
   markLiveLimitsApplied,
+  moveCaseBackToWorking,
   regenerateResubmissionLink,
   saveMidCreationDetails,
   saveFieldReviews,
@@ -72,6 +73,9 @@ export const CASE_COMMENTS_KEY = ['case-comments'] as const
 export const CASE_HISTORY_KEY = ['case-history'] as const
 const CASE_DETAIL_STALE_TIME = 30_000
 
+// Email delivery status (Resend webhooks) isn't polled: the server pushes a
+// case-email-status signal on the notifications stream, which refreshes the
+// case detail and history (see NotificationsProvider).
 export function caseDetailQueryOptions(caseId: string) {
   return queryOptions({
     queryKey: [...CASE_DETAIL_KEY, caseId],
@@ -299,6 +303,23 @@ export function useSaveDocumentReviewSubMerchant(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to save sub-merchants'))
+    },
+  })
+}
+
+export function useMoveCaseBackToWorking(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => moveCaseBackToWorking(caseId),
+    onSuccess: () => {
+      toast.success('Case moved back to Working')
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to move the case'))
+    },
+    onSettled: () => {
+      void invalidateCaseWorkflowQueries(queryClient, caseId)
     },
   })
 }

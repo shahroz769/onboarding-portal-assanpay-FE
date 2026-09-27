@@ -29,7 +29,6 @@ import {
 import { Separator } from '#/components/ui/separator'
 import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { caseHistoryQueryOptions } from '#/hooks/use-case-detail-query'
-import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 import { cn } from '#/lib/utils'
 import type { CaseHistory } from '#/schemas/cases.schema'
 
@@ -45,7 +44,6 @@ type Round = {
   fieldsUpdated: Array<string>
   rejectedFieldDetails: Array<RoundFieldDetail>
   fieldDetails: Array<RoundFieldDetail>
-  expiresAt: string | null
   recipient: string | null
   emailFailed: boolean
   emailError: string | null
@@ -66,9 +64,10 @@ type RoundFieldDetail = {
 }
 
 function formatDate(value: string | null) {
-  return formatExpiryLabel(value, (date) =>
-    REJECTION_ROUND_DATE_FORMATTER.format(date),
-  )
+  if (!value) return null
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return null
+  return REJECTION_ROUND_DATE_FORMATTER.format(date)
 }
 
 function getStringList(value: unknown) {
@@ -159,8 +158,6 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
         fieldsUpdated: [],
         rejectedFieldDetails: getFieldDetails(details.rejectedFieldDetails),
         fieldDetails: [],
-        expiresAt:
-          typeof details.expiresAt === 'string' ? details.expiresAt : null,
         recipient:
           typeof details.recipient === 'string' ? details.recipient : null,
         emailFailed: false,
@@ -179,7 +176,6 @@ function buildRounds(history: Array<CaseHistory>): Array<Round> {
         fieldsUpdated: [],
         rejectedFieldDetails: [],
         fieldDetails: [],
-        expiresAt: null,
         recipient: null,
         emailFailed: true,
         emailError: typeof details.error === 'string' ? details.error : null,
@@ -271,7 +267,6 @@ function SummaryMetric({ label, value }: { label: string; value: string }) {
 
 function RoundRow({ round }: { round: Round }) {
   const sentAt = formatDate(round.sentEntry.createdAt)
-  const expiresAt = formatDate(round.expiresAt)
   const resubmittedAt = formatDate(round.resubmittedEntry?.createdAt ?? null)
 
   return (
@@ -321,11 +316,7 @@ function RoundRow({ round }: { round: Round }) {
               </AlertDescription>
             </Alert>
           ) : (
-            <RoundDetails
-              round={round}
-              expiresAt={expiresAt}
-              resubmittedAt={resubmittedAt}
-            />
+            <RoundDetails round={round} resubmittedAt={resubmittedAt} />
           )}
         </div>
       </CollapsibleContent>
@@ -371,11 +362,9 @@ function RoundStatusBadge({ round }: { round: Round }) {
 
 function RoundDetails({
   round,
-  expiresAt,
   resubmittedAt,
 }: {
   round: Round
-  expiresAt: string | null
   resubmittedAt: string | null
 }) {
   return (
@@ -384,13 +373,6 @@ function RoundDetails({
         icon={MailCheck}
         label="Sent to"
         title={round.recipient ?? 'Recipient unavailable'}
-        description={
-          expiresAt
-            ? expiresAt === NO_EXPIRY_LABEL
-              ? expiresAt
-              : `Link expires ${expiresAt}`
-            : null
-        }
       />
 
       <TimelineDetailBlock

@@ -1,7 +1,13 @@
 import { API_BASE_URL } from '#/lib/api-client'
 import { isTerminalSessionRefreshError } from '#/features/auth/session-refresh'
-import { notificationSchema } from '#/schemas/notifications.schema'
-import type { Notification } from '#/schemas/notifications.schema'
+import {
+  caseEmailStatusEventSchema,
+  notificationSchema,
+} from '#/schemas/notifications.schema'
+import type {
+  CaseEmailStatusEvent,
+  Notification,
+} from '#/schemas/notifications.schema'
 
 type Listener = (notification: Notification) => void
 
@@ -14,6 +20,8 @@ interface SubscribeOptions {
   getAccessToken: () => string | null
   refreshAccessToken: () => Promise<string>
   onEvent: Listener
+  /** A case email's delivery status changed; not a notification. */
+  onCaseEmailStatus?: (event: CaseEmailStatusEvent) => void
   onOpen?: () => void
   onError?: (err: unknown) => void
   onInvalidEvent?: () => void
@@ -175,9 +183,20 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         dataLines.push(line.slice(5).trim())
       }
     }
-    if (event !== 'notification') return
     const data = dataLines.join('\n')
     if (!data) return
+    if (event === 'case-email-status') {
+      // A signal only: a malformed one is dropped without resyncing the
+      // notifications, since nothing about them was missed.
+      try {
+        const parsed = caseEmailStatusEventSchema.safeParse(JSON.parse(data))
+        if (parsed.success) options.onCaseEmailStatus?.(parsed.data)
+      } catch {
+        // Ignore unparseable signals.
+      }
+      return
+    }
+    if (event !== 'notification') return
     try {
       const parsed = notificationSchema.safeParse(JSON.parse(data))
       if (!parsed.success) {

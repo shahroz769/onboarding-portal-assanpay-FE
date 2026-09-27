@@ -51,9 +51,13 @@ export function ManualEmailPanel({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">To:</span>{' '}
-        {preview.recipient}
+      {/* CC / BCC / reply-to come from Configuration → Email sending, so a
+          Gmail send reaches the same people as the automatic one. */}
+      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+        <RecipientLine label="To" emails={[preview.recipient]} />
+        <RecipientLine label="Cc" emails={preview.cc} />
+        <RecipientLine label="Bcc" emails={preview.bcc} />
+        <RecipientLine label="Reply-to" emails={preview.replyTo} />
       </div>
 
       {/* Subject */}
@@ -147,6 +151,40 @@ export function ManualEmailPanel({
       >
         {isPending ? 'Saving…' : 'Mark as sent & save screenshot'}
       </Button>
+    </div>
+  )
+}
+
+/** One recipient row; lists get a copy button to paste into Gmail. */
+function RecipientLine({
+  label,
+  emails,
+}: {
+  label: string
+  emails?: string[]
+}) {
+  if (!emails || emails.length === 0) return null
+  const value = emails.join(', ')
+  return (
+    <div className="flex min-w-0 items-start gap-1.5">
+      <span className="shrink-0 font-medium text-foreground">{label}:</span>
+      <span className="min-w-0 flex-1 wrap-anywhere select-all">{value}</span>
+      {label !== 'To' ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 shrink-0 gap-1 px-2 text-xs"
+          onClick={() =>
+            void navigator.clipboard
+              .writeText(value)
+              .then(() => toast.success(`${label} copied to clipboard`))
+          }
+        >
+          <Copy className="size-3" />
+          Copy
+        </Button>
+      ) : null}
     </div>
   )
 }

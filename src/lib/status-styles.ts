@@ -145,6 +145,37 @@ export function passwordStatusBadgeClasses(hasSetPassword: boolean): string {
   return hasSetPassword ? '' : TINTS.amber
 }
 
+// ─── Queue lifecycle / workflow ─────────────────────────────────────────────
+
+// Inactive renders as the neutral secondary badge, like an inactive user.
+const QUEUE_LIFECYCLE_TINTS: Record<string, StatusTint | 'plain'> = {
+  active: 'emerald',
+  draft: 'amber',
+  inactive: 'plain',
+}
+
+export function queueLifecycleBadgeClasses(lifecycle: string): string {
+  const tint = QUEUE_LIFECYCLE_TINTS[lifecycle] ?? 'neutral'
+  return tint === 'plain' ? '' : TINTS[tint]
+}
+
+// 'plain' = the untinted secondary badge (the generic template).
+const QUEUE_WORKFLOW_TINTS: Record<string, StatusTint | 'plain'> = {
+  generic: 'plain',
+  document_review: 'blue',
+  agreement: 'violet',
+  mid: 'indigo',
+  testing: 'sky',
+  wordpress: 'cyan',
+  live: 'emerald',
+  sub_merchant_form: 'teal',
+}
+
+export function queueWorkflowBadgeClasses(workflowType: string): string {
+  const tint = QUEUE_WORKFLOW_TINTS[workflowType] ?? 'neutral'
+  return tint === 'plain' ? '' : TINTS[tint]
+}
+
 // ─── Priority ───────────────────────────────────────────────────────────────
 
 // Normal priority renders as the default neutral secondary badge.

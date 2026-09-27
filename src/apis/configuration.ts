@@ -4,9 +4,9 @@ import type {
   CaseFlowBackfillPreview,
   CaseFlowBackfillResult,
   AgreementDraft,
+  EmailRecipientSettings,
   EmailSendingMode,
   LimitsAndMdrSettings,
-  LinkDeadlineSettings,
   MerchantPortalSettings,
   PaymentMethodSettings,
   PayoutMethodSettings,
@@ -18,9 +18,9 @@ import {
   caseFlowBackfillPreviewSchema,
   caseFlowBackfillResultSchema,
   agreementDraftSchema,
+  emailRecipientSettingsSchema,
   emailSendingModeSchema,
   limitsAndMdrSettingsSchema,
-  linkDeadlineSettingsSchema,
   merchantPortalSettingsSchema,
   paymentMethodSettingsSchema,
   payoutMethodSettingsSchema,
@@ -65,22 +65,9 @@ export async function fetchMerchantPortal(): Promise<MerchantPortalSettings> {
   return merchantPortalSettingsSchema.parse(response.data)
 }
 
-export async function fetchLinkDeadlines(): Promise<LinkDeadlineSettings> {
-  const response = await apiClient.get('/api/configuration/link-deadlines')
-  return linkDeadlineSettingsSchema.parse(response.data)
-}
-
 export async function fetchEmailSendingMode(): Promise<EmailSendingMode> {
   const response = await apiClient.get('/api/configuration/email-sending-mode')
   return emailSendingModeSchema.parse(response.data)
-}
-
-export async function updateLinkDeadlines(input: LinkDeadlineSettings) {
-  const response = await apiClient.put(
-    '/api/configuration/link-deadlines',
-    input,
-  )
-  return response.data
 }
 
 export async function updateEmailSendingMode(input: EmailSendingMode) {
@@ -89,6 +76,19 @@ export async function updateEmailSendingMode(input: EmailSendingMode) {
     input,
   )
   return response.data
+}
+
+export async function fetchEmailRecipients(): Promise<EmailRecipientSettings> {
+  const response = await apiClient.get('/api/configuration/email-recipients')
+  return emailRecipientSettingsSchema.parse(response.data)
+}
+
+export async function updateEmailRecipients(input: EmailRecipientSettings) {
+  const response = await apiClient.put(
+    '/api/configuration/email-recipients',
+    input,
+  )
+  return emailRecipientSettingsSchema.parse(response.data)
 }
 
 export async function updateMerchantPortal(input: MerchantPortalSettings) {
