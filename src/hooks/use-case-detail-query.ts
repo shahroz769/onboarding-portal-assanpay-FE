@@ -40,6 +40,8 @@ import {
   sendLiveEmail,
   fetchLiveEmailPreview,
   confirmLiveEmailManual,
+  generatePortalPasswordCode,
+  revealPortalPasswordCode,
 } from '#/apis/cases'
 import type {
   CaseTransitionResult,
@@ -652,6 +654,35 @@ export function useConfirmLiveEmailManual(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to confirm manual email'))
+    },
+  })
+}
+
+// Mutations rather than queries, so the code never sits in the query cache.
+export function useRevealPortalPasswordCode(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => revealPortalPasswordCode(caseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to reveal the code'))
+    },
+  })
+}
+
+export function useGeneratePortalPasswordCode(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => generatePortalPasswordCode(caseId),
+    onSuccess: () => {
+      toast.success('Portal password code generated')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to generate the code'))
     },
   })
 }

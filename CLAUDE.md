@@ -1,0 +1,32 @@
+work on both frontend and backend
+do not run builds on frontend and backend unless specified
+Desktop folder \Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate
+
+Use shadcn/ui components built on Base UI for all new and updated frontend UI. Keep `components.json` on a Base UI style. Do not add Radix UI or `cmdk` components or dependencies.
+
+Tailwind v4 syntax only:
+- important modifier goes at the end: `size-2.5!`, `hover:scale-125!` (not `!size-2.5`)
+- use scale classes instead of arbitrary px when one exists: `w-100` not `w-[400px]` (1 unit = 4px)
+- `wrap-break-word` / `wrap-anywhere`, not `break-words` / `[overflow-wrap:anywhere]`
+- never put two classes that set the same property on one element
+
+The current DB is a test DB and can be used for read/write tests, verifications, etc
+
+
+<!-- intent-skills:start -->
+
+# Skill mappings - when working in these areas, load the linked skill file into context.
+
+skills:
+
+- task: "working on TanStack Start app setup, shared layouts, route shell, or useServerFn"
+  load: "node_modules/@tanstack/react-start/skills/react-start/SKILL.md"
+- task: "working on TanStack Router layouts, navigation, path-based routing, and Link behavior"
+  load: "node_modules/@tanstack/router-core/skills/router-core/navigation/SKILL.md"
+- task: "working on route not found handling, error boundaries, or notFoundComponent behavior"
+  load: "node_modules/@tanstack/router-core/skills/router-core/not-found-and-errors/SKILL.md"
+- task: "working on server functions, request handling, middleware, or server routes in TanStack Start"
+  load: "node_modules/@tanstack/start-client-core/skills/start-core/server-functions/SKILL.md"
+- task: "working on TanStack Router plugin setup, generated routes, and Vite router integration"
+load: "node_modules/@tanstack/router-plugin/skills/router-plugin/SKILL.md"
+<!-- intent-skills:end -->

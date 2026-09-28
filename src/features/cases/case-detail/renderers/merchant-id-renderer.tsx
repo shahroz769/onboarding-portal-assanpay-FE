@@ -52,6 +52,7 @@ import type { MerchantPortalRole } from '#/schemas/cases.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
 import { CaseCardHeading } from '../case-section'
+import { PortalPasswordCodeCard } from '../portal-password-code-card'
 import type { QueueRendererProps } from '../queue-registry'
 
 const DEFAULT_METHODS: PaymentMethodSettings = []
@@ -172,6 +173,7 @@ export default function MerchantIdRenderer({
   const savedMerchantRole =
     caseDetail.testing?.merchantRole ?? DEFAULT_MERCHANT_PORTAL_ROLE
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
+  const portalPasswordCode = caseDetail.testing?.portalPasswordCode ?? null
   const savedPaymentMethods = savedCredentialsReady
     ? (caseDetail.testing?.paymentMethods ?? null)
     : null
@@ -558,13 +560,20 @@ export default function MerchantIdRenderer({
         </CardContent>
       </Card>
 
+      <PortalPasswordCodeCard
+        caseId={caseId}
+        status={portalPasswordCode}
+        email={form.email}
+        canManage={canEdit}
+      />
+
       <Card>
         <CardHeader>
           <CaseCardHeading
             icon={IdCard}
             tone="indigo"
             title="Merchant IDs"
-            description="Save both IDs created on the merchant platform before closing this case successfully. The temporary password is generated only when credentials are sent."
+            description="Save both IDs created on the merchant platform before closing this case successfully. Create the merchant account with the temporary password from Portal Password."
             action={
               <Badge variant="secondary">
                 <ShieldCheck />
@@ -757,7 +766,11 @@ export default function MerchantIdRenderer({
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 onClick={handleSave}
-                disabled={!canEdit || saveMidCreationDetails.isPending}
+                disabled={
+                  !canEdit ||
+                  !portalPasswordCode ||
+                  saveMidCreationDetails.isPending
+                }
               >
                 {saveMidCreationDetails.isPending ? (
                   <Spinner data-icon="inline-start" />
@@ -778,6 +791,15 @@ export default function MerchantIdRenderer({
           <AlertDescription>
             Both merchant IDs are saved. You can now mark this case as
             successful.
+          </AlertDescription>
+        </Alert>
+      ) : canEdit && !portalPasswordCode ? (
+        <Alert variant="warning">
+          <Info />
+          <AlertTitle>Portal password code required</AlertTitle>
+          <AlertDescription>
+            Generate the portal password code and create the merchant account
+            with its password before saving the merchant IDs.
           </AlertDescription>
         </Alert>
       ) : !canEdit && isWorking ? (

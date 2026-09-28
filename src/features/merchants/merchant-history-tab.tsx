@@ -65,6 +65,8 @@ const ACTION_LABELS: Record<string, string> = {
   live_limits_applied: 'Live limits applied',
   wordpress_website_saved: 'WordPress website saved',
   mid_creation_saved: 'MID creation saved',
+  portal_password_code_generated: 'Portal password code generated',
+  portal_password_code_revealed: 'Portal password code viewed',
   resubmission_email_sent: 'Resubmission email sent',
   resubmission_email_sent_manual: 'Resubmission email sent',
   resubmission_email_failed: 'Resubmission email failed',

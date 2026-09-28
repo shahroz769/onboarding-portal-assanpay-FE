@@ -42,6 +42,7 @@ import type { EmailPreviewResult } from '#/apis/cases'
 import type { EmailRecipientType } from '#/schemas/cases.schema'
 
 import { CaseCardHeading } from '../case-section'
+import { PortalPasswordCodeCard } from '../portal-password-code-card'
 import type { QueueRendererProps } from '../queue-registry'
 
 export default function TestingRenderer({
@@ -65,6 +66,8 @@ export default function TestingRenderer({
   const limitsAppliedAt = caseDetail.testing?.limitsAppliedAt ?? null
   const limitsAppliedBy = caseDetail.testing?.limitsAppliedBy?.name ?? null
   const credentialsReady = Boolean(caseDetail.testing?.credentialsReady)
+  const portalPasswordCode = caseDetail.testing?.portalPasswordCode ?? null
+  const passwordCodeActive = portalPasswordCode?.status === 'active'
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
@@ -81,6 +84,7 @@ export default function TestingRenderer({
     isCaseOwner &&
     isWorking &&
     credentialsReady &&
+    passwordCodeActive &&
     Boolean(limitsAppliedAt) &&
     !credentialsEmailSent &&
     !historyQuery.isPending
@@ -198,6 +202,14 @@ export default function TestingRenderer({
         </CardContent>
       </Card>
 
+      {!credentialsEmailSent ? (
+        <PortalPasswordCodeCard
+          caseId={caseId}
+          status={portalPasswordCode}
+          canManage={isCaseOwner && isWorking}
+        />
+      ) : null}
+
       <Card>
         <CardHeader>
           <CaseCardHeading
@@ -249,6 +261,18 @@ export default function TestingRenderer({
           <AlertDescription>
             Save the portal MID and email in the MID Creation case before
             sending credentials from Testing.
+          </AlertDescription>
+        </Alert>
+      ) : credentialsReady &&
+        !passwordCodeActive &&
+        !credentialsEmailSent &&
+        isWorking ? (
+        <Alert variant="warning">
+          <Info />
+          <AlertTitle>Portal password code required</AlertTitle>
+          <AlertDescription>
+            Generate the portal password code, set its password on the merchant
+            portal, then send credentials.
           </AlertDescription>
         </Alert>
       ) : credentialsReady && !limitsAppliedAt && isWorking ? (

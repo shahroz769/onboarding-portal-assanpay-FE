@@ -561,6 +561,31 @@ export async function saveMidCreationDetails(
   return response.data
 }
 
+export interface PortalPasswordCode {
+  code: string
+  createdAt: string
+  /** Portal email saved in MID Creation, when saved. */
+  portalEmail: string | null
+}
+
+export async function revealPortalPasswordCode(
+  caseId: string,
+): Promise<PortalPasswordCode> {
+  const response = await apiClient.get<PortalPasswordCode>(
+    `/api/cases/${caseId}/portal-password-code`,
+  )
+  return response.data
+}
+
+export async function generatePortalPasswordCode(
+  caseId: string,
+): Promise<PortalPasswordCode> {
+  const response = await apiClient.post<PortalPasswordCode>(
+    `/api/cases/${caseId}/portal-password-code`,
+  )
+  return response.data
+}
+
 // ─── Case Comments ──────────────────────────────────────────────────────────
 
 export async function markLiveLimitsApplied(caseId: string) {

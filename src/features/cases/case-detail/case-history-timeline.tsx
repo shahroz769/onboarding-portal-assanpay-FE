@@ -16,6 +16,8 @@ import {
   Globe,
   ExternalLink,
   History,
+  Eye,
+  KeyRound,
 } from 'lucide-react'
 
 import { EmailDeliveryBadge } from '#/components/case-email/email-delivery-badge'
@@ -375,6 +377,20 @@ const ACTION_META: Record<
     iconClassName: 'text-indigo-700 dark:text-indigo-300',
     iconWrapperClassName:
       'border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60',
+  },
+  portal_password_code_generated: {
+    label: 'Portal password code generated',
+    icon: KeyRound,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
+  portal_password_code_revealed: {
+    label: 'Portal password code viewed',
+    icon: Eye,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
   },
   live_limits_applied: {
     label: 'Live limits applied',

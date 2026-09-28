@@ -162,11 +162,7 @@ export type CaseFilters = z.infer<typeof caseFiltersSchema>
 
 // ─── Stage Category ─────────────────────────────────────────────────────────
 
-export const STAGE_CATEGORIES = [
-  'new',
-  'in_progress',
-  'closed',
-] as const
+export const STAGE_CATEGORIES = ['new', 'in_progress', 'closed'] as const
 // ─── Queue Stage ────────────────────────────────────────────────────────────
 
 export const queueStageSchema = z.object({
@@ -377,6 +373,14 @@ const caseDetailSchema = z.object({
         .optional(),
       merchantRole: z.enum(MERCHANT_PORTAL_ROLES).nullable().optional(),
       credentialsReady: z.boolean().optional(),
+      portalPasswordCode: z
+        .object({
+          status: z.enum(['active', 'used']),
+          createdAt: z.string(),
+          consumedAt: z.string().nullable(),
+        })
+        .nullable()
+        .optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
       payoutMethods: payoutMethodSettingsSchema.nullable().optional(),
     })
