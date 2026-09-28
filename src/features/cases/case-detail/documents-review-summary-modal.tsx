@@ -148,16 +148,6 @@ export function DocumentsReviewSummaryModal({
 
   const autoContent = (
     <div className="flex flex-col gap-4">
-      <EmailRecipientSelect
-        value={recipientEmailType}
-        onValueChange={(value) => {
-          setRecipientEmailType(value)
-          setPreview(null)
-        }}
-        submitterEmail={submitterEmail}
-        businessEmail={businessEmail}
-        disabled={sendForResubmission.isPending}
-      />
       {hasRejections ? (
         <RejectionsList items={rejectedItems} />
       ) : (
@@ -171,7 +161,7 @@ export function DocumentsReviewSummaryModal({
         }}
         submitterEmail={submitterEmail}
         businessEmail={businessEmail}
-        disabled={fetchPreview.isPending || confirmManual.isPending}
+        disabled={sendForResubmission.isPending}
       />
       <DialogFooter className="gap-2 sm:gap-2">
         <Button

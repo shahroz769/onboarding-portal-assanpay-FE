@@ -125,24 +125,19 @@ function AppLayout() {
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
           />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink render={<Link to="/" />}>
-                  AssanPay
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
+          <Breadcrumb className="min-w-0">
+            <BreadcrumbList className="flex-nowrap">
               {isCaseDetailRoute ? (
                 <>
-                  <BreadcrumbItem>
+                  <BreadcrumbItem className="hidden shrink-0 sm:inline-flex">
                     <BreadcrumbLink render={<Link to="/cases/all-cases" />}>
                       All Cases
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden sm:block" />
+                  <BreadcrumbItem className="min-w-0">
                     <BreadcrumbLink
+                      className="block max-w-48 truncate"
                       render={
                         <Link
                           to="/cases/all-cases"
@@ -154,15 +149,15 @@ function AppLayout() {
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
+                  <BreadcrumbItem className="shrink-0">
+                    <BreadcrumbPage className="whitespace-nowrap">
                       {caseDetail?.case?.caseNumber ?? 'Case'}
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               ) : merchantDetailMatch ? (
                 <>
-                  <BreadcrumbItem>
+                  <BreadcrumbItem className="shrink-0">
                     <BreadcrumbLink render={<Link to="/merchants" />}>
                       Merchants
                     </BreadcrumbLink>
@@ -175,8 +170,10 @@ function AppLayout() {
                   </BreadcrumbItem>
                 </>
               ) : (
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{title}</BreadcrumbPage>
+                <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbPage className="block truncate">
+                    {title}
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               )}
             </BreadcrumbList>
