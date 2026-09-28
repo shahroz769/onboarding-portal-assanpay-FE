@@ -52,7 +52,7 @@ function CasesRoutePending() {
     <DataTableRouteSkeleton
       filterCount={2}
       filterWidths={[96, 128]}
-      actionWidth={124}
+      actionWidth={0}
       columns={[
         { width: 40, kind: 'checkbox' },
         { width: 160, kind: 'link', header: 'Case Number', cellWidth: 118 },

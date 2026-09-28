@@ -37,10 +37,8 @@ export function DataTableRouteSkeleton({
   columnWidths?: number[]
   rowCount?: number
 }) {
-  void filterCount
-  void searchWidth
-  void filterWidths
-
+  const resolvedFilterWidths =
+    filterWidths ?? Array.from({ length: filterCount ?? 0 }, () => 112)
   const resolvedColumns: SkeletonColumn[] =
     columns ??
     (columnWidths ?? Array.from({ length: 10 }, () => 140)).map((width) => ({
@@ -50,9 +48,33 @@ export function DataTableRouteSkeleton({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
+      {/* Mirrors DataTableToolbar: h-9 search input, h-8 filter/action buttons. */}
       <div className="shrink-0">
-        <div className="flex justify-end">
-          <Skeleton className="h-5" style={{ width: actionWidth }} />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-wrap items-center gap-2">
+            <div
+              className="flex h-9 w-full max-w-sm items-center gap-2 rounded-md border border-input px-3 shadow-xs"
+              style={searchWidth ? { width: searchWidth } : undefined}
+            >
+              <Skeleton className="size-4 shrink-0 rounded-sm" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+            {resolvedFilterWidths.map((width, index) => (
+              <Skeleton
+                key={index}
+                className="h-8 rounded-md"
+                style={{ width }}
+              />
+            ))}
+          </div>
+          {actionWidth > 0 ? (
+            <div className="flex items-center gap-2">
+              <Skeleton
+                className="h-8 rounded-md"
+                style={{ width: actionWidth }}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
 
