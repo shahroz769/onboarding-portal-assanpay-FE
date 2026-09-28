@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import {
+  addTransitionType,
+  startTransition,
+  useState,
+  ViewTransition,
+} from 'react'
 import { CheckCheck } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { Separator } from '#/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useMarkAllNotificationsReadMutation } from '#/hooks/use-notifications-query'
+import { skipActiveViewTransition } from '#/lib/view-transition'
 import type { NotificationFilter } from '#/schemas/notifications.schema'
 
 import { NotificationList } from './notification-list'
+
+// Tab order, for the direction the list slides on a filter change.
+const FILTERS: NotificationFilter[] = ['all', 'unread']
+const FILTER_NEXT = 'notification-filter-next'
+const FILTER_PREV = 'notification-filter-prev'
 
 interface NotificationsPopoverContentProps {
   onNavigate: () => void
@@ -52,7 +63,19 @@ export function NotificationsPopoverContent({
       <div className="px-3 pt-2 pb-2">
         <Tabs
           value={filter}
-          onValueChange={(value) => setFilter(value as NotificationFilter)}
+          onValueChange={(value) => {
+            const to = FILTERS.indexOf(value as NotificationFilter)
+            const from = FILTERS.indexOf(filter)
+            if (to < 0 || to === from) return
+            // Same motion as the case side panel tabs: the list slides
+            // toward the picked tab. Own transition types, so the side
+            // panel's tab-next/tab-prev boundaries stay still.
+            skipActiveViewTransition()
+            startTransition(() => {
+              addTransitionType(to > from ? FILTER_NEXT : FILTER_PREV)
+              setFilter(FILTERS[to])
+            })
+          }}
         >
           <TabsList className="h-8">
             <TabsTrigger value="all" className="text-xs">
@@ -65,7 +88,30 @@ export function NotificationsPopoverContent({
         </Tabs>
       </div>
 
-      <NotificationList filter={filter} onNavigate={onNavigate} />
+      {/* Keyed by filter: the old list exits and the new one enters, each
+          sliding toward the picked tab. Not an `update` transition: the
+          list's own <ViewTransition>s would claim its DOM changes, so an
+          outer update never fires. Only this outermost boundary animates on
+          enter/exit; the rows' animations sit it out. The remount also
+          starts the new list scrolled to the top. */}
+      <ViewTransition
+        key={filter}
+        default="none"
+        enter={{
+          [FILTER_NEXT]: 'vt-slide vt-quick vt-clip vt-forward',
+          [FILTER_PREV]: 'vt-slide vt-quick vt-clip vt-back',
+          default: 'none',
+        }}
+        exit={{
+          [FILTER_NEXT]: 'vt-slide vt-quick vt-clip vt-forward',
+          [FILTER_PREV]: 'vt-slide vt-quick vt-clip vt-back',
+          default: 'none',
+        }}
+      >
+        <div>
+          <NotificationList filter={filter} onNavigate={onNavigate} />
+        </div>
+      </ViewTransition>
     </div>
   )
 }
