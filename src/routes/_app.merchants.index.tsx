@@ -24,17 +24,19 @@ function MerchantsRoutePending() {
   return (
     <DataTableRouteSkeleton
       filterCount={3}
-      filterWidths={[104, 96, 104]}
+      filterWidths={[104, 104, 96]}
       actionWidth={148}
       columns={[
         { width: 40, kind: 'checkbox' },
-        { width: 240, kind: 'text', header: 'Merchant Name' },
-        { width: 130, kind: 'text', header: 'Business Scope', cellWidth: 92 },
-        { width: 80, kind: 'text', header: 'Currency', cellWidth: 36 },
+        { width: 300, kind: 'text', header: 'Merchant Name' },
+        { width: 220, kind: 'text', header: 'Owner', cellWidth: 120 },
         { width: 120, kind: 'badge', header: 'Status', cellWidth: 88 },
         { width: 100, kind: 'badge', header: 'Priority', cellWidth: 64 },
+        { width: 110, kind: 'text', header: 'Open Cases', cellWidth: 24 },
         { width: 180, kind: 'date', header: 'Created At' },
-        { width: 100, kind: 'actions', header: 'Actions' },
+        { width: 130, kind: 'date', header: 'Went Live' },
+        { width: 180, kind: 'date', header: 'Last Updated' },
+        { width: 140, kind: 'actions', header: 'Actions' },
       ]}
     />
   )

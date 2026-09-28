@@ -3,10 +3,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
-import {
-  DEFAULT_CASE_STATUS_FILTER,
-  caseRouteSearchSchema,
-} from '#/schemas/cases.schema'
+import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 export const Route = createFileRoute('/_app/cases/work-queue-cases')({
   staticData: {
@@ -32,10 +29,8 @@ function RouteComponent() {
   const { setFilter, setFilters } = useCasesSearchActions(
     '/cases/work-queue-cases',
   )
-  const filters = {
-    ...search,
-    status: search.status ?? DEFAULT_CASE_STATUS_FILTER,
-  }
+  // No status in the URL means every status; the filter starts empty.
+  const filters = search
 
   return (
     <CasesTableComposed
@@ -50,8 +45,8 @@ function RouteComponent() {
 function CasesRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={2}
-      filterWidths={[96, 128]}
+      filterCount={4}
+      filterWidths={[92, 116, 112, 84]}
       actionWidth={0}
       columns={[
         { width: 40, kind: 'checkbox' },

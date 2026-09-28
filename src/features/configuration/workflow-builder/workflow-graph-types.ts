@@ -1,5 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 
+import { statusTint } from '#/lib/status-styles'
+import type { StatusTint } from '#/lib/status-styles'
 import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
 
 export const SUBMISSION_NODE_ID = 'submission'
@@ -70,43 +72,54 @@ export const SOURCE_HANDLE_KIND: Record<string, WorkflowEdgeKind> = {
 
 export type WorkflowEdgeKindMeta = {
   label: string
-  /** Hex color — needed for SVG stroke and arrow markers. */
+  /**
+   * Theme token (see --flow-* in styles.css) for SVG strokes and arrow
+   * markers; follows light/dark mode.
+   */
   color: string
   strokeDasharray?: string
-  /** Tailwind classes for edge label chips and legend swatches. */
+  /** Portal tint for chips, icons and labels (lib/status-styles). */
+  tint: StatusTint
+  /** Tint classes for edge label chips and rule icons. */
   chipClass: string
+  /** Fill for this rule's connection handles. */
+  handleClass: string
   description: string
 }
 
 export const EDGE_KIND_META: Record<WorkflowEdgeKind, WorkflowEdgeKindMeta> = {
   startRule: {
     label: 'Start rule',
-    color: '#10b981',
-    chipClass:
-      'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+    color: 'var(--flow-start)',
+    tint: 'emerald',
+    chipClass: statusTint('emerald'),
+    handleClass: 'bg-(--flow-start)!',
     description: 'Opens when onboarding is submitted',
   },
   closeTrigger: {
     label: 'Close trigger',
-    color: '#3b82f6',
-    chipClass:
-      'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+    color: 'var(--flow-trigger)',
+    tint: 'blue',
+    chipClass: statusTint('blue'),
+    handleClass: 'bg-(--flow-trigger)!',
     description: 'Closing the case opens the next one',
   },
   closeBlocker: {
     label: 'Close requirement',
-    color: '#f59e0b',
+    color: 'var(--flow-close)',
     strokeDasharray: '7 5',
-    chipClass:
-      'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+    tint: 'amber',
+    chipClass: statusTint('amber'),
+    handleClass: 'bg-(--flow-close)!',
     description: 'Case cannot close until the prerequisite closes',
   },
   creationRequirement: {
     label: 'Creation requirement',
-    color: '#8b5cf6',
+    color: 'var(--flow-create)',
     strokeDasharray: '2 4',
-    chipClass:
-      'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300',
+    tint: 'violet',
+    chipClass: statusTint('violet'),
+    handleClass: 'bg-(--flow-create)!',
     description: 'Case cannot be created until the prerequisite closes',
   },
 }

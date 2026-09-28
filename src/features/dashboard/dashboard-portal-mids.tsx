@@ -70,6 +70,7 @@ import { EmptyState } from '#/components/empty-state'
 import { useAuth } from '#/features/auth/auth-client'
 import { fetchPendingPortalMidValues } from '#/apis/dashboard'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { useMorph } from '#/hooks/use-morph'
 import {
   pendingPortalMidsInfiniteQueryOptions,
   useApplyPortalMidLimits,
@@ -150,6 +151,9 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
     user?.roleType === 'super_admin' || user?.roleType === 'admin'
   const [open, setOpen] = useState(false)
   const [appliedOpen, setAppliedOpen] = useState(false)
+  // Both dialogs grow out of the buttons that open them.
+  const applyMorph = useMorph()
+  const appliedMorph = useMorph()
   const [value, setValue] = useState('')
   const [category, setCategory] =
     useState<ApplyPortalMidLimitsInput['category']>('custom_wordpress')
@@ -232,7 +236,12 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setAppliedOpen(true)}
+              onClick={(event) =>
+                appliedMorph.run(
+                  () => setAppliedOpen(true),
+                  event.currentTarget,
+                )
+              }
               disabled={isLoading}
             >
               <History data-icon="inline-start" />
@@ -240,7 +249,12 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             </Button>
             <Button
               size="sm"
-              onClick={() => handleOpenChange(true)}
+              onClick={(event) =>
+                applyMorph.run(
+                  () => handleOpenChange(true),
+                  event.currentTarget,
+                )
+              }
               disabled={isLoading || !canApply}
             >
               <ShieldCheck data-icon="inline-start" />
@@ -289,7 +303,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
       </CardContent>
 
       <Dialog open={appliedOpen} onOpenChange={setAppliedOpen}>
-        <DialogContent>
+        <DialogContent {...appliedMorph.popupProps}>
           <DialogHeader>
             <DialogTitle>Applied portal MIDs</DialogTitle>
             <DialogDescription>
@@ -341,7 +355,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
       </Dialog>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent>
+        <DialogContent {...applyMorph.popupProps}>
           <DialogHeader>
             <DialogTitle>Apply limits</DialogTitle>
             <DialogDescription>

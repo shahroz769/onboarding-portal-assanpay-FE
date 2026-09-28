@@ -21,13 +21,17 @@ import {
   useCreateMissingCloseTriggerCasesMutation,
   usePreviewMissingCloseTriggerCasesMutation,
 } from '#/hooks/use-configuration-query'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 
 export function CaseFlowBackfillDialog({
   triggerId,
+  popupProps,
 
   onOpenChange,
 }: {
   triggerId: string | null
+  /** From useMorph: the dialog grows out of the button that opened it. */
+  popupProps?: MorphPopupProps
 
   onOpenChange: (open: boolean) => void
 }) {
@@ -75,7 +79,7 @@ export function CaseFlowBackfillDialog({
         if (!open && !backfillMutation.isPending) onOpenChange(false)
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent {...popupProps}>
         <AlertDialogHeader>
           <AlertDialogTitle>Create missing cases?</AlertDialogTitle>
 
@@ -132,7 +136,7 @@ export function CaseFlowBackfillDialog({
             <AlertTitle>Why automatic retries are failing</AlertTitle>
 
             <AlertDescription>
-              <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
+              <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto scrollbar-thin pl-4">
                 {previewMutation.data.retryIssues.map((issue) => (
                   <li key={issue.merchantId}>
                     {issue.merchantName} ({issue.attempts} attempts):{' '}
@@ -152,7 +156,7 @@ export function CaseFlowBackfillDialog({
             </AlertTitle>
 
             <AlertDescription>
-              <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto pl-4">
+              <ul className="mt-2 max-h-36 list-disc space-y-1 overflow-y-auto scrollbar-thin pl-4">
                 {backfillMutation.data.failures.map((failure) => (
                   <li key={failure.merchantId}>
                     {failure.merchantName}: {failure.error}

@@ -31,26 +31,64 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { useAssignCaseMutation } from '#/hooks/use-cases-query'
 import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
+import { useOpenCount } from '#/hooks/use-open-count'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 
-interface CaseAssignOwnerDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface AssignOwnerTarget {
   caseId: string
   caseNumber: string
   currentOwnerId: string | null
   isClosed: boolean
 }
 
+interface CaseAssignOwnerDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  target: AssignOwnerTarget | null
+  /** From useMorph: the dialog grows out of the Owner cell that opened it. */
+  popupProps?: MorphPopupProps
+}
+
+// The dialog stays mounted so Base UI can run its open/close transitions;
+// the form is keyed per open so the selection and errors start fresh.
 export function CaseAssignOwnerDialog({
   open,
+  onOpenChange,
+  target,
+  popupProps,
+}: CaseAssignOwnerDialogProps) {
+  const openCount = useOpenCount(open)
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-md', popupProps?.className)}
+      >
+        {target ? (
+          <AssignOwnerForm
+            key={openCount}
+            {...target}
+            onOpenChange={onOpenChange}
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AssignOwnerForm({
   onOpenChange,
   caseId,
   caseNumber,
   currentOwnerId,
   isClosed,
-}: CaseAssignOwnerDialogProps) {
+}: AssignOwnerTarget & { onOpenChange: (open: boolean) => void }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  // Start from the current owner so the picker shows who owns the case and
+  // Save stays disabled until the owner actually changes.
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(
+    currentOwnerId,
+  )
 
   const { data: users = [] } = useQuery(userDirectoryQueryOptions())
   const assignMutation = useAssignCaseMutation()
@@ -83,103 +121,98 @@ export function CaseAssignOwnerDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Assign Case Owner</DialogTitle>
-          <DialogDescription>
-            Assign or transfer case{' '}
-            <span className="font-mono font-medium">{caseNumber}</span>. Setting
-            AP System returns the case to New.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>Assign Case Owner</DialogTitle>
+        <DialogDescription>
+          Assign or transfer case{' '}
+          <span className="font-mono font-medium">{caseNumber}</span>. Setting
+          AP System returns the case to New.
+        </DialogDescription>
+      </DialogHeader>
 
-        {isClosed ? (
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertDescription>
-              This case is closed. Ownership cannot be assigned or transferred.
-            </AlertDescription>
-          </Alert>
-        ) : null}
+      {isClosed ? (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertDescription>
+            This case is closed. Ownership cannot be assigned or transferred.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
-        <Field>
-          <FieldLabel className="sr-only">Owner</FieldLabel>
-          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger
-              render={
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={popoverOpen}
-                  className="w-full justify-between font-normal"
-                  disabled={isClosed}
-                />
-              }
-            >
-              {selectedLabel}
-              <ChevronsUpDownIcon
-                data-icon="inline-end"
-                className="opacity-50"
+      <Field>
+        <FieldLabel className="sr-only">Owner</FieldLabel>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger
+            render={
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={popoverOpen}
+                className="w-full justify-between font-normal"
+                disabled={isClosed}
               />
-            </PopoverTrigger>
-            <PopoverContent className="w-(--anchor-width) p-0" align="start">
-              <Command items={options.map((option) => option.label)}>
-                <CommandInput placeholder="Search users..." />
-                <CommandList>
-                  <CommandEmpty>No users found.</CommandEmpty>
-                  <CommandGroup>
-                    {options.map((option) => (
-                      <CommandItem
-                        key={option.value}
-                        value={option.label}
-                        disabled={isClosed}
-                        onSelect={() => handleSelect(option.value)}
-                      >
-                        {option.label}
-                        <CheckIcon
-                          data-icon="inline-end"
-                          className={cn(
-                            'ml-auto',
-                            selectedValue === option.value
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </Field>
-
-        {assignMutation.error ? (
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertDescription>
-              {getApiErrorMessage(
-                assignMutation.error,
-                'Unable to assign this case.',
-              )}
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isClosed || !hasChanged || assignMutation.isPending}
+            }
           >
-            {assignMutation.isPending && <Spinner data-icon="inline-start" />}
-            Save owner
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {selectedLabel}
+            <ChevronsUpDownIcon data-icon="inline-end" className="opacity-50" />
+          </PopoverTrigger>
+          <PopoverContent className="w-(--anchor-width) p-0" align="start">
+            <Command items={options.map((option) => option.label)}>
+              <CommandInput placeholder="Search users..." />
+              <CommandList>
+                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.label}
+                      disabled={isClosed}
+                      onSelect={() => handleSelect(option.value)}
+                    >
+                      {option.label}
+                      <CheckIcon
+                        data-icon="inline-end"
+                        className={cn(
+                          'ml-auto',
+                          selectedValue === option.value
+                            ? 'opacity-100'
+                            : 'opacity-0',
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </Field>
+
+      {assignMutation.error ? (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertDescription>
+            {getApiErrorMessage(
+              assignMutation.error,
+              'Unable to assign this case.',
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isClosed || !hasChanged || assignMutation.isPending}
+        >
+          {assignMutation.isPending && <Spinner data-icon="inline-start" />}
+          Save owner
+        </Button>
+      </DialogFooter>
+    </>
   )
 }

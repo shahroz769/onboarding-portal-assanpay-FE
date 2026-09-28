@@ -31,6 +31,7 @@ import {
 } from '#/components/ui/combobox'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveFieldReviews } from '#/hooks/use-case-detail-query'
+import { useMorph } from '#/hooks/use-morph'
 import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import {
   Card,
@@ -410,17 +411,27 @@ export default function DocumentsReviewRenderer({
       .filter((item): item is ReviewDocument => item !== null)
   })()
 
-  function openRejectDialog(item: { key: string; label: string }) {
+  // The reject dialog grows out of the field's Reject button.
+  const rejectMorph = useMorph()
+
+  function openRejectDialog(
+    item: { key: string; label: string },
+    trigger: HTMLElement,
+  ) {
     if (!isEditable) return
 
     const existing = draftReviews[item.key]
-    setRejectDialog({
-      open: true,
-      item,
-      isRejected: existing?.status === 'rejected',
-      remarks: existing?.remarks ?? '',
-      error: null,
-    })
+    rejectMorph.run(
+      () =>
+        setRejectDialog({
+          open: true,
+          item,
+          isRejected: existing?.status === 'rejected',
+          remarks: existing?.remarks ?? '',
+          error: null,
+        }),
+      trigger,
+    )
   }
 
   // Only flips `open`; the content is cleared in onOpenChangeComplete so the
@@ -648,7 +659,7 @@ export default function DocumentsReviewRenderer({
                         caseDetail.latestResubmissionRequestedAt
                       }
                       isEditable={isEditable}
-                      onReject={() => openRejectDialog(item)}
+                      onReject={(trigger) => openRejectDialog(item, trigger)}
                     />
                   ))}
                 </FieldGroup>
@@ -684,7 +695,9 @@ export default function DocumentsReviewRenderer({
                           caseDetail.latestResubmissionRequestedAt
                         }
                         isEditable={isEditable}
-                        onReject={() => openRejectDialog(document)}
+                        onReject={(trigger) =>
+                          openRejectDialog(document, trigger)
+                        }
                       />
                     ))}
                   </div>
@@ -713,7 +726,7 @@ export default function DocumentsReviewRenderer({
           if (!open) setRejectDialog(CLOSED_REJECT_DIALOG)
         }}
       >
-        <DialogContent>
+        <DialogContent {...rejectMorph.popupProps}>
           <DialogHeader>
             <DialogTitle>Reject item</DialogTitle>
             <DialogDescription>
@@ -824,7 +837,7 @@ function ReadOnlyReviewField({
   persistedReview: FieldReview | undefined
   latestResubmissionRequestedAt: string | null
   isEditable: boolean
-  onReject: () => void
+  onReject: (trigger: HTMLElement) => void
 }) {
   const isRejected = review?.status === 'rejected'
   const showUpdated = isUpdatedInLatestResubmissionRound(
@@ -849,7 +862,7 @@ function ReadOnlyReviewField({
                   statusTint('red'),
                   'cursor-pointer border-transparent hover:bg-red-200 dark:hover:bg-red-800',
                 )}
-                onClick={onReject}
+                onClick={(event) => onReject(event.currentTarget)}
               >
                 Rejected
               </Badge>
@@ -857,7 +870,7 @@ function ReadOnlyReviewField({
               <Badge
                 variant="secondary"
                 className="cursor-pointer"
-                onClick={onReject}
+                onClick={(event) => onReject(event.currentTarget)}
               >
                 Reject
               </Badge>
@@ -908,7 +921,7 @@ function ReadOnlyDocumentField({
   persistedReview: FieldReview | undefined
   latestResubmissionRequestedAt: string | null
   isEditable: boolean
-  onReject: () => void
+  onReject: (trigger: HTMLElement) => void
 }) {
   const isRejected = review?.status === 'rejected'
   const showUpdated = isUpdatedInLatestResubmissionRound(
@@ -933,7 +946,7 @@ function ReadOnlyDocumentField({
                   statusTint('red'),
                   'cursor-pointer border-transparent hover:bg-red-200 dark:hover:bg-red-800',
                 )}
-                onClick={onReject}
+                onClick={(event) => onReject(event.currentTarget)}
               >
                 Rejected
               </Badge>
@@ -941,7 +954,7 @@ function ReadOnlyDocumentField({
               <Badge
                 variant="secondary"
                 className="cursor-pointer"
-                onClick={onReject}
+                onClick={(event) => onReject(event.currentTarget)}
               >
                 Reject
               </Badge>

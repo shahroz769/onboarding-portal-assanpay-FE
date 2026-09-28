@@ -46,6 +46,7 @@ import {
   useConfirmAgreementEmailManual,
 } from '#/hooks/use-case-detail-query'
 import { emailSendingModeQueryOptions } from '#/hooks/use-configuration-query'
+import { useMorph } from '#/hooks/use-morph'
 import type { AgreementEmailPreviewResult } from '#/apis/cases'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
@@ -196,14 +197,21 @@ export default function AgreementRenderer({
     !hasReceivedAgreement
   const canUploadReceived = isCaseOwner && isAwaitingMerchant
 
-  function openReview() {
-    setReview((current) => ({
-      ...current,
-      open: true,
-      remarks: '',
-      remarksError: null,
-      preview: null,
-    }))
+  // The review dialog grows out of the Review button.
+  const reviewMorph = useMorph()
+
+  function openReview(trigger: HTMLElement) {
+    reviewMorph.run(
+      () =>
+        setReview((current) => ({
+          ...current,
+          open: true,
+          remarks: '',
+          remarksError: null,
+          preview: null,
+        })),
+      trigger,
+    )
   }
 
   async function handleAutoSend() {
@@ -345,7 +353,7 @@ export default function AgreementRenderer({
           file={agreement.finalAgreement}
           action={
             canReviewFinal ? (
-              <Button onClick={openReview}>
+              <Button onClick={(event) => openReview(event.currentTarget)}>
                 <MailCheck data-icon="inline-start" />
                 Review
               </Button>
@@ -400,7 +408,10 @@ export default function AgreementRenderer({
         open={reviewOpen}
         onOpenChange={(open) => setReview((current) => ({ ...current, open }))}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent
+          {...reviewMorph.popupProps}
+          className={cn('sm:max-w-lg', reviewMorph.popupProps.className)}
+        >
           <DialogHeader>
             <DialogTitle>Review Agreement</DialogTitle>
             <DialogDescription>

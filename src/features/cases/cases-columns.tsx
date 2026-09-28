@@ -40,11 +40,7 @@ function formatDate(dateStr: string | null): string {
 }
 
 function isCaseClosed(item: CaseListItem) {
-  return (
-    item.status === 'closed' ||
-    !!item.closeOutcome ||
-    !!item.closedAt
-  )
+  return item.status === 'closed' || !!item.closeOutcome || !!item.closedAt
 }
 
 function OwnerCell({
@@ -54,12 +50,14 @@ function OwnerCell({
 }: {
   item: CaseListItem
   canEdit: boolean
-  onOpenAssignOwner: (item: CaseListItem) => void
+  onOpenAssignOwner: (item: CaseListItem, trigger: HTMLElement) => void
 }) {
   const ownerName = item.ownerName ?? 'AP System'
 
   if (!canEdit) {
-    return <span className="text-sm font-medium text-foreground">{ownerName}</span>
+    return (
+      <span className="text-sm font-medium text-foreground">{ownerName}</span>
+    )
   }
 
   return (
@@ -67,7 +65,7 @@ function OwnerCell({
       type="button"
       variant="ghost"
       className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-foreground no-underline hover:bg-transparent hover:text-foreground hover:underline hover:decoration-dashed hover:underline-offset-4"
-      onClick={() => onOpenAssignOwner(item)}
+      onClick={(event) => onOpenAssignOwner(item, event.currentTarget)}
     >
       {ownerName}
     </Button>
@@ -81,7 +79,7 @@ function PriorityCell({
 }: {
   item: CaseListItem
   canEdit: boolean
-  onOpenPriority: (item: CaseListItem) => void
+  onOpenPriority: (item: CaseListItem, trigger: HTMLElement) => void
 }) {
   const className = cn(
     priorityBadgeClasses(item.priority),
@@ -98,7 +96,12 @@ function PriorityCell({
 
   return (
     <Badge
-      render={<button type="button" onClick={() => onOpenPriority(item)} />}
+      render={
+        <button
+          type="button"
+          onClick={(event) => onOpenPriority(item, event.currentTarget)}
+        />
+      }
       variant="secondary"
       className={className}
     >
@@ -134,8 +137,8 @@ interface CreateColumnsOptions {
   allIds: string[]
   onSelectRow: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
-  onOpenAssignOwner: (item: CaseListItem) => void
-  onOpenPriority: (item: CaseListItem) => void
+  onOpenAssignOwner: (item: CaseListItem, trigger: HTMLElement) => void
+  onOpenPriority: (item: CaseListItem, trigger: HTMLElement) => void
 }
 
 function getSortDirection(

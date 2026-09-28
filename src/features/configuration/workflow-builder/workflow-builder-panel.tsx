@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { cn } from '#/lib/utils'
+import { useMorph } from '#/hooks/use-morph'
 
 import {
   caseFlowConfigurationQueryOptions,
@@ -131,6 +132,9 @@ export function WorkflowBuilderPanel() {
   const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
 
   const [publishOpen, setPublishOpen] = useState(false)
+  // Publish and backfill dialogs grow out of the buttons that open them.
+  const publishMorph = useMorph()
+  const backfillMorph = useMorph()
 
   const [reloadingStale, setReloadingStale] = useState(false)
 
@@ -514,7 +518,12 @@ export function WorkflowBuilderPanel() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setBackfillTriggerId(backfillRuleId)}
+            onClick={(event) =>
+              backfillMorph.run(
+                () => setBackfillTriggerId(backfillRuleId),
+                event.currentTarget,
+              )
+            }
           >
             Create missing cases for v{base.versionId}
           </Button>
@@ -584,7 +593,9 @@ export function WorkflowBuilderPanel() {
           <Button
             size="sm"
             disabled={mutation.isPending || Boolean(formError) || !dirty}
-            onClick={() => setPublishOpen(true)}
+            onClick={(event) =>
+              publishMorph.run(() => setPublishOpen(true), event.currentTarget)
+            }
           >
             <Save data-icon="inline-start" />
             Publish new version
@@ -642,7 +653,7 @@ export function WorkflowBuilderPanel() {
 
         <FieldSet
           disabled={readOnly || mutation.isPending}
-          className="min-w-0 shrink-0 xl:min-h-0 xl:w-85 xl:overflow-y-auto"
+          className="min-w-0 shrink-0 xl:min-h-0 xl:w-85 xl:overflow-y-auto xl:scrollbar-thin"
         >
           <WorkflowInspector
             className="shrink-0"
@@ -670,7 +681,7 @@ export function WorkflowBuilderPanel() {
                 )
                 return
               }
-              setBackfillTriggerId(id)
+              backfillMorph.run(() => setBackfillTriggerId(id))
             }}
           />
         </FieldSet>
@@ -682,7 +693,10 @@ export function WorkflowBuilderPanel() {
           if (!mutation.isPending) setPublishOpen(open)
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          {...publishMorph.popupProps}
+          className={cn('sm:max-w-md', publishMorph.popupProps.className)}
+        >
           <DialogHeader>
             <DialogTitle>Publish new version</DialogTitle>
 
@@ -768,6 +782,7 @@ export function WorkflowBuilderPanel() {
 
       <CaseFlowBackfillDialog
         triggerId={backfillTriggerId}
+        popupProps={backfillMorph.popupProps}
 
         onOpenChange={(open) => {
           if (!open) setBackfillTriggerId(null)

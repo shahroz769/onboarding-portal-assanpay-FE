@@ -39,6 +39,9 @@ import {
 } from '#/hooks/use-cases-query'
 import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import { useDebouncedValue } from '#/hooks/use-debounced-value'
+import { useMorph } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
+import { cn } from '#/lib/utils'
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
 import type { SubMerchantOption } from '#/schemas/configuration.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
@@ -53,16 +56,24 @@ export function useCanTriggerCases() {
 export function TriggerCaseButton() {
   const canTrigger = useCanTriggerCases()
   const [open, setOpen] = useState(false)
+  const morph = useMorph()
 
   if (!canTrigger) return null
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        onClick={(event) => morph.run(() => setOpen(true), event.currentTarget)}
+      >
         <Play data-icon="inline-start" />
         Trigger Case
       </Button>
-      <TriggerCaseDialog open={open} onOpenChange={setOpen} />
+      <TriggerCaseDialog
+        open={open}
+        onOpenChange={setOpen}
+        popupProps={morph.popupProps}
+      />
     </>
   )
 }
@@ -73,6 +84,8 @@ type TriggerCaseDialogProps = {
   /** Preselected merchants (from table row selection). Omit to pick one. */
   merchants?: MerchantListItem[]
   onTriggered?: () => void
+  /** From useMorph: the dialog grows out of its trigger button. */
+  popupProps?: MorphPopupProps
 }
 
 export function TriggerCaseDialog({
@@ -80,12 +93,16 @@ export function TriggerCaseDialog({
   onOpenChange,
   merchants,
   onTriggered,
+  popupProps,
 }: TriggerCaseDialogProps) {
   const merchantCount = merchants?.length ?? 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-lg', popupProps?.className)}
+      >
         <DialogHeader>
           <DialogTitle>Trigger Case</DialogTitle>
           <DialogDescription>
@@ -188,7 +205,7 @@ function TriggerCaseForm({
                 ? 'Merchant'
                 : `Merchants (${targetMerchants.length})`}
             </FieldLabel>
-            <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-md border bg-muted/40 p-2">
+            <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto scrollbar-thin rounded-md border bg-muted/40 p-2">
               {targetMerchants.map((merchant) => (
                 <Badge key={merchant.id} variant="secondary">
                   {merchant.businessName}

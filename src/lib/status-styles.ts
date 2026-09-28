@@ -173,6 +173,15 @@ export function queueWorkflowBadgeClasses(workflowType: string): string {
   return tint === 'plain' ? '' : TINTS[tint]
 }
 
+// Icon chips always need a surface, so the generic template falls back to
+// the neutral tint instead of an untinted badge.
+export function queueWorkflowIconClasses(
+  workflowType: string | null | undefined,
+): string {
+  const tint = QUEUE_WORKFLOW_TINTS[workflowType ?? ''] ?? 'neutral'
+  return TINTS[tint === 'plain' ? 'neutral' : tint]
+}
+
 // ─── Priority ───────────────────────────────────────────────────────────────
 
 // Normal priority renders as the default neutral secondary badge.

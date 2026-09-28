@@ -44,6 +44,7 @@ import {
   roleTypes,
   userStatuses,
 } from '#/schemas/users.schema'
+import { useMorph } from '#/hooks/use-morph'
 import { CreateUserDialog } from './create-user-dialog'
 import { EditUserDialog } from './edit-user-dialog'
 import { createUserColumns } from './users-columns'
@@ -62,14 +63,22 @@ const statusFilterOptions = userStatuses.map((status) => ({
 
 function CreateUserButton() {
   const [open, setOpen] = useState(false)
+  const morph = useMorph()
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        onClick={(event) => morph.run(() => setOpen(true), event.currentTarget)}
+      >
         <PlusIcon data-icon="inline-start" />
         Create User
       </Button>
-      <CreateUserDialog open={open} onOpenChange={setOpen} />
+      <CreateUserDialog
+        open={open}
+        onOpenChange={setOpen}
+        popupProps={morph.popupProps}
+      />
     </>
   )
 }

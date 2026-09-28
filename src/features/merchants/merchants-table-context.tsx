@@ -12,6 +12,8 @@ import {
   useTerminateMerchantMutation,
   useUpdatePriorityMutation,
 } from '#/hooks/use-merchants-query'
+import { useMorph } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
   MerchantFilters,
@@ -44,6 +46,9 @@ interface MerchantsTableState {
   isTerminatePending: boolean
   isDeletePending: boolean
   isBulkPriorityPending: boolean
+  priorityPopupProps: MorphPopupProps
+  terminatePopupProps: MorphPopupProps
+  deletePopupProps: MorphPopupProps
 }
 
 interface MerchantsTableActions {
@@ -51,10 +56,13 @@ interface MerchantsTableActions {
   fetchNextPage: () => void
   retry: () => void
   clearSelection: () => void
-  openPriorityDialog: (merchant: MerchantListItem) => void
+  openPriorityDialog: (
+    merchant: MerchantListItem,
+    trigger?: HTMLElement,
+  ) => void
   closePriorityDialog: () => void
-  openBulkPriorityDialog: () => void
-  openTerminateDialog: (target: TerminateTarget) => void
+  openBulkPriorityDialog: (trigger?: HTMLElement) => void
+  openTerminateDialog: (target: TerminateTarget, trigger?: HTMLElement) => void
   closeTerminateDialog: () => void
   closeDeleteDialog: () => void
   submitPriority: (priority: Priority, note?: string) => void
@@ -172,6 +180,11 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const [deleteTarget, setDeleteTarget] = useState<MerchantListItem | null>(
     null,
   )
+  // Dialogs grow out of the badge or button that opened them.
+  const priorityMorph = useMorph()
+  const terminateMorph = useMorph()
+  const deleteMorph = useMorph()
+
   const queryFilters: MerchantFilters = {
     ...filters,
     status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
@@ -223,6 +236,17 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
   const selectedIds = Array.from(selectedIdSet)
 
+  const openPriority = (merchant: MerchantListItem, trigger?: HTMLElement) => {
+    if (merchant.status === 'terminated') return
+    priorityMorph.run(
+      () => setPriorityTarget({ type: 'single', merchant }),
+      trigger,
+    )
+  }
+
+  const openTerminate = (target: TerminateTarget, trigger?: HTMLElement) =>
+    terminateMorph.run(() => setTerminateTarget(target), trigger)
+
   const columns = createMerchantColumns({
     userRole,
     sortBy: filters.sortBy,
@@ -232,16 +256,12 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     allIds,
     onSelectRow: handleSelectRow,
     onSelectAll: handleSelectAll,
-    onPriorityClick: (merchant) => {
-      if (merchant.status !== 'terminated') {
-        setPriorityTarget({ type: 'single', merchant })
-      }
-    },
-    onTerminateClick: (merchant) =>
-      setTerminateTarget({ type: 'single', merchant }),
-    onDeleteClick: (merchant) => {
+    onPriorityClick: (merchant, trigger) => openPriority(merchant, trigger),
+    onTerminateClick: (merchant, trigger) =>
+      openTerminate({ type: 'single', merchant }, trigger),
+    onDeleteClick: (merchant, trigger) => {
       if (merchant.status === 'terminated') {
-        setDeleteTarget(merchant)
+        deleteMorph.run(() => setDeleteTarget(merchant), trigger)
       }
     },
   })
@@ -356,6 +376,9 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     isTerminatePending: terminateMerchant.isPending || bulkTerminate.isPending,
     isDeletePending: permanentlyDeleteMerchant.isPending,
     isBulkPriorityPending: bulkPriority.isPending,
+    priorityPopupProps: priorityMorph.popupProps,
+    terminatePopupProps: terminateMorph.popupProps,
+    deletePopupProps: deleteMorph.popupProps,
   }
 
   const actionsValue: MerchantsTableActions = {
@@ -363,24 +386,24 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
     clearSelection: () => setSelectedIdSet(new Set()),
-    openPriorityDialog: (merchant) => {
-      if (merchant.status !== 'terminated') {
-        setPriorityTarget({ type: 'single', merchant })
-      }
-    },
+    openPriorityDialog: openPriority,
     closePriorityDialog: () => setPriorityTarget(null),
-    openBulkPriorityDialog: () => {
+    openBulkPriorityDialog: (trigger) => {
       const ids = selectedNonTerminatedIds(selectedIds, flatData)
 
       if (ids.length === 0) return
 
-      setPriorityTarget({
-        type: 'bulk',
-        ids,
-        initialPriority: 'normal',
-      })
+      priorityMorph.run(
+        () =>
+          setPriorityTarget({
+            type: 'bulk',
+            ids,
+            initialPriority: 'normal',
+          }),
+        trigger,
+      )
     },
-    openTerminateDialog: setTerminateTarget,
+    openTerminateDialog: openTerminate,
     closeTerminateDialog: () => setTerminateTarget(null),
     closeDeleteDialog: () => setDeleteTarget(null),
     submitPriority,

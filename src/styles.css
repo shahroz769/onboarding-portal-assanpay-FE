@@ -91,6 +91,13 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  /* Caseflow builder rule colors (edges, arrows, handles, legend swatches).
+     Same hues as the badge tints in lib/status-styles.ts, desaturated to sit
+     with the muted brand teal instead of competing with it. */
+  --flow-start: oklch(0.62 0.09 165);
+  --flow-trigger: oklch(0.6 0.11 258);
+  --flow-close: oklch(0.72 0.11 72);
+  --flow-create: oklch(0.6 0.12 293);
   --radius: 0.625rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -133,6 +140,11 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  /* Lighter, equally muted steps so rules stay legible on the dark canvas. */
+  --flow-start: oklch(0.72 0.08 165);
+  --flow-trigger: oklch(0.72 0.09 256);
+  --flow-close: oklch(0.8 0.1 80);
+  --flow-create: oklch(0.72 0.1 293);
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -864,4 +876,10 @@ body,
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Slim, borderless scrollbar for lists inside popovers (no Windows arrows). */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }

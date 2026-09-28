@@ -13,6 +13,8 @@ import {
   useBulkAssignCasesMutation,
 } from '#/hooks/use-cases-query'
 import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
+import { useMorph } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
@@ -46,6 +48,8 @@ interface CasesTableState {
   bulkAssignError: string | null
   assignOwnerCase: CaseListItem | null
   priorityCase: CaseListItem | null
+  assignOwnerPopupProps: MorphPopupProps
+  priorityPopupProps: MorphPopupProps
 }
 
 interface CasesTableActions {
@@ -54,9 +58,9 @@ interface CasesTableActions {
   retry: () => void
   setBulkAssignOwnerId: (value: string | null) => void
   submitBulkAssign: () => void
-  openAssignOwnerDialog: (item: CaseListItem) => void
+  openAssignOwnerDialog: (item: CaseListItem, trigger?: HTMLElement) => void
   closeAssignOwnerDialog: () => void
-  openPriorityDialog: (item: CaseListItem) => void
+  openPriorityDialog: (item: CaseListItem, trigger?: HTMLElement) => void
   closePriorityDialog: () => void
 }
 
@@ -135,10 +139,40 @@ function CasesTableProviderState({
     null,
   )
   const [bulkAssignError, setBulkAssignError] = useState<string | null>(null)
+
+  // A new result set drops the row selection and bulk-assign draft. Reset in
+  // place (React's "adjust state on prop change") rather than re-keying the
+  // provider: a remount closed open filter popovers and dialogs and blurred
+  // the search box on every filter change.
+  const filtersKey = JSON.stringify({
+    search: filters.search,
+    queueId: filters.queueId,
+    ownerId: filters.ownerId,
+    status: filters.status,
+    priority: filters.priority,
+    merchantId: filters.merchantId,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
+  })
+  const [selectionFiltersKey, setSelectionFiltersKey] = useState(filtersKey)
+  if (selectionFiltersKey !== filtersKey) {
+    setSelectionFiltersKey(filtersKey)
+    setSelectedIdSet(new Set())
+    setBulkAssignOwnerId(null)
+    setBulkAssignError(null)
+  }
+
   const [assignOwnerCase, setAssignOwnerCase] = useState<CaseListItem | null>(
     null,
   )
   const [priorityCase, setPriorityCase] = useState<CaseListItem | null>(null)
+  // Row dialogs grow out of the Owner / Priority cell that opened them.
+  const assignOwnerMorph = useMorph()
+  const priorityMorph = useMorph()
+  const openAssignOwner = (item: CaseListItem, trigger?: HTMLElement) =>
+    assignOwnerMorph.run(() => setAssignOwnerCase(item), trigger)
+  const openPriority = (item: CaseListItem, trigger?: HTMLElement) =>
+    priorityMorph.run(() => setPriorityCase(item), trigger)
 
   const {
     data,
@@ -181,9 +215,7 @@ function CasesTableProviderState({
   const assignableIds =
     userRole === 'super_admin' || userRole === 'admin'
       ? flatData.flatMap((item) =>
-          item.status !== 'closed' &&
-          !item.closeOutcome &&
-          !item.closedAt
+          item.status !== 'closed' && !item.closeOutcome && !item.closedAt
             ? [item.id]
             : [],
         )
@@ -227,8 +259,8 @@ function CasesTableProviderState({
     allIds: assignableIds,
     onSelectRow: handleSelectRow,
     onSelectAll: handleSelectAll,
-    onOpenAssignOwner: setAssignOwnerCase,
-    onOpenPriority: setPriorityCase,
+    onOpenAssignOwner: openAssignOwner,
+    onOpenPriority: openPriority,
   })
 
   const commaToSet = (value: string | undefined) =>
@@ -285,6 +317,8 @@ function CasesTableProviderState({
     bulkAssignError,
     assignOwnerCase,
     priorityCase,
+    assignOwnerPopupProps: assignOwnerMorph.popupProps,
+    priorityPopupProps: priorityMorph.popupProps,
   }
 
   const actionsValue: CasesTableActions = {
@@ -296,9 +330,9 @@ function CasesTableProviderState({
       setBulkAssignError(null)
     },
     submitBulkAssign,
-    openAssignOwnerDialog: setAssignOwnerCase,
+    openAssignOwnerDialog: openAssignOwner,
     closeAssignOwnerDialog: () => setAssignOwnerCase(null),
-    openPriorityDialog: setPriorityCase,
+    openPriorityDialog: openPriority,
     closePriorityDialog: () => setPriorityCase(null),
   }
 
@@ -320,17 +354,4 @@ function CasesTableProviderState({
   )
 }
 
-function CasesTableProvider(props: CasesTableProviderProps) {
-  const resetKey = JSON.stringify({
-    search: props.filters.search,
-    queueId: props.filters.queueId,
-    ownerId: props.filters.ownerId,
-    status: props.filters.status,
-    sortBy: props.filters.sortBy,
-    sortOrder: props.filters.sortOrder,
-  })
-
-  return <CasesTableProviderState key={resetKey} {...props} />
-}
-
-export { CasesTableProvider }
+export { CasesTableProviderState as CasesTableProvider }

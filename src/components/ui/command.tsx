@@ -121,7 +121,7 @@ function CommandList({
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        'max-h-75 scroll-py-1 overflow-x-hidden overflow-y-auto',
+        'max-h-75 scroll-py-1 overflow-x-hidden overflow-y-auto scrollbar-thin',
         className,
       )}
       {...props}
@@ -136,7 +136,9 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className={cn('py-6 text-center text-sm', className)}
+      // Base UI keeps this element mounted and only fills it when nothing
+      // matches; hide it while empty so its padding doesn't leave a gap.
+      className={cn('py-6 text-center text-sm empty:hidden', className)}
       {...props}
     />
   )

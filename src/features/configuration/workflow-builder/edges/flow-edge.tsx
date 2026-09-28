@@ -112,7 +112,7 @@ export function FlowEdge({
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
           }}
           className={cn(
-            'pointer-events-none absolute rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium shadow-xs',
+            'pointer-events-none absolute rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium shadow-xs ring-1 ring-background',
             meta.chipClass,
             !data.isActive && 'opacity-60',
             selected && 'ring-2 ring-ring/40',

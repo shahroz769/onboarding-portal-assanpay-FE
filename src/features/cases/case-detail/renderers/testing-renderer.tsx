@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { useMorph } from '#/hooks/use-morph'
+
 import {
   CheckCircle2,
   FlaskConical,
@@ -107,10 +109,15 @@ export default function TestingRenderer({
       ? caseDetail.merchant.businessEmail
       : null
 
-  function handleReview() {
+  // The review dialog grows out of the Send Credentials button.
+  const reviewMorph = useMorph()
+
+  function handleReview(trigger: HTMLElement) {
     if (!canSendCredentials) return
-    setManualPreview(null)
-    setReviewOpen(true)
+    reviewMorph.run(() => {
+      setManualPreview(null)
+      setReviewOpen(true)
+    }, trigger)
   }
 
   async function handleSendMail() {
@@ -243,7 +250,7 @@ export default function TestingRenderer({
 
             <div className="flex flex-wrap justify-end gap-2">
               <Button
-                onClick={handleReview}
+                onClick={(event) => handleReview(event.currentTarget)}
                 disabled={!canSendCredentials || sendCredentialsEmail.isPending}
               >
                 <Mail data-icon="inline-start" />
@@ -296,7 +303,7 @@ export default function TestingRenderer({
       ) : null}
 
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent>
+        <DialogContent {...reviewMorph.popupProps}>
           <DialogHeader>
             <DialogTitle>Send credentials</DialogTitle>
           </DialogHeader>

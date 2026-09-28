@@ -45,7 +45,8 @@ function RouteComponent() {
 function CasesRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={0}
+      filterCount={2}
+      filterWidths={[92, 84]}
       actionWidth={0}
       columns={[
         { width: 40, kind: 'checkbox' },

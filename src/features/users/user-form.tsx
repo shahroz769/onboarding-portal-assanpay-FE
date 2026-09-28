@@ -324,7 +324,7 @@ export function UserForm({
         className={cn(
           'grid items-start gap-6',
           isDialog
-            ? 'min-h-0 flex-1 overflow-y-auto px-6 py-4'
+            ? 'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-6 py-4'
             : 'xl:grid-cols-2',
         )}
       >

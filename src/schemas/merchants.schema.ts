@@ -48,6 +48,8 @@ export const MERCHANT_SORTABLE_COLUMNS = [
   'priority',
   'createdAt',
   'businessScope',
+  'ownerFullName',
+  'updatedAt',
 ] as const
 
 export type MerchantSortableColumn = (typeof MERCHANT_SORTABLE_COLUMNS)[number]
@@ -65,6 +67,9 @@ export const merchantListItemSchema = z.object({
   currency: z.string(),
   businessScope: z.enum(BUSINESS_SCOPES),
   liveAt: z.string().nullable(),
+  ownerFullName: z.string(),
+  updatedAt: z.string(),
+  openCasesCount: z.number(),
 })
 
 export type MerchantListItem = z.infer<typeof merchantListItemSchema>

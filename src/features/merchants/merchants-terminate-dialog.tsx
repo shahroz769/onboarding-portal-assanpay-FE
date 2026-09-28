@@ -1,5 +1,9 @@
 import { useState } from 'react'
 
+import { useOpenCount } from '#/hooks/use-open-count'
+import type { MorphPopupProps } from '#/hooks/use-morph'
+import { cn } from '#/lib/utils'
+
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -24,15 +28,36 @@ interface MerchantTerminateDialogProps {
   onOpenChange: (open: boolean) => void
   onConfirm: (reason: string) => void
   isPending: boolean
+  /** From useMorph: the dialog grows out of the button that opened it. */
+  popupProps?: MorphPopupProps
 }
 
+// The dialog stays mounted so Base UI can run its open/close transitions;
+// the form is keyed per open so the reason starts empty every time.
 export function MerchantTerminateDialog({
-  target,
   open,
+  popupProps,
+  ...props
+}: MerchantTerminateDialogProps) {
+  const openCount = useOpenCount(open)
+  return (
+    <Dialog open={open} onOpenChange={props.onOpenChange}>
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-md', popupProps?.className)}
+      >
+        <TerminateForm key={openCount} {...props} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function TerminateForm({
+  target,
   onOpenChange,
   onConfirm,
   isPending,
-}: MerchantTerminateDialogProps) {
+}: Omit<MerchantTerminateDialogProps, 'open'>) {
   const [reason, setReason] = useState('')
   const trimmedReason = reason.trim()
 
@@ -48,47 +73,45 @@ export function MerchantTerminateDialog({
       : `${target?.ids.length ?? 0} selected merchants`
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Terminate Merchant</DialogTitle>
-          <DialogDescription>
-            Terminate {targetDescription}. Open cases will be closed as
-            unsuccessful.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Reason</FieldLabel>
-              <Textarea
-                placeholder="Reason for termination..."
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                rows={4}
-                required
-              />
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={isPending || !trimmedReason}
-            >
-              {isPending && <Spinner data-icon="inline-start" />}
-              Terminate
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <DialogHeader>
+        <DialogTitle>Terminate Merchant</DialogTitle>
+        <DialogDescription>
+          Terminate {targetDescription}. Open cases will be closed as
+          unsuccessful.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Reason</FieldLabel>
+            <Textarea
+              placeholder="Reason for termination..."
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              rows={4}
+              required
+            />
+          </Field>
+        </FieldGroup>
+        <DialogFooter className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="destructive"
+            disabled={isPending || !trimmedReason}
+          >
+            {isPending && <Spinner data-icon="inline-start" />}
+            Terminate
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
   )
 }

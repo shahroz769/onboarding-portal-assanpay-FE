@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon, UserIcon } from 'lucide-react'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
@@ -22,7 +24,13 @@ import {
   DataTableToolbar,
 } from '#/components/data-table'
 import type { CaseFilterStatus, CaseRouteSearch } from '#/schemas/cases.schema'
-import { CASE_FILTER_STATUS_LABELS } from '#/schemas/cases.schema'
+import {
+  CASE_FILTER_STATUS_LABELS,
+  CASE_PRIORITIES,
+  CASE_PRIORITY_LABELS,
+} from '#/schemas/cases.schema'
+import { useDebouncedValue } from '#/hooks/use-debounced-value'
+import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
 import { usePageHeaderActions } from '#/hooks/use-page-header-actions'
 import { CaseAssignOwnerDialog } from './case-assign-owner-dialog'
 import { useRetainedValue } from '#/hooks/use-retained-value'
@@ -46,6 +54,49 @@ const statusFilterOptions = CASE_STATUS_FILTER_ORDER.map((status) => ({
   label: CASE_FILTER_STATUS_LABELS[status],
   value: status,
 }))
+
+const priorityFilterOptions = CASE_PRIORITIES.map((priority) => ({
+  label: CASE_PRIORITY_LABELS[priority],
+  value: priority,
+}))
+
+/**
+ * Merchants can number in the thousands, so options come from a debounced
+ * server search rather than a preloaded list.
+ */
+function MerchantFilter() {
+  const state = useCasesTableState()
+  const actions = useCasesTableActions()
+  const meta = useCasesTableMeta()
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
+  const { data, isFetching } = useQuery(
+    merchantOptionsQueryOptions(debouncedSearch.trim()),
+  )
+  const options = (data?.merchants ?? []).map((merchant) => ({
+    label: merchant.businessName,
+    value: merchant.id,
+  }))
+  // Selected merchants label themselves from the filtered rows, which all
+  // belong to them, even when the current search doesn't return them.
+  const selectedLabels = new Map(
+    state.flatData.map((item) => [item.merchantId, item.merchantName]),
+  )
+
+  return (
+    <DataTableFilter
+      title="Merchant"
+      options={options}
+      onSearchChange={setSearch}
+      isLoading={isFetching || search !== debouncedSearch}
+      selectedLabels={selectedLabels}
+      selectedValues={meta.commaToSet(state.filters.merchantId)}
+      onChange={(set) =>
+        actions.setFilter('merchantId', meta.setToCommaString(set))
+      }
+    />
+  )
+}
 
 function QueueSelector() {
   const state = useCasesTableState()
@@ -110,16 +161,9 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
           onChange={(value) => actions.setFilter('search', value || undefined)}
           placeholder="Search by case number or merchant name..."
         />
-        {state.hideStatusFilter ? null : (
-          <DataTableFilter
-            title="Case Status"
-            options={statusFilterOptions}
-            selectedValues={meta.commaToSet(filters.status)}
-            onChange={(set) =>
-              actions.setFilter('status', meta.setToCommaString(set))
-            }
-          />
-        )}
+        {/* Filters follow the table's column order (the queue picker lives
+            in the page header). */}
+        <MerchantFilter />
         {state.hideOwnerFilter ? null : (
           <DataTableFilter
             title="Case Owner"
@@ -131,6 +175,24 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
             }
           />
         )}
+        {state.hideStatusFilter ? null : (
+          <DataTableFilter
+            title="Case Status"
+            options={statusFilterOptions}
+            selectedValues={meta.commaToSet(filters.status)}
+            onChange={(set) =>
+              actions.setFilter('status', meta.setToCommaString(set))
+            }
+          />
+        )}
+        <DataTableFilter
+          title="Priority"
+          options={priorityFilterOptions}
+          selectedValues={meta.commaToSet(filters.priority)}
+          onChange={(set) =>
+            actions.setFilter('priority', meta.setToCommaString(set))
+          }
+        />
       </DataTableToolbar.Filters>
       <DataTableToolbar.Actions>
         {selectedIds.length > 0 ? (
@@ -245,35 +307,37 @@ function Dialogs() {
 
   return (
     <>
-      {assignOwnerCase ? (
-        <CaseAssignOwnerDialog
-          open={state.assignOwnerCase !== null}
-          onOpenChange={(open) => {
-            if (!open) {
-              actions.closeAssignOwnerDialog()
-            }
-          }}
-          caseId={assignOwnerCase.id}
-          caseNumber={assignOwnerCase.caseNumber}
-          currentOwnerId={assignOwnerCase.ownerId}
-          isClosed={
-            assignOwnerCase.status === 'closed' ||
-            !!assignOwnerCase.closedAt
+      <CaseAssignOwnerDialog
+        open={state.assignOwnerCase !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            actions.closeAssignOwnerDialog()
           }
-        />
-      ) : null}
-      {priorityCase ? (
-        <CasePriorityDialog
-          key={priorityCase.id}
-          open={state.priorityCase !== null}
-          onOpenChange={(open) => {
-            if (!open) {
-              actions.closePriorityDialog()
-            }
-          }}
-          caseItem={priorityCase}
-        />
-      ) : null}
+        }}
+        target={
+          assignOwnerCase
+            ? {
+                caseId: assignOwnerCase.id,
+                caseNumber: assignOwnerCase.caseNumber,
+                currentOwnerId: assignOwnerCase.ownerId,
+                isClosed:
+                  assignOwnerCase.status === 'closed' ||
+                  !!assignOwnerCase.closedAt,
+              }
+            : null
+        }
+        popupProps={state.assignOwnerPopupProps}
+      />
+      <CasePriorityDialog
+        popupProps={state.priorityPopupProps}
+        open={state.priorityCase !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            actions.closePriorityDialog()
+          }
+        }}
+        caseItem={priorityCase}
+      />
     </>
   )
 }

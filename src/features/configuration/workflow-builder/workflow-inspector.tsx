@@ -5,11 +5,12 @@ import {
   GitBranch,
   Landmark,
   ListRestart,
-  MousePointer2,
   Play,
   Trash2,
+  Workflow,
 } from 'lucide-react'
 
+import { SectionIcon } from '#/components/section-icon'
 import { Button } from '#/components/ui/button'
 
 import {
@@ -32,6 +33,7 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 
+import { queueWorkflowIconClasses } from '#/lib/status-styles'
 import { cn } from '#/lib/utils'
 
 import type {
@@ -55,6 +57,11 @@ const KIND_ICONS: Record<WorkflowEdgeKind, typeof Play> = {
   closeBlocker: FileCheck2,
   creationRequirement: Landmark,
 }
+
+// Destructive actions inside the inspector stay secondary (outline) but read
+// as destructive, like the row delete actions on the portal tables.
+const DESTRUCTIVE_OUTLINE_CLASSES =
+  'text-destructive hover:bg-destructive/10 hover:text-destructive'
 
 export function WorkflowInspector({
   className,
@@ -120,6 +127,85 @@ function queueName(nodes: WorkflowNode[], queueId: string) {
   return 'Unknown queue'
 }
 
+// ─── Shared pieces ──────────────────────────────────────────────────────────
+
+/** Card heading matching the portal's case-detail panels. */
+function InspectorHeading({
+  icon,
+  title,
+  description,
+}: {
+  icon: ReactNode
+  title: ReactNode
+  description: ReactNode
+}) {
+  return (
+    <CardHeader>
+      <div className="flex items-center gap-3">
+        {icon}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <CardTitle className="truncate">{title}</CardTitle>
+          <CardDescription className="truncate">{description}</CardDescription>
+        </div>
+      </div>
+    </CardHeader>
+  )
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">
+      {children}
+    </p>
+  )
+}
+
+/** Small tinted icon chip for a rule kind. */
+function KindChip({
+  kind,
+  className,
+}: {
+  kind: WorkflowEdgeKind
+  className?: string
+}) {
+  const Icon = KIND_ICONS[kind]
+  return (
+    <span
+      className={cn(
+        'flex size-7 shrink-0 items-center justify-center rounded-md',
+        EDGE_KIND_META[kind].chipClass,
+        className,
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden="true" />
+    </span>
+  )
+}
+
+/** The rule's line style as drawn on the canvas (solid or dashed). */
+function KindLineSwatch({ kind }: { kind: WorkflowEdgeKind }) {
+  const meta = EDGE_KIND_META[kind]
+  return (
+    <svg
+      className="h-2 w-8 shrink-0"
+      viewBox="0 0 32 8"
+      aria-hidden="true"
+      style={{ color: meta.color }}
+    >
+      <line
+        x1="1"
+        y1="4"
+        x2="31"
+        y2="4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={meta.strokeDasharray}
+      />
+    </svg>
+  )
+}
+
 // ─── Edge inspector ─────────────────────────────────────────────────────────
 function EdgeInspector({
   edge,
@@ -137,7 +223,6 @@ function EdgeInspector({
   onOpenBackfill: (ruleId: string) => void
 }) {
   const meta = EDGE_KIND_META[edge.data.kind]
-  const KindIcon = KIND_ICONS[edge.data.kind]
   const isStartRule = edge.data.kind === 'startRule'
   const hasOrder =
     edge.data.kind === 'startRule' || edge.data.kind === 'closeTrigger'
@@ -149,34 +234,23 @@ function EdgeInspector({
 
   return (
     <>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-md border',
-              meta.chipClass,
-            )}
-          >
-            <KindIcon className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <CardTitle className="text-base">{meta.label}</CardTitle>
-            <CardDescription className="truncate">
-              {sourceName} → {targetName}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+      <InspectorHeading
+        icon={
+          <SectionIcon icon={KIND_ICONS[edge.data.kind]} tone={meta.tint} />
+        }
+        title={meta.label}
+        description={`${sourceName} → ${targetName}`}
+      />
       <CardContent className="flex flex-col gap-5">
         {!isStartRule ? (
           <div className="flex flex-col gap-2">
-            <Label>Rule type</Label>
-            <div className="grid grid-cols-1 gap-1.5">
+            <SectionLabel>Rule type</SectionLabel>
+            <div className="flex flex-col gap-1.5">
               {QUEUE_TO_QUEUE_KINDS.map((kind) => {
                 const kindMeta = EDGE_KIND_META[kind]
-                const KindOptionIcon = KIND_ICONS[kind]
+                const isCurrent = kind === edge.data.kind
                 const unavailable =
-                  kind !== edge.data.kind &&
+                  !isCurrent &&
                   getNewEdgeError({
                     edges,
                     nodes,
@@ -192,23 +266,21 @@ function EdgeInspector({
                       <button
                         type="button"
                         disabled={unavailable}
+                        aria-pressed={isCurrent}
                         onClick={() => onUpdateEdge(edge.id, { kind })}
                         className={cn(
-                          'flex flex-1 items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition-colors',
-                          kind === edge.data.kind
-                            ? 'border-primary bg-accent font-medium'
-                            : 'hover:border-foreground/40',
+                          'flex flex-1 items-center gap-2.5 rounded-lg border bg-card px-2.5 py-2 text-left text-sm transition-colors',
+                          isCurrent
+                            ? 'border-primary bg-primary/5 font-medium'
+                            : 'hover:bg-muted/50',
                           unavailable && 'pointer-events-none opacity-50',
                         )}
                       >
-                        <span
-                          className="size-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: kindMeta.color }}
-                        />
+                        <KindChip kind={kind} />
                         <span className="min-w-0 flex-1 truncate">
                           {kindMeta.label}
                         </span>
-                        <KindOptionIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <KindLineSwatch kind={kind} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="left" className="max-w-60">
@@ -246,8 +318,13 @@ function EdgeInspector({
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between gap-3">
-          <Label htmlFor={`edge-active-${edge.id}`}>Active</Label>
+        <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
+          <div className="flex flex-col gap-0.5">
+            <Label htmlFor={`edge-active-${edge.id}`}>Active</Label>
+            <p className="text-xs text-muted-foreground">
+              Inactive rules stay on the canvas but never fire.
+            </p>
+          </div>
           <Switch
             id={`edge-active-${edge.id}`}
             checked={edge.data.isActive}
@@ -271,21 +348,23 @@ function EdgeInspector({
 
         <Separator />
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-destructive hover:text-destructive"
-          onClick={() => onDeleteEdge(edge.id)}
-        >
-          <Trash2 data-icon="inline-start" />
-          Delete rule
-        </Button>
-        {!edge.data.ruleId ? (
-          <p className="text-xs text-muted-foreground">
-            New rule — saved when you save the workflow.
-          </p>
-        ) : null}
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={DESTRUCTIVE_OUTLINE_CLASSES}
+            onClick={() => onDeleteEdge(edge.id)}
+          >
+            <Trash2 data-icon="inline-start" />
+            Delete rule
+          </Button>
+          {!edge.data.ruleId ? (
+            <p className="text-center text-xs text-muted-foreground">
+              New rule — saved when you publish the workflow.
+            </p>
+          ) : null}
+        </div>
       </CardContent>
     </>
   )
@@ -313,21 +392,25 @@ function QueueInspector({
   )
   return (
     <>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+      <InspectorHeading
+        icon={
+          // Same tint as the queue's workflow badge across the portal.
+          <span
+            className={cn(
+              'flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tracking-wide uppercase',
+              queueWorkflowIconClasses(queue.workflowType),
+            )}
+          >
             {queue.prefix.slice(0, 3)}
           </span>
-          <div className="min-w-0">
-            <CardTitle className="truncate text-base">{queue.name}</CardTitle>
-            <CardDescription>
-              {connectable
-                ? `${related.length} rule${related.length === 1 ? '' : 's'}`
-                : `Queue is ${queue.lifecycle ?? 'inactive'}`}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+        }
+        title={queue.name}
+        description={
+          connectable
+            ? `${related.length} rule${related.length === 1 ? '' : 's'}`
+            : `Queue is ${queue.lifecycle ?? 'inactive'}`
+        }
+      />
       <CardContent className="flex flex-col gap-4">
         {!connectable ? (
           <p className="text-xs text-muted-foreground">
@@ -341,17 +424,20 @@ function QueueInspector({
             to another queue to create a rule.
           </p>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            {related.map((edge) => (
-              <EdgeRuleRow
-                key={edge.id}
-                edge={edge}
-                perspectiveNodeId={node.id}
-                nodes={nodes}
-                onSelect={() => onSelectEdge(edge.id)}
-                onToggle={(isActive) => onUpdateEdge(edge.id, { isActive })}
-              />
-            ))}
+          <div className="flex flex-col gap-2">
+            <SectionLabel>Rules</SectionLabel>
+            <div className="flex flex-col gap-1.5">
+              {related.map((edge) => (
+                <EdgeRuleRow
+                  key={edge.id}
+                  edge={edge}
+                  perspectiveNodeId={node.id}
+                  nodes={nodes}
+                  onSelect={() => onSelectEdge(edge.id)}
+                  onToggle={(isActive) => onUpdateEdge(edge.id, { isActive })}
+                />
+              ))}
+            </div>
           </div>
         )}
         {related.length > 0 ? (
@@ -361,7 +447,7 @@ function QueueInspector({
               type="button"
               variant="outline"
               size="sm"
-              className="text-destructive hover:text-destructive"
+              className={DESTRUCTIVE_OUTLINE_CLASSES}
               onClick={() => onDeleteNodeRules(node.id)}
             >
               <Trash2 data-icon="inline-start" />
@@ -394,19 +480,11 @@ function SubmissionInspector({
     .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0))
   return (
     <>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white dark:bg-emerald-700">
-            <Play className="size-4" />
-          </span>
-          <div>
-            <CardTitle className="text-base">Onboarding submitted</CardTitle>
-            <CardDescription>
-              First cases opened when a merchant submits onboarding.
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+      <InspectorHeading
+        icon={<SectionIcon icon={Play} tone={EDGE_KIND_META.startRule.tint} />}
+        title="Onboarding submitted"
+        description="First cases opened on submission"
+      />
       <CardContent className="flex flex-col gap-4">
         {startRules.length === 0 ? (
           <p className="text-xs text-muted-foreground">
@@ -414,17 +492,20 @@ function SubmissionInspector({
             first queue a merchant should enter.
           </p>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            {startRules.map((edge) => (
-              <EdgeRuleRow
-                key={edge.id}
-                edge={edge}
-                perspectiveNodeId={SUBMISSION_NODE_ID}
-                nodes={nodes}
-                onSelect={() => onSelectEdge(edge.id)}
-                onToggle={(isActive) => onUpdateEdge(edge.id, { isActive })}
-              />
-            ))}
+          <div className="flex flex-col gap-2">
+            <SectionLabel>Start rules</SectionLabel>
+            <div className="flex flex-col gap-1.5">
+              {startRules.map((edge) => (
+                <EdgeRuleRow
+                  key={edge.id}
+                  edge={edge}
+                  perspectiveNodeId={SUBMISSION_NODE_ID}
+                  nodes={nodes}
+                  onSelect={() => onSelectEdge(edge.id)}
+                  onToggle={(isActive) => onUpdateEdge(edge.id, { isActive })}
+                />
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
@@ -446,25 +527,21 @@ function EdgeRuleRow({
   onSelect: () => void
   onToggle: (isActive: boolean) => void
 }) {
-  const meta = EDGE_KIND_META[edge.data.kind]
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-md border px-2.5 py-2 text-sm transition-colors hover:border-foreground/30',
+        'flex items-center gap-2.5 rounded-lg border bg-card py-1.5 pr-2.5 pl-1.5 text-sm transition-colors hover:bg-muted/50',
         !edge.data.isActive && 'opacity-60',
       )}
     >
-      <span
-        className="size-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: meta.color }}
-      />
+      <KindChip kind={edge.data.kind} />
       <Tooltip>
         <TooltipTrigger
           render={
             <button
               type="button"
               onClick={onSelect}
-              className="min-w-0 flex-1 truncate text-left hover:underline"
+              className="min-w-0 flex-1 truncate text-left hover:underline hover:decoration-dashed hover:underline-offset-4"
             />
           }
         >
@@ -507,6 +584,8 @@ function describeEdge(
 }
 
 // ─── Empty state (legend + help) ────────────────────────────────────────────
+const HANDLE_KINDS = QUEUE_TO_QUEUE_KINDS
+
 function EmptyInspector({
   nodes,
   edges,
@@ -520,62 +599,64 @@ function EmptyInspector({
   ).length
   return (
     <>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-            <MousePointer2 className="size-4 text-muted-foreground" />
-          </span>
-          <div>
-            <CardTitle className="text-base">Caseflow builder</CardTitle>
-            <CardDescription>
-              {queuesInFlow} queue{queuesInFlow === 1 ? '' : 's'} in flow ·{' '}
-              {activeCount} active rule{activeCount === 1 ? '' : 's'}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            How to build
-          </p>
-          <ul className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-            <li>
-              Drag from a colored handle on the right of a node to another queue
-              to create a rule.
-            </li>
-            <li>
-              Blue handle: close trigger. Amber: close requirement. Violet:
-              creation requirement.
-            </li>
-            <li>
+      <InspectorHeading
+        icon={<SectionIcon icon={Workflow} tone="teal" />}
+        title="Caseflow builder"
+        description={`${queuesInFlow} queue${queuesInFlow === 1 ? '' : 's'} in flow · ${activeCount} active rule${activeCount === 1 ? '' : 's'}`}
+      />
+      <CardContent className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
+          <SectionLabel>How to build</SectionLabel>
+          <ol className="flex flex-col gap-2.5 text-sm">
+            <HowToStep step={1}>
+              Drag from a handle on the right of a node to another queue to
+              create a rule. The handle&apos;s color sets the rule type:
+              <span className="mt-1.5 flex flex-wrap gap-1.5">
+                {HANDLE_KINDS.map((kind) => (
+                  <span
+                    key={kind}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+                      EDGE_KIND_META[kind].chipClass,
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'size-2 rounded-full',
+                        EDGE_KIND_META[kind].handleClass,
+                      )}
+                    />
+                    {EDGE_KIND_META[kind].label}
+                  </span>
+                ))}
+              </span>
+            </HowToStep>
+            <HowToStep step={2}>
               Drag from &quot;Onboarding submitted&quot; to set the first case.
-            </li>
-            <li>
+            </HowToStep>
+            <HowToStep step={3}>
               Click any line or node to edit it here. Press Delete to remove a
               selected rule.
-            </li>
-          </ul>
+            </HowToStep>
+          </ol>
         </div>
         <Separator />
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Legend
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {(
-              Object.entries(EDGE_KIND_META) as Array<
-                [WorkflowEdgeKind, (typeof EDGE_KIND_META)[WorkflowEdgeKind]]
-              >
-            ).map(([kind, meta]) => (
-              <LegendRow key={kind} kind={kind}>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm">{meta.label}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {meta.description}
+        <div className="flex flex-col gap-3">
+          <SectionLabel>Legend</SectionLabel>
+          <div className="flex flex-col gap-3">
+            {(Object.keys(EDGE_KIND_META) as WorkflowEdgeKind[]).map((kind) => (
+              <div key={kind} className="flex items-start gap-2.5">
+                <KindChip kind={kind} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                    {EDGE_KIND_META[kind].label}
+                    <KindLineSwatch kind={kind} />
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {EDGE_KIND_META[kind].description}
                   </span>
                 </span>
-              </LegendRow>
+              </div>
             ))}
           </div>
         </div>
@@ -584,26 +665,13 @@ function EmptyInspector({
   )
 }
 
-function LegendRow({
-  kind,
-  children,
-}: {
-  kind: WorkflowEdgeKind
-  children: ReactNode
-}) {
-  const meta = EDGE_KIND_META[kind]
+function HowToStep({ step, children }: { step: number; children: ReactNode }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <span
-        className="h-0.5 w-8 shrink-0 rounded-full"
-        style={{
-          backgroundColor: meta.strokeDasharray ? 'transparent' : meta.color,
-          borderTop: meta.strokeDasharray
-            ? `2px dashed ${meta.color}`
-            : undefined,
-        }}
-      />
-      {children}
-    </div>
+    <li className="flex gap-2.5">
+      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground tabular-nums">
+        {step}
+      </span>
+      <span className="min-w-0 flex-1 text-muted-foreground">{children}</span>
+    </li>
   )
 }

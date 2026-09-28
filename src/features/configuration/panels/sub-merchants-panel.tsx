@@ -54,6 +54,8 @@ import {
   useCreateSubMerchantDraftMutation,
   useUpdateSubMerchantDraftMutation,
 } from '#/hooks/use-configuration-query'
+import { useMorph } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 import { useRetainedValue } from '#/hooks/use-retained-value'
 import type { SubMerchantDraft } from '#/schemas/configuration.schema'
 
@@ -61,8 +63,7 @@ import { ConfigurationHeaderActions } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
 
 type SubMerchantEditor =
-  | { mode: 'create' }
-  | { mode: 'edit'; subMerchant: SubMerchantDraft }
+  { mode: 'create' } | { mode: 'edit'; subMerchant: SubMerchantDraft }
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {
@@ -76,9 +77,14 @@ export function SubMerchantsPanel() {
   const shownEditor = useRetainedValue(editor)
   const subMerchants = data ?? []
 
-  const openEditor = (next: SubMerchantEditor) => {
-    setEditorKey((key) => key + 1)
-    setEditor(next)
+  // The editor grows out of whichever button opened it (Add or a row's Edit).
+  const editorMorph = useMorph()
+
+  const openEditor = (next: SubMerchantEditor, trigger: HTMLElement) => {
+    editorMorph.run(() => {
+      setEditorKey((key) => key + 1)
+      setEditor(next)
+    }, trigger)
   }
 
   const columns: DataTableColumnDef<SubMerchantDraft>[] = [
@@ -119,8 +125,11 @@ export function SubMerchantsPanel() {
                   variant="ghost"
                   size="icon"
                   className="size-8"
-                  onClick={() =>
-                    openEditor({ mode: 'edit', subMerchant: item })
+                  onClick={(event) =>
+                    openEditor(
+                      { mode: 'edit', subMerchant: item },
+                      event.currentTarget,
+                    )
                   }
                 />
               }
@@ -160,7 +169,12 @@ export function SubMerchantsPanel() {
   return (
     <>
       <ConfigurationHeaderActions>
-        <Button size="sm" onClick={() => openEditor({ mode: 'create' })}>
+        <Button
+          size="sm"
+          onClick={(event) =>
+            openEditor({ mode: 'create' }, event.currentTarget)
+          }
+        >
           <Plus data-icon="inline-start" />
           Add Sub-Merchant
         </Button>
@@ -182,7 +196,8 @@ export function SubMerchantsPanel() {
       />
 
       <SubMerchantDialog
-        key={editorKey}
+        formKey={editorKey}
+        popupProps={editorMorph.popupProps}
         open={editor !== null}
         subMerchant={
           shownEditor?.mode === 'edit' ? shownEditor.subMerchant : null
@@ -196,16 +211,60 @@ export function SubMerchantsPanel() {
   )
 }
 
-function SubMerchantDialog({
-  open,
-  subMerchant,
-  subMerchants,
-  onOpenChange,
-}: {
-  open: boolean
+type SubMerchantFormProps = {
   subMerchant: SubMerchantDraft | null
   subMerchants: SubMerchantDraft[]
   onOpenChange: (open: boolean) => void
+}
+
+// The dialog stays mounted so Base UI can run its open/close transitions;
+// only the form body is keyed, so each open starts from a fresh form.
+function SubMerchantDialog({
+  open,
+  formKey,
+  popupProps,
+  ...props
+}: SubMerchantFormProps & {
+  open: boolean
+  formKey: number
+  popupProps: MorphPopupProps
+}) {
+  const createDraft = useCreateSubMerchantDraftMutation()
+  const updateDraft = useUpdateSubMerchantDraftMutation()
+  const isPending = createDraft.isPending || updateDraft.isPending
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (isPending) return
+        props.onOpenChange(next)
+      }}
+    >
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-lg', popupProps.className)}
+      >
+        <SubMerchantForm
+          key={formKey}
+          {...props}
+          createDraft={createDraft}
+          updateDraft={updateDraft}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SubMerchantForm({
+  subMerchant,
+  subMerchants,
+  onOpenChange,
+  createDraft,
+  updateDraft,
+}: SubMerchantFormProps & {
+  createDraft: ReturnType<typeof useCreateSubMerchantDraftMutation>
+  updateDraft: ReturnType<typeof useUpdateSubMerchantDraftMutation>
 }) {
   const isEdit = subMerchant !== null
   const [name, setName] = useState(subMerchant?.name ?? '')
@@ -214,8 +273,6 @@ function SubMerchantDialog({
   // Errors appear only after the first submit attempt, so blurring a field
   // (e.g. by clicking outside to close) never flashes validation messages.
   const [submitted, setSubmitted] = useState(false)
-  const createDraft = useCreateSubMerchantDraftMutation()
-  const updateDraft = useUpdateSubMerchantDraftMutation()
   const isPending = createDraft.isPending || updateDraft.isPending
   const others = subMerchants.filter((item) => item.id !== subMerchant?.id)
 
@@ -278,113 +335,105 @@ function SubMerchantDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (isPending) return
-        onOpenChange(next)
-      }}
-    >
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Edit Sub-Merchant' : 'Add Sub-Merchant'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? 'Update the name or Seller Code, or upload a new draft form to replace the current one.'
-              : 'Add a sub-merchant name and draft form. Files are stored under Configuration / Sub-Merchants.'}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {isEdit ? 'Edit Sub-Merchant' : 'Add Sub-Merchant'}
+        </DialogTitle>
+        <DialogDescription>
+          {isEdit
+            ? 'Update the name or Seller Code, or upload a new draft form to replace the current one.'
+            : 'Add a sub-merchant name and draft form. Files are stored under Configuration / Sub-Merchants.'}
+        </DialogDescription>
+      </DialogHeader>
 
-        <form
-          id="sub-merchant-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault()
-            handleSubmit()
-          }}
+      <form
+        id="sub-merchant-form"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSubmit()
+        }}
+      >
+        <FieldGroup>
+          <Field data-invalid={Boolean(showNameError)}>
+            <FieldLabel htmlFor="sub-merchant-name">Name</FieldLabel>
+            <Input
+              id="sub-merchant-name"
+              value={name}
+              autoFocus
+              placeholder="e.g. Acme Holdings"
+              aria-invalid={Boolean(showNameError)}
+              disabled={isPending}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <FieldError>{showNameError}</FieldError>
+          </Field>
+
+          <Field data-invalid={Boolean(showSellerCodeError)}>
+            <FieldLabel htmlFor="sub-merchant-seller-code">
+              Seller Code
+            </FieldLabel>
+            <Input
+              id="sub-merchant-seller-code"
+              value={sellerCode}
+              placeholder="e.g. MST-715012"
+              aria-invalid={Boolean(showSellerCodeError)}
+              disabled={isPending}
+              onChange={(event) => setSellerCode(event.target.value)}
+            />
+            <FieldError>{showSellerCodeError}</FieldError>
+          </Field>
+
+          <Field data-invalid={Boolean(showFileError)}>
+            <FieldLabel>
+              {isEdit ? 'Replace draft form' : 'Draft form'}
+            </FieldLabel>
+            {subMerchant ? (
+              <FieldDescription>
+                Current draft:{' '}
+                <a
+                  href={subMerchant.googleDriveWebViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-4"
+                >
+                  {subMerchant.originalName}
+                </a>
+                . Leave empty to keep it.
+              </FieldDescription>
+            ) : null}
+            <DraftFileDropzone
+              file={file}
+              error={showFileError}
+              disabled={isPending}
+              onSelect={setFile}
+              onClear={() => setFile(null)}
+            />
+          </Field>
+        </FieldGroup>
+      </form>
+
+      <DialogFooter>
+        <DialogClose
+          render={
+            <Button type="button" variant="outline" disabled={isPending} />
+          }
         >
-          <FieldGroup>
-            <Field data-invalid={Boolean(showNameError)}>
-              <FieldLabel htmlFor="sub-merchant-name">Name</FieldLabel>
-              <Input
-                id="sub-merchant-name"
-                value={name}
-                autoFocus
-                placeholder="e.g. Acme Holdings"
-                aria-invalid={Boolean(showNameError)}
-                disabled={isPending}
-                onChange={(event) => setName(event.target.value)}
-              />
-              <FieldError>{showNameError}</FieldError>
-            </Field>
-
-            <Field data-invalid={Boolean(showSellerCodeError)}>
-              <FieldLabel htmlFor="sub-merchant-seller-code">
-                Seller Code
-              </FieldLabel>
-              <Input
-                id="sub-merchant-seller-code"
-                value={sellerCode}
-                placeholder="e.g. MST-715012"
-                aria-invalid={Boolean(showSellerCodeError)}
-                disabled={isPending}
-                onChange={(event) => setSellerCode(event.target.value)}
-              />
-              <FieldError>{showSellerCodeError}</FieldError>
-            </Field>
-
-            <Field data-invalid={Boolean(showFileError)}>
-              <FieldLabel>
-                {isEdit ? 'Replace draft form' : 'Draft form'}
-              </FieldLabel>
-              {subMerchant ? (
-                <FieldDescription>
-                  Current draft:{' '}
-                  <a
-                    href={subMerchant.googleDriveWebViewLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium underline underline-offset-4"
-                  >
-                    {subMerchant.originalName}
-                  </a>
-                  . Leave empty to keep it.
-                </FieldDescription>
-              ) : null}
-              <DraftFileDropzone
-                file={file}
-                error={showFileError}
-                disabled={isPending}
-                onSelect={setFile}
-                onClear={() => setFile(null)}
-              />
-            </Field>
-          </FieldGroup>
-        </form>
-
-        <DialogFooter>
-          <DialogClose
-            render={
-              <Button type="button" variant="outline" disabled={isPending} />
-            }
-          >
-            Cancel
-          </DialogClose>
-          <Button type="submit" form="sub-merchant-form" disabled={isPending}>
-            {isPending ? (
-              <Spinner data-icon="inline-start" />
-            ) : isEdit ? (
-              <Save data-icon="inline-start" />
-            ) : (
-              <Plus data-icon="inline-start" />
-            )}
-            {isEdit ? 'Save' : 'Add'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          Cancel
+        </DialogClose>
+        <Button type="submit" form="sub-merchant-form" disabled={isPending}>
+          {isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : isEdit ? (
+            <Save data-icon="inline-start" />
+          ) : (
+            <Plus data-icon="inline-start" />
+          )}
+          {isEdit ? 'Save' : 'Add'}
+        </Button>
+      </DialogFooter>
+    </>
   )
 }
 

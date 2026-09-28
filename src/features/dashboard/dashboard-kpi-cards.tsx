@@ -74,7 +74,7 @@ function StatCard({
           <Icon className={cn('size-3.5', ACCENT_CLASSES[accent])} />
           {label}
           {link ? (
-            <ArrowUpRight className="ml-auto size-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+            <ArrowUpRight className="ml-auto size-3.5 text-muted-foreground/70 transition-[color,translate] duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground group-focus-visible:translate-x-0.5 group-focus-visible:-translate-y-0.5 group-focus-visible:text-foreground motion-reduce:transition-none" />
           ) : null}
         </CardDescription>
       </CardHeader>
@@ -203,11 +203,6 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
           icon={ShieldAlert}
           accent="danger"
           link={{ to: '/merchants', statuses: ['terminated'] }}
-        />
-        <StatCard
-          label="Form submissions"
-          value={count(merchants?.submittedInRange)}
-          icon={FilePlus2}
         />
       </Section>
     </div>

@@ -43,6 +43,7 @@ import {
   useGeneratePortalPasswordCode,
   useRevealPortalPasswordCode,
 } from '#/hooks/use-case-detail-query'
+import { useMorph } from '#/hooks/use-morph'
 import type { CaseDetail } from '#/schemas/cases.schema'
 
 import { CaseCardHeading } from './case-section'
@@ -80,6 +81,8 @@ export function PortalPasswordCodeCard({
   const generateCode = useGeneratePortalPasswordCode(caseId)
   const [revealed, setRevealed] = useState<PortalPasswordCode | null>(null)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
+  // The confirmation grows out of the Regenerate button.
+  const regenerateMorph = useMorph()
   const isBusy = revealCode.isPending || generateCode.isPending
   const portalEmail = email?.trim() || revealed?.portalEmail || null
   const password =
@@ -225,15 +228,27 @@ export function PortalPasswordCodeCard({
                     )}
                     <AlertDialog
                       open={regenerateOpen}
-                      onOpenChange={setRegenerateOpen}
+                      onOpenChange={(next) => {
+                        if (next) {
+                          regenerateMorph.run(() => setRegenerateOpen(true))
+                        } else {
+                          setRegenerateOpen(false)
+                        }
+                      }}
                     >
                       <AlertDialogTrigger
-                        render={<Button variant="outline" disabled={isBusy} />}
+                        render={
+                          <Button
+                            variant="outline"
+                            disabled={isBusy}
+                            {...regenerateMorph.triggerProps}
+                          />
+                        }
                       >
                         <RefreshCw data-icon="inline-start" />
                         Regenerate
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent {...regenerateMorph.popupProps}>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
                             Regenerate portal password code?

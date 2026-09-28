@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { CheckIcon, PlusCircleIcon } from 'lucide-react'
 
@@ -17,7 +18,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
+import { InputGroupAddon } from '#/components/ui/input-group'
 import { Separator } from '#/components/ui/separator'
+import { Spinner } from '#/components/ui/spinner'
 
 interface FilterOption {
   label: string
@@ -32,13 +35,39 @@ interface DataTableFilterProps {
   onChange: (values: Set<string>) => void
   /** Adds a search input and a scrollable list, for long or growing option lists. */
   searchable?: boolean
+  /**
+   * Searches on the server instead of filtering `options` locally: called
+   * with the typed text, and `options` should hold the matching results.
+   * Implies `searchable`.
+   */
+  onSearchChange?: (search: string) => void
+  /** Shows a spinner while server-side results load. */
+  isLoading?: boolean
+  /**
+   * Labels for selected values that may be missing from `options` (e.g.
+   * server-searched options that aren't in the current results).
+   */
+  selectedLabels?: ReadonlyMap<string, string>
+}
+
+// Ticking options edits a draft; nothing is applied (and the table doesn't
+// refetch) until Apply. Closing the popover any other way discards the draft.
+
+function sameSet(a: Set<string>, b: Set<string>) {
+  return a.size === b.size && [...a].every((value) => b.has(value))
 }
 
 function DataTableFilterLabel({
   title,
-  options,
   selectedValues,
-}: Pick<DataTableFilterProps, 'title' | 'options' | 'selectedValues'>) {
+  labelFor,
+}: {
+  title: string
+  selectedValues: Set<string>
+  labelFor: (value: string) => string | undefined
+}) {
+  const labels = [...selectedValues].map(labelFor)
+  const allLabelled = labels.every((label) => label !== undefined)
   return (
     <>
       <PlusCircleIcon data-icon="inline-start" />
@@ -53,7 +82,7 @@ function DataTableFilterLabel({
             {selectedValues.size}
           </Badge>
           <div className="hidden gap-1 lg:flex">
-            {selectedValues.size > 2 ? (
+            {selectedValues.size > 2 || !allLabelled ? (
               <Badge
                 variant="secondary"
                 className="rounded-sm px-1 font-normal"
@@ -61,19 +90,15 @@ function DataTableFilterLabel({
                 {selectedValues.size} selected
               </Badge>
             ) : (
-              options.flatMap((option) =>
-                selectedValues.has(option.value)
-                  ? [
-                      <Badge
-                        key={option.value}
-                        variant="secondary"
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        {option.label}
-                      </Badge>,
-                    ]
-                  : [],
-              )
+              labels.map((label) => (
+                <Badge
+                  key={label}
+                  variant="secondary"
+                  className="rounded-sm px-1 font-normal"
+                >
+                  {label}
+                </Badge>
+              ))
             )}
           </div>
         </>
@@ -82,38 +107,81 @@ function DataTableFilterLabel({
   )
 }
 
-export function DataTableFilter({
+function FilterFooter({
+  draft,
+  applied,
+  onClear,
+  onApply,
+}: {
+  draft: Set<string>
+  applied: Set<string>
+  onClear: () => void
+  onApply: () => void
+}) {
+  return (
+    <>
+      <Separator />
+      <div className="flex items-center justify-between gap-2 p-1.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={draft.size === 0}
+          onClick={onClear}
+        >
+          Clear
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          disabled={sameSet(draft, applied)}
+          onClick={onApply}
+        >
+          Apply
+          {draft.size > 0 ? ` (${draft.size})` : ''}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+export function DataTableFilter(props: DataTableFilterProps) {
+  if (props.searchable || props.onSearchChange) {
+    return <SearchableDataTableFilter {...props} />
+  }
+
+  return <PlainDataTableFilter {...props} />
+}
+
+function PlainDataTableFilter({
   title,
   options,
   selectedValues,
   onChange,
-  searchable = false,
 }: DataTableFilterProps) {
-  if (searchable) {
-    return (
-      <SearchableDataTableFilter
-        title={title}
-        options={options}
-        selectedValues={selectedValues}
-        onChange={onChange}
-      />
-    )
-  }
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<Set<string>>(() => new Set())
+
+  const labelFor = (value: string) =>
+    options.find((option) => option.value === value)?.label
 
   const toggleValue = (value: string) => {
-    const next = new Set(selectedValues)
-    if (next.has(value)) {
-      next.delete(value)
-    } else {
-      next.add(value)
-    }
-    onChange(next)
+    setDraft((current) => {
+      const next = new Set(current)
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
+      return next
+    })
   }
 
-  const clearAll = () => onChange(new Set())
-
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) setDraft(new Set(selectedValues))
+        setOpen(nextOpen)
+      }}
+    >
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm" className="border-dashed" />
@@ -121,28 +189,28 @@ export function DataTableFilter({
       >
         <DataTableFilterLabel
           title={title}
-          options={options}
           selectedValues={selectedValues}
+          labelFor={labelFor}
         />
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-0" align="start">
+      <PopoverContent className="w-56 p-0" align="start">
         <div className="flex flex-col gap-0.5 p-1">
           {options.map((option) => {
-            const isSelected = selectedValues.has(option.value)
+            const isSelected = draft.has(option.value)
             return (
               <button
                 key={option.value}
                 type="button"
+                role="menuitemcheckbox"
+                aria-checked={isSelected}
                 onClick={() => toggleValue(option.value)}
-                className={cn(
-                  'flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground',
-                )}
+                className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent"
               >
                 <div
                   data-slot="data-table-filter-tick"
                   data-selected={isSelected || undefined}
                   className={cn(
-                    'flex size-4 shrink-0 items-center justify-center rounded-lg border border-primary',
+                    'flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary',
                     isSelected
                       ? 'bg-primary text-primary-foreground'
                       : 'opacity-50 [&_svg]:invisible',
@@ -158,20 +226,15 @@ export function DataTableFilter({
             )
           })}
         </div>
-        {selectedValues.size > 0 && (
-          <>
-            <Separator />
-            <div className="p-1">
-              <button
-                type="button"
-                onClick={clearAll}
-                className="w-full cursor-default rounded-sm px-2 py-1.5 text-center text-sm outline-hidden hover:bg-accent hover:text-accent-foreground"
-              >
-                Clear filters
-              </button>
-            </div>
-          </>
-        )}
+        <FilterFooter
+          draft={draft}
+          applied={selectedValues}
+          onClear={() => setDraft(new Set())}
+          onApply={() => {
+            onChange(draft)
+            setOpen(false)
+          }}
+        />
       </PopoverContent>
     </Popover>
   )
@@ -182,24 +245,57 @@ function SearchableDataTableFilter({
   options,
   selectedValues,
   onChange,
-}: Omit<DataTableFilterProps, 'searchable'>) {
-  const selectedOptions = options.filter((option) =>
-    selectedValues.has(option.value),
-  )
+  onSearchChange,
+  isLoading = false,
+  selectedLabels,
+}: DataTableFilterProps) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<Set<string>>(() => new Set())
+  const serverSearch = Boolean(onSearchChange)
+
+  // Labels of every option seen so far, so a draft selection stays labelled
+  // after a server search stops returning it.
+  const seenLabels = useRef(new Map<string, string>())
+  for (const option of options) {
+    seenLabels.current.set(option.value, option.label)
+  }
+  const labelFor = (value: string) =>
+    seenLabels.current.get(value) ?? selectedLabels?.get(value)
+
+  // Selected values missing from the current results are listed first, so
+  // they can still be unticked while searching for something else.
+  const optionValues = new Set(options.map((option) => option.value))
+  const pinned: FilterOption[] = [...draft]
+    .filter((value) => !optionValues.has(value))
+    .flatMap((value) => {
+      const label = labelFor(value)
+      return label ? [{ value, label }] : []
+    })
+  const items = serverSearch ? [...pinned, ...options] : options
+  const draftOptions = items.filter((option) => draft.has(option.value))
 
   return (
     <Combobox
       multiple
       autoHighlight
-      items={options}
-      value={selectedOptions}
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) setDraft(new Set(selectedValues))
+        else onSearchChange?.('')
+        setOpen(nextOpen)
+      }}
+      items={items}
+      value={draftOptions}
+      // Server-searched options are already filtered.
+      filter={serverSearch ? null : undefined}
+      onInputValueChange={(value) => onSearchChange?.(value)}
       itemToStringLabel={(option: FilterOption) => option.label}
       itemToStringValue={(option: FilterOption) => option.value}
       isItemEqualToValue={(item: FilterOption, selected: FilterOption) =>
         item.value === selected.value
       }
       onValueChange={(next: FilterOption[]) =>
-        onChange(new Set(next.map((option) => option.value)))
+        setDraft(new Set(next.map((option) => option.value)))
       }
     >
       <ComboboxPrimitive.Trigger
@@ -209,16 +305,24 @@ function SearchableDataTableFilter({
       >
         <DataTableFilterLabel
           title={title}
-          options={options}
           selectedValues={selectedValues}
+          labelFor={labelFor}
         />
       </ComboboxPrimitive.Trigger>
-      <ComboboxContent align="start" className="w-60 min-w-60">
+      <ComboboxContent align="start" className="w-64 min-w-64">
         <ComboboxInput
           showTrigger={false}
           placeholder={`Search ${title.toLowerCase()}...`}
-        />
-        <ComboboxEmpty>No results found.</ComboboxEmpty>
+        >
+          {isLoading ? (
+            <InputGroupAddon align="inline-end">
+              <Spinner className="size-3.5 text-muted-foreground" />
+            </InputGroupAddon>
+          ) : null}
+        </ComboboxInput>
+        <ComboboxEmpty>
+          {isLoading ? 'Searching...' : 'No results found.'}
+        </ComboboxEmpty>
         <ComboboxList className="max-h-72">
           {(option: FilterOption) => (
             <ComboboxItem key={option.value} value={option}>
@@ -229,20 +333,15 @@ function SearchableDataTableFilter({
             </ComboboxItem>
           )}
         </ComboboxList>
-        {selectedValues.size > 0 && (
-          <>
-            <Separator />
-            <div className="p-1">
-              <button
-                type="button"
-                onClick={() => onChange(new Set())}
-                className="w-full cursor-default rounded-sm px-2 py-1.5 text-center text-sm outline-hidden hover:bg-accent hover:text-accent-foreground"
-              >
-                Clear filters
-              </button>
-            </div>
-          </>
-        )}
+        <FilterFooter
+          draft={draft}
+          applied={selectedValues}
+          onClear={() => setDraft(new Set())}
+          onApply={() => {
+            onChange(draft)
+            setOpen(false)
+          }}
+        />
       </ComboboxContent>
     </Combobox>
   )

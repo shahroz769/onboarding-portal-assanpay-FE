@@ -88,7 +88,7 @@ export function WhatsAppMessagePanel({
             {copied ? 'Copied' : 'Copy'}
           </Button>
         </div>
-        <pre className="max-h-64 select-all overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 font-sans text-sm leading-relaxed">
+        <pre className="max-h-64 select-all overflow-y-auto scrollbar-thin whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 font-sans text-sm leading-relaxed">
           {preview.body}
         </pre>
       </div>

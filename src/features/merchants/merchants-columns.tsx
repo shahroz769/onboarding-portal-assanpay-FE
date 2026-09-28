@@ -40,9 +40,9 @@ interface CreateColumnsOptions {
   allIds: string[]
   onSelectRow: (id: string, selected: boolean) => void
   onSelectAll: (selected: boolean) => void
-  onPriorityClick: (merchant: MerchantListItem) => void
-  onTerminateClick: (merchant: MerchantListItem) => void
-  onDeleteClick: (merchant: MerchantListItem) => void
+  onPriorityClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
+  onTerminateClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
+  onDeleteClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
 }
 
 function getSortDirection(
@@ -122,7 +122,28 @@ export function createMerchantColumns({
           {merchant.businessName}
         </TruncatedTooltip>
       ),
-      width: 360,
+      width: 300,
+    },
+
+    // Owner Full Name
+    {
+      id: 'ownerFullName',
+      header: (
+        <DataTableColumnHeader
+          title="Owner"
+          sortDirection={getSortDirection('ownerFullName', sortBy, sortOrder)}
+          onSort={() => onSort('ownerFullName')}
+        />
+      ),
+      cell: (merchant) => (
+        <TruncatedTooltip
+          render={<span className="block max-w-52 truncate text-sm" />}
+          content={merchant.ownerFullName}
+        >
+          {merchant.ownerFullName}
+        </TruncatedTooltip>
+      ),
+      width: 220,
     },
 
     // Status (derived)
@@ -170,7 +191,8 @@ export function createMerchantColumns({
             }
             onClick={
               canEditMerchantPriority
-                ? () => onPriorityClick(merchant)
+                ? (event: React.MouseEvent<HTMLElement>) =>
+                    onPriorityClick(merchant, event.currentTarget)
                 : undefined
             }
           >
@@ -194,6 +216,21 @@ export function createMerchantColumns({
       width: 100,
     },
 
+    // Open Cases
+    {
+      id: 'openCasesCount',
+      header: 'Open Cases',
+      cell: (merchant) =>
+        merchant.openCasesCount > 0 ? (
+          <span className="text-sm font-medium tabular-nums">
+            {merchant.openCasesCount}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+      width: 110,
+    },
+
     // Created At
     {
       id: 'createdAt',
@@ -212,6 +249,39 @@ export function createMerchantColumns({
           </span>
         )
       },
+      width: 180,
+    },
+
+    // Went Live
+    {
+      id: 'liveAt',
+      header: 'Went Live',
+      cell: (merchant) =>
+        merchant.liveAt ? (
+          <span className="text-sm text-muted-foreground">
+            {format(new Date(merchant.liveAt), 'MMM dd, yyyy')}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+      width: 130,
+    },
+
+    // Last Updated
+    {
+      id: 'updatedAt',
+      header: (
+        <DataTableColumnHeader
+          title="Last Updated"
+          sortDirection={getSortDirection('updatedAt', sortBy, sortOrder)}
+          onSort={() => onSort('updatedAt')}
+        />
+      ),
+      cell: (merchant) => (
+        <span className="text-sm text-muted-foreground">
+          {format(new Date(merchant.updatedAt), 'MMM dd, yyyy h:mm a')}
+        </span>
+      ),
       width: 180,
     },
 
@@ -250,7 +320,9 @@ export function createMerchantColumns({
                     variant="ghost"
                     size="icon"
                     className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onTerminateClick(merchant)}
+                    onClick={(event) =>
+                      onTerminateClick(merchant, event.currentTarget)
+                    }
                   />
                 }
               >
@@ -268,7 +340,9 @@ export function createMerchantColumns({
                     variant="ghost"
                     size="icon"
                     className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onDeleteClick(merchant)}
+                    onClick={(event) =>
+                      onDeleteClick(merchant, event.currentTarget)
+                    }
                   />
                 }
               >

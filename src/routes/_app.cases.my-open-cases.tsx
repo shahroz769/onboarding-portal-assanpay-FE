@@ -6,9 +6,7 @@ import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { useAuth } from '#/features/auth/auth-client'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
 
-const OPEN_CASE_STATUSES = CASE_STATUSES.filter(
-  (status) => status !== 'closed',
-)
+const OPEN_CASE_STATUSES = CASE_STATUSES.filter((status) => status !== 'closed')
 const OPEN_CASES_STATUS_FILTER = OPEN_CASE_STATUSES.join(',')
 
 export const Route = createFileRoute('/_app/cases/my-open-cases')({
@@ -48,7 +46,8 @@ function RouteComponent() {
 function CasesRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={0}
+      filterCount={2}
+      filterWidths={[92, 84]}
       actionWidth={0}
       columns={[
         { width: 40, kind: 'checkbox' },

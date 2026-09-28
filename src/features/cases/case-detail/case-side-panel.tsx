@@ -338,8 +338,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
 
   const [closeReason, setCloseReason] = useState('')
-  // Morph Dialog: the review modal grows out of the Review button.
-  const reviewModal = useMorph()
+  // Morph Dialog: the review modal grows out of the Review button, then
+  // closes with the regular dialog fade/zoom like every other modal.
+  const reviewModal = useMorph({ morphClose: false })
   // Bumped on every open so the modal starts fresh, while staying mounted
   // after close so its exit animation can play.
   const [reviewModalKey, setReviewModalKey] = useState(0)
@@ -611,7 +612,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                 ? isCaseOwner
                                   ? 'Review the rejected fields and email the merchant to request a resubmission.'
                                   : 'Only the current case owner can review rejected fields and request a resubmission.'
-                                : primaryAction.actionKind === 'awaiting-merchant'
+                                : primaryAction.actionKind ===
+                                    'awaiting-merchant'
                                   ? 'Waiting for the merchant to update the requested fields.'
                                   : primaryAction.actionKind ===
                                       'sub-merchant-form'
@@ -848,6 +850,8 @@ function AwaitingMerchantAlert({
   const historyQuery = useQuery(caseHistoryQueryOptions(caseId))
   const regenerateLink = useRegenerateResubmissionLink(caseId)
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
+  // The confirmation grows out of the Regenerate link button.
+  const regenerateMorph = useMorph()
 
   const expiresAt = (() => {
     const items = historyQuery.data
@@ -921,15 +925,25 @@ function AwaitingMerchantAlert({
         {canRegenerate ? (
           <AlertDialog
             open={regenerateDialogOpen}
-            onOpenChange={setRegenerateDialogOpen}
+            onOpenChange={(next) => {
+              if (next) regenerateMorph.run(() => setRegenerateDialogOpen(true))
+              else setRegenerateDialogOpen(false)
+            }}
           >
             <AlertDialogTrigger
-              render={<Button type="button" variant="outline" size="sm" />}
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  {...regenerateMorph.triggerProps}
+                />
+              }
             >
               <RefreshCw data-icon="inline-start" />
               Regenerate link
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent {...regenerateMorph.popupProps}>
               <AlertDialogHeader>
                 <AlertDialogTitle>
                   Regenerate resubmission link?

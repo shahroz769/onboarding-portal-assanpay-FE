@@ -105,7 +105,7 @@ export function ManualEmailPanel({
             {copiedBody ? 'Copied' : 'Copy'}
           </Button>
         </div>
-        <pre className="whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 text-sm font-sans leading-relaxed max-h-64 overflow-y-auto select-all">
+        <pre className="whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 text-sm font-sans leading-relaxed max-h-64 overflow-y-auto scrollbar-thin select-all">
           {preview.body}
         </pre>
       </div>

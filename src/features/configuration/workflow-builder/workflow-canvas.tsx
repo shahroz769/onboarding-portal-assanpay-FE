@@ -5,6 +5,7 @@ import {
   Panel,
   ReactFlow,
   useReactFlow,
+  useStore,
 } from '@xyflow/react'
 import type {
   Connection,
@@ -13,6 +14,9 @@ import type {
   NodeChange,
   NodeTypes,
 } from '@xyflow/react'
+
+import { useEffect, useRef } from 'react'
+import type { RefObject } from 'react'
 
 import { LayoutGrid } from 'lucide-react'
 
@@ -30,6 +34,8 @@ const nodeTypes = {
   submission: SubmissionNode,
   queue: QueueNode,
 } satisfies NodeTypes
+
+const FIT_VIEW_OPTIONS = { padding: 0.25, maxZoom: 1 }
 
 const edgeTypes = {
   flow: FlowEdge,
@@ -56,6 +62,9 @@ export function WorkflowCanvas({
   isValidConnection: (connection: Connection | WorkflowEdge) => boolean
   onRelayout: () => void
 }) {
+  // Set once the user pans or zooms, so resizes stop re-centering the view
+  // under them. Auto-layout clears it.
+  const userMovedRef = useRef(false)
   return (
     <ReactFlow
       nodes={nodes}
@@ -68,7 +77,11 @@ export function WorkflowCanvas({
       isValidConnection={isValidConnection}
       colorMode={colorMode}
       fitView
-      fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
+      fitViewOptions={FIT_VIEW_OPTIONS}
+      onMoveStart={(event) => {
+        // `event` is null for programmatic moves such as fitView.
+        if (event) userMovedRef.current = true
+      }}
       minZoom={0.2}
       maxZoom={1.5}
       nodesConnectable={!readOnly}
@@ -80,12 +93,38 @@ export function WorkflowCanvas({
     >
       <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} />
       <Controls position="bottom-left" showInteractive={false} />
-      <AutoLayoutPanel onRelayout={onRelayout} />
+      <FitOnResize userMovedRef={userMovedRef} />
+      <AutoLayoutPanel onRelayout={onRelayout} userMovedRef={userMovedRef} />
     </ReactFlow>
   )
 }
 
-function AutoLayoutPanel({ onRelayout }: { onRelayout: () => void }) {
+/**
+ * The `fitView` prop only fits once, on mount. The canvas is a flex child
+ * whose size settles after that (the page layout, alerts above it, the
+ * sidebar, window resizes), which left the graph off-center and clipped.
+ * Refit whenever the pane resizes, until the user takes over the viewport.
+ */
+function FitOnResize({ userMovedRef }: { userMovedRef: RefObject<boolean> }) {
+  const { fitView } = useReactFlow()
+  const width = useStore((state) => state.width)
+  const height = useStore((state) => state.height)
+
+  useEffect(() => {
+    if (!width || !height || userMovedRef.current) return
+    void fitView(FIT_VIEW_OPTIONS)
+  }, [fitView, height, userMovedRef, width])
+
+  return null
+}
+
+function AutoLayoutPanel({
+  onRelayout,
+  userMovedRef,
+}: {
+  onRelayout: () => void
+  userMovedRef: RefObject<boolean>
+}) {
   const { fitView } = useReactFlow()
   return (
     <Panel position="top-right">
@@ -95,11 +134,11 @@ function AutoLayoutPanel({ onRelayout }: { onRelayout: () => void }) {
         variant="outline"
         className="bg-background shadow-xs"
         onClick={() => {
+          userMovedRef.current = false
           onRelayout()
           window.setTimeout(() => {
             void fitView({
-              padding: 0.25,
-              maxZoom: 1,
+              ...FIT_VIEW_OPTIONS,
               duration: prefersReducedMotion() ? 0 : 300,
             })
           }, 50)

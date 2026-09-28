@@ -3,11 +3,16 @@ import type { NodeProps } from '@xyflow/react'
 
 import { Badge } from '#/components/ui/badge'
 
+import {
+  queueLifecycleBadgeClasses,
+  queueWorkflowIconClasses,
+} from '#/lib/status-styles'
 import { cn } from '#/lib/utils'
 
 import { HintedHandle } from './hinted-handle'
 
 import type { QueueFlowNode } from '../workflow-graph-types'
+import { EDGE_KIND_META } from '../workflow-graph-types'
 import { QUEUE_NODE_HEIGHT, QUEUE_NODE_WIDTH } from '../workflow-layout'
 
 const HANDLE_BASE =
@@ -42,7 +47,12 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
       style={{ width: QUEUE_NODE_WIDTH, height: QUEUE_NODE_HEIGHT }}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <span
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase',
+            queueWorkflowIconClasses(queue.workflowType),
+          )}
+        >
           {queue.prefix.slice(0, 3)}
         </span>
         <div className="min-w-0 flex-1">
@@ -56,7 +66,13 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
           </p>
         </div>
         {!connectable ? (
-          <Badge variant="outline" className="shrink-0 text-[10px]">
+          <Badge
+            variant="secondary"
+            className={cn(
+              'shrink-0 text-[10px] capitalize',
+              queueLifecycleBadgeClasses(queue.lifecycle ?? 'inactive'),
+            )}
+          >
             {queue.lifecycle ?? 'inactive'}
           </Badge>
         ) : null}
@@ -68,7 +84,7 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Left}
         style={{ top: '24%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-amber-500!')}
+        className={cn(HANDLE_BASE, EDGE_KIND_META.closeBlocker.handleClass)}
         hint="Close requirement: this case cannot close until the other closes"
       />
       <HintedHandle
@@ -77,7 +93,7 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Left}
         style={{ top: '50%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-blue-500!')}
+        className={cn(HANDLE_BASE, EDGE_KIND_META.closeTrigger.handleClass)}
         hint="Opens when the connected case closes"
       />
       <HintedHandle
@@ -86,7 +102,10 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Left}
         style={{ top: '76%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-violet-500!')}
+        className={cn(
+          HANDLE_BASE,
+          EDGE_KIND_META.creationRequirement.handleClass,
+        )}
         hint="Creation requirement: this case needs the other closed first"
       />
       <HintedHandle
@@ -95,7 +114,7 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Right}
         style={{ top: '24%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-amber-500!')}
+        className={cn(HANDLE_BASE, EDGE_KIND_META.closeBlocker.handleClass)}
         hint="Drag to a queue whose closing this one must precede"
       />
       <HintedHandle
@@ -104,7 +123,7 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Right}
         style={{ top: '50%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-blue-500!')}
+        className={cn(HANDLE_BASE, EDGE_KIND_META.closeTrigger.handleClass)}
         hint="Close trigger — drag to the queue that opens next"
       />
       <HintedHandle
@@ -113,7 +132,10 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
         position={Position.Right}
         style={{ top: '76%' }}
         isConnectable={connectable}
-        className={cn(HANDLE_BASE, 'bg-violet-500!')}
+        className={cn(
+          HANDLE_BASE,
+          EDGE_KIND_META.creationRequirement.handleClass,
+        )}
         hint="Drag to a queue that requires this one closed before creation"
       />
     </div>

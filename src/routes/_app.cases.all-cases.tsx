@@ -4,10 +4,7 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { TriggerCaseButton } from '#/features/cases/trigger-case-dialog'
-import {
-  DEFAULT_CASE_STATUS_FILTER,
-  caseRouteSearchSchema,
-} from '#/schemas/cases.schema'
+import { caseRouteSearchSchema } from '#/schemas/cases.schema'
 
 export const Route = createFileRoute('/_app/cases/all-cases')({
   staticData: {
@@ -24,10 +21,8 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
 function RouteComponent() {
   const search = Route.useSearch()
   const { setFilter, setFilters } = useCasesSearchActions('/cases/all-cases')
-  const filters = {
-    ...search,
-    status: search.status ?? DEFAULT_CASE_STATUS_FILTER,
-  }
+  // No status in the URL means every status; the filter starts empty.
+  const filters = search
 
   return (
     <CasesTableComposed
@@ -42,8 +37,8 @@ function RouteComponent() {
 function CasesRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={2}
-      filterWidths={[96, 128]}
+      filterCount={4}
+      filterWidths={[92, 116, 112, 84]}
       actionWidth={124}
       columns={[
         { width: 40, kind: 'checkbox' },

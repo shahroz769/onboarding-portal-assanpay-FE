@@ -29,6 +29,7 @@ import {
 import { selectedNonTerminatedIds } from './merchants-table-utils'
 import { MerchantPriorityDialog } from './merchants-priority-dialog'
 import { useRetainedValue } from '#/hooks/use-retained-value'
+import { useMorph } from '#/hooks/use-morph'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 import { MerchantDeleteDialog } from './merchant-delete-dialog'
 import {
@@ -70,6 +71,17 @@ function Toolbar() {
           onChange={(v) => actions.setFilter('search', v || undefined)}
           placeholder="Search by ID or name..."
         />
+        {/* Filters follow the table's column order; Scope has no column. */}
+        <DataTableFilter
+          title="Status"
+          options={statusFilterOptions}
+          selectedValues={meta.commaToSet(
+            filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
+          )}
+          onChange={(set) =>
+            actions.setFilter('status', meta.setToCommaString(set))
+          }
+        />
         <DataTableFilter
           title="Priority"
           options={priorityFilterOptions}
@@ -84,16 +96,6 @@ function Toolbar() {
           selectedValues={meta.commaToSet(filters.businessScope)}
           onChange={(set) =>
             actions.setFilter('businessScope', meta.setToCommaString(set))
-          }
-        />
-        <DataTableFilter
-          title="Status"
-          options={statusFilterOptions}
-          selectedValues={meta.commaToSet(
-            filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
-          )}
-          onChange={(set) =>
-            actions.setFilter('status', meta.setToCommaString(set))
           }
         />
       </DataTableToolbar.Filters>
@@ -124,6 +126,7 @@ function BulkActions() {
   )
   const canTriggerCases = useCanTriggerCases()
   const [triggerOpen, setTriggerOpen] = useState(false)
+  const triggerMorph = useMorph()
   const actionableIdSet = new Set(actionableIds)
   const triggerMerchants = state.flatData.filter((merchant) =>
     actionableIdSet.has(merchant.id),
@@ -138,7 +141,9 @@ function BulkActions() {
         <Button
           size="sm"
           variant="outline"
-          onClick={() => setTriggerOpen(true)}
+          onClick={(event) =>
+            triggerMorph.run(() => setTriggerOpen(true), event.currentTarget)
+          }
         >
           <Play data-icon="inline-start" />
           Trigger Case ({actionableIds.length})
@@ -148,7 +153,9 @@ function BulkActions() {
         <Button
           variant="outline"
           size="sm"
-          onClick={actions.openBulkPriorityDialog}
+          onClick={(event) =>
+            actions.openBulkPriorityDialog(event.currentTarget)
+          }
           disabled={state.isBulkPriorityPending}
         >
           <AlertTriangleIcon data-icon="inline-start" />
@@ -159,11 +166,11 @@ function BulkActions() {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() =>
-            actions.openTerminateDialog({
-              type: 'bulk',
-              ids: actionableIds,
-            })
+          onClick={(event) =>
+            actions.openTerminateDialog(
+              { type: 'bulk', ids: actionableIds },
+              event.currentTarget,
+            )
           }
           disabled={state.isTerminatePending}
         >
@@ -176,6 +183,7 @@ function BulkActions() {
         onOpenChange={setTriggerOpen}
         merchants={triggerMerchants}
         onTriggered={actions.clearSelection}
+        popupProps={triggerMorph.popupProps}
       />
     </DataTableSelectionInfo>
   )
@@ -223,39 +231,36 @@ function Dialogs() {
 
   return (
     <>
-      {priorityTarget ? (
-        <MerchantPriorityDialog
-          target={priorityTarget}
-          open={state.priorityTarget !== null}
-          onOpenChange={(open) => {
-            if (!open) actions.closePriorityDialog()
-          }}
-          onSubmit={actions.submitPriority}
-          isPending={state.isPriorityPending || state.isBulkPriorityPending}
-        />
-      ) : null}
-      {terminateTarget ? (
-        <MerchantTerminateDialog
-          target={terminateTarget}
-          open={state.terminateTarget !== null}
-          onOpenChange={(open) => {
-            if (!open) actions.closeTerminateDialog()
-          }}
-          onConfirm={actions.confirmTerminate}
-          isPending={state.isTerminatePending}
-        />
-      ) : null}
-      {deleteTarget ? (
-        <MerchantDeleteDialog
-          merchant={deleteTarget}
-          open={state.deleteTarget !== null}
-          onOpenChange={(open) => {
-            if (!open) actions.closeDeleteDialog()
-          }}
-          onConfirm={actions.confirmDelete}
-          isPending={state.isDeletePending}
-        />
-      ) : null}
+      <MerchantPriorityDialog
+        target={priorityTarget}
+        open={state.priorityTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) actions.closePriorityDialog()
+        }}
+        onSubmit={actions.submitPriority}
+        isPending={state.isPriorityPending || state.isBulkPriorityPending}
+        popupProps={state.priorityPopupProps}
+      />
+      <MerchantTerminateDialog
+        target={terminateTarget}
+        open={state.terminateTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) actions.closeTerminateDialog()
+        }}
+        onConfirm={actions.confirmTerminate}
+        isPending={state.isTerminatePending}
+        popupProps={state.terminatePopupProps}
+      />
+      <MerchantDeleteDialog
+        merchant={deleteTarget}
+        open={state.deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) actions.closeDeleteDialog()
+        }}
+        onConfirm={actions.confirmDelete}
+        isPending={state.isDeletePending}
+        popupProps={state.deletePopupProps}
+      />
     </>
   )
 }

@@ -25,7 +25,7 @@ import {
   useConfirmResubmissionEmailManual,
 } from '#/hooks/use-case-detail-query'
 import { emailSendingModeQueryOptions } from '#/hooks/use-configuration-query'
-import { morphPopupClassName } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
 import type { CaseDetail, EmailRecipientType } from '#/schemas/cases.schema'
 import type { EmailPreviewResult } from '#/apis/cases'
@@ -42,7 +42,7 @@ interface DocumentsReviewSummaryModalProps {
   caseId: string
   reviewSummary: ReviewSummary | null
   /** From useMorph: the modal grows out of its trigger button. */
-  popupProps?: Record<`data-${string}`, string>
+  popupProps?: MorphPopupProps
 }
 
 export function DocumentsReviewSummaryModal({
@@ -273,7 +273,7 @@ export function DocumentsReviewSummaryModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         {...popupProps}
-        className={cn('sm:max-w-2xl', popupProps && morphPopupClassName)}
+        className={cn('sm:max-w-2xl', popupProps?.className)}
       >
         <DialogHeader>
           <DialogTitle>Send for resubmission</DialogTitle>

@@ -59,8 +59,11 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 
+import { useMorph } from '#/hooks/use-morph'
+import type { MorphPopupProps } from '#/hooks/use-morph'
 import { useRetainedValue } from '#/hooks/use-retained-value'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { cn } from '#/lib/utils'
 
 import type { PaymentMethod } from '#/schemas/configuration.schema'
 
@@ -134,9 +137,19 @@ export function MethodListPanel({
   const shownRemoval = useRetainedValue(pendingRemoval)
   const methods = data ?? []
 
-  const openEditor = (next: NonNullable<typeof editor>) => {
-    setEditorKey((key) => key + 1)
-    setEditor(next)
+  // The editor grows out of whichever button opened it (Add or a row's Edit).
+  const editorMorph = useMorph()
+  // The remove confirmation grows out of the row's Remove button.
+  const removeMorph = useMorph()
+
+  const openEditor = (
+    next: NonNullable<typeof editor>,
+    trigger: HTMLElement,
+  ) => {
+    editorMorph.run(() => {
+      setEditorKey((key) => key + 1)
+      setEditor(next)
+    }, trigger)
   }
 
   const columns: DataTableColumnDef<PaymentMethod>[] = [
@@ -187,7 +200,9 @@ export function MethodListPanel({
                   variant="ghost"
                   size="icon-sm"
                   disabled={mutation.isPending}
-                  onClick={() => openEditor({ mode: 'edit', method })}
+                  onClick={(event) =>
+                    openEditor({ mode: 'edit', method }, event.currentTarget)
+                  }
                 />
               }
             >
@@ -204,7 +219,12 @@ export function MethodListPanel({
                   size="icon-sm"
                   className="text-muted-foreground hover:text-destructive"
                   disabled={mutation.isPending}
-                  onClick={() => setPendingRemoval(method)}
+                  onClick={(event) =>
+                    removeMorph.run(
+                      () => setPendingRemoval(method),
+                      event.currentTarget,
+                    )
+                  }
                 />
               }
             >
@@ -249,7 +269,9 @@ export function MethodListPanel({
         <Button
           size="sm"
           disabled={mutation.isPending}
-          onClick={() => openEditor({ mode: 'create' })}
+          onClick={(event) =>
+            openEditor({ mode: 'create' }, event.currentTarget)
+          }
         >
           <Plus data-icon="inline-start" />
           Add {noun}
@@ -270,7 +292,8 @@ export function MethodListPanel({
       />
 
       <MethodEditorDialog
-        key={editorKey}
+        formKey={editorKey}
+        popupProps={editorMorph.popupProps}
         open={editor !== null}
         noun={noun}
         method={shownEditor?.mode === 'edit' ? shownEditor.method : null}
@@ -288,7 +311,7 @@ export function MethodListPanel({
           if (!open && !mutation.isPending) setPendingRemoval(null)
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent {...removeMorph.popupProps}>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {shownRemoval?.label}?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -317,16 +340,7 @@ export function MethodListPanel({
   )
 }
 
-function MethodEditorDialog({
-  open,
-  noun,
-  method,
-  methods,
-  schema,
-  mutation,
-  onOpenChange,
-}: {
-  open: boolean
+type MethodEditorProps = {
   noun: string
   method: PaymentMethod | null
   methods: PaymentMethod[]
@@ -340,7 +354,46 @@ function MethodEditorDialog({
   }
   mutation: MethodMutation
   onOpenChange: (open: boolean) => void
+}
+
+// The dialog stays mounted so Base UI can run its open/close transitions;
+// only the form body is keyed, so each open starts from a fresh draft.
+function MethodEditorDialog({
+  open,
+  formKey,
+  popupProps,
+  ...props
+}: MethodEditorProps & {
+  open: boolean
+  formKey: number
+  popupProps: MorphPopupProps
 }) {
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (props.mutation.isPending) return
+        props.onOpenChange(next)
+      }}
+    >
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-lg', popupProps.className)}
+      >
+        <MethodEditorForm key={formKey} {...props} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function MethodEditorForm({
+  noun,
+  method,
+  methods,
+  schema,
+  mutation,
+  onOpenChange,
+}: MethodEditorProps) {
   const [draft, setDraft] = useState<MethodDraft>(() =>
     method ? toDraft(method) : emptyDraft,
   )
@@ -379,123 +432,115 @@ function MethodEditorDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (mutation.isPending) return
-        onOpenChange(next)
-      }}
-    >
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="first-letter:uppercase">
-            {isEdit ? `Edit ${noun}` : `Add ${noun}`}
-          </DialogTitle>
-          <DialogDescription>
-            Commission and transaction limits apply when this {noun} is selected
-            in MID Creation.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle className="first-letter:uppercase">
+          {isEdit ? `Edit ${noun}` : `Add ${noun}`}
+        </DialogTitle>
+        <DialogDescription>
+          Commission and transaction limits apply when this {noun} is selected
+          in MID Creation.
+        </DialogDescription>
+      </DialogHeader>
 
-        <form
-          id="method-editor-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault()
-            handleSubmit()
-          }}
-        >
-          <FieldGroup className="gap-5">
-            <div className="grid gap-4 sm:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)]">
-              <Field
-                data-invalid={Boolean(visibleErrors.label)}
-                className="sm:col-span-2"
-              >
-                <FieldLabel htmlFor="method-label">Name</FieldLabel>
-                <Input
-                  id="method-label"
-                  autoFocus
-                  value={draft.label}
-                  maxLength={80}
-                  placeholder="e.g. JazzCash"
-                  aria-invalid={Boolean(visibleErrors.label)}
-                  disabled={mutation.isPending}
-                  onChange={(event) => set('label', event.target.value)}
-                />
-                <FieldError>{visibleErrors.label}</FieldError>
-              </Field>
-              <NumberField
-                id="method-commission"
-                label="Commission"
-                suffix="%"
-                step="0.01"
-                max={100}
-                value={draft.commissionRate}
-                error={visibleErrors.commissionRate}
+      <form
+        id="method-editor-form"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSubmit()
+        }}
+      >
+        <FieldGroup className="gap-5">
+          <div className="grid gap-4 sm:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)]">
+            <Field
+              data-invalid={Boolean(visibleErrors.label)}
+              className="sm:col-span-2"
+            >
+              <FieldLabel htmlFor="method-label">Name</FieldLabel>
+              <Input
+                id="method-label"
+                autoFocus
+                value={draft.label}
+                maxLength={80}
+                placeholder="e.g. JazzCash"
+                aria-invalid={Boolean(visibleErrors.label)}
                 disabled={mutation.isPending}
-                onChange={(value) => set('commissionRate', value)}
+                onChange={(event) => set('label', event.target.value)}
               />
-            </div>
-
-            <FieldSeparator />
-
-            <LimitsFieldSet
+              <FieldError>{visibleErrors.label}</FieldError>
+            </Field>
+            <NumberField
+              id="method-commission"
+              label="Commission"
+              suffix="%"
+              step="0.01"
+              max={100}
+              value={draft.commissionRate}
+              error={visibleErrors.commissionRate}
               disabled={mutation.isPending}
-              rows={[
-                {
-                  label: 'Testing',
-                  prefix: 'testing',
-                  min: draft.testingMin,
-                  max: draft.testingMax,
-                  minError: visibleErrors.testingMin,
-                  maxError: visibleErrors.testingMax,
-                  onMinChange: (value) => set('testingMin', value),
-                  onMaxChange: (value) => set('testingMax', value),
-                },
-                {
-                  label: 'Live',
-                  prefix: 'live',
-                  min: draft.liveMin,
-                  max: draft.liveMax,
-                  minError: visibleErrors.liveMin,
-                  maxError: visibleErrors.liveMax,
-                  onMinChange: (value) => set('liveMin', value),
-                  onMaxChange: (value) => set('liveMax', value),
-                },
-              ]}
+              onChange={(value) => set('commissionRate', value)}
             />
+          </div>
 
-            {formError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            ) : null}
-          </FieldGroup>
-        </form>
+          <FieldSeparator />
 
-        <DialogFooter>
-          <DialogClose
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                disabled={mutation.isPending}
-              />
-            }
-          >
-            Cancel
-          </DialogClose>
-          <Button
-            type="submit"
-            form="method-editor-form"
+          <LimitsFieldSet
             disabled={mutation.isPending}
-          >
-            {mutation.isPending ? <Spinner data-icon="inline-start" /> : null}
-            {isEdit ? 'Save changes' : `Add ${noun}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            rows={[
+              {
+                label: 'Testing',
+                prefix: 'testing',
+                min: draft.testingMin,
+                max: draft.testingMax,
+                minError: visibleErrors.testingMin,
+                maxError: visibleErrors.testingMax,
+                onMinChange: (value) => set('testingMin', value),
+                onMaxChange: (value) => set('testingMax', value),
+              },
+              {
+                label: 'Live',
+                prefix: 'live',
+                min: draft.liveMin,
+                max: draft.liveMax,
+                minError: visibleErrors.liveMin,
+                maxError: visibleErrors.liveMax,
+                onMinChange: (value) => set('liveMin', value),
+                onMaxChange: (value) => set('liveMax', value),
+              },
+            ]}
+          />
+
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+        </FieldGroup>
+      </form>
+
+      <DialogFooter>
+        <DialogClose
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              disabled={mutation.isPending}
+            />
+          }
+        >
+          Cancel
+        </DialogClose>
+        <Button
+          type="submit"
+          form="method-editor-form"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <Spinner data-icon="inline-start" /> : null}
+          {isEdit ? 'Save changes' : `Add ${noun}`}
+        </Button>
+      </DialogFooter>
+    </>
   )
 }
 

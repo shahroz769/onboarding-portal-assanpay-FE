@@ -48,19 +48,21 @@ function ScrollBar({
     <ScrollAreaPrimitive.Scrollbar
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
+      // Overlay scrollbar: hidden until the area is hovered or scrolled, so a
+      // list that overflows by a few pixels doesn't show a near-full-height
+      // thumb over its items. Base UI positions it absolutely along the edge;
+      // the margins keep it off the popup's rounded corners.
       className={cn(
-        'flex touch-none p-px transition-colors select-none',
-        orientation === 'vertical' &&
-          'h-full w-2.5 border-l border-l-transparent',
-        orientation === 'horizontal' &&
-          'h-2.5 flex-col border-t border-t-transparent',
+        'flex touch-none p-0.5 opacity-0 transition-opacity duration-150 select-none data-hovering:opacity-100 data-scrolling:opacity-100',
+        orientation === 'vertical' && 'my-1 w-2',
+        orientation === 'horizontal' && 'mx-1 h-2 flex-col',
         className,
       )}
       {...props}
     >
       <ScrollAreaPrimitive.Thumb
         data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-border"
+        className="relative flex-1 rounded-full bg-border transition-colors hover:bg-muted-foreground/40"
       />
     </ScrollAreaPrimitive.Scrollbar>
   )

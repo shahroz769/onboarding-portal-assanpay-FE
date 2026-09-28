@@ -37,6 +37,7 @@ import {
 import { Spinner } from '#/components/ui/spinner'
 import { Switch } from '#/components/ui/switch'
 import { cn } from '#/lib/utils'
+import { useMorph } from '#/hooks/use-morph'
 
 import {
   emailRecipientsQueryOptions,
@@ -298,15 +299,29 @@ function DialogSection({
 /** The sending modes and case email recipients, edited in a dialog. */
 export function EmailSendingSettingsDialog() {
   const [open, setOpen] = useState(false)
+  // The dialog grows out of the Sending settings button.
+  const morph = useMorph()
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) morph.run(() => setOpen(true))
+        else setOpen(false)
+      }}
+    >
+      <DialogTrigger render={<Button size="sm" {...morph.triggerProps} />}>
         <Settings2Icon data-icon="inline-start" />
         Sending settings
       </DialogTrigger>
       {/* The popup unmounts when closed, so unsaved edits are dropped. */}
-      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+      <DialogContent
+        {...morph.popupProps}
+        className={cn(
+          'flex flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl',
+          morph.popupProps.className,
+        )}
+      >
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>Email sending</DialogTitle>
           <DialogDescription>
@@ -504,7 +519,7 @@ function EmailSendingSettingsForm({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto scrollbar-thin px-6 py-5">
         {body}
       </div>
       <DialogFooter className="items-center border-t px-6 py-4">

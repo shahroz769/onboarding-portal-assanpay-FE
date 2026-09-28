@@ -72,7 +72,7 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            'relative z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md transition-[opacity,scale] duration-150 ease-out data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0',
+            'relative z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto scrollbar-thin rounded-md border bg-popover text-popover-foreground shadow-md transition-[opacity,scale] duration-150 ease-out data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0',
             className,
           )}
           {...props}
@@ -83,7 +83,7 @@ function SelectContent({
             className={cn(
               'p-1',
               !alignItemWithTrigger &&
-                'max-h-[min(var(--available-height),20rem)] w-full scroll-my-1',
+                'max-h-[min(var(--available-height),20rem)] w-full scroll-my-1 scrollbar-thin',
             )}
           >
             {children}

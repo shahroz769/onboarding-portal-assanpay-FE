@@ -1,5 +1,8 @@
 import { useState } from 'react'
 
+import { useMorph } from '#/hooks/use-morph'
+import { cn } from '#/lib/utils'
+
 import { useQuery } from '@tanstack/react-query'
 import {
   CheckCircle2,
@@ -133,14 +136,15 @@ export default function LiveRenderer({
   const selectedEmail =
     recipientEmailType === 'business' ? businessEmail : submitterEmail
 
-  function handleReview() {
-    if (!selectedEmail) return
-    setReviewOpen(true)
-  }
+  // The review dialog grows out of the Review & Send mail button.
+  const reviewMorph = useMorph()
 
-  function openReview() {
-    setManualPreview(null)
-    handleReview()
+  function openReview(trigger: HTMLElement) {
+    if (!selectedEmail) return
+    reviewMorph.run(() => {
+      setManualPreview(null)
+      setReviewOpen(true)
+    }, trigger)
   }
 
   async function handleSendMail() {
@@ -294,7 +298,7 @@ export default function LiveRenderer({
 
             <div className="flex flex-wrap justify-end gap-2">
               <Button
-                onClick={openReview}
+                onClick={(event) => openReview(event.currentTarget)}
                 disabled={
                   !canSendLiveEmail || !selectedEmail || sendLiveEmail.isPending
                 }
@@ -318,7 +322,10 @@ export default function LiveRenderer({
       ) : null}
 
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent
+          {...reviewMorph.popupProps}
+          className={cn('sm:max-w-2xl', reviewMorph.popupProps.className)}
+        >
           <DialogHeader>
             <DialogTitle>Review email</DialogTitle>
             <DialogDescription>
@@ -333,7 +340,7 @@ export default function LiveRenderer({
               <PreviewRow label="Subject" value={emailPreview.subject} />
             </div>
             <div className="rounded-lg border bg-background">
-              <pre className="max-h-96 overflow-auto whitespace-pre-wrap px-4 py-3 text-sm leading-6">
+              <pre className="max-h-96 overflow-auto scrollbar-thin whitespace-pre-wrap px-4 py-3 text-sm leading-6">
                 {emailPreview.body}
               </pre>
             </div>

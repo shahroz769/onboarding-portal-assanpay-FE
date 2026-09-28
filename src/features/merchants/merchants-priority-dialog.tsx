@@ -1,5 +1,9 @@
 import { useState } from 'react'
 
+import { useOpenCount } from '#/hooks/use-open-count'
+import type { MorphPopupProps } from '#/hooks/use-morph'
+import { cn } from '#/lib/utils'
+
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -33,15 +37,36 @@ interface MerchantPriorityDialogProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (priority: Priority, note?: string) => void
   isPending: boolean
+  /** From useMorph: the dialog grows out of the button that opened it. */
+  popupProps?: MorphPopupProps
 }
 
+// The dialog stays mounted so Base UI can run its open/close transitions;
+// the form is keyed per open so it starts from the current target's values.
 export function MerchantPriorityDialog({
-  target,
   open,
+  popupProps,
+  ...props
+}: MerchantPriorityDialogProps) {
+  const openCount = useOpenCount(open)
+  return (
+    <Dialog open={open} onOpenChange={props.onOpenChange}>
+      <DialogContent
+        {...popupProps}
+        className={cn('sm:max-w-md', popupProps?.className)}
+      >
+        <PriorityForm key={openCount} {...props} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PriorityForm({
+  target,
   onOpenChange,
   onSubmit,
   isPending,
-}: MerchantPriorityDialogProps) {
+}: Omit<MerchantPriorityDialogProps, 'open'>) {
   const merchant = target?.type === 'single' ? target.merchant : null
   const [priority, setPriority] = useState<Priority>(
     target?.type === 'bulk'
@@ -49,10 +74,6 @@ export function MerchantPriorityDialog({
       : (merchant?.priority ?? 'normal'),
   )
   const [note, setNote] = useState(merchant?.priorityNote ?? '')
-
-  const handleOpenChange = (next: boolean) => {
-    onOpenChange(next)
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,74 +89,72 @@ export function MerchantPriorityDialog({
         : 'Update merchant priority.'
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Change Priority</DialogTitle>
-          <DialogDescription>
-            {target?.type === 'single' && merchant ? (
-              <>
-                {description}
-                <span className="font-medium text-foreground">
-                  {merchant.businessName}
-                </span>
-              </>
-            ) : (
-              description
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Priority</FieldLabel>
-              <Select
-                items={PRIORITIES.map((p) => ({
-                  value: p,
-                  label: PRIORITY_LABELS[p],
-                }))}
-                value={priority}
-                onValueChange={(v) => setPriority(v as Priority)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {PRIORITY_LABELS[p]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel>Note (optional)</FieldLabel>
-              <Textarea
-                placeholder="Reason for priority change..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-              />
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+    <>
+      <DialogHeader>
+        <DialogTitle>Change Priority</DialogTitle>
+        <DialogDescription>
+          {target?.type === 'single' && merchant ? (
+            <>
+              {description}
+              <span className="font-medium text-foreground">
+                {merchant.businessName}
+              </span>
+            </>
+          ) : (
+            description
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Priority</FieldLabel>
+            <Select
+              items={PRIORITIES.map((p) => ({
+                value: p,
+                label: PRIORITY_LABELS[p],
+              }))}
+              value={priority}
+              onValueChange={(v) => setPriority(v as Priority)}
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Spinner data-icon="inline-start" />}
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel>Note (optional)</FieldLabel>
+            <Textarea
+              placeholder="Reason for priority change..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+            />
+          </Field>
+        </FieldGroup>
+        <DialogFooter className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Spinner data-icon="inline-start" />}
+            Save
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
   )
 }
