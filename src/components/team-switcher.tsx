@@ -23,6 +23,7 @@ export function TeamSwitcher({
         <SidebarMenuButton
           render={<Link to="/" aria-label={`${activeTeam.name} home`} />}
           size="lg"
+          className="hover:bg-transparent active:bg-transparent"
         >
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarImage src={activeTeam.logo} alt={activeTeam.name} />
