@@ -42,6 +42,8 @@ import {
   confirmLiveEmailManual,
   generatePortalPasswordCode,
   revealPortalPasswordCode,
+  revealPortalApiCredentials,
+  savePortalApiCredentials,
 } from '#/apis/cases'
 import type {
   CaseTransitionResult,
@@ -683,6 +685,40 @@ export function useGeneratePortalPasswordCode(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to generate the code'))
+    },
+  })
+}
+
+// gcTime 0 drops the submitted values from the mutation cache as soon as the
+// component stops observing; callers also reset() after success.
+export function useSavePortalApiCredentials(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { apiKey: string; apiSecret: string }) =>
+      savePortalApiCredentials(caseId, input),
+    gcTime: 0,
+    onSuccess: () => {
+      toast.success('API credentials saved')
+      queryClient.invalidateQueries({ queryKey: [...CASE_DETAIL_KEY, caseId] })
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to save API credentials'))
+    },
+  })
+}
+
+// A mutation rather than a query, so the values never sit in the query cache.
+export function useRevealPortalApiCredentials(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => revealPortalApiCredentials(caseId),
+    gcTime: 0,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...CASE_HISTORY_KEY, caseId] })
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to reveal API credentials'))
     },
   })
 }

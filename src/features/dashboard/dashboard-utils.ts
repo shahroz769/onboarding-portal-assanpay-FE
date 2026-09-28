@@ -8,10 +8,6 @@ export function formatCount(value: number) {
   return numberFormatter.format(value)
 }
 
-export function formatPercent(value: number) {
-  return `${value.toFixed(1)}%`
-}
-
 export function formatDay(value: string) {
   return format(parseDateKey(value), 'MMM d')
 }

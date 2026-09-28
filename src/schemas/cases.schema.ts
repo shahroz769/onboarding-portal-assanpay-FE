@@ -381,6 +381,15 @@ const caseDetailSchema = z.object({
         })
         .nullable()
         .optional(),
+      // Status only; the values are fetched through the reveal endpoint.
+      portalApiCredentials: z
+        .object({
+          apiKeyLast4: z.string().nullable(),
+          updatedAt: z.string(),
+          updatedBy: z.object({ id: z.string(), name: z.string() }).nullable(),
+        })
+        .nullable()
+        .optional(),
       paymentMethods: paymentMethodSettingsSchema.nullable().optional(),
       payoutMethods: payoutMethodSettingsSchema.nullable().optional(),
     })

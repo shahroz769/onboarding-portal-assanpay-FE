@@ -5,8 +5,10 @@ import {
   FileImage,
   Globe,
   Images,
+  IdCard,
   Info,
   LinkIcon,
+  ShieldCheck,
   Upload,
   X,
 } from 'lucide-react'
@@ -36,6 +38,7 @@ import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
 
 import { CaseCardHeading } from '../case-section'
+import { PortalApiCredentialsFields } from '../portal-api-credentials-fields'
 import type { QueueRendererProps } from '../queue-registry'
 
 const SCREENSHOT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -110,7 +113,8 @@ export default function WordpressWebsiteRenderer({
     wordpressWebsite?.assanpayCheckoutScreenshots ?? []
   const documentReviewSubMerchants =
     caseDetail.documentReview?.subMerchants ?? []
-  const internalMidEmail = caseDetail.testing?.internalEmail ?? null
+  const internalBranchCode = caseDetail.testing?.internalBranchCode ?? null
+  const portalApiCredentials = caseDetail.testing?.portalApiCredentials ?? null
   const hasAllSavedLogoScreenshots = documentReviewSubMerchants.every(
     (subMerchant) =>
       savedLogoScreenshots.some(
@@ -148,7 +152,7 @@ export default function WordpressWebsiteRenderer({
       return
     }
 
-    setScreenshots((current) => [...current, ...result.files].slice(0, 30))
+    setScreenshots(result.files.slice(0, 1))
     setFileError(null)
   }
 
@@ -192,7 +196,7 @@ export default function WordpressWebsiteRenderer({
     }
 
     if (screenshots.length === 0) {
-      setFileError('Upload screenshots of all pages before saving.')
+      setFileError('Upload a screenshot of the home page before saving.')
       return
     }
 
@@ -280,12 +284,9 @@ export default function WordpressWebsiteRenderer({
                 {documentReviewSubMerchants.length > 0 ? (
                   <div className="flex flex-col gap-3">
                     {documentReviewSubMerchants.map((subMerchant) => (
-                      <div key={subMerchant.id} className="flex flex-col gap-1">
-                        <p className="font-medium">{subMerchant.name}</p>
-                        <p className="text-muted-foreground">
-                          Internal MID email: {internalMidEmail ?? 'Not saved'}
-                        </p>
-                      </div>
+                      <p key={subMerchant.id} className="font-medium">
+                        {subMerchant.name}
+                      </p>
                     ))}
                   </div>
                 ) : (
@@ -321,7 +322,7 @@ export default function WordpressWebsiteRenderer({
             </Field>
 
             <Field data-invalid={Boolean(fileError)}>
-              <FieldLabel>Screenshots of all pages</FieldLabel>
+              <FieldLabel>Screenshot of Home Page</FieldLabel>
               <ScreenshotUpload
                 disabled={!canEdit}
                 isUploading={saveWebsite.isPending}
@@ -329,14 +330,10 @@ export default function WordpressWebsiteRenderer({
                 error={fileError}
                 onError={setFileError}
                 onFilesSelected={handleFilesSelected}
-                onRemove={(index) =>
-                  setScreenshots((current) =>
-                    current.filter((_, itemIndex) => itemIndex !== index),
-                  )
-                }
+                onRemove={() => setScreenshots([])}
               />
               <FieldDescription>
-                JPG, PNG, or WEBP. Upload up to 30 screenshots.
+                Upload one JPG, PNG, or WEBP screenshot of the home page.
               </FieldDescription>
             </Field>
 
@@ -412,6 +409,46 @@ export default function WordpressWebsiteRenderer({
           </FieldGroup>
         </CardContent>
       </Card>
+
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CaseCardHeading
+              icon={IdCard}
+              tone="indigo"
+              title="Merchant ID (Internal)"
+              description="Internal merchant account details for configuring the WordPress website."
+              action={
+                <Badge variant="secondary">
+                  <ShieldCheck />
+                  Owner only
+                </Badge>
+              }
+            />
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="wordpress-internal-branch-code">
+                  Branch Code
+                </FieldLabel>
+                <Input
+                  id="wordpress-internal-branch-code"
+                  readOnly
+                  autoComplete="off"
+                  value={internalBranchCode ?? 'Not saved'}
+                />
+              </Field>
+              <PortalApiCredentialsFields
+                caseId={caseId}
+                idPrefix="wordpress-internal"
+                status={portalApiCredentials}
+                canReveal={canEdit}
+              />
+            </FieldGroup>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {savedLink ||
       savedScreenshots.length > 0 ||
@@ -623,10 +660,10 @@ function ScreenshotUpload({
           </div>
           <div>
             <p className="font-semibold">
-              {isUploading ? 'Saving screenshots' : 'Drop screenshots here'}
+              {isUploading ? 'Saving screenshot' : 'Drop screenshot here'}
             </p>
             <p className="text-sm text-muted-foreground">
-              JPG, PNG, WEBP (max 10MB each)
+              JPG, PNG, WEBP (max 10MB)
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -641,7 +678,7 @@ function ScreenshotUpload({
               ) : (
                 <Upload data-icon="inline-start" />
               )}
-              Browse Screenshots
+              Browse Screenshot
             </Button>
             {files.length > 0 ? (
               <Badge variant="secondary">{files.length} selected</Badge>
@@ -658,7 +695,6 @@ function ScreenshotUpload({
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         type="file"
-        multiple
         disabled={disabled || isUploading}
         onChange={(event) => handleFiles(event.target.files)}
       />

@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  AlertTriangle,
   ArrowUpRight,
   CheckCircle2,
   Clock,
@@ -29,7 +28,7 @@ import {
   MERCHANT_STATUSES,
   type MerchantStatus,
 } from '#/schemas/merchants.schema'
-import { formatCount, formatPercent } from './dashboard-utils'
+import { formatCount } from './dashboard-utils'
 
 /** Opens the cases or merchants list pre-filtered to the card's statuses. */
 type StatCardLink =
@@ -151,6 +150,13 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
           link={{ to: '/cases/all-cases', statuses: ['working'] }}
         />
         <StatCard
+          label="Awaiting merchant"
+          value={count(cases?.awaitingMerchant)}
+          icon={Hourglass}
+          accent="warning"
+          link={{ to: '/cases/all-cases', statuses: ['awaiting_merchant'] }}
+        />
+        <StatCard
           label="Closed"
           value={count(cases?.closed)}
           icon={CheckCircle2}
@@ -161,20 +167,6 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
             to: '/cases/all-cases',
             statuses: ['closed', 'unsuccessful'],
           }}
-        />
-        <StatCard
-          label="Awaiting merchant"
-          value={count(cases?.awaitingMerchant)}
-          icon={Hourglass}
-          accent="warning"
-          link={{ to: '/cases/all-cases', statuses: ['awaiting_merchant'] }}
-        />
-        <StatCard
-          label="Breach rate"
-          value={cases ? cases.breachRate : null}
-          format={formatPercent}
-          icon={AlertTriangle}
-          accent={cases && cases.breachRate > 10 ? 'danger' : 'default'}
         />
       </Section>
 

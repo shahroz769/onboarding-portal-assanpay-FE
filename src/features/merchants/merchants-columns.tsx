@@ -20,7 +20,6 @@ import type {
 import {
   MERCHANT_STATUS_DISPLAY,
   PRIORITY_LABELS,
-  BUSINESS_SCOPE_LABELS,
 } from '#/schemas/merchants.schema'
 import {
   CLICKABLE_BADGE_CLASSES,
@@ -124,36 +123,6 @@ export function createMerchantColumns({
         </TruncatedTooltip>
       ),
       width: 360,
-    },
-
-    // Business Scope
-    {
-      id: 'businessScope',
-      header: (
-        <DataTableColumnHeader
-          title="Business Scope"
-          sortDirection={getSortDirection('businessScope', sortBy, sortOrder)}
-          onSort={() => onSort('businessScope')}
-        />
-      ),
-      cell: (merchant) => (
-        <span className="text-sm text-muted-foreground">
-          {BUSINESS_SCOPE_LABELS[merchant.businessScope]}
-        </span>
-      ),
-      width: 130,
-    },
-
-    // Currency
-    {
-      id: 'currency',
-      header: 'Currency',
-      cell: (merchant) => (
-        <span className="text-sm text-muted-foreground">
-          {merchant.currency}
-        </span>
-      ),
-      width: 80,
     },
 
     // Status (derived)

@@ -18,6 +18,8 @@ import {
   History,
   Eye,
   KeyRound,
+  KeySquare,
+  Trash2,
 } from 'lucide-react'
 
 import { EmailDeliveryBadge } from '#/components/case-email/email-delivery-badge'
@@ -391,6 +393,26 @@ const ACTION_META: Record<
     iconClassName: 'text-amber-700 dark:text-amber-300',
     iconWrapperClassName:
       'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
+  portal_api_credentials_saved: {
+    label: 'API credentials saved',
+    icon: KeySquare,
+    iconClassName: 'text-indigo-700 dark:text-indigo-300',
+    iconWrapperClassName:
+      'border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60',
+  },
+  portal_api_credentials_revealed: {
+    label: 'API credentials viewed',
+    icon: Eye,
+    iconClassName: 'text-indigo-700 dark:text-indigo-300',
+    iconWrapperClassName:
+      'border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60',
+  },
+  portal_api_credentials_cleared: {
+    label: 'API credentials cleared',
+    icon: Trash2,
+    iconClassName: 'text-muted-foreground',
+    iconWrapperClassName: 'border-border bg-muted',
   },
   live_limits_applied: {
     label: 'Live limits applied',

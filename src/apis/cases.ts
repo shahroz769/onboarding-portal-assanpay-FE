@@ -586,6 +586,32 @@ export async function generatePortalPasswordCode(
   return response.data
 }
 
+export interface PortalApiCredentials {
+  apiKey: string
+  apiSecret: string
+  updatedAt: string
+}
+
+export async function savePortalApiCredentials(
+  caseId: string,
+  input: { apiKey: string; apiSecret: string },
+): Promise<{ apiKeyLast4: string; updatedAt: string }> {
+  const response = await apiClient.put<{
+    apiKeyLast4: string
+    updatedAt: string
+  }>(`/api/cases/${caseId}/portal-api-credentials`, input)
+  return response.data
+}
+
+export async function revealPortalApiCredentials(
+  caseId: string,
+): Promise<PortalApiCredentials> {
+  const response = await apiClient.post<PortalApiCredentials>(
+    `/api/cases/${caseId}/portal-api-credentials/reveal`,
+  )
+  return response.data
+}
+
 // ─── Case Comments ──────────────────────────────────────────────────────────
 
 export async function markLiveLimitsApplied(caseId: string) {

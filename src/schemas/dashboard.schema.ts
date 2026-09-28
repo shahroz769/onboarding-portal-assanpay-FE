@@ -133,7 +133,6 @@ export const dashboardResponseSchema = z.object({
     slaBreached: z.number(),
     slaEvaluated: z.number(),
     openOverSla: z.number(),
-    breachRate: z.number(),
     statusDistribution: z.array(
       z.object({ status: z.enum(CASE_STATUSES), count: z.number() }),
     ),

@@ -52,6 +52,7 @@ import type { MerchantPortalRole } from '#/schemas/cases.schema'
 import { WEBSITE_CMS_OPTIONS } from '#/schemas/merchant-onboarding.schema'
 
 import { CaseCardHeading } from '../case-section'
+import { PortalApiCredentialsFields } from '../portal-api-credentials-fields'
 import { PortalPasswordCodeCard } from '../portal-password-code-card'
 import type { QueueRendererProps } from '../queue-registry'
 
@@ -141,14 +142,6 @@ function getMerchantString(
   return null
 }
 
-function getMerchantNumber(
-  merchant: Record<string, unknown>,
-  key: string,
-): number | null {
-  const value = merchant[key]
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
 function getWebsitePlatformLabel(value: string | null): string {
   if (!value) return 'Not provided'
   const match = WEBSITE_CMS_OPTIONS.find((option) => option.value === value)
@@ -174,6 +167,7 @@ export default function MerchantIdRenderer({
     caseDetail.testing?.merchantRole ?? DEFAULT_MERCHANT_PORTAL_ROLE
   const savedCredentialsReady = Boolean(caseDetail.testing?.credentialsReady)
   const portalPasswordCode = caseDetail.testing?.portalPasswordCode ?? null
+  const portalApiCredentials = caseDetail.testing?.portalApiCredentials ?? null
   const savedPaymentMethods = savedCredentialsReady
     ? (caseDetail.testing?.paymentMethods ?? null)
     : null
@@ -183,7 +177,6 @@ export default function MerchantIdRenderer({
 
   const merchant = caseDetail.merchant
   const merchantId = getMerchantString(merchant, 'id') ?? undefined
-  const merchantNumber = getMerchantNumber(merchant, 'merchantNumber')
   const saveMidCreationDetails = useSaveMidCreationDetails(caseId, merchantId)
   const websiteCmsValue = getMerchantString(merchant, 'websiteCms')
   const businessWebsite = getMerchantString(merchant, 'businessWebsite')
@@ -367,10 +360,6 @@ export default function MerchantIdRenderer({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Field>
-              <FieldLabel>Onboarding Portal ID</FieldLabel>
-              <ReadonlyValue>{merchantNumber ?? 'Not provided'}</ReadonlyValue>
-            </Field>
             <Field>
               <FieldLabel>Website Platform / CMS</FieldLabel>
               <ReadonlyValue>{platformLabel}</ReadonlyValue>
@@ -762,6 +751,15 @@ export default function MerchantIdRenderer({
                   <FieldError>{errors.internalBranchCode}</FieldError>
                 </Field>
               </div>
+              <div className="mt-4 border-t pt-4">
+                <PortalApiCredentialsFields
+                  caseId={caseId}
+                  idPrefix="merchant-id-internal"
+                  status={portalApiCredentials}
+                  canReveal={canEdit}
+                  canEdit={canEdit}
+                />
+              </div>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               <Button
@@ -791,6 +789,15 @@ export default function MerchantIdRenderer({
           <AlertDescription>
             Both merchant IDs are saved. You can now mark this case as
             successful.
+          </AlertDescription>
+        </Alert>
+      ) : canEdit && portalPasswordCode && !portalApiCredentials ? (
+        <Alert variant="warning">
+          <Info />
+          <AlertTitle>API credentials required</AlertTitle>
+          <AlertDescription>
+            Save the API Key and API Secret for Merchant ID (Internal) before
+            marking this case as successful.
           </AlertDescription>
         </Alert>
       ) : canEdit && !portalPasswordCode ? (
