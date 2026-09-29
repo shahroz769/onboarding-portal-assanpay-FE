@@ -1,5 +1,11 @@
 import { format } from 'date-fns'
-import { BanIcon, ChevronDownIcon, EyeIcon, Trash2Icon } from 'lucide-react'
+import {
+  ArrowUpRight,
+  BanIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  Trash2Icon,
+} from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
@@ -238,14 +244,21 @@ export function createMerchantColumns({
     {
       id: 'openCasesCount',
       header: 'Open Cases',
-      cell: (merchant) =>
-        merchant.openCasesCount > 0 ? (
-          <span className="text-sm font-medium tabular-nums">
-            {merchant.openCasesCount}
-          </span>
-        ) : (
-          <span className="text-sm text-muted-foreground">—</span>
-        ),
+      cell: (merchant) => (
+        <Link
+          to="/cases/all-cases"
+          search={{
+            merchantId: merchant.id,
+            status: 'new,working,awaiting_merchant',
+            sortBy: 'createdAt',
+            sortOrder: 'desc',
+          }}
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary tabular-nums hover:underline hover:decoration-dashed hover:underline-offset-4"
+        >
+          {merchant.openCasesCount}
+          <ArrowUpRight className="size-3.5 text-muted-foreground" />
+        </Link>
+      ),
       width: 110,
     },
 

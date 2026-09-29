@@ -68,7 +68,10 @@ function StatCard({
     <Card
       className={cn(
         'h-full gap-0 py-4',
-        link && 'transition-colors group-hover:bg-muted/40',
+        // In dark mode muted/40 over the card is nearly invisible, so the
+        // hover uses a stronger muted plus a lighter border there.
+        link &&
+          'transition-colors group-hover:bg-muted/40 dark:group-hover:border-foreground/15 dark:group-hover:bg-muted/70',
       )}
     >
       <CardHeader className="px-4">
