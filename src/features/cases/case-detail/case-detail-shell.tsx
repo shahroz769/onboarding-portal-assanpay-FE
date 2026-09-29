@@ -1,7 +1,6 @@
 import { createElement, Suspense } from 'react'
-import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react'
+import { CheckCircle2, Clock3 } from 'lucide-react'
 
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent } from '#/components/ui/card'
 import { useCaseDetailPageQuery } from '#/hooks/use-case-detail-query'
@@ -71,15 +70,6 @@ export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
               <InfoBlock label="Merchant Name" value={merchantName} />
             </CardContent>
           </Card>
-
-          {data.case.closeOutcome === 'unsuccessful' &&
-          data.case.closeReason ? (
-            <Alert variant="destructive">
-              <AlertTriangle />
-              <AlertTitle>Case closed as unsuccessful</AlertTitle>
-              <AlertDescription>{data.case.closeReason}</AlertDescription>
-            </Alert>
-          ) : null}
 
           <CaseSlaBox caseDetail={data} />
 
