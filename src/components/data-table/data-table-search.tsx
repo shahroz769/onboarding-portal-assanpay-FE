@@ -7,11 +7,6 @@ import {
   InputGroupInput,
 } from '#/components/ui/input-group'
 import { Button } from '#/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 
 interface DataTableSearchProps {
   value: string
@@ -79,22 +74,15 @@ export function DataTableSearch({
 
       {localValue && (
         <InputGroupAddon align="inline-end">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6"
-                  onClick={handleClear}
-                  aria-label="Clear search"
-                />
-              }
-            >
-              <XIcon />
-            </TooltipTrigger>
-            <TooltipContent>Clear search</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={handleClear}
+            aria-label="Clear search"
+          >
+            <XIcon />
+          </Button>
         </InputGroupAddon>
       )}
     </InputGroup>

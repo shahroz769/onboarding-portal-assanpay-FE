@@ -291,27 +291,20 @@ export function createMerchantColumns({
       header: 'Actions',
       cell: (merchant) => (
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <ButtonLink
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  render={
-                    <Link
-                      to="/merchants/$merchantId/overview"
-                      params={{ merchantId: merchant.id }}
-                    />
-                  }
-                />
-              }
-            >
-              <EyeIcon className="size-4" />
-              <span className="sr-only">View</span>
-            </TooltipTrigger>
-            <TooltipContent>View</TooltipContent>
-          </Tooltip>
+          <ButtonLink
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            render={
+              <Link
+                to="/merchants/$merchantId/overview"
+                params={{ merchantId: merchant.id }}
+              />
+            }
+          >
+            <EyeIcon className="size-4" />
+            <span className="sr-only">View</span>
+          </ButtonLink>
           {canTerminate && merchant.status !== 'terminated' && (
             <Tooltip>
               <TooltipTrigger

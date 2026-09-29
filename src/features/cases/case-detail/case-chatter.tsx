@@ -31,11 +31,6 @@ import { Popover, PopoverContent } from '#/components/ui/popover'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 import { EmptyState } from '#/components/empty-state'
 import {
   caseCommentsQueryOptions,
@@ -441,23 +436,16 @@ export function CaseChatter({
                     Replying to {replyTarget.authorName ?? 'Unknown'}:{' '}
                     {replyTarget.content}
                   </span>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          className="ml-auto"
-                          onClick={() => setIsClosingReplyTarget(true)}
-                          aria-label="Cancel reply"
-                        />
-                      }
-                    >
-                      <X />
-                    </TooltipTrigger>
-                    <TooltipContent>Cancel reply</TooltipContent>
-                  </Tooltip>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="ml-auto"
+                    onClick={() => setIsClosingReplyTarget(true)}
+                    aria-label="Cancel reply"
+                  >
+                    <X />
+                  </Button>
                 </div>
               ) : null}
 

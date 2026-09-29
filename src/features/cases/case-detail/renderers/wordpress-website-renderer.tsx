@@ -27,11 +27,6 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 import { useAuth } from '#/features/auth/auth-client'
 import { useSaveWordpressWebsiteCase } from '#/hooks/use-case-detail-query'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
@@ -716,26 +711,19 @@ function ScreenshotUpload({
                   {formatFileSize(file.size)}
                 </p>
               </div>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={isUploading}
-                      onClick={() => {
-                        onRemove(index)
-                        onError(null)
-                      }}
-                    />
-                  }
-                >
-                  <X />
-                  <span className="sr-only">Remove screenshot</span>
-                </TooltipTrigger>
-                <TooltipContent>Remove screenshot</TooltipContent>
-              </Tooltip>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isUploading}
+                onClick={() => {
+                  onRemove(index)
+                  onError(null)
+                }}
+              >
+                <X />
+                <span className="sr-only">Remove screenshot</span>
+              </Button>
             </div>
           ))}
         </div>

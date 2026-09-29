@@ -472,28 +472,21 @@ function CopyMidButton({ mid }: { mid: number }) {
   const [copied, flagCopied] = useCopiedFlag()
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <button
-            type="button"
-            aria-label={`Copy MID ${mid}`}
-            className="group/mid ml-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono font-medium tabular-nums transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            onClick={async () => {
-              if (await copyText(String(mid))) flagCopied()
-            }}
-          />
-        }
-      >
-        {copied ? (
-          <Check className="size-3.5 text-primary" />
-        ) : (
-          <Copy className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/mid:opacity-100 group-focus-visible/mid:opacity-100" />
-        )}
-        {mid}
-      </TooltipTrigger>
-      <TooltipContent>{copied ? 'Copied' : 'Copy MID'}</TooltipContent>
-    </Tooltip>
+    <button
+      type="button"
+      aria-label={`Copy MID ${mid}`}
+      className="group/mid ml-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono font-medium tabular-nums transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      onClick={async () => {
+        if (await copyText(String(mid))) flagCopied()
+      }}
+    >
+      {copied ? (
+        <Check className="size-3.5 text-primary" />
+      ) : (
+        <Copy className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/mid:opacity-100 group-focus-visible/mid:opacity-100" />
+      )}
+      {mid}
+    </button>
   )
 }
 

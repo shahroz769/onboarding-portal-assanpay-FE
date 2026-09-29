@@ -8,11 +8,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 import { useUnreadCountQuery } from '#/hooks/use-notifications-query'
 import { cn } from '#/lib/utils'
 
@@ -27,42 +22,31 @@ export function NotificationBell() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <PopoverTrigger
-              render={
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="relative rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
-                  aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
-                />
-              }
-            />
-          }
-        >
-          <Bell />
-          {hasUnread ? (
-            <Badge
-              className={cn(
-                'absolute -top-0.5 -right-0.5 rounded-full text-[9px] leading-none tabular-nums',
-                // Pops in when unread first appears; count changes don't animate.
-                'transition-[opacity,scale] duration-150 ease-out starting:scale-90 starting:opacity-0 motion-reduce:transition-opacity',
-                displayCount.length === 1 ? 'size-4 p-0' : 'h-4 min-w-4 px-1',
-              )}
-              variant="destructive"
-            >
-              {displayCount}
-            </Badge>
-          ) : null}
-        </TooltipTrigger>
-        <TooltipContent>
-          {hasUnread
-            ? `Notifications (${unreadCount} unread)`
-            : 'Notifications'}
-        </TooltipContent>
-      </Tooltip>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="secondary"
+            size="icon"
+            className="relative rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
+            aria-label={`Notifications${hasUnread ? ` (${unreadCount} unread)` : ''}`}
+          />
+        }
+      >
+        <Bell />
+        {hasUnread ? (
+          <Badge
+            className={cn(
+              'absolute -top-0.5 -right-0.5 rounded-full text-[9px] leading-none tabular-nums',
+              // Pops in when unread first appears; count changes don't animate.
+              'transition-[opacity,scale] duration-150 ease-out starting:scale-90 starting:opacity-0 motion-reduce:transition-opacity',
+              displayCount.length === 1 ? 'size-4 p-0' : 'h-4 min-w-4 px-1',
+            )}
+            variant="destructive"
+          >
+            {displayCount}
+          </Badge>
+        ) : null}
+      </PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}

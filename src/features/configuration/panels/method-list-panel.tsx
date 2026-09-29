@@ -53,12 +53,6 @@ import {
 
 import { Spinner } from '#/components/ui/spinner'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
-
 import { useMorph } from '#/hooks/use-morph'
 import type { MorphPopupProps } from '#/hooks/use-morph'
 import { useRetainedValue } from '#/hooks/use-retained-value'
@@ -193,46 +187,32 @@ export function MethodListPanel({
       width: 110,
       cell: (method) => (
         <div className="flex justify-end gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={mutation.isPending}
-                  onClick={(event) =>
-                    openEditor({ mode: 'edit', method }, event.currentTarget)
-                  }
-                />
-              }
-            >
-              <Pencil />
-              <span className="sr-only">Edit {method.label}</span>
-            </TooltipTrigger>
-            <TooltipContent>Edit</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground hover:text-destructive"
-                  disabled={mutation.isPending}
-                  onClick={(event) =>
-                    removeMorph.run(
-                      () => setPendingRemoval(method),
-                      event.currentTarget,
-                    )
-                  }
-                />
-              }
-            >
-              <Trash2 />
-              <span className="sr-only">Remove {method.label}</span>
-            </TooltipTrigger>
-            <TooltipContent>Remove</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={mutation.isPending}
+            onClick={(event) =>
+              openEditor({ mode: 'edit', method }, event.currentTarget)
+            }
+          >
+            <Pencil />
+            <span className="sr-only">Edit {method.label}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-destructive"
+            disabled={mutation.isPending}
+            onClick={(event) =>
+              removeMorph.run(
+                () => setPendingRemoval(method),
+                event.currentTarget,
+              )
+            }
+          >
+            <Trash2 />
+            <span className="sr-only">Remove {method.label}</span>
+          </Button>
         </div>
       ),
     },

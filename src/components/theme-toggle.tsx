@@ -12,11 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
-import {
   skipActiveViewTransition,
   startViewTransition,
 } from '#/lib/view-transition'
@@ -72,26 +67,19 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
-                  aria-label={`Theme: ${selectedTheme.label}`}
-                />
-              }
-            />
-          }
-        >
-          <SelectedIcon />
-          <span className="sr-only">{selectedTheme.label}</span>
-        </TooltipTrigger>
-        <TooltipContent>Theme: {selectedTheme.label}</TooltipContent>
-      </Tooltip>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
+            aria-label={`Theme: ${selectedTheme.label}`}
+          />
+        }
+      >
+        <SelectedIcon />
+        <span className="sr-only">{selectedTheme.label}</span>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuGroup>
           <DropdownMenuRadioGroup

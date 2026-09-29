@@ -16,11 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
 import { cn } from '#/lib/utils'
 import {
   DASHBOARD_RANGE_LABELS,
@@ -102,22 +97,15 @@ export function DashboardFilterBar({
         </>
       ) : null}
 
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onRefresh}
-              disabled={isFetching}
-              aria-label="Refresh dashboard"
-            />
-          }
-        >
-          <RefreshCw className={cn(isFetching && 'animate-spin')} />
-        </TooltipTrigger>
-        <TooltipContent>Refresh dashboard</TooltipContent>
-      </Tooltip>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onRefresh}
+        disabled={isFetching}
+        aria-label="Refresh dashboard"
+      >
+        <RefreshCw className={cn(isFetching && 'animate-spin')} />
+      </Button>
     </div>
   )
 }

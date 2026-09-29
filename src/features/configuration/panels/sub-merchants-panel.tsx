@@ -41,12 +41,6 @@ import { Input } from '#/components/ui/input'
 
 import { Spinner } from '#/components/ui/spinner'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '#/components/ui/tooltip'
-
 import { cn } from '#/lib/utils'
 
 import {
@@ -119,49 +113,35 @@ export function SubMerchantsPanel() {
       width: 100,
       cell: (item) => (
         <div className="flex justify-end gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={(event) =>
-                    openEditor(
-                      { mode: 'edit', subMerchant: item },
-                      event.currentTarget,
-                    )
-                  }
-                />
-              }
-            >
-              <Pencil className="size-4" />
-              <span className="sr-only">Edit {item.name}</span>
-            </TooltipTrigger>
-            <TooltipContent>Edit</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <ButtonLink
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  render={
-                    <a
-                      href={item.googleDriveWebViewLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                />
-              }
-            >
-              <ExternalLink className="size-4" />
-              <span className="sr-only">View draft</span>
-            </TooltipTrigger>
-            <TooltipContent>View draft</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={(event) =>
+              openEditor(
+                { mode: 'edit', subMerchant: item },
+                event.currentTarget,
+              )
+            }
+          >
+            <Pencil className="size-4" />
+            <span className="sr-only">Edit {item.name}</span>
+          </Button>
+          <ButtonLink
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            render={
+              <a
+                href={item.googleDriveWebViewLink}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            <ExternalLink className="size-4" />
+            <span className="sr-only">View draft</span>
+          </ButtonLink>
         </div>
       ),
     },
@@ -516,23 +496,16 @@ function DraftFileDropzone({
                 </p>
               </div>
             </div>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={disabled}
-                    onClick={onClear}
-                    aria-label="Remove file"
-                  />
-                }
-              >
-                <X />
-              </TooltipTrigger>
-              <TooltipContent>Remove file</TooltipContent>
-            </Tooltip>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={disabled}
+              onClick={onClear}
+              aria-label="Remove file"
+            >
+              <X />
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">

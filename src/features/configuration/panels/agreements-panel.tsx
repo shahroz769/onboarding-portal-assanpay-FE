@@ -149,43 +149,29 @@ function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
                 {uploadDraft.isPending ? 'Uploading' : 'Upload draft'}
               </TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground"
-                    disabled={uploadDraft.isPending}
-                    onClick={clearSelection}
-                    aria-label="Clear selected file"
-                  />
-                }
-              >
-                <X />
-              </TooltipTrigger>
-              <TooltipContent>Clear</TooltipContent>
-            </Tooltip>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground"
+              disabled={uploadDraft.isPending}
+              onClick={clearSelection}
+              aria-label="Clear selected file"
+            >
+              <X />
+            </Button>
           </>
         ) : (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() => fileInputRef.current?.click()}
-                  aria-label="Select file"
-                />
-              }
-            >
-              <FileUp />
-            </TooltipTrigger>
-            <TooltipContent>Select file</TooltipContent>
-          </Tooltip>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Select file"
+          >
+            <FileUp />
+          </Button>
         )}
       </div>
       {fileError ? (
