@@ -2,9 +2,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import {
-  CircleCheck,
-  CircleDashed,
-  CirclePause,
   ClipboardList,
   Clock3,
   FileSearch,
@@ -71,13 +68,10 @@ const WORKFLOW_OPTIONS: Array<{
   },
 ]
 
-const LIFECYCLE_META: Record<
-  QueueLifecycle,
-  { label: string; icon: LucideIcon }
-> = {
-  active: { label: 'Active', icon: CircleCheck },
-  draft: { label: 'Draft', icon: CircleDashed },
-  inactive: { label: 'Inactive', icon: CirclePause },
+const LIFECYCLE_META: Record<QueueLifecycle, { label: string }> = {
+  active: { label: 'Active' },
+  draft: { label: 'Draft' },
+  inactive: { label: 'Inactive' },
 }
 
 function lifecycleLabel(queue: {
@@ -114,13 +108,12 @@ function WorkflowBadge({ workflowType }: { workflowType: QueueWorkflowType }) {
 }
 
 function LifecycleBadge({ lifecycle }: { lifecycle: QueueLifecycle }) {
-  const { label, icon: Icon } = LIFECYCLE_META[lifecycle]
+  const { label } = LIFECYCLE_META[lifecycle]
   return (
     <Badge
       variant="secondary"
       className={queueLifecycleBadgeClasses(lifecycle) || undefined}
     >
-      <Icon />
       {label}
     </Badge>
   )
