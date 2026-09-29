@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CalendarIcon, RefreshCw } from 'lucide-react'
-import { format } from 'date-fns'
+import { addDays, format, min as minDate } from 'date-fns'
 
 import { Button } from '#/components/ui/button'
 import { Calendar } from '#/components/ui/calendar'
@@ -25,6 +25,7 @@ import { cn } from '#/lib/utils'
 import {
   DASHBOARD_RANGE_LABELS,
   DASHBOARD_RANGES,
+  MAX_DASHBOARD_RANGE_DAYS,
 } from '#/schemas/dashboard.schema'
 import type {
   DashboardRange,
@@ -51,6 +52,10 @@ export function DashboardFilterBar({
   isFetching,
 }: DashboardFilterBarProps) {
   const today = new Date()
+  const fromDate = parseDate(search.from)
+  const toDate = parseDate(search.to)
+  // Both ends are inclusive, so the span between them is one less.
+  const maxSpanDays = MAX_DASHBOARD_RANGE_DAYS - 1
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -79,14 +84,19 @@ export function DashboardFilterBar({
           <DateField
             label="From"
             value={search.from}
-            max={parseDate(search.to) ?? today}
+            min={toDate ? addDays(toDate, -maxSpanDays) : undefined}
+            max={toDate ?? today}
             onChange={(value) => onChange({ from: value })}
           />
           <DateField
             label="To"
             value={search.to}
-            min={parseDate(search.from)}
-            max={today}
+            min={fromDate}
+            max={
+              fromDate
+                ? minDate([today, addDays(fromDate, maxSpanDays)])
+                : today
+            }
             onChange={(value) => onChange({ to: value })}
           />
         </>

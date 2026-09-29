@@ -24,25 +24,25 @@ export const WORKLOAD_SERIES: ReadonlyArray<{
     key: 'new',
     status: 'new',
     label: 'New',
-    fill: { light: 'var(--color-blue-200)', dark: 'var(--color-blue-900)' },
+    fill: { light: 'var(--color-blue-300)', dark: 'oklch(0.72 0.1 252)' },
     swatchClassName:
-      'bg-blue-200 ring-1 ring-blue-300 dark:bg-blue-900 dark:ring-blue-700',
+      'bg-blue-300 ring-1 ring-blue-300 dark:bg-[oklch(0.72_0.1_252)] dark:ring-[oklch(0.72_0.1_252)]',
   },
   {
     key: 'working',
     status: 'working',
     label: 'Working',
-    fill: { light: 'var(--color-amber-200)', dark: 'var(--color-amber-900)' },
+    fill: { light: 'oklch(0.92 0.1 95)', dark: 'oklch(0.78 0.1 80)' },
     swatchClassName:
-      'bg-amber-200 ring-1 ring-amber-300 dark:bg-amber-900 dark:ring-amber-700',
+      'bg-[oklch(0.92_0.1_95)] ring-1 ring-[oklch(0.92_0.1_95)] dark:bg-[oklch(0.78_0.1_80)] dark:ring-[oklch(0.78_0.1_80)]',
   },
   {
     key: 'awaitingMerchant',
     status: 'awaiting_merchant',
     label: 'Awaiting merchant',
-    fill: { light: 'var(--color-rose-200)', dark: 'var(--color-rose-900)' },
+    fill: { light: 'oklch(0.86 0.07 10)', dark: 'oklch(0.72 0.1 15)' },
     swatchClassName:
-      'bg-rose-200 ring-1 ring-rose-300 dark:bg-rose-900 dark:ring-rose-700',
+      'bg-[oklch(0.86_0.07_10)] ring-1 ring-[oklch(0.86_0.07_10)] dark:bg-[oklch(0.72_0.1_15)] dark:ring-[oklch(0.72_0.1_15)]',
   },
 ]
 

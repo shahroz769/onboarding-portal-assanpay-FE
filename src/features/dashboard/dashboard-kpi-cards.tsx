@@ -1,8 +1,10 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowUpRight,
+  ChartPie,
   CheckCircle2,
   Clock,
+  ClockAlert,
   FilePlus2,
   Gauge,
   Hourglass,
@@ -48,7 +50,7 @@ type StatCardProps = {
 
 const ACCENT_CLASSES: Record<NonNullable<StatCardProps['accent']>, string> = {
   default: 'text-muted-foreground',
-  positive: 'text-emerald-600 dark:text-emerald-400',
+  positive: 'text-foreground',
   warning: 'text-amber-600 dark:text-amber-400',
   danger: 'text-red-600 dark:text-red-400',
 }
@@ -128,11 +130,23 @@ function Section({
   )
 }
 
+const formatPercent = (value: number) => `${value.toFixed(1)}%`
+
 /** Without `data`, renders the loading state with the exact loaded layout. */
 export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
   const cases = data?.cases
   const merchants = data?.merchants
   const count = (value: number | undefined) => value ?? null
+  const liveRate = merchants
+    ? merchants.total > 0
+      ? (merchants.live / merchants.total) * 100
+      : 0
+    : null
+  const breachRate = cases
+    ? cases.slaEvaluated > 0
+      ? (cases.slaBreached / cases.slaEvaluated) * 100
+      : 0
+    : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -167,6 +181,19 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
             to: '/cases/all-cases',
             statuses: ['closed', 'unsuccessful'],
           }}
+        />
+        <StatCard
+          label="SLA breaches"
+          value={count(cases?.slaBreached)}
+          icon={ClockAlert}
+          accent="danger"
+        />
+        <StatCard
+          label="SLA breach rate"
+          value={breachRate}
+          format={formatPercent}
+          icon={ChartPie}
+          accent="danger"
         />
       </Section>
 
@@ -203,6 +230,12 @@ export function DashboardKpiCards({ data }: { data?: DashboardResponse }) {
           icon={ShieldAlert}
           accent="danger"
           link={{ to: '/merchants', statuses: ['terminated'] }}
+        />
+        <StatCard
+          label="Live rate"
+          value={liveRate}
+          format={formatPercent}
+          icon={ChartPie}
         />
       </Section>
     </div>

@@ -25,6 +25,9 @@ export const DASHBOARD_RANGE_LABELS: Record<DashboardRange, string> = {
   custom: 'Custom',
 }
 
+// Mirrors the API limit: trend charts plot at most this many days.
+export const MAX_DASHBOARD_RANGE_DAYS = 120
+
 function normalizeOptionalString(value: string | undefined) {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined

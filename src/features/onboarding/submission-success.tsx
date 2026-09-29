@@ -21,8 +21,8 @@ export function SubmissionSuccess({
 }: SubmissionSuccessProps) {
   return (
     <div className="motion-success-enter flex flex-col items-center gap-6 py-12">
-      <div className="motion-success-icon flex size-20 items-center justify-center rounded-full bg-emerald-500/10">
-        <CheckCircle2 className="size-10 text-emerald-500" />
+      <div className="motion-success-icon flex size-20 items-center justify-center rounded-full bg-muted">
+        <CheckCircle2 className="size-10 text-foreground" />
       </div>
 
       <div className="text-center">

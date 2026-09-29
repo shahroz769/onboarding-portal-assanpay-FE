@@ -49,7 +49,7 @@ function parseDateKey(value: string) {
 export const submissionsChartConfig = {
   count: {
     label: 'Submissions',
-    theme: { light: 'var(--color-blue-300)', dark: 'var(--color-blue-800)' },
+    theme: { light: 'var(--color-blue-300)', dark: 'oklch(0.72 0.1 252)' },
   },
 } satisfies ChartConfig
 
@@ -58,7 +58,7 @@ export const merchantsLiveChartConfig = {
     label: 'Went live',
     theme: {
       light: 'oklch(0.81 0.08 180)',
-      dark: 'oklch(0.45 0.07 180)',
+      dark: 'oklch(0.72 0.08 180)',
     },
   },
 } satisfies ChartConfig

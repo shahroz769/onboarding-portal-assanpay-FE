@@ -165,10 +165,18 @@ function TeamWorkloadCard({ data, error, onRetry }: WorkloadState) {
   // New cases have no owner, so the unassigned pool is the first bar.
   const rows: WorkloadChartRow[] = workload
     ? [
-        toChartRow(UNASSIGNED_ROW_ID, 'Unassigned', workload.unassigned),
-        ...workload.members.map(({ member, totals }) =>
-          toChartRow(member.id, member.name, totals),
-        ),
+        {
+          ...toChartRow(UNASSIGNED_ROW_ID, 'Unassigned', workload.unassigned),
+          // Normally only new cases; skip the other statuses while empty.
+          omit: (['working', 'awaitingMerchant'] as const).filter(
+            (key) => workload.unassigned[key] === 0,
+          ),
+        },
+        ...workload.members.map(({ member, totals }) => ({
+          ...toChartRow(member.id, member.name, totals),
+          // Cases are unassigned while new, so a person never has any.
+          omit: ['new'] as const,
+        })),
       ]
     : []
   const sumAssigned = (pick: (totals: WorkloadTotals) => number) =>

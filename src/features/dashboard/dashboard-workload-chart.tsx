@@ -41,6 +41,8 @@ export type WorkloadChartRow = {
   working: number
   awaitingMerchant: number
   open: number
+  /** Series that don't apply to this row; hidden from its tooltip. */
+  omit?: ReadonlyArray<OpenStatusKey>
 }
 
 const ROW_HEIGHT = 36
@@ -172,14 +174,16 @@ function WorkloadTooltip({
     <div className="grid min-w-44 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-medium">{row.label}</div>
       <div className="grid gap-1.5">
-        {WORKLOAD_SERIES.map((item) => (
-          <TooltipRow
-            key={item.key}
-            label={item.label}
-            value={formatCount(row[item.key])}
-            swatchClassName={item.swatchClassName}
-          />
-        ))}
+        {WORKLOAD_SERIES.filter((item) => !row.omit?.includes(item.key)).map(
+          (item) => (
+            <TooltipRow
+              key={item.key}
+              label={item.label}
+              value={formatCount(row[item.key])}
+              swatchClassName={item.swatchClassName}
+            />
+          ),
+        )}
       </div>
       <div className="grid gap-1.5 border-t border-border/50 pt-1.5">
         <TooltipRow label="Open" value={formatCount(row.open)} />

@@ -15,11 +15,14 @@ export function SectionIcon({
   tone?: StatusTint
   className?: string
 }) {
+  // The green family stays out of section chips; the theme is neutral.
+  const chipTone: StatusTint =
+    tone === 'teal' || tone === 'emerald' || tone === 'green' ? 'neutral' : tone
   return (
     <div
       className={cn(
         'flex size-10 shrink-0 items-center justify-center rounded-lg',
-        statusTint(tone),
+        statusTint(chipTone),
         className,
       )}
     >
