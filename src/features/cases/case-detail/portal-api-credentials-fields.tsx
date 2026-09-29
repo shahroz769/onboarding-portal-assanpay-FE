@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 
-import { Copy, Eye, EyeOff, RefreshCw, Save } from 'lucide-react'
+import { Copy, Eye, EyeOff, Info, RefreshCw, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import {
   Field,
@@ -157,6 +158,13 @@ export function PortalApiCredentialsFields({
   if (isEditing) {
     return (
       <div className="flex flex-col gap-4">
+        <Alert>
+          <Info />
+          <AlertDescription>
+            Use the API Key and API Secret from the live environment, not
+            test.
+          </AlertDescription>
+        </Alert>
         <div className="grid gap-4 md:grid-cols-2">
           {(
             [
@@ -193,9 +201,6 @@ export function PortalApiCredentialsFields({
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <p className="mr-auto text-sm text-muted-foreground">
-            Stored encrypted. Cleared when the WordPress Website case closes.
-          </p>
           {replacing ? (
             <Button
               variant="outline"

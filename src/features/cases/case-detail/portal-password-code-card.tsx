@@ -56,7 +56,7 @@ type PortalPasswordCodeStatus = NonNullable<
 // the email prefix keeps the shape the merchant portal expects.
 function buildPortalPassword(email: string, code: string) {
   const [localPart = email] = email.trim().split('@')
-  return `${localPart.trim().toLowerCase()}@ASSAN${code}`
+  return `${localPart.trim().toLowerCase()}@${code}`
 }
 
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
@@ -165,7 +165,7 @@ export function PortalPasswordCodeCard({
                       readOnly
                       autoComplete="off"
                       className="font-mono"
-                      value={password ?? `<email name>@ASSAN${revealed.code}`}
+                      value={password ?? `<email name>@${revealed.code}`}
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
