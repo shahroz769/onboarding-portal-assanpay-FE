@@ -617,7 +617,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold">Merchant Onboarding</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Merchant Onboarding</h1>
         <p className="mt-2 text-muted-foreground">
           Submit every requested correction below.
         </p>
@@ -688,7 +688,7 @@ export function ResubmissionForm({ token, context }: ResubmissionFormProps) {
           ) : (
             <CheckCircle2 data-icon="inline-start" />
           )}
-          {mutation.isPending ? 'Submitting...' : 'Submit updates'}
+          {mutation.isPending ? 'Submitting…' : 'Submit updates'}
         </Button>
       </div>
     </form>
@@ -846,7 +846,7 @@ function FieldControl({
         onValueChange={(nextValue) => onChange(nextValue ?? '')}
       >
         <ComboboxInput
-          placeholder="Search bank..."
+          placeholder="Search bank…"
           className="w-full"
           showClear
           aria-invalid={isInvalid}

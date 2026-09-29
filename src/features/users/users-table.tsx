@@ -191,7 +191,7 @@ export function UsersTableComposed({
                 <DataTableSearch
                   value={filters.search ?? ''}
                   onChange={(value) => setFilter('search', value || undefined)}
-                  placeholder="Search by name, email, or username..."
+                  placeholder="Search by name, email, or username…"
                 />
 
                 <DataTableFilter

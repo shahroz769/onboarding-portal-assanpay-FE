@@ -107,9 +107,7 @@ function EmailTemplateView({ template }: { template: EmailTemplatePreview }) {
 
         <dl className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b bg-muted/20 px-5 py-4 text-sm">
           <dt className="text-muted-foreground">From</dt>
-          <dd className="truncate">
-            {view === 'email' ? template.from : 'Your Gmail account'}
-          </dd>
+          <dd>{view === 'email' ? template.from : 'Your Gmail account'}</dd>
           <dt className="text-muted-foreground">To</dt>
           <dd>{template.audience}</dd>
           <dt className="text-muted-foreground">Subject</dt>

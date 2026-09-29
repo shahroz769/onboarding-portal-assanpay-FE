@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -87,14 +88,26 @@ export function SubMerchantsPanel() {
       id: 'name',
       header: 'Name',
       width: 240,
-      cell: (item) => <span className="truncate font-medium">{item.name}</span>,
+      cell: (item) => (
+        <TruncatedTooltip
+          render={<span className="block truncate font-medium" />}
+          content={item.name}
+        >
+          {item.name}
+        </TruncatedTooltip>
+      ),
     },
     {
       id: 'sellerCode',
       header: 'Seller Code',
       width: 180,
       cell: (item) => (
-        <span className="truncate font-mono text-xs">{item.sellerCode}</span>
+        <TruncatedTooltip
+          render={<span className="block truncate font-mono text-xs" />}
+          content={item.sellerCode}
+        >
+          {item.sellerCode}
+        </TruncatedTooltip>
       ),
     },
     {
@@ -490,7 +503,12 @@ function DraftFileDropzone({
                 <FileText className="size-5 text-muted-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{file.name}</p>
+                <TruncatedTooltip
+                  render={<p className="truncate text-sm font-medium" />}
+                  content={file.name}
+                >
+                  {file.name}
+                </TruncatedTooltip>
                 <p className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)}
                 </p>

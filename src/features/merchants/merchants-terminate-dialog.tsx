@@ -86,7 +86,7 @@ function TerminateForm({
           <Field>
             <FieldLabel>Reason</FieldLabel>
             <Textarea
-              placeholder="Reason for termination..."
+              placeholder="Reason for termination…"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               rows={4}

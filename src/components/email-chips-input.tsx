@@ -2,6 +2,7 @@ import { useState } from 'react'
 import * as z from 'zod'
 import { MailPlusIcon } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import {
   Combobox,
   ComboboxChip,
@@ -114,7 +115,12 @@ export function EmailChipsInput({
               <>
                 {emails.map((email) => (
                   <ComboboxChip key={email} className="max-w-full">
-                    <span className="min-w-0 truncate">{email}</span>
+                    <TruncatedTooltip
+                      render={<span className="min-w-0 truncate" />}
+                      content={email}
+                    >
+                      {email}
+                    </TruncatedTooltip>
                   </ComboboxChip>
                 ))}
                 <ComboboxChipsInput

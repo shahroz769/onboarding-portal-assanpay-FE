@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { AppShellPending } from '#/components/app-shell-pending'
 import { AppSidebar } from '#/components/app-sidebar'
 import { NavUser } from '#/components/nav-user'
@@ -136,17 +137,22 @@ function AppLayout() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden sm:block" />
                   <BreadcrumbItem className="min-w-0">
-                    <BreadcrumbLink
-                      className="block max-w-48 truncate"
+                    <TruncatedTooltip
                       render={
-                        <Link
-                          to="/cases/all-cases"
-                          search={{ queueId: caseDetail?.queue?.id }}
+                        <BreadcrumbLink
+                          className="block max-w-48 truncate"
+                          render={
+                            <Link
+                              to="/cases/all-cases"
+                              search={{ queueId: caseDetail?.queue?.id }}
+                            />
+                          }
                         />
                       }
+                      content={caseDetail?.queue?.name ?? 'Queue'}
                     >
                       {caseDetail?.queue?.name ?? 'Queue'}
-                    </BreadcrumbLink>
+                    </TruncatedTooltip>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem className="shrink-0">
@@ -164,9 +170,14 @@ function AppLayout() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem className="min-w-0">
-                    <BreadcrumbPage className="block max-w-64 truncate">
+                    <TruncatedTooltip
+                      render={
+                        <BreadcrumbPage className="block max-w-64 truncate" />
+                      }
+                      content={merchantHeader?.businessName ?? 'Merchant'}
+                    >
                       {merchantHeader?.businessName ?? 'Merchant'}
-                    </BreadcrumbPage>
+                    </TruncatedTooltip>
                   </BreadcrumbItem>
                 </>
               ) : (

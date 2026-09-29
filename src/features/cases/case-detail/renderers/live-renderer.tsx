@@ -386,7 +386,7 @@ export default function LiveRenderer({
                     <MailCheck data-icon="inline-start" />
                   )}
                   {fetchPreview.isPending
-                    ? 'Loading preview...'
+                    ? 'Loading preview…'
                     : 'Load email preview'}
                 </Button>
               ) : (
@@ -411,7 +411,7 @@ export default function LiveRenderer({
                     <MailCheck data-icon="inline-start" />
                   )}
                   {fetchPreview.isPending
-                    ? 'Loading preview...'
+                    ? 'Loading preview…'
                     : 'Load WhatsApp message'}
                 </Button>
               ) : (

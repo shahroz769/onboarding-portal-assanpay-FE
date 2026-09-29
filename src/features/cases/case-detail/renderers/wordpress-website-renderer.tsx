@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import * as z from 'zod'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -483,9 +484,14 @@ export default function WordpressWebsiteRenderer({
                   className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 hover:bg-muted/40"
                 >
                   <FileImage className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  <TruncatedTooltip
+                    render={
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium" />
+                    }
+                    content={screenshot.originalName}
+                  >
                     {screenshot.originalName}
-                  </span>
+                  </TruncatedTooltip>
                   <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
                 </a>
               ))}
@@ -508,11 +514,20 @@ export default function WordpressWebsiteRenderer({
                         className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 hover:bg-muted/40"
                       >
                         <FileImage className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        <TruncatedTooltip
+                          render={
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium" />
+                          }
+                          content={
+                            subMerchantName
+                              ? `${subMerchantName}: ${screenshot.originalName}`
+                              : screenshot.originalName
+                          }
+                        >
                           {subMerchantName
                             ? `${subMerchantName}: ${screenshot.originalName}`
                             : screenshot.originalName}
-                        </span>
+                        </TruncatedTooltip>
                         <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
                       </a>
                     )
@@ -534,9 +549,14 @@ export default function WordpressWebsiteRenderer({
                       className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 hover:bg-muted/40"
                     >
                       <FileImage className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      <TruncatedTooltip
+                        render={
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium" />
+                        }
+                        content={screenshot.originalName}
+                      >
                         {screenshot.originalName}
-                      </span>
+                      </TruncatedTooltip>
                       <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
                     </a>
                   ))}
@@ -706,7 +726,12 @@ function ScreenshotUpload({
             >
               <FileImage className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{file.name}</p>
+                <TruncatedTooltip
+                  render={<p className="truncate text-sm font-medium" />}
+                  content={file.name}
+                >
+                  {file.name}
+                </TruncatedTooltip>
                 <p className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)}
                 </p>

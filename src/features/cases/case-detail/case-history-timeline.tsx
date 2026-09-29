@@ -514,9 +514,14 @@ export function CaseHistoryTimeline({
                     <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-col gap-2">
-                          <p className="truncate text-sm font-semibold tracking-tight">
+                          <TruncatedTooltip
+                            render={
+                              <p className="truncate text-sm font-semibold tracking-tight" />
+                            }
+                            content={entry.actorName ?? 'System'}
+                          >
                             {entry.actorName ?? 'System'}
-                          </p>
+                          </TruncatedTooltip>
                           {detailsText ? (
                             <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                               {detailsText}
@@ -548,7 +553,12 @@ export function CaseHistoryTimeline({
                                 }
                               >
                                 <ExternalLink data-icon="inline-start" />
-                                <span className="truncate">{proofLabel}</span>
+                                <TruncatedTooltip
+                                  render={<span className="truncate" />}
+                                  content={proofLabel}
+                                >
+                                  {proofLabel}
+                                </TruncatedTooltip>
                               </ButtonLink>
                             </div>
                           ) : null}
@@ -579,7 +589,7 @@ export function CaseHistoryTimeline({
                             tracked={entry.emailDelivery.tracked}
                           />
                         ) : null}
-                        <span className="max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <span className="max-w-full rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                           {formatDateTime(entry.createdAt)}
                         </span>
                       </div>

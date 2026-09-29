@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { EmailChipsInput } from '#/components/email-chips-input'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -206,7 +207,12 @@ function PreviewRow({
 function PreviewAddress({ children }: { children: ReactNode }) {
   return (
     <Badge variant="secondary" className="max-w-full font-normal">
-      <span className="truncate">{children}</span>
+      <TruncatedTooltip
+        render={<span className="truncate" />}
+        content={children}
+      >
+        {children}
+      </TruncatedTooltip>
     </Badge>
   )
 }

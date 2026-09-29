@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
 import {
   Card,
@@ -326,7 +327,10 @@ function DocumentRow({
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/40">
             <FileText className="size-4 text-muted-foreground" />
           </div>
-          <div className="min-w-0">
+          <TruncatedTooltip
+            render={<div className="min-w-0" />}
+            content={file.originalName}
+          >
             <p className="truncate text-sm font-medium">
               {file.documentType
                 ? documentTypeLabel(file.documentType)
@@ -335,7 +339,7 @@ function DocumentRow({
             <p className="truncate text-xs text-muted-foreground">
               {file.originalName}
             </p>
-          </div>
+          </TruncatedTooltip>
         </div>
         <div className="flex items-center gap-2">
           {file.statusLabel ? (
@@ -372,7 +376,10 @@ function AgreementRow({
         <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/40">
           <FileText className="size-4 text-muted-foreground" />
         </div>
-        <div className="min-w-0">
+        <TruncatedTooltip
+          render={<div className="min-w-0" />}
+          content={file ? file.originalName : title}
+        >
           <p className="truncate text-sm font-medium">{title}</p>
           <p className="truncate text-xs text-muted-foreground">
             {file
@@ -382,7 +389,7 @@ function AgreementRow({
                 )}`
               : emptyText}
           </p>
-        </div>
+        </TruncatedTooltip>
       </div>
       <div className="flex items-center gap-2">
         {file ? (

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Copy, Check, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Button } from '#/components/ui/button'
 import type { AgreementEmailPreviewResult } from '#/apis/cases'
 
@@ -137,9 +138,14 @@ export function ManualEmailPanel({
             {selectedFile ? 'Change file' : 'Attach screenshot'}
           </Button>
           {selectedFile ? (
-            <span className="text-sm text-muted-foreground truncate max-w-48">
+            <TruncatedTooltip
+              render={
+                <span className="max-w-48 truncate text-sm text-muted-foreground" />
+              }
+              content={selectedFile.name}
+            >
               {selectedFile.name}
-            </span>
+            </TruncatedTooltip>
           ) : null}
         </div>
       </div>

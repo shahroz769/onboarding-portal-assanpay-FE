@@ -61,7 +61,7 @@ function Command({
 
 function CommandDialog({
   title = 'Command Palette',
-  description = 'Search for a command to run...',
+  description = 'Search for a command to run…',
   children,
   className,
   showCloseButton = true,
@@ -104,7 +104,7 @@ function CommandInput({
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full rounded-md bg-transparent py-3 text-base outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
           className,
         )}
         {...props}

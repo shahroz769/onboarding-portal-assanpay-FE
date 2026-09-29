@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { FileCheck2, FileText, FileUp, Upload, X } from 'lucide-react'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -29,7 +30,12 @@ export function AgreementsPanel() {
       header: 'Business Type',
       width: 240,
       cell: (draft) => (
-        <span className="truncate font-medium">{draft.label}</span>
+        <TruncatedTooltip
+          render={<span className="block truncate font-medium" />}
+          content={draft.label}
+        >
+          {draft.label}
+        </TruncatedTooltip>
       ),
     },
     {
@@ -40,14 +46,19 @@ export function AgreementsPanel() {
         draft.googleDriveWebViewLink ? (
           <div className="flex min-w-0 items-center gap-2">
             <FileCheck2 className="shrink-0 text-muted-foreground" />
-            <a
-              href={draft.googleDriveWebViewLink}
-              target="_blank"
-              rel="noreferrer"
-              className="min-w-0 truncate text-primary underline-offset-2 hover:underline"
+            <TruncatedTooltip
+              render={
+                <a
+                  href={draft.googleDriveWebViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 truncate text-primary underline-offset-2 hover:underline"
+                />
+              }
+              content={draft.originalName}
             >
               {draft.originalName}
-            </a>
+            </TruncatedTooltip>
           </div>
         ) : (
           <span className="text-muted-foreground">No draft</span>
@@ -58,9 +69,14 @@ export function AgreementsPanel() {
       header: 'Folder',
       width: 240,
       cell: (draft) => (
-        <span className="truncate font-mono text-xs text-muted-foreground">
+        <TruncatedTooltip
+          render={
+            <span className="block truncate font-mono text-xs text-muted-foreground" />
+          }
+          content={`Agreements / ${draft.label}`}
+        >
           Agreements / {draft.label}
-        </span>
+        </TruncatedTooltip>
       ),
     },
     {
@@ -124,7 +140,12 @@ function AgreementDraftUploadCell({ draft }: { draft: AgreementDraft }) {
           <>
             <span className="flex min-w-0 max-w-48 items-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
               <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate">{file.name}</span>
+              <TruncatedTooltip
+                render={<span className="truncate" />}
+                content={file.name}
+              >
+                {file.name}
+              </TruncatedTooltip>
             </span>
             <Tooltip>
               <TooltipTrigger

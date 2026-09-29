@@ -101,7 +101,7 @@ function AssignOwnerForm({
   const selectedValue = selectedUserId ?? 'ap-system'
   const hasChanged = selectedUserId !== currentOwnerId
   const selectedLabel =
-    options.find((o) => o.value === selectedValue)?.label ?? 'Select owner...'
+    options.find((o) => o.value === selectedValue)?.label ?? 'Select owner…'
 
   function handleSelect(value: string) {
     setSelectedUserId(value === 'ap-system' ? null : value)
@@ -159,7 +159,7 @@ function AssignOwnerForm({
           </PopoverTrigger>
           <PopoverContent className="w-(--anchor-width) p-0" align="start">
             <Command items={options.map((option) => option.label)}>
-              <CommandInput placeholder="Search users..." />
+              <CommandInput placeholder="Search users…" />
               <CommandList>
                 <CommandEmpty>No users found.</CommandEmpty>
                 <CommandGroup>

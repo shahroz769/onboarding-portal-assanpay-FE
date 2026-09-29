@@ -332,7 +332,7 @@ function CaseHistoryPanel({ group }: { group: CaseHistoryGroup }) {
     <div className="rounded-lg border bg-muted/20 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-base font-semibold leading-none">
+          <p className="text-base leading-tight font-semibold">
             {caseRow.queueName}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { ListChecksIcon, RotateCcwIcon, UserRoundIcon } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button, ButtonLink } from '#/components/ui/button'
 import {
@@ -122,7 +123,12 @@ function QueueAccessCombobox({
             <>
               {values.map((id) => (
                 <ComboboxChip key={id} className="max-w-full">
-                  <span className="min-w-0 truncate">{getLabel(id)}</span>
+                  <TruncatedTooltip
+                    render={<span className="min-w-0 truncate" />}
+                    content={getLabel(id)}
+                  >
+                    {getLabel(id)}
+                  </TruncatedTooltip>
                 </ComboboxChip>
               ))}
               <ComboboxChipsInput
@@ -760,10 +766,10 @@ export function UserForm({
               {isSubmitting ? <Spinner data-icon="inline-start" /> : null}
               {mode === 'create'
                 ? isSubmitting
-                  ? 'Creating...'
+                  ? 'Creating…'
                   : 'Create User'
                 : isSubmitting
-                  ? 'Saving...'
+                  ? 'Saving…'
                   : 'Save Changes'}
             </Button>
           )}

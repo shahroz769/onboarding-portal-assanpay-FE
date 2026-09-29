@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { CheckCircle2, FileSignature, Info } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -60,7 +61,10 @@ const columns: DataTableColumnDef<AwaitingPhysicalAgreement>[] = [
     id: 'merchant',
     header: 'Merchant',
     cell: (item) => (
-      <div className="flex min-w-0 flex-col leading-tight">
+      <TruncatedTooltip
+        render={<div className="flex min-w-0 flex-col leading-tight" />}
+        content={`${item.merchantName} · ${item.emailRecipient ?? 'Recipient not recorded'}`}
+      >
         <Link
           to="/merchants/$merchantId/overview"
           params={{ merchantId: item.merchantId }}
@@ -71,7 +75,7 @@ const columns: DataTableColumnDef<AwaitingPhysicalAgreement>[] = [
         <span className="truncate text-xs text-muted-foreground">
           {item.emailRecipient ?? 'Recipient not recorded'}
         </span>
-      </div>
+      </TruncatedTooltip>
     ),
   },
   {
@@ -87,9 +91,12 @@ const columns: DataTableColumnDef<AwaitingPhysicalAgreement>[] = [
         >
           {item.caseNumber}
         </Link>
-        <span className="truncate text-xs text-muted-foreground">
+        <TruncatedTooltip
+          render={<span className="truncate text-xs text-muted-foreground" />}
+          content={item.ownerName ?? 'Unassigned'}
+        >
           {item.ownerName ?? 'Unassigned'}
-        </span>
+        </TruncatedTooltip>
       </div>
     ),
   },

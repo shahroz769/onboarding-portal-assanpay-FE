@@ -14,6 +14,7 @@ import {
   Signature,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -80,12 +81,15 @@ function lifecycleLabel(queue: {
 
 function QueueIdentityCell({ queue }: { queue: Queue }) {
   return (
-    <div className="min-w-0">
+    <TruncatedTooltip
+      render={<div className="min-w-0" />}
+      content={`${queue.name} · ${queue.slug}`}
+    >
       <span className="block truncate text-sm font-medium">{queue.name}</span>
       <span className="block truncate font-mono text-xs text-muted-foreground">
         {queue.slug}
       </span>
-    </div>
+    </TruncatedTooltip>
   )
 }
 

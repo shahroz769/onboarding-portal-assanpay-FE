@@ -1302,7 +1302,7 @@ export function MerchantOnboardingForm({
                     >
                       <ComboboxInput
                         id={field.name}
-                        placeholder="Search bank..."
+                        placeholder="Search bank…"
                         aria-invalid={isInvalid}
                         aria-describedby={
                           isInvalid ? `${field.name}-error` : undefined

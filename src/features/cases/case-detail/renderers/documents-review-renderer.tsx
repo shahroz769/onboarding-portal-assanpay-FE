@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -971,7 +972,12 @@ function ReadOnlyDocumentField({
       >
         <FileText className="size-4 shrink-0 text-muted-foreground" />
         <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-          <span className="truncate text-sm">{document.name}</span>
+          <TruncatedTooltip
+            render={<span className="truncate text-sm" />}
+            content={document.name}
+          >
+            {document.name}
+          </TruncatedTooltip>
           <span className="text-xs text-muted-foreground">
             {document.sizeBytes
               ? formatFileSize(document.sizeBytes)

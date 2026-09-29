@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -681,16 +682,26 @@ function CommentCard({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold tracking-tight">
+              <TruncatedTooltip
+                render={
+                  <p className="truncate text-sm font-semibold tracking-tight" />
+                }
+                content={comment.authorName ?? 'Unknown'}
+              >
                 {comment.authorName ?? 'Unknown'}
-              </p>
+              </TruncatedTooltip>
               {formatUsername(comment.authorUsername) ? (
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                <TruncatedTooltip
+                  render={
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground" />
+                  }
+                  content={formatUsername(comment.authorUsername)}
+                >
                   {formatUsername(comment.authorUsername)}
-                </p>
+                </TruncatedTooltip>
               ) : null}
             </div>
-            <span className="max-w-full truncate text-xs font-medium text-muted-foreground sm:shrink-0">
+            <span className="max-w-full text-xs font-medium text-muted-foreground sm:shrink-0">
               {formatDateTime(comment.createdAt)}
             </span>
           </div>

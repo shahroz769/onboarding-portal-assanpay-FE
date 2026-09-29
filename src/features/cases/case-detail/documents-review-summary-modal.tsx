@@ -245,7 +245,7 @@ export function DocumentsReviewSummaryModal({
             <Send data-icon="inline-start" />
           )}
           {fetchPreview.isPending
-            ? 'Loading preview...'
+            ? 'Loading preview…'
             : 'Load WhatsApp message'}
         </Button>
       ) : (

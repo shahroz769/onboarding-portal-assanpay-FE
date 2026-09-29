@@ -134,7 +134,7 @@ function PriorityForm({
           <Field>
             <FieldLabel>Note (optional)</FieldLabel>
             <Textarea
-              placeholder="Reason for priority change..."
+              placeholder="Reason for priority change…"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}

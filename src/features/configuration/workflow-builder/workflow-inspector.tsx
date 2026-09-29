@@ -10,6 +10,7 @@ import {
   Workflow,
 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { SectionIcon } from '#/components/section-icon'
 import { Button } from '#/components/ui/button'
 
@@ -144,8 +145,13 @@ function InspectorHeading({
       <div className="flex items-center gap-3">
         {icon}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <CardTitle className="truncate">{title}</CardTitle>
-          <CardDescription className="truncate">{description}</CardDescription>
+          <TruncatedTooltip
+            render={<CardTitle className="truncate" />}
+            content={title}
+          >
+            {title}
+          </TruncatedTooltip>
+          <CardDescription>{description}</CardDescription>
         </div>
       </div>
     </CardHeader>

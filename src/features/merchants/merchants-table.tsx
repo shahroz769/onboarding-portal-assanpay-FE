@@ -69,7 +69,7 @@ function Toolbar() {
         <DataTableSearch
           value={filters.search ?? ''}
           onChange={(v) => actions.setFilter('search', v || undefined)}
-          placeholder="Search by ID or name..."
+          placeholder="Search by ID or name…"
         />
         {/* Filters follow the table's column order; Scope has no column. */}
         <DataTableFilter

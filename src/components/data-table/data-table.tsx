@@ -312,7 +312,7 @@ export function DataTable<TData>({
                 >
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Spinner className="size-4" />
-                    Loading more...
+                    Loading more…
                   </div>
                 </TableCell>
               </TableRow>

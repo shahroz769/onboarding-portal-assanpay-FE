@@ -4,6 +4,7 @@ import type { ComponentType, SVGProps } from 'react'
 
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
 import { EmptyState } from '#/components/empty-state'
@@ -152,7 +153,12 @@ export function MethodListPanel({
       header: 'Method',
       width: 260,
       cell: (method) => (
-        <span className="truncate font-medium">{method.label}</span>
+        <TruncatedTooltip
+          render={<span className="block truncate font-medium" />}
+          content={method.label}
+        >
+          {method.label}
+        </TruncatedTooltip>
       ),
     },
     {
@@ -652,10 +658,13 @@ function NumberField({
 
 function LimitRange({ min, max }: { min: number; max: number }) {
   return (
-    <span className="block truncate text-right tabular-nums">
+    <TruncatedTooltip
+      render={<span className="block truncate text-right tabular-nums" />}
+      content={`PKR ${min.toLocaleString()} – ${max.toLocaleString()}`}
+    >
       <span className="text-muted-foreground">PKR </span>
       {min.toLocaleString()} – {max.toLocaleString()}
-    </span>
+    </TruncatedTooltip>
   )
 }
 

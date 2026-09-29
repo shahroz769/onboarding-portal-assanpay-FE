@@ -1,6 +1,7 @@
 import { Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
 
 import {
@@ -56,9 +57,14 @@ export function QueueNode({ data, selected }: NodeProps<QueueFlowNode>) {
           {queue.prefix.slice(0, 3)}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm leading-tight font-medium">
+          <TruncatedTooltip
+            render={
+              <p className="truncate text-sm leading-tight font-medium" />
+            }
+            content={queue.name}
+          >
             {queue.name}
-          </p>
+          </TruncatedTooltip>
           <p className="truncate text-[11px] text-muted-foreground">
             {inFlow
               ? (workflowLabel ?? 'In flow')

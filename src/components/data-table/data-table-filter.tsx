@@ -321,7 +321,7 @@ function SearchableDataTableFilter({
           ) : null}
         </ComboboxInput>
         <ComboboxEmpty>
-          {isLoading ? 'Searching...' : 'No results found.'}
+          {isLoading ? 'Searching…' : 'No results found.'}
         </ComboboxEmpty>
         <ComboboxList className="max-h-72">
           {(option: FilterOption) => (

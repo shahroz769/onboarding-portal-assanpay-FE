@@ -198,7 +198,7 @@ function RouteComponent() {
                       {isSubmitting ? (
                         <Spinner data-icon="inline-start" />
                       ) : null}
-                      {isSubmitting ? 'Saving...' : 'Set Password'}
+                      {isSubmitting ? 'Saving…' : 'Set Password'}
                     </Button>
                   )}
                 </form.Subscribe>

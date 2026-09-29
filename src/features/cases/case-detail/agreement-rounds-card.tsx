@@ -261,9 +261,7 @@ function AgreementRoundRow({ round }: { round: AgreementRound }) {
               <span className="text-sm font-semibold">Round {round.index}</span>
               <RoundStatusBadge round={round} />
             </div>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {roundDate}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{roundDate}</p>
           </div>
         </div>
         <ChevronDown className="size-4 text-muted-foreground transition-transform group-data-open:rotate-180" />

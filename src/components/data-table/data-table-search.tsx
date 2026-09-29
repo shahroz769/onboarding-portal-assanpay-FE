@@ -18,7 +18,7 @@ interface DataTableSearchProps {
 export function DataTableSearch({
   value,
   onChange,
-  placeholder = 'Search...',
+  placeholder = 'Search…',
   debounceMs = 300,
 }: DataTableSearchProps) {
   const [localValue, setLocalValue] = useState(value)

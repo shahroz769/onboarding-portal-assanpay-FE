@@ -242,7 +242,7 @@ function TriggerCaseForm({
             value={queueId}
             queues={queues}
             placeholder={
-              queuesQuery.isPending ? 'Loading queues...' : 'Select queue'
+              queuesQuery.isPending ? 'Loading queues…' : 'Select queue'
             }
             onValueChange={(value) => {
               setQueueId(value)
@@ -361,7 +361,7 @@ function MerchantCombobox({
       />
       <ComboboxContent>
         <ComboboxEmpty>
-          {isFetching ? 'Loading merchants...' : 'No merchants found.'}
+          {isFetching ? 'Loading merchants…' : 'No merchants found.'}
         </ComboboxEmpty>
         <ComboboxList>
           {(merchant: MerchantListItem) => (

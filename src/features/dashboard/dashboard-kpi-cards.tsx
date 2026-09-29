@@ -83,7 +83,7 @@ function StatCard({
       <CardContent className="px-4">
         <CardTitle className="text-2xl tabular-nums">
           {/* h-lh = exactly one line of the value's text, whatever the
-              computed line-height is (cn drops CardTitle's leading-none) */}
+              computed line-height is (cn drops CardTitle's leading-tight) */}
           {value === null ? (
             <Skeleton className="h-lh w-10" />
           ) : (

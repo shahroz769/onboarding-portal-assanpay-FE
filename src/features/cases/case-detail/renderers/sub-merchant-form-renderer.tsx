@@ -14,6 +14,7 @@ import {
   Upload,
 } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button, ButtonLink } from '#/components/ui/button'
@@ -317,9 +318,12 @@ export default function SubMerchantFormRenderer({
                 <FieldLabel>Draft form</FieldLabel>
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <p className="truncate text-sm font-medium">
+                    <TruncatedTooltip
+                      render={<p className="truncate text-sm font-medium" />}
+                      content={inheritedSubMerchant.name}
+                    >
                       {inheritedSubMerchant.name}
-                    </p>
+                    </TruncatedTooltip>
                     <p className="text-sm text-muted-foreground">
                       Open the draft and complete it manually before uploading
                       the final file.
@@ -379,9 +383,12 @@ export default function SubMerchantFormRenderer({
             <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">
               <FileText className="text-muted-foreground" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
+                <TruncatedTooltip
+                  render={<p className="truncate text-sm font-medium" />}
+                  content={details.finalForm.originalName}
+                >
                   {details.finalForm.originalName}
-                </p>
+                </TruncatedTooltip>
                 <p className="text-sm text-muted-foreground">
                   {formatFileSize(details.finalForm.sizeBytes)}
                 </p>
@@ -716,7 +723,12 @@ function EmailProofUpload({
                 <Image className="size-5 text-muted-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{file.name}</p>
+                <TruncatedTooltip
+                  render={<p className="truncate text-sm font-medium" />}
+                  content={file.name}
+                >
+                  {file.name}
+                </TruncatedTooltip>
                 <p className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)}
                 </p>

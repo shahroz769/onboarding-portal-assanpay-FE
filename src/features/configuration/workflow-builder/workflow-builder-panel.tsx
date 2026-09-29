@@ -612,7 +612,7 @@ export function WorkflowBuilderPanel() {
             ? `v${base.versionId} · Read-only`
             : `v${base.versionId} · Current`}
         </Badge>
-        <span className="min-w-0 truncate">
+        <span className="min-w-0 text-pretty">
           {readOnly
             ? 'Published rules are read-only. Select the current version to make changes.'
             : 'New submissions use this version. Publishing creates a new version; existing merchants keep theirs.'}

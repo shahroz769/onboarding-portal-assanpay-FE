@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { FileText, Upload, X } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -137,7 +138,12 @@ export function DocumentUploadField({
             className="size-4 shrink-0 text-muted-foreground"
           />
           <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-            <span className="truncate text-sm">{file.name}</span>
+            <TruncatedTooltip
+              render={<span className="truncate text-sm" />}
+              content={file.name}
+            >
+              {file.name}
+            </TruncatedTooltip>
             <span className="text-xs text-muted-foreground">
               {formatFileSize(file.size)}
             </span>

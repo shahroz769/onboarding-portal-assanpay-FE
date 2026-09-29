@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import {
   passwordStatusBadgeClasses,
   userRoleBadgeClasses,
@@ -38,11 +39,16 @@ function UserIdentityCell({
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
       {/* Opens the Edit User dialog, like Create User. */}
-      <button
-        type="button"
-        onClick={() => onEdit(user)}
-        aria-label={`Edit ${user.name}`}
-        className="group/identity min-w-0 cursor-pointer rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      <TruncatedTooltip
+        render={
+          <button
+            type="button"
+            onClick={() => onEdit(user)}
+            aria-label={`Edit ${user.name}`}
+            className="group/identity min-w-0 cursor-pointer rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+        }
+        content={`${user.name} · ${user.email}`}
       >
         <span className="block truncate text-sm font-medium text-primary group-hover/identity:underline group-hover/identity:decoration-dashed group-hover/identity:underline-offset-4">
           {user.name}
@@ -50,7 +56,7 @@ function UserIdentityCell({
         <span className="block truncate text-xs text-muted-foreground group-hover/identity:text-primary">
           {user.email}
         </span>
-      </button>
+      </TruncatedTooltip>
     </div>
   )
 }

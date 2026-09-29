@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Check, Copy, ExternalLink, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Button, ButtonLink } from '#/components/ui/button'
 import type { AgreementEmailPreviewResult } from '#/apis/cases'
 
@@ -120,15 +121,20 @@ export function WhatsAppMessagePanel({
             {selectedFile ? 'Change file' : 'Attach screenshot'}
           </Button>
           {selectedFile ? (
-            <span className="max-w-48 truncate text-sm text-muted-foreground">
+            <TruncatedTooltip
+              render={
+                <span className="max-w-48 truncate text-sm text-muted-foreground" />
+              }
+              content={selectedFile.name}
+            >
               {selectedFile.name}
-            </span>
+            </TruncatedTooltip>
           ) : null}
         </div>
       </div>
 
       <Button disabled={!selectedFile || isPending} onClick={handleConfirm}>
-        {isPending ? 'Saving...' : 'Save WhatsApp screenshot'}
+        {isPending ? 'Saving…' : 'Save WhatsApp screenshot'}
       </Button>
     </div>
   )

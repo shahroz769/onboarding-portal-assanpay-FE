@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
+import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button, ButtonLink } from '#/components/ui/button'
@@ -299,9 +300,12 @@ export default function AgreementRenderer({
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">
                   <FileText className="text-muted-foreground" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
+                    <TruncatedTooltip
+                      render={<p className="truncate text-sm font-medium" />}
+                      content={agreement.draftLabel}
+                    >
                       {agreement.draftLabel}
-                    </p>
+                    </TruncatedTooltip>
                     <p className="text-sm text-muted-foreground">
                       Open the draft and prepare the final agreement manually.
                     </p>
@@ -526,7 +530,7 @@ export default function AgreementRenderer({
                     <MailCheck data-icon="inline-start" />
                   )}
                   {fetchPreview.isPending
-                    ? 'Loading preview...'
+                    ? 'Loading preview…'
                     : 'Load WhatsApp message'}
                 </Button>
               ) : (
@@ -579,7 +583,12 @@ function AgreementFileCard({
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 px-3 py-3">
           <FileText className="text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{file.originalName}</p>
+            <TruncatedTooltip
+              render={<p className="truncate text-sm font-medium" />}
+              content={file.originalName}
+            >
+              {file.originalName}
+            </TruncatedTooltip>
             <p className="text-sm text-muted-foreground">
               {formatFileSize(file.sizeBytes)}
             </p>

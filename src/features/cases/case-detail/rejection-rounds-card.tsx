@@ -260,7 +260,12 @@ function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+      <TruncatedTooltip
+        render={<p className="mt-1 truncate text-sm font-semibold" />}
+        content={value}
+      >
+        {value}
+      </TruncatedTooltip>
     </div>
   )
 }
@@ -296,7 +301,7 @@ function RoundRow({ round }: { round: Round }) {
               <span className="text-sm font-semibold">Round {round.index}</span>
               <RoundStatusBadge round={round} />
             </div>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               {sentAt ?? 'Date unavailable'}
             </p>
           </div>
@@ -478,9 +483,14 @@ function FieldAuditList({
           className="min-w-0 rounded-lg border bg-muted/20 px-3 py-2"
         >
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-sm font-medium">
+            <TruncatedTooltip
+              render={
+                <p className="min-w-0 flex-1 truncate text-sm font-medium" />
+              }
+              content={field.label}
+            >
               {field.label}
-            </p>
+            </TruncatedTooltip>
             {field.type === 'document' ? (
               <Badge variant="outline">
                 {field.action === 'remove' ? 'Removed' : 'Reuploaded'}
@@ -553,7 +563,12 @@ function FileLink({ href, label }: { href: string; label: string }) {
       render={<a href={href} target="_blank" rel="noreferrer" />}
     >
       <ExternalLink data-icon="inline-start" />
-      <span className="truncate">{label}</span>
+      <TruncatedTooltip
+        render={<span className="truncate" />}
+        content={label}
+      >
+        {label}
+      </TruncatedTooltip>
     </ButtonLink>
   )
 }

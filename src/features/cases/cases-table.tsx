@@ -160,7 +160,7 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
         <DataTableSearch
           value={filters.search ?? ''}
           onChange={(value) => actions.setFilter('search', value || undefined)}
-          placeholder="Search by case number or merchant name..."
+          placeholder="Search by case number or merchant name…"
         />
         {/* Filters follow the table's column order (the queue picker lives
             in the page header). */}
