@@ -1,3 +1,5 @@
+oxlint and oxfmt are used
+
 work on both frontend and backend
 do not run builds on frontend and backend unless specified
 Desktop folder \Onboarding Portal\onboarding-portal-assanpay-BE folder contains Bun Hono backend for this project. use that for backend. backend will be hosted separate

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { CheckCircle2, FilePlus2 } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
@@ -19,16 +20,27 @@ export function SubmissionSuccess({
   data,
   onNewSubmission,
 }: SubmissionSuccessProps) {
+  // This view replaces the form (and the page heading), so the focused submit
+  // button is gone; land focus on the new heading instead of <body>.
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
+
   return (
     <div className="motion-success-enter flex flex-col items-center gap-6 py-12">
       <div className="motion-success-icon flex size-20 items-center justify-center rounded-full bg-muted">
-        <CheckCircle2 className="size-10 text-foreground" />
+        <CheckCircle2 aria-hidden="true" className="size-10 text-foreground" />
       </div>
 
       <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-tight outline-none"
+        >
           Form Submitted Successfully
-        </h2>
+        </h1>
         <p className="mt-2 text-muted-foreground">
           Your merchant onboarding form has been received and is being
           processed.
@@ -37,7 +49,9 @@ export function SubmissionSuccess({
 
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Submission Details</CardTitle>
+          <CardTitle>
+            <h2>Submission Details</h2>
+          </CardTitle>
           <CardDescription>
             Keep this information for your records
           </CardDescription>

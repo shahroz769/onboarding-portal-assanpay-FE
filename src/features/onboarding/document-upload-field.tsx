@@ -50,6 +50,17 @@ export function DocumentUploadField({
   const inputRef = useRef<HTMLInputElement>(null)
   const [isRemoving, setIsRemoving] = useState(false)
   const [hasReturnedToPicker, setHasReturnedToPicker] = useState(false)
+  // Choosing or removing a file swaps the focused button for another one;
+  // this carries focus across the swap instead of dropping it on <body>.
+  const moveFocusOnMountRef = useRef(false)
+  const focusIfPending = (element: HTMLElement | null) => {
+    if (element && moveFocusOnMountRef.current) {
+      moveFocusOnMountRef.current = false
+      element.focus()
+    }
+  }
+  const uploadId = `${name}-upload`
+  const errorId = `${name}-error`
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0]
@@ -63,6 +74,7 @@ export function DocumentUploadField({
       return
     }
 
+    moveFocusOnMountRef.current = true
     onFileChange(selected)
     if (inputRef.current) inputRef.current.value = ''
   }
@@ -82,6 +94,7 @@ export function DocumentUploadField({
 
     setIsRemoving(false)
     setHasReturnedToPicker(true)
+    moveFocusOnMountRef.current = true
     onFileChange(null)
     if (inputRef.current) inputRef.current.value = ''
   }
@@ -119,7 +132,10 @@ export function DocumentUploadField({
           className="motion-file-state flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-2"
           onTransitionEnd={finishRemove}
         >
-          <FileText className="size-4 shrink-0 text-muted-foreground" />
+          <FileText
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground"
+          />
           <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
             <span className="truncate text-sm">{file.name}</span>
             <span className="text-xs text-muted-foreground">
@@ -127,20 +143,25 @@ export function DocumentUploadField({
             </span>
           </div>
           <Button
+            ref={focusIfPending}
             type="button"
             variant="ghost"
             size="icon"
             className="size-7 shrink-0"
             onClick={handleRemove}
           >
-            <X />
+            <X aria-hidden="true" />
             <span className="sr-only">Remove {label}</span>
           </Button>
         </div>
       ) : (
         <Button
+          ref={focusIfPending}
+          id={uploadId}
           type="button"
           variant="outline"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           data-motion={hasReturnedToPicker ? 'returning' : undefined}
           className={cn(
             'justify-start gap-2',
@@ -148,13 +169,14 @@ export function DocumentUploadField({
           )}
           onClick={() => inputRef.current?.click()}
         >
-          <Upload data-icon="inline-start" />
+          <Upload aria-hidden="true" data-icon="inline-start" />
           Choose file
+          <span className="sr-only"> for {label}</span>
         </Button>
       )}
 
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p id={errorId} className="text-sm text-destructive">
           {error}
         </p>
       ) : null}

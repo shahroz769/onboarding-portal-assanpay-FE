@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 
+import { prefersReducedMotion } from '#/hooks/use-reduced-motion'
 import { statusTint, statusTintDeep } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
 import { cn } from '#/lib/utils'
@@ -90,10 +91,14 @@ export function OnboardingSectionNav({
               onClick={() => {
                 setActiveId(section.id)
                 pinnedUntilRef.current = Date.now() + 800
-                document.getElementById(section.id)?.scrollIntoView({
-                  behavior: 'smooth',
+                const target = document.getElementById(section.id)
+                target?.scrollIntoView({
+                  behavior: prefersReducedMotion() ? 'auto' : 'smooth',
                   block: 'start',
                 })
+                // Move focus with the scroll so the next Tab continues inside
+                // the section rather than on the next chip.
+                target?.focus({ preventScroll: true })
               }}
               className={cn(
                 'flex min-w-max flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-center text-xs font-medium whitespace-nowrap transition-colors',
@@ -118,6 +123,9 @@ export function OnboardingSectionNav({
               </span>
               <span className={cn(isActive && !section.complete && 'shimmer')}>
                 {section.label}
+                {section.complete && (
+                  <span className="sr-only">, complete</span>
+                )}
               </span>
             </button>
           )

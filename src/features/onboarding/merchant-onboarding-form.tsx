@@ -251,6 +251,12 @@ function showValidationErrorsToast(errors: Iterable<unknown>) {
   )
 }
 
+// For fields that render a FieldDescription (id `${name}-description`) as well
+// as a FieldError (id `${name}-error`).
+function describedBy(name: string, isInvalid: boolean) {
+  return isInvalid ? `${name}-description ${name}-error` : `${name}-description`
+}
+
 function hasNonEmptyString(value: unknown) {
   return typeof value === 'string' && value.trim() !== ''
 }
@@ -275,24 +281,14 @@ function handleNumericKeyDown(
   event: KeyboardEvent<HTMLInputElement>,
   allowDecimal: boolean,
 ) {
-  if (event.ctrlKey || event.metaKey || event.altKey) {
-    return
-  }
-
-  const allowedKeys = new Set([
-    'Backspace',
-    'Delete',
-    'Tab',
-    'Enter',
-    'ArrowLeft',
-    'ArrowRight',
-    'ArrowUp',
-    'ArrowDown',
-    'Home',
-    'End',
-  ])
-
-  if (allowedKeys.has(event.key)) {
+  // Only filter printable characters. Named keys (Escape, F-keys, Shift+Tab,
+  // IME composition, etc.) pass through; onChange sanitizes pasted text anyway.
+  if (
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    event.key.length !== 1
+  ) {
     return
   }
 
@@ -376,6 +372,8 @@ export function MerchantOnboardingForm({
       if (Object.keys(docErrors).length > 0) {
         setDocumentErrors(docErrors)
         showValidationErrorsToast(Object.values(docErrors))
+        const [firstMissingDoc] = Object.keys(docErrors)
+        document.getElementById(`${firstMissingDoc}-upload`)?.focus()
         return
       }
       setDocumentErrors({})
@@ -406,7 +404,6 @@ export function MerchantOnboardingForm({
           'Unable to submit the application. Please try again.',
         )
         setSubmissionError(message)
-        toast.error(message)
       }
     },
   })
@@ -634,13 +631,15 @@ export function MerchantOnboardingForm({
       <OnboardingSectionNav sections={navSections} />
 
       {/* Section 1: Submitter Information */}
-      <Card id="submitter" className="scroll-mt-28">
+      <Card id="submitter" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={Mail} tone="blue" />
 
             <div>
-              <CardTitle>Submitter Information</CardTitle>
+              <CardTitle>
+                <h2>Submitter Information</h2>
+              </CardTitle>
               <CardDescription>
                 Email address of the person submitting this form
               </CardDescription>
@@ -665,12 +664,18 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="email@example.com"
                       autoComplete="email"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -702,12 +707,18 @@ export function MerchantOnboardingForm({
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="03XXXXXXXXX"
                       autoComplete="tel"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -718,13 +729,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 2: Business Information */}
-      <Card id="business" className="scroll-mt-28">
+      <Card id="business" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={Building2} tone="violet" />
 
             <div>
-              <CardTitle>Business Information</CardTitle>
+              <CardTitle>
+                <h2>Business Information</h2>
+              </CardTitle>
               <CardDescription>
                 Basic business and contact details
               </CardDescription>
@@ -748,11 +761,18 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter business name"
+                      autoComplete="organization"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -781,12 +801,18 @@ export function MerchantOnboardingForm({
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter business phone"
                       autoComplete="tel"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -809,11 +835,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="business@example.com"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -836,11 +868,18 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="https://example.com"
+                      autoComplete="url"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -862,12 +901,19 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter full business address"
+                      autoComplete="street-address"
                       className="min-h-20"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -891,6 +937,9 @@ export function MerchantOnboardingForm({
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={isInvalid}
+                        aria-describedby={
+                          isInvalid ? `${field.name}-error` : undefined
+                        }
                         className="w-full"
                       >
                         <SelectValue placeholder="Select platform" />
@@ -906,7 +955,10 @@ export function MerchantOnboardingForm({
                       </SelectContent>
                     </Select>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -928,11 +980,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="e.g. E-commerce, SaaS, Retail"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -947,14 +1005,23 @@ export function MerchantOnboardingForm({
                   : undefined
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel>Business Registration Date *</FieldLabel>
+                    <FieldLabel id={`${field.name}-label`} htmlFor={field.name}>
+                      Business Registration Date *
+                    </FieldLabel>
                     <Popover>
                       <PopoverTrigger
                         render={
                           <Button
+                            id={field.name}
+                            // Label first, then the button's own text, so the
+                            // picked date (or "Pick a date") is still read.
+                            aria-labelledby={`${field.name}-label ${field.name}`}
                             variant="outline"
                             data-empty={!field.state.value}
                             aria-invalid={isInvalid}
+                            aria-describedby={
+                              isInvalid ? `${field.name}-error` : undefined
+                            }
                             className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
                             onBlur={field.handleBlur}
                           />
@@ -981,7 +1048,10 @@ export function MerchantOnboardingForm({
                       </PopoverContent>
                     </Popover>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1003,12 +1073,18 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Describe what your business does"
                       className="min-h-20"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1019,13 +1095,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 3: Business Classification */}
-      <Card id="classification" className="scroll-mt-28">
+      <Card id="classification" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={Briefcase} tone="teal" />
 
             <div>
-              <CardTitle>Business Classification</CardTitle>
+              <CardTitle>
+                <h2>Business Classification</h2>
+              </CardTitle>
               <CardDescription>
                 Business type and transaction estimates
               </CardDescription>
@@ -1051,6 +1129,7 @@ export function MerchantOnboardingForm({
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={isInvalid}
+                        aria-describedby={describedBy(field.name, isInvalid)}
                         className="w-full"
                       >
                         <SelectValue placeholder="Select business type" />
@@ -1065,11 +1144,14 @@ export function MerchantOnboardingForm({
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <FieldDescription>
+                    <FieldDescription id={`${field.name}-description`}>
                       This determines which documents are required below.
                     </FieldDescription>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1098,11 +1180,17 @@ export function MerchantOnboardingForm({
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="e.g. 500"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1131,11 +1219,17 @@ export function MerchantOnboardingForm({
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, true)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="e.g. 1000000"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1146,13 +1240,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 4: Financial Information */}
-      <Card id="financial" className="scroll-mt-28">
+      <Card id="financial" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={CreditCard} tone="green" />
 
             <div>
-              <CardTitle>Financial Information</CardTitle>
+              <CardTitle>
+                <h2>Financial Information</h2>
+              </CardTitle>
               <CardDescription>
                 Bank account and settlement details
               </CardDescription>
@@ -1176,11 +1272,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter account title"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1192,15 +1294,19 @@ export function MerchantOnboardingForm({
                 const isInvalid = getIsInvalid(field)
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel>Bank Name *</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Bank Name *</FieldLabel>
                     <Combobox
                       items={BANK_NAMES as unknown as string[]}
                       value={field.state.value || null}
                       onValueChange={(value) => field.handleChange(value ?? '')}
                     >
                       <ComboboxInput
+                        id={field.name}
                         placeholder="Search bank..."
                         aria-invalid={isInvalid}
+                        aria-describedby={
+                          isInvalid ? `${field.name}-error` : undefined
+                        }
                         className="w-full"
                         onBlur={field.handleBlur}
                         showClear
@@ -1218,7 +1324,10 @@ export function MerchantOnboardingForm({
                       </ComboboxContent>
                     </Combobox>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1238,11 +1347,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter branch name"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1264,11 +1379,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter account number or IBAN"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1288,14 +1409,18 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={describedBy(field.name, isInvalid)}
                       placeholder="Optional"
                     />
 
-                    <FieldDescription>
+                    <FieldDescription id={`${field.name}-description`}>
                       Required only for international transfers.
                     </FieldDescription>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1306,13 +1431,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 5: Director/CEO/Owner Information */}
-      <Card id="owner" className="scroll-mt-28">
+      <Card id="owner" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={User} tone="amber" />
 
             <div>
-              <CardTitle>Director/CEO/Owner Information</CardTitle>
+              <CardTitle>
+                <h2>Director/CEO/Owner Information</h2>
+              </CardTitle>
               <CardDescription>
                 Details of the Director, CEO, or owner
               </CardDescription>
@@ -1334,11 +1461,17 @@ export function MerchantOnboardingForm({
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Enter full name"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1368,12 +1501,18 @@ export function MerchantOnboardingForm({
                       }
                       onKeyDown={(event) => handleNumericKeyDown(event, false)}
                       aria-invalid={isInvalid}
+                      aria-describedby={
+                        isInvalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="03XXXXXXXXX"
                       autoComplete="tel"
                     />
 
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1384,13 +1523,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 6: Next of Kin */}
-      <Card id="kin" className="scroll-mt-28">
+      <Card id="kin" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={Users} tone="rose" />
 
             <div>
-              <CardTitle>Next of Kin</CardTitle>
+              <CardTitle>
+                <h2>Next of Kin</h2>
+              </CardTitle>
               <CardDescription>Emergency contact relationship</CardDescription>
             </div>
           </div>
@@ -1414,6 +1555,9 @@ export function MerchantOnboardingForm({
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={isInvalid}
+                        aria-describedby={
+                          isInvalid ? `${field.name}-error` : undefined
+                        }
                         className="w-full"
                       >
                         <SelectValue placeholder="Select relation" />
@@ -1429,7 +1573,10 @@ export function MerchantOnboardingForm({
                       </SelectContent>
                     </Select>
                     {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
                     )}
                   </Field>
                 )
@@ -1440,13 +1587,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Section 7: Documents */}
-      <Card id="documents" className="scroll-mt-28">
+      <Card id="documents" tabIndex={-1} className="scroll-mt-28">
         <CardHeader>
           <div className="flex items-center gap-3">
             <SectionIcon icon={FileText} tone="orange" />
 
             <div>
-              <CardTitle>Documents</CardTitle>
+              <CardTitle>
+                <h2>Documents</h2>
+              </CardTitle>
               <CardDescription>
                 Upload required documents for verification
               </CardDescription>
@@ -1558,11 +1707,15 @@ export function MerchantOnboardingForm({
       </Card>
 
       {/* Submit */}
-      {submissionError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{submissionError}</AlertDescription>
-        </Alert>
-      ) : null}
+      {/* Always mounted so the error is announced when it appears; the inner
+          Alert drops its own role to avoid a nested alert. */}
+      <div role="alert" className="-mt-6">
+        {submissionError ? (
+          <Alert variant="destructive" role={undefined} className="mt-6">
+            <AlertDescription>{submissionError}</AlertDescription>
+          </Alert>
+        ) : null}
+      </div>
       <div className="flex justify-between gap-3">
         <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
           <AlertDialogTrigger render={<Button type="button" variant="ghost" />}>
@@ -1594,7 +1747,7 @@ export function MerchantOnboardingForm({
           {(isSubmitting) => (
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
+              Submit Application
             </Button>
           )}
         </form.Subscribe>

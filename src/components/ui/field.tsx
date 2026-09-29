@@ -221,7 +221,10 @@ function FieldError({
 
   return (
     <div
-      role="alert"
+      // With an id, the control points at this via aria-describedby and the
+      // error is read when the field is focused, so an alert would announce
+      // it twice. Unlinked errors still need the alert to be heard at all.
+      role={props.id ? undefined : 'alert'}
       data-slot="field-error"
       className={cn('text-sm font-normal text-destructive', className)}
       {...props}
