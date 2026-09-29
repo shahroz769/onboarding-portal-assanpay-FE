@@ -10,6 +10,11 @@ import {
   CaseDetailShell,
   CaseDetailShellSkeleton,
 } from '#/features/cases/case-detail'
+import {
+  preloadQueueRenderer,
+  resolveQueueWorkflowType,
+} from '#/features/cases/case-detail/queue-registry'
+import { loadCaseDetailPage } from '#/hooks/use-case-detail-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { parseUuidParam } from '#/lib/route-params'
 
@@ -21,10 +26,18 @@ export const Route = createFileRoute('/_app/cases/$caseId')({
     title: 'Case Details',
     hidePageShell: true,
   },
+  // The skeleton shows as soon as the case is clicked while the loader fetches
+  // the case and everything around it in parallel, and leaves as soon as the
+  // case arrives. A failed case request lands in CaseDetailsError.
   pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: CaseDetailsPending,
-  // No loader: CaseDetailShell fetches the case and everything around it
-  // itself; a failed case request is rethrown into CaseDetailsError.
+  loader: async ({ context: { queryClient }, params: { caseId }, preload }) => {
+    // Hovering a case link (a table row) must not fetch it; the click does.
+    if (preload) return
+    const detail = await loadCaseDetailPage(queryClient, caseId)
+    preloadQueueRenderer(resolveQueueWorkflowType(detail.queue))
+  },
   errorComponent: CaseDetailsError,
   notFoundComponent: CaseDetailsNotFound,
   component: CaseDetailsRoute,
@@ -89,7 +102,7 @@ function CaseDetailsError({ error }: { error: unknown }) {
         <Button
           type="button"
           onClick={() => {
-            // Reset the failed query so the page requests it again.
+            // Reset the failed query so the re-run loader requests it again.
             void queryClient.resetQueries({
               predicate: (query) => query.state.status === 'error',
             })

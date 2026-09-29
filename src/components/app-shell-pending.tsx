@@ -116,7 +116,10 @@ function GhostMark({ ghost }: { ghost: number }) {
         xmlns="http://www.w3.org/2000/svg"
       >
         <path transform={HALF_FRAME} d={HALF_BODY} />
-        <path transform={`rotate(180 187.5 187.5) ${HALF_FRAME}`} d={HALF_BODY} />
+        <path
+          transform={`rotate(180 187.5 187.5) ${HALF_FRAME}`}
+          d={HALF_BODY}
+        />
       </svg>
     </div>
   )

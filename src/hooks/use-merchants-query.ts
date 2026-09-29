@@ -3,11 +3,11 @@ import {
   keepPreviousData,
   queryOptions,
   useMutation,
-  useQuery,
   useQueryClient,
+  type FetchQueryOptions,
   type InfiniteData,
+  type QueryClient,
   type QueryKey,
-  type UseQueryOptions,
 } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -127,23 +127,18 @@ export function merchantHistoryQueryOptions(merchantId: string) {
   })
 }
 
-export function useLoadedMerchantSection<
-  TQueryFnData,
-  TError,
-  TData,
-  TQueryKey extends QueryKey,
->(options: UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>) {
-  const { data, error, isError, isPending } = useQuery(options)
-
-  if (isError && !data) {
-    throw error
-  }
-
-  if (isPending || !data) {
-    return null
-  }
-
-  return data
+/**
+ * A merchant tab's route loader: the tab's request starts as the tab is
+ * clicked, alongside its skeleton, and a failed request lands in the tab's
+ * error boundary. Hover preloads don't fetch.
+ */
+export async function loadMerchantSection<TData, TQueryKey extends QueryKey>(
+  queryClient: QueryClient,
+  options: FetchQueryOptions<TData, Error, TData, TQueryKey>,
+  preload: boolean,
+) {
+  if (preload) return
+  await queryClient.ensureQueryData(options)
 }
 
 export function useUpdateMerchantLimitsMdrMutation(merchantId: string) {

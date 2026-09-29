@@ -3,9 +3,10 @@
 **Date:** 2026-09-25 (reorganized edition)
 **Scope:** read-only review — no code was modified, committed, or pushed in either repository.
 **Repos:**
+
 - Backend — https://github.com/shahroz769/onboarding-portal-assanpay-BE (`be/`)
 - Frontend — https://github.com/shahroz769/onboarding-portal-assanpay-FE (`fe/`)
-**Method:** static analysis of both trees, FE↔BE contract cross-check (~95 frontend API calls verified against backend routes and Zod schemas), plus toolchain runs (`tsc --noEmit`, `eslint`, `vite build`). Transient build artifacts were removed afterwards.
+  **Method:** static analysis of both trees, FE↔BE contract cross-check (~95 frontend API calls verified against backend routes and Zod schemas), plus toolchain runs (`tsc --noEmit`, `eslint`, `vite build`). Transient build artifacts were removed afterwards.
 
 ---
 
@@ -17,13 +18,13 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 ### Findings at a glance
 
-| Severity | Backend | Frontend | Integration | Database | **Total** |
-|---|---|---|---|---|---|
-| 🔴 Critical | 3 | 0 | 0 | 0 | **3** |
-| 🟠 High | 4 | 1 | 0 | 0 | **5** |
-| 🟡 Medium | 7 | 4 | 2 | 0 | **13** |
-| 🔵 Low | 5 | 11 | 2 | 3 | **21** |
-| **Total** | **19** | **16** | **4** | **3** | **42** |
+| Severity    | Backend | Frontend | Integration | Database | **Total** |
+| ----------- | ------- | -------- | ----------- | -------- | --------- |
+| 🔴 Critical | 3       | 0        | 0           | 0        | **3**     |
+| 🟠 High     | 4       | 1        | 0           | 0        | **5**     |
+| 🟡 Medium   | 7       | 4        | 2           | 0        | **13**    |
+| 🔵 Low      | 5       | 11       | 2           | 3        | **21**    |
+| **Total**   | **19**  | **16**   | **4**       | **3**    | **42**    |
 
 ### Top 4 risks
 
@@ -53,18 +54,21 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **CRT-01 — Post-commit error deletes committed KYC files from Google Drive** · 🔴 Critical · Backend
 📍 `be/src/modules/merchants/merchants.service.ts:344-424`
-- **What:** `createMerchantSubmission()` uploads KYC files to Drive *before* the DB transaction, commits merchant + documents + initial cases inside the transaction (L344–402), then does post-commit bookkeeping (L404–413). A single `try` wraps both phases, so a transient post-commit DB error falls into the `catch` (L418), which calls `cleanupFailedAttemptObjects()` — and that deletes every object whose lifecycle isn't `'superseded'`, **including `'current'` objects the committed rows reference**.
+
+- **What:** `createMerchantSubmission()` uploads KYC files to Drive _before_ the DB transaction, commits merchant + documents + initial cases inside the transaction (L344–402), then does post-commit bookkeeping (L404–413). A single `try` wraps both phases, so a transient post-commit DB error falls into the `catch` (L418), which calls `cleanupFailedAttemptObjects()` — and that deletes every object whose lifecycle isn't `'superseded'`, **including `'current'` objects the committed rows reference**.
 - **Impact:** A network blip after commit irreversibly deletes customer KYC documents from Drive while `merchant_documents` rows still point at the deleted file IDs. Regulated data loss with no recovery.
 - **Fix:** Narrow the `try/catch` so cleanup runs only when the DB transaction itself fails. Post-commit bookkeeping gets its own error handler that logs/alerts and never deletes committed files. Add a regression test asserting cleanup never touches `'current'` objects.
 
 **CRT-02 — Same post-commit cleanup bug in public resubmission** · 🔴 Critical · Backend
 📍 `be/src/modules/merchants/public-resubmission.routes.ts:668-710`
+
 - **What:** Token consumption + new documents + case updates commit at L668; marking attempt objects `'current'` and superseding old files (L670–674) happens after commit inside the same outer `try`; the `catch` (L704–705) calls `cleanupFailedAttemptObjects()`.
 - **Impact:** A failure in the post-commit bookkeeping deletes newly uploaded files the committed rows now reference — while the client's resubmission is recorded as successful.
 - **Fix:** Same as CRT-01: separate pre-commit cleanup from post-commit error handling; post-commit failures must alert, never delete.
 
 **CRT-03 — Google Drive deletions happen inside an open DB transaction** · 🔴 Critical · Backend
 📍 `be/src/modules/merchants/merchants.service.ts:712-856`
+
 - **What:** `permanentlyDeleteMerchant()` deletes irreversible external Drive objects (~L811–816) while the Postgres transaction (L717) is still open. Subsequent SQL (`tx.delete(emailLog)`, `tx.delete(merchants)`) can still fail and roll back — and a rollback cannot undelete Drive files.
 - **Impact:** Merchant row and document links survive while the files are permanently gone: orphaned references to deleted KYC data.
 - **Fix:** Team rule — external side effects (Drive, email) happen **after** commit, never inside a transaction. Consider the outbox pattern already used for case-flow jobs (`caseFlowCloseJobs`) for file-lifecycle transitions.
@@ -73,6 +77,7 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **HIGH-01 — Merchant portal password is deterministic and publicly derivable** · 🟠 High · Backend
 📍 `be/src/modules/cases/case-detail-lookups.ts:477-480`
+
 - **What:**
   ```ts
   export function buildPortalPassword(email: string, merchantNumber: number) {
@@ -86,24 +91,28 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **HIGH-04 — Generic status endpoint allows jumps that bypass workflow close validation** · 🟠 High · Backend
 📍 `be/src/modules/cases/cases.schemas.ts:45-64`, `be/src/modules/cases/case-transition.service.ts:~190-197`
-- **What:** `isValidStatusTransition()` allows *any* forward jump (`if (nextIdx > currentIdx) return true`, L58), so `PATCH /api/cases/:id/status` lets an owner jump `new → closed` directly. That path runs only cross-queue close blockers, not the workflow-internal validations `advanceStage()` enforces (document_review: must be `working` + ≥1 sub-merchant + zero rejected fields; sub_merchant_form: Final Form *and* sent-email proof uploaded). Closing auto-sets `closeOutcome='successful'` when omitted — a case can be closed "successful" without the compliance artifacts the workflow exists to require. Separately, `awaiting_client` is ordered *after* terminal states in `statusOrder`, treating a resubmission-loop state as "later than closed".
+
+- **What:** `isValidStatusTransition()` allows _any_ forward jump (`if (nextIdx > currentIdx) return true`, L58), so `PATCH /api/cases/:id/status` lets an owner jump `new → closed` directly. That path runs only cross-queue close blockers, not the workflow-internal validations `advanceStage()` enforces (document_review: must be `working` + ≥1 sub-merchant + zero rejected fields; sub_merchant_form: Final Form _and_ sent-email proof uploaded). Closing auto-sets `closeOutcome='successful'` when omitted — a case can be closed "successful" without the compliance artifacts the workflow exists to require. Separately, `awaiting_client` is ordered _after_ terminal states in `statusOrder`, treating a resubmission-loop state as "later than closed".
 - **Impact:** Compliance validations are silently skippable; audit trail can show "successful" closes that never produced required artifacts.
 - **Fix:** Restrict the generic endpoint to adjacent transitions or route `closed` through the same validation as `advanceStage`; fix `statusOrder` so `awaiting_client` isn't terminal-adjacent.
 
 **HIGH-05 — Public merchant submission has no idempotency** · 🟠 High · Backend
 📍 `be/src/modules/merchants/form.routes.ts:10`
+
 - **What:** `POST /api/public/merchant-form` creates Drive folders, uploads files, inserts merchant + documents, and triggers initial case creation with no idempotency key or duplicate guard.
 - **Impact:** A client timeout → retry (normal on flaky mobile networks for multi-file uploads) creates a second merchant, second Drive tree, second document set, and second batch of cases — with KYC PII duplicated. No safe retry is possible.
 - **Fix:** Idempotency keys / submission tokens on the public endpoint; dedupe guard on business identifiers.
 
 **HIGH-06 — Resubmission saga can strand a case in `awaiting_client` with no recovery** · 🟠 High · Backend
 📍 `be/src/modules/cases/case-documents-review.service.ts:585-830`
-- **What:** `sendForResubmission()` is a four-step saga: (1) case → `awaiting_client` (L722–730, race-safe); (2) token issued in a *separate* transaction (L733–737); (3) email sent, with compensation on *returned* failure (L739–761); (4) history recorded (L805–830). A crash/OOM between steps 2 and 3 leaves the case in `awaiting_client` with a valid token the merchant never received — and re-sending is impossible because the endpoint requires `status === 'working'` (L626).
+
+- **What:** `sendForResubmission()` is a four-step saga: (1) case → `awaiting_client` (L722–730, race-safe); (2) token issued in a _separate_ transaction (L733–737); (3) email sent, with compensation on _returned_ failure (L739–761); (4) history recorded (L805–830). A crash/OOM between steps 2 and 3 leaves the case in `awaiting_client` with a valid token the merchant never received — and re-sending is impossible because the endpoint requires `status === 'working'` (L626).
 - **Impact:** Stranded cases recoverable only by manual DB intervention; merchants silently stuck.
 - **Fix:** Add a recovery/retry path (re-issue endpoint or watchdog job that detects issued-but-unemailed tokens); consider a single transaction or explicit saga compensation.
 
 **HIGH-08 — `bun run lint` is completely broken (linter never runs)** · 🟠 High · Frontend
 📍 `fe/package.json:61`, `fe/eslint.config.js`
+
 - **What:** `typescript@7.0.2` vs `@typescript-eslint/*@8.58.2` (peer requires `typescript >=4.8.4 <6.1.0`) → ESLint crashes at startup (`TypeError: Cannot read properties of undefined (reading 'Cjs')`). Zero files are linted.
 - **Impact:** CI lint gives false confidence; violations accumulate silently.
 - **Fix:** Upgrade `@typescript-eslint/*` to a line supporting TS 7 (or pin TS <6.1); verify `bun run lint` exits 0 in CI.
@@ -112,78 +121,91 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **MED-01 — User creation commits before the invite email; failure leaves a 502 + uniqueness trap** · 🟡 Medium · Backend
 📍 `be/src/modules/users/users.service.ts:373-421`
-- **What:** User + queue access commit (L386–409); `sendPasswordEmail` (L411) throws `AppError(502)` on Resend failure *after* the user row and password token exist. Retrying `POST /api/users` then 409s on the uniqueness check while the user never got credentials and can't log in (`passwordHash` null). A resend-invite path exists (L565) but is undiscoverable from the error.
+
+- **What:** User + queue access commit (L386–409); `sendPasswordEmail` (L411) throws `AppError(502)` on Resend failure _after_ the user row and password token exist. Retrying `POST /api/users` then 409s on the uniqueness check while the user never got credentials and can't log in (`passwordHash` null). A resend-invite path exists (L565) but is undiscoverable from the error.
 - **Impact:** Admins stuck with a half-created user and no clear recovery path in the UI.
 - **Fix:** Return the created user id with an explicit "invite email pending" state instead of a bare 502; surface the resend-invite action.
 
 **MED-02 — Unvalidated path IDs turn into 500s instead of 400s** · 🟡 Medium · Backend
 📍 e.g. `be/src/modules/cases/cases.routes.ts:253`, `be/src/modules/merchants/merchants.routes.ts:66`
+
 - **What:** Most routes pass `c.req.param('id')` straight to the service layer, where `eq(cases.id, 'not-a-uuid')` raises Postgres `invalid input syntax for type uuid` → generic 500 (`be/src/middleware/error-handler.ts:31`). A few routes validate manually (`cases.routes.ts:201-206`), proving the inconsistency is accidental.
 - **Impact:** Client bugs surface as 500s; noisy error logs; no actionable message for API consumers.
 - **Fix:** Validate path IDs with shared Zod params everywhere → 400 on invalid input.
 
 **MED-03 — List filters are free-form strings with inconsistent failure modes** · 🟡 Medium · Backend
 📍 `be/src/modules/merchants/merchants.schemas.ts:569-581`, `be/src/modules/users/users.schemas.ts:37-41`
-- **What:** Merchant list: `status`/`priority`/`currency`/`businessScope` are bare strings — invalid values are silently dropped, so `?status=bogus` returns *unfiltered* 200s, misleading clients. User list: bare strings cast to enums → invalid value becomes a 500. Two opposite failure modes, no consistent contract.
+
+- **What:** Merchant list: `status`/`priority`/`currency`/`businessScope` are bare strings — invalid values are silently dropped, so `?status=bogus` returns _unfiltered_ 200s, misleading clients. User list: bare strings cast to enums → invalid value becomes a 500. Two opposite failure modes, no consistent contract.
 - **Impact:** Silent wrong-data responses on one endpoint, 500s on the other.
 - **Fix:** Validate filters against their enums and return 400 on invalid input, consistently.
 
 **MED-04 — `GET /api/users` is unpaginated** · 🟡 Medium · Backend
 📍 `be/src/modules/users/users.service.ts:308-347`
-- **What:** Returns *every* user, then hydrates queue-access rows and owned-case counts for the whole set. No `limit`/`cursor` in the schema — unlike the keyset pagination on merchants/cases.
+
+- **What:** Returns _every_ user, then hydrates queue-access rows and owned-case counts for the whole set. No `limit`/`cursor` in the schema — unlike the keyset pagination on merchants/cases.
 - **Impact:** Response cost grows unbounded with headcount.
 - **Fix:** Add keyset pagination like merchants/cases.
 
 **MED-05 — `bulkAssignCaseSchema.ids` has no upper bound** · 🟡 Medium · Backend
 📍 `be/src/modules/cases/cases.schemas.ts:94-99`
+
 - **What:** Every other bulk schema caps at 100 (`be/src/modules/merchants/merchants.schemas.ts:597-599`), but bulk-assign runs per-case `transitionCaseState` (row lock + history + notifications) in a loop over an unbounded array.
 - **Impact:** One request can hold many DB rows and trigger a notification fan-out storm.
 - **Fix:** Cap at 100 like the other bulk schemas.
 
 **MED-06 — Manual email "preview token" is just the case ID** · 🟡 Medium · Backend
 📍 `be/src/modules/cases/case-communications.service.ts:796-801,835-837`
+
 - **What:** Preview returns `tokenId: caseId`; confirmation checks only `input.tokenId !== caseId`. No random, expiring, single-use token bound to the previewed recipient/subject/body.
 - **Impact:** An owner can confirm "sent manually" without the previewed content ever being rendered — the audit history entry proves less than it appears.
 - **Fix:** Bind confirmations to a real single-use preview token carrying the rendered content hash.
 
 **MED-07 — Merchant endpoints have no queue-access scoping; any agent can read all merchant KYC** · 🟡 Medium · Backend
 📍 `be/src/modules/merchants/merchants.routes.ts:58-90`
+
 - **What:** Overview/form/history/limits-MDR endpoints are exposed to **all authenticated roles** with no queue view/work check (cases enforce `assertCanViewCase`).
 - **Impact:** Any agent — even with zero queue access — can pull any merchant's full KYC: CNIC documents, IBANs, phone numbers, Drive links. Contradicts the "agents are constrained by queue access" model.
 - **Fix:** Add queue-access scoping to merchant reads (or document the intentional exception).
 
 **MED-08 — Onboarding draft persists sensitive PII in plaintext localStorage with no expiry** · 🟡 Medium · Frontend
 📍 `fe/src/features/onboarding/merchant-onboarding-form.tsx:100-155`
+
 - **What:** Every non-empty string field (`ownerFullName`, `ownerPhone`, `businessEmail`, `businessAddress`, `accountNumberIban`, next-of-kin) is autosaved debounced to `localStorage` in cleartext, with a version tag but no TTL; cleanup happens only on successful submit.
 - **Impact:** The public form runs on potentially shared devices; PII/bank data survives indefinitely, readable by any script on the origin and anyone opening the browser later.
 - **Fix:** Exclude bank/PII fields from the draft, add 24–48h expiry, or use `sessionStorage`.
 
 **MED-09 — Password visibility toggle is unreachable via keyboard** · 🟡 Medium · Frontend
 📍 `fe/src/components/login-form.tsx:158-168`
+
 - **What:** `tabIndex={-1}` on the toggle button.
 - **Impact:** Keyboard-only users can't reveal the password to check typos — an a11y failure on the login page.
 - **Fix:** Remove `tabIndex={-1}`; ensure proper focus styling.
 
 **MED-10 — Resubmission form hand-rolls validation instead of reusing Zod schemas** · 🟡 Medium · Frontend
 📍 `fe/src/features/onboarding/resubmission-form.tsx:340-430` vs `fe/src/schemas/merchant-onboarding.schema.ts`
+
 - **What:** Per-field imperative checks (URL constructor, email/phone regexes) duplicate existing Zod schemas (`localMobileNumberSchema`, `digitsOnlyPhoneNumberSchema`, …).
 - **Impact:** The two forms will drift; double maintenance, inconsistent error copy.
 - **Fix:** Reuse the shared Zod schemas in the resubmission form.
 
-**MED-11 — 401 interceptor surfaces the *refresh* error instead of the original request error** · 🟡 Medium · Frontend
+**MED-11 — 401 interceptor surfaces the _refresh_ error instead of the original request error** · 🟡 Medium · Frontend
 📍 `fe/src/lib/api-client.ts:66-92`
+
 - **What:** On non-terminal refresh failure the caller receives the refresh failure, not the error from the request it actually made.
 - **Impact:** Misattributed errors; confusing toasts and logs.
 - **Fix:** Reject with the original request's error.
 
 **MED-12 — Enum drift: FE `QUEUE_WORKFLOW_TYPES` missing `'physical_agreement'`** · 🟡 Medium · Integration
 📍 FE `fe/src/schemas/queue-workflow.schema.ts:5-15` vs BE `be/src/contracts/queues.ts:10-21`
+
 - **What:** BE has 9 workflow types plus `'physical_agreement'`; FE lists only the 9. FE queue-creation UI can't create/select `physical_agreement` queues; BE queues of that type are unrepresentable in FE types. No runtime crash (schema never `.parse()`d against BE data) — a functional gap.
 - **Impact:** New queue type is invisible/unmanageable from the UI.
 - **Fix:** Add `'physical_agreement'` to the FE union; add a CI contract-drift check (see §6.3).
 
 **MED-13 — Cookie defaults break cross-site refresh in the split production deployment** · 🟡 Medium · Integration
 📍 BE `.env.example` (`COOKIE_SECURE=false`, `COOKIE_SAME_SITE=lax`); FE `fe/src/lib/api-client.ts:17` (`withCredentials: true`)
+
 - **What:** Over HTTPS with FE on a different origin, the browser won't send the httpOnly refresh cookie cross-site → silent refresh dies and users are logged out after the 15-min access token expires. The example file documents the fix but ships insecure defaults.
 - **Impact:** Production users get logged out every 15 minutes in the intended split deployment.
 - **Fix:** Derive `COOKIE_SECURE`/`COOKIE_SAME_SITE` from an explicit prod profile (`true`/`none`); verify `VITE_API_URL` ↔ `CORS_ORIGIN` wiring.
@@ -192,42 +214,52 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **LOW-01 — Unauthenticated `/health/db` leaks operational internals** · 🔵 Low · Backend
 📍 `be/src/index.ts:84-117`
+
 - Exposes worker readiness, cycle timings, and retrying/failed/blocked job counts without auth. Put behind auth or IP allowlisting.
 
 **LOW-03 — HTML-escaping applied before persistence corrupts stored data** · 🔵 Low · Backend
 📍 `be/src/modules/merchants/merchants.schemas.ts:199-203,522-535`
-- `sanitizedStringSchema` escapes `&<>"'` via Zod `.transform()` on the way *into* the DB (`Smith & Sons` → `Smith &amp; Sons` at rest); any correctly-escaping renderer double-encodes. Escaping is an output concern — store raw, escape on render.
+
+- `sanitizedStringSchema` escapes `&<>"'` via Zod `.transform()` on the way _into_ the DB (`Smith & Sons` → `Smith &amp; Sons` at rest); any correctly-escaping renderer double-encodes. Escaping is an output concern — store raw, escape on render.
 
 **LOW-04 — File signature check is a 16-byte sanity check, not a malware boundary** · 🔵 Low · Backend
 📍 `be/src/lib/storage/file-signatures.ts:14,123-132`
+
 - Any ZIP passes as `docx`; no OOXML structure validation. Fine as a typo-catcher; don't rely on it for security.
 
 **LOW-05 — Google OAuth token cached until expiry with no 401 recovery** · 🔵 Low · Backend
 📍 `be/src/lib/storage/google-drive.ts:63-65`
+
 - Revocation or clock-skew fails every Drive call until cache expiry. Add refresh-on-401.
 
 **LOW-06 — SSE fan-out is in-process only** · 🔵 Low · Backend
 📍 `be/src/modules/notifications/notifications.events.ts:1-60` (file itself documents: "single-process only; for multi-instance, swap with Redis pub/sub")
+
 - Horizontal scaling silently breaks live notifications for clients connected to other processes. Swap to Redis pub/sub before scaling.
 
 **LOW-08 — Assign/priority mutations don't invalidate the open case-detail query** · 🔵 Low · Frontend
 📍 `fe/src/hooks/use-cases-query.ts:76-117`
+
 - Only `CASES_KEY` is invalidated, not `[...CASE_DETAIL_KEY, caseId]` → stale owner/priority on a detail page open in another tab.
 
 **LOW-09 — Duplicated API-error-message extraction** · 🔵 Low · Frontend
 📍 `fe/src/components/login-form.tsx:26-58`, `fe/src/routes/onboarding-form.resubmit.$token.tsx:57-63` vs shared `fe/src/lib/get-api-error-message.ts`
+
 - Three copies of response-shape sniffing to keep in sync. Use the shared helper.
 
 **LOW-10 — `dangerouslySetInnerHTML` in chart theme injection** · 🔵 Low · Frontend
 📍 `fe/src/components/ui/chart.tsx:88-103`
+
 - Standard shadcn pattern with developer-controlled ids → minimal practical risk, and it's the only usage in the app. Add a comment/guard.
 
 **LOW-14 — API/hook layering inconsistency** · 🔵 Low · Frontend
 📍 `fe/src/apis/merchant-onboarding.ts:72-88,154-172`
+
 - Onboarding mutations live in `src/apis/` while every other feature keeps hooks in `src/hooks/`. Pick one layering and align.
 
 **LOW-15 — Two sources of truth for the production API URL** · 🔵 Low · Frontend
 📍 `fe/src/config/client-env.ts:4-5` (fallback `https://onboard.assanpay.net`) vs `fe/wrangler.jsonc:8` (`vars.VITE_API_URL`)
+
 - They agree today; if one changes, the other silently wins depending on build env. Single canonical source.
 
 **LOW-16 — Hidden file input has no accessible label** · 🔵 Low · Frontend
@@ -235,6 +267,7 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **LOW-17 — Single-use tokens travel in URL paths** · 🔵 Low · Frontend
 📍 `fe/src/routes/set-password.$token.tsx`, `fe/src/routes/onboarding-form.resubmit.$token.tsx`
+
 - Mitigated by single-use + expiry + good 410/404 screens; noted for completeness (tokens can linger in browser history/server logs).
 
 **LOW-18 — Merchant detail route lacks a `pendingComponent`** · 🔵 Low · Frontend
@@ -244,6 +277,7 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 📍 `fe/src/routes/set-password.$token.tsx:88-101` — add `onBlur`/`onChange` validators so users learn about a weak password before clicking submit.
 
 **LOW-20 — Background refetch failures in tables are silent** · 🔵 Low · Frontend
+
 - With `keepPreviousData` + `staleTime: 30s`, a failed background refetch leaves stale rows with no error indication. Surface `isError` as a banner with retry.
 
 **LOW-21 — Breadcrumb passes possibly-`undefined` `queueId` search param** · 🔵 Low · Frontend
@@ -251,19 +285,24 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 
 **LOW-22 — FE `Queue` type claims a field the BE never returns** · 🔵 Low · Integration
 📍 FE `fe/src/schemas/cases.schema.ts:89` vs BE `be/src/modules/queues/queues.service.ts:229-240`
+
 - FE requires `createdAt: z.string()` on `queueSchema`; BE `listQueues` selects only `{id,name,slug,prefix,workflowType,lifecycle,qcEnabled,slaHours,isActive}`. No runtime impact today (no zod parse, no reads of `queue.createdAt`) — a type-only lie that will bite when rendered. Fix the type.
 
 **LOW-23 — Prod hostnames differ across repos (deploy wiring)** · 🔵 Low · Integration
 📍 FE prod API fallback `https://onboard.assanpay.net` (`fe/src/config/client-env.ts:9`) vs BE `.env.example` prod `CORS_ORIGIN` entry `https://onboarding-portal-assanpay.shahrozahmed.workers.dev`
+
 - Dev values are consistent; for production `VITE_API_URL` and `CORS_ORIGIN` must be wired to the same pair or all credentialed calls fail CORS.
 
 **LOW-24 — Money/rate column types not verified** · 🔵 Low · Database
+
 - Not confirmed in this pass whether monetary fields (limits, MDR rates in `merchants` / `portalMidLimitApplications`) use `numeric` or integer minor-units rather than `float`/`double`. Worth a manual audit — floats in money columns are a classic rounding-bug source.
 
 **LOW-25 — Covering indexes not verified against a live DB** · 🔵 Low · Database
+
 - Run `bun run db:audit` against a migrated staging DB and add any missing FK/covering indexes it reports; pay particular attention to `caseHistory(caseId, createdAt)`, `notifications(userId, readAt)`, and `emailLog` lookups.
 
 **LOW-26 — No soft-delete or retention policy for regulated KYC data** · 🔵 Low · Database
+
 - `DELETE /api/merchants/:id/permanent` and bulk-delete are hard deletes of regulated data. Consider a scheduled retention/purge policy with legal-hold flag instead of ad-hoc permanent delete, plus an audit record of who/when for every permanent deletion (currently only `caseHistory` covers cases).
 
 ---
@@ -271,18 +310,23 @@ That said, the review found **42 open findings: 3 Critical, 5 High, 13 Medium, 2
 ## 4. Thematic analysis
 
 ### 4.1 Security posture
-The fundamentals are solid: no hardcoded secrets, httpOnly refresh cookies with rotation, hashed at-rest tokens, `Bun.password` hashing, atomic single-use token claims, strict Zod schemas on write bodies, CORS allowlist, Resend idempotency keys. The holes are all *above* that foundation: derivable credentials (HIGH-01), missing authorization checks (MED-07), a bypassable workflow (HIGH-04), and client-side data leaks (MED-08). Fixing the High items would leave a genuinely defensible posture.
+
+The fundamentals are solid: no hardcoded secrets, httpOnly refresh cookies with rotation, hashed at-rest tokens, `Bun.password` hashing, atomic single-use token claims, strict Zod schemas on write bodies, CORS allowlist, Resend idempotency keys. The holes are all _above_ that foundation: derivable credentials (HIGH-01), missing authorization checks (MED-07), a bypassable workflow (HIGH-04), and client-side data leaks (MED-08). Fixing the High items would leave a genuinely defensible posture.
 
 ### 4.2 Data integrity & transaction discipline
+
 CRT-01/02/03 are one pattern: external side effects (Drive) and DB transactions are interleaved instead of sequenced. The codebase already contains the right pattern — the outbox table `caseFlowCloseJobs` (`SKIP LOCKED` + advisory locks + bounded backoff) — it just isn't applied to file-lifecycle transitions. Adopting "side effects after commit, via outbox" as a team rule eliminates the entire Critical class.
 
 ### 4.3 FE↔BE contract health
+
 Remarkably good: zero missing endpoints and zero request/response field mismatches across ~95 calls; auth token format, refresh flow shapes, and error envelopes all compatible. The only actionable drift is MED-12 (missing enum value), LOW-22 (type-only field lie), and the deployment-wiring items MED-13/LOW-23. **Unused backend surface** (not bugs, but surface to justify or remove): `GET /api/cases/owners`, `PATCH /api/cases/:id/status`, `PUT /api/cases/:id/sub-merchant-form/selection`, `GET /api/configuration/`, queue stage CRUD, flow-jobs admin routes, `DELETE /api/merchants/:id`, `POST /api/merchants/bulk-delete`, `POST /api/auth/register-super-admin`, `GET /health/db`.
 
 ### 4.4 Database health
+
 34 tables, 81 forward-only sequential migrations — good hygiene, and a `db:audit` script exists for duplicate indexes / FK coverage. Issues are: corrupted-at-rest data from pre-persistence HTML escaping (LOW-03), unverified money types (LOW-24) and indexes (LOW-25), and no retention story (LOW-26).
 
 ### 4.5 Toolchain & CI readiness
+
 Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (HIGH-08), **zero test files exist in either repo**, the router ships a 1,465 kB chunk, and `db:audit` isn't in CI. Priority toolchain fixes: repair lint, add contract/saga/idempotency tests, code-split the router bundle, CI running typecheck + lint + tests + `db:audit`.
 
 ---
@@ -303,6 +347,7 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 ## 6. Recommendations
 
 ### 6.1 UI/UX improvements
+
 1. Code-split the router bundle (1,465 kB / 310.9 kB gzip) — route-level lazy loading for heavy panels (configuration, flow designer, dashboard charts).
 2. Onboarding draft: 24–48h expiry, exclude bank/PII fields or move to `sessionStorage` (MED-08); add explicit discard affordance.
 3. Validate set-password on blur/change, not submit-only (LOW-19); reuse shared Zod schemas in the resubmission form (MED-10).
@@ -314,6 +359,7 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 9. The internal `fe/composition-patterns-todo.md` lists 15 refactor items (4 High, 11 Medium) — treat as tech-debt prioritization input, not defects.
 
 ### 6.2 Missing features (for a production onboarding portal)
+
 1. Idempotency for public submission (HIGH-05) + duplicate-merchant detection (fuzzy match on CNIC/phone/business name with a review queue).
 2. Resubmission recovery UI: re-send/expire resubmission links for stuck `awaiting_client` cases (HIGH-06).
 3. Credential lifecycle: random portal passwords (HIGH-01), forced first-login rotation, merchant password-reset flow, audit log of credential emails.
@@ -326,6 +372,7 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 10. Tests: contract tests for `isValidStatusTransition`, resubmission saga, idempotency, and the Drive/DB ordering invariants (CRT-01–03).
 
 ### 6.3 Architecture improvements
+
 1. **Outbox for all external side effects** — extend the `caseFlowCloseJobs` pattern to Drive file-lifecycle transitions and email sends (eliminates the CRT-01/02/03 class).
 2. **Saga/recovery for multi-step flows** — resubmission (HIGH-06) and user-invite (MED-01) need single-transaction designs or explicit compensation + watchdog sweepers.
 3. **Centralize authorization** — one `authorize(caseId, action)` entry point for case mutations, plus queue scoping on merchant reads (MED-07).
@@ -337,6 +384,7 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 9. **Multi-instance readiness** — Redis-backed rate limiting and Redis pub/sub for SSE (LOW-06) before horizontal scaling.
 
 ### 6.4 Database improvements
+
 1. Stop HTML-escaping before persistence; store raw, escape on render (LOW-03).
 2. Paginate `GET /api/users` (MED-04); cap bulk-assign ids at 100 (MED-05).
 3. Validate enum filters → 400 instead of silent-drop/500 (MED-03).
@@ -350,12 +398,14 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 ## 7. Prioritized action list
 
 ### P0 — Fix before any production use with real customer data
+
 - [ ] **CRT-01 / CRT-02:** Narrow `try/catch` in `createMerchantSubmission` and public resubmission so post-commit bookkeeping can never trigger Drive file deletion. Add regression tests.
 - [ ] **CRT-03:** Move Google Drive deletions after transaction commit in `permanentlyDeleteMerchant`.
 - [ ] **HIGH-01:** Replace deterministic portal password with a random secret (hashed at rest, forced rotation on first login).
 - [ ] **HIGH-05:** Add idempotency to `POST /api/public/merchant-form`.
 
 ### P1 — Fix before scaling / shortly after launch
+
 - [ ] **HIGH-04:** Restrict `PATCH /api/cases/:id/status` to validated transitions; fix `statusOrder` for `awaiting_client`.
 - [ ] **HIGH-06:** Add recovery/retry path + watchdog for stuck `awaiting_client` resubmissions.
 - [ ] **MED-08:** Stop persisting PII/bank fields in plaintext localStorage; add draft expiry.
@@ -365,6 +415,7 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 - [ ] **HIGH-08:** Repair `bun run lint` (typescript-eslint vs TS 7).
 
 ### P2 — Hardening, quality, and tech debt
+
 - [ ] **MED-02 / MED-03:** Validate path IDs and enum filters → consistent 400s.
 - [ ] **MED-04:** Paginate `GET /api/users`. **MED-05:** Cap `bulkAssignCaseSchema.ids` at 100.
 - [ ] **MED-06:** Bind manual-email confirmations to a real single-use preview token.
@@ -379,12 +430,12 @@ Both repos typecheck clean and the FE builds, but: lint is fully broken on FE (H
 
 ## Appendix A — Toolchain results (read-only runs)
 
-| Check | Backend | Frontend |
-|---|---|---|
-| Install (`bun install --frozen-lockfile`) | ✅ OK | ✅ OK — 776 packages |
-| Typecheck (`tsc --noEmit`) | ✅ exit 0 | ✅ exit 0 |
-| Lint (`bun run lint`) | ✅ OK | ❌ crashes before linting (HIGH-08) |
-| Build | n/a (Bun runtime) | ✅ ~5.1s — router chunk 1,465 kB (310.9 kB gzip) |
-| Tests | no test files | no test files |
+| Check                                     | Backend           | Frontend                                         |
+| ----------------------------------------- | ----------------- | ------------------------------------------------ |
+| Install (`bun install --frozen-lockfile`) | ✅ OK             | ✅ OK — 776 packages                             |
+| Typecheck (`tsc --noEmit`)                | ✅ exit 0         | ✅ exit 0                                        |
+| Lint (`bun run lint`)                     | ✅ OK             | ❌ crashes before linting (HIGH-08)              |
+| Build                                     | n/a (Bun runtime) | ✅ ~5.1s — router chunk 1,465 kB (310.9 kB gzip) |
+| Tests                                     | no test files     | no test files                                    |
 
-*End of report. All analysis was read-only; no code was modified, committed, or pushed in either repository.*
+_End of report. All analysis was read-only; no code was modified, committed, or pushed in either repository._

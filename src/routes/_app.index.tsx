@@ -7,6 +7,12 @@ import {
 import { Dashboard } from '#/features/dashboard/dashboard'
 import { DashboardSkeleton } from '#/features/dashboard/dashboard-skeleton'
 import { loadDashboardCharts } from '#/features/dashboard/load-dashboard-charts'
+import {
+  awaitingPhysicalAgreementsInfiniteQueryOptions,
+  caseWorkloadQueryOptions,
+  dashboardQueryOptions,
+  pendingPortalMidsInfiniteQueryOptions,
+} from '#/hooks/use-dashboard-query'
 import { dashboardRouteSearchSchema } from '#/schemas/dashboard.schema'
 import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
 
@@ -21,11 +27,28 @@ export const Route = createFileRoute('/_app/')({
     // every other range and any custom date parameters.
     middlewares: [stripSearchParams({ range: '30d' })],
   },
-  // Data is fetched by Dashboard itself (it renders its own skeleton). The
-  // loader only starts the charts code chunk so it downloads alongside the
-  // data. A failed chunk load resurfaces through the lazy boundary.
-  loader: () => {
+  // Starts every dashboard request and the charts code chunk together as
+  // navigation begins, instead of the lists waiting for the summary to render
+  // them. Nothing is awaited: Dashboard shows its own skeleton and error
+  // states, and range changes refetch from the component (loaderDeps would
+  // swap the kept previous range for the route skeleton). A failed chunk load
+  // resurfaces through the lazy boundary.
+  loader: ({ context: { queryClient }, location, preload }) => {
     loadDashboardCharts().catch(() => {})
+    if (preload) return
+    // Loaders get the raw search; this is the same parse validateSearch runs,
+    // so the key matches the one Dashboard reads.
+    const search = dashboardRouteSearchSchema.safeParse(location.search)
+    if (search.success) {
+      void queryClient.prefetchQuery(dashboardQueryOptions(search.data))
+    }
+    void queryClient.prefetchQuery(caseWorkloadQueryOptions())
+    void queryClient.prefetchInfiniteQuery(
+      pendingPortalMidsInfiniteQueryOptions(),
+    )
+    void queryClient.prefetchInfiniteQuery(
+      awaitingPhysicalAgreementsInfiniteQueryOptions(),
+    )
   },
   pendingComponent: DashboardSkeleton,
   pendingMs: 0,

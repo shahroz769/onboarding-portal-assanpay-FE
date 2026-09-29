@@ -7,6 +7,7 @@ import { AlertTriangle, FileQuestion, RefreshCw } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { MerchantDetailsLayout } from '#/features/merchants/merchant-details'
+import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { parseUuidParam } from '#/lib/route-params'
 
@@ -18,9 +19,14 @@ export const Route = createFileRoute('/_app/merchants/$merchantId')({
     title: 'Merchant Details',
     hidePageShell: true,
   },
-  // No loader: MerchantDetailsLayout and each tab fetch their own data (in
-  // parallel, since the layout renders the tab without waiting for its
-  // header). Query errors thrown from them land in MerchantDetailsError.
+  // Starts the header request as navigation begins, in parallel with the
+  // tab's loader. It isn't awaited: the layout renders straight away with its
+  // own header skeleton, so the tab never waits for the header. A failed header
+  // request is rethrown by MerchantDetailsLayout into MerchantDetailsError.
+  loader: ({ context: { queryClient }, params: { merchantId }, preload }) => {
+    if (preload) return
+    void queryClient.prefetchQuery(merchantHeaderQueryOptions(merchantId))
+  },
   errorComponent: MerchantDetailsError,
   notFoundComponent: MerchantDetailsNotFound,
   component: MerchantDetailsLayoutRoute,

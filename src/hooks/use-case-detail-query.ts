@@ -2,9 +2,8 @@ import { useEffect } from 'react'
 import {
   queryOptions,
   useMutation,
-  usePrefetchQuery,
-  useQuery,
   useQueryClient,
+  useSuspenseQuery,
 } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -108,18 +107,37 @@ export function caseHistoryQueryOptions(caseId: string) {
 }
 
 /**
- * The case page's data, fetched from the page itself. Comments, history and
- * the user directory start in the same render as the case (not after it), and
- * the workflow's configuration queries start as soon as the case says which
- * workflow it is in.
+ * Starts the case page's data from its route loader, as navigation begins:
+ * comments, history and the user directory in parallel with the case, and the
+ * workflow's configuration as soon as the case says which workflow it is in.
+ * Resolves with the case; a failed case request rejects into the route's
+ * errorComponent.
+ */
+export async function loadCaseDetailPage(
+  queryClient: QueryClient,
+  caseId: string,
+) {
+  void queryClient.prefetchQuery(caseCommentsQueryOptions(caseId))
+  void queryClient.prefetchQuery(caseHistoryQueryOptions(caseId))
+  void queryClient.prefetchQuery(userDirectoryQueryOptions())
+  const detail = await queryClient.ensureQueryData(
+    caseDetailQueryOptions(caseId),
+  )
+  if (detail.queue.workflowType) {
+    prefetchCaseWorkflowConfiguration(queryClient, detail.queue.workflowType)
+  }
+  return detail
+}
+
+/**
+ * The case page's data, already started by loadCaseDetailPage. Refetches keep
+ * showing the current case; the configuration prefetch follows the workflow
+ * if a transition moves the case to another one.
  */
 export function useCaseDetailPageQuery(caseId: string) {
   const queryClient = useQueryClient()
-  usePrefetchQuery(caseCommentsQueryOptions(caseId))
-  usePrefetchQuery(caseHistoryQueryOptions(caseId))
-  usePrefetchQuery(userDirectoryQueryOptions())
-  const query = useQuery(caseDetailQueryOptions(caseId))
-  const workflowType = query.data?.queue.workflowType
+  const query = useSuspenseQuery(caseDetailQueryOptions(caseId))
+  const workflowType = query.data.queue.workflowType
 
   useEffect(() => {
     if (workflowType) {

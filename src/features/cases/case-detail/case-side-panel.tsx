@@ -860,7 +860,9 @@ function AwaitingMerchantAlert({
       actionSet.has(historyEntry.action),
     )
     const details = latest?.details as
-      { expiresAt?: string | null } | null | undefined
+      | { expiresAt?: string | null }
+      | null
+      | undefined
     return details?.expiresAt ?? null
   })()
 

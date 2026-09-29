@@ -34,16 +34,17 @@ Test scripts are in `qa/` (see `qa/README.md`). They are test-only. The backend 
 
 ## Summary
 
-| Severity | Count |
-|---|---|
-| Medium | 6 |
-| Low / Info | 12 |
+| Severity   | Count |
+| ---------- | ----- |
+| Medium     | 6     |
+| Low / Info | 12    |
 
 No high-severity frontend issue was found. The worst user-visible problems originate in the backend (see the BE report: username case, status bypass, 500 on over-long input).
 
 ## Medium
 
 ### F1. Public onboarding page fails to hydrate (dev)
+
 - **Where:** `src/routes/onboarding-form.index.tsx`.
 - **Observed:** opening `/onboarding-form` logs a React hydration error on every load. The server emitted a `<Suspense>` and the client rendered `<main className="min-h-svh …">`, so React discards the server HTML and re-renders on the client.
 - **Impact:** the first page a merchant sees loses its SSR benefit and can flash.
@@ -51,17 +52,20 @@ No high-severity frontend issue was found. The worst user-visible problems origi
 - **Suggested check:** compare the raw HTML from `curl localhost:5173/onboarding-form` with the client DOM, then make the first render deterministic or set `ssr: false` on this route. The cause was not bisected.
 
 ### F2. A successful submission leaves the merchant's personal data in localStorage
+
 - **Where:** `src/features/onboarding/merchant-onboarding-form.tsx:126-162`, plus the removal calls at `:399` and `:543`.
 - **Reproduced:** after a fully successful submit (success screen shown, reference ID issued), `localStorage["assanpay:merchant-onboarding-draft"]` still held the submitted email, owner name, phone numbers and business details. The form's own comments say it is cleared on submit; the debounced autosave apparently writes it back after the clear.
 - **Impact:** on a shared or kiosk machine, the next visitor gets the previous merchant's data restored into the form ("Your draft was restored"). There is no expiry.
 - **Fix:** cancel the pending debounced save on submit and clear after it, add a TTL, and add an explicit "clear draft" control.
 
 ### F3. Lint tooling is broken, so lint cannot gate changes
+
 - **Observed:** `bun run lint` crashes: `TypeError: Cannot read properties of undefined (reading 'Cjs')` in `@typescript-eslint/typescript-estree`. `package.json` pins `typescript` to `7.0.2`, which the installed typescript-eslint does not support.
 - `prettier --check src` also flags 8 files. There is no CI workflow for the FE.
 - **Fix:** upgrade typescript-eslint or pin a supported TypeScript, run `prettier --write`, and add a lint/typecheck job.
 
 ### F4. FE validation is weaker than, and drifts from, the API contract
+
 - **Where:** `src/schemas/merchant-onboarding.schema.ts:105-133`, `src/schemas/users.schema.ts:136`.
 - **Problems:**
   - Required text fields use `.min(1)` with no `.trim()`, so `"   "` passes the client and is rejected by the server. The user sees only the server's first-issue message.
@@ -71,11 +75,13 @@ No high-severity frontend issue was found. The worst user-visible problems origi
 - **Fix:** share or mirror the server schema and map server field errors onto the form.
 
 ### F5. Time zones are shown inconsistently on the same case page
+
 - **Where:** these files hard-code `timeZone: 'Asia/Karachi'`: `case-side-panel.tsx:1223`, `rejection-rounds-card.tsx:563`, `agreement-rounds-card.tsx:413`, `case-chatter.tsx:733`, `case-history-timeline.tsx:1087`, `documents-review-renderer.tsx:988`, `sub-merchants-panel.tsx:593`. `case-detail-shell.tsx:223` (SLA created/deadline), the merchant Journey card and the table columns use the **browser** zone.
 - **Reproduced:** with the browser in UTC, one case page showed "Created at 6:46 PM" and "Round 1 Resubmitted 11:47 PM" for events about a minute apart.
 - **Fix:** one formatting helper with an explicit, labelled zone.
 
 ### F6. Merchant portal settings accept non-http(s) login URLs in the UI
+
 - **Where:** `src/features/configuration/panels/merchant-portal-panel.tsx` (login URL and server base URL fields).
 - **Reproduced:** `javascript:alert(1)` and `ftp://x.example.com` leave **Save changes enabled**, and the API accepts them (BE report M7). A bare `not a url` is correctly blocked. The WhatsApp field correctly strips non-digits.
 - **Impact:** that login URL is written into the credentials email sent to merchants.

@@ -63,7 +63,8 @@ import { ConfigurationHeaderActions } from './configuration-panel-shared'
 import { getDraftFileError } from './configuration-panel-utils'
 
 type SubMerchantEditor =
-  { mode: 'create' } | { mode: 'edit'; subMerchant: SubMerchantDraft }
+  | { mode: 'create' }
+  | { mode: 'edit'; subMerchant: SubMerchantDraft }
 
 // ─── Sub-Merchants ──────────────────────────────────────────────────────────
 export function SubMerchantsPanel() {

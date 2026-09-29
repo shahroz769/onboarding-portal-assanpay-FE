@@ -14,6 +14,16 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({
       spa: { enabled: true },
+      router: {
+        codeSplittingOptions: {
+          // Split only route components. Error and not-found UIs stay in the
+          // route file: split, they render through the router's lazy wrapper,
+          // which is only preloaded for loader/beforeLoad failures. An error
+          // thrown while rendering (a query rethrown by a layout) then suspends
+          // on it once and React warns about the wrapper's conditional use().
+          defaultBehavior: [['component']],
+        },
+      },
     }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),

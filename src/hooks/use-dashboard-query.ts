@@ -24,12 +24,18 @@ import { CASES_KEY } from './use-cases-query'
 
 export const DASHBOARD_KEY = ['dashboard'] as const
 
+// The dashboard route's loader starts all of these as navigation begins. A
+// request that has already failed when its card mounts shows its error
+// (with Retry) instead of being requested again on mount.
+const LOADER_STARTED = { retryOnMount: false } as const
+
 export function dashboardQueryOptions(search: DashboardRouteSearch) {
   return queryOptions({
     queryKey: [...DASHBOARD_KEY, search],
     queryFn: () => fetchDashboard(search),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+    ...LOADER_STARTED,
   })
 }
 
@@ -40,6 +46,7 @@ export function caseWorkloadQueryOptions() {
     queryKey: [...DASHBOARD_KEY, 'workload'],
     queryFn: fetchCaseWorkload,
     staleTime: 30_000,
+    ...LOADER_STARTED,
   })
 }
 
@@ -57,6 +64,7 @@ export function pendingPortalMidsInfiniteQueryOptions() {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
+    ...LOADER_STARTED,
   })
 }
 
@@ -71,6 +79,7 @@ export function awaitingPhysicalAgreementsInfiniteQueryOptions() {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
+    ...LOADER_STARTED,
   })
 }
 

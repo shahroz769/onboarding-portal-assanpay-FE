@@ -28,11 +28,17 @@ type MerchantDetailsLayoutProps = {
 export function MerchantDetailsLayout({
   merchantId,
 }: MerchantDetailsLayoutProps) {
+  // The route loader starts this request. If it has already failed when the
+  // layout mounts (a fast 404), rethrow that failure instead of requesting
+  // the header again; Retry resets it and re-runs the loader.
   const {
     data: header,
     error,
     isError,
-  } = useQuery(merchantHeaderQueryOptions(merchantId))
+  } = useQuery({
+    ...merchantHeaderQueryOptions(merchantId),
+    retryOnMount: false,
+  })
   const activeTab = useActiveMerchantTab()
 
   if (isError && !header) {

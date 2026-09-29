@@ -10,7 +10,13 @@ import {
 } from '#/components/ui/table'
 
 type SkeletonCellKind =
-  'checkbox' | 'mono' | 'link' | 'text' | 'badge' | 'date' | 'actions'
+  | 'checkbox'
+  | 'mono'
+  | 'link'
+  | 'text'
+  | 'badge'
+  | 'date'
+  | 'actions'
 
 interface SkeletonColumn {
   width: number

@@ -161,8 +161,7 @@ export function PortalApiCredentialsFields({
         <Alert>
           <Info />
           <AlertDescription>
-            Use the API Key and API Secret from the live environment, not
-            test.
+            Use the API Key and API Secret from the live environment, not test.
           </AlertDescription>
         </Alert>
         <div className="grid gap-4 md:grid-cols-2">

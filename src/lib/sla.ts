@@ -51,10 +51,7 @@ export function getCaseSlaStatus({
   slaBreached?: boolean | null
   now?: Date
 }): SlaStatus {
-  const evaluatedAt =
-    status === 'closed' && closedAt
-      ? new Date(closedAt)
-      : now
+  const evaluatedAt = status === 'closed' && closedAt ? new Date(closedAt) : now
 
   const sla = getSlaStatus(createdAt, slaHours, evaluatedAt)
 

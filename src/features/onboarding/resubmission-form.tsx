@@ -84,7 +84,13 @@ interface ResubmissionFormProps {
 }
 
 type FieldKind =
-  'text' | 'textarea' | 'email' | 'url' | 'date' | 'select' | 'combobox'
+  | 'text'
+  | 'textarea'
+  | 'email'
+  | 'url'
+  | 'date'
+  | 'select'
+  | 'combobox'
 
 type SectionKey =
   | 'submitter'

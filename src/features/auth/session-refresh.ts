@@ -53,7 +53,10 @@ async function refreshAcrossTabs(): Promise<RefreshResponse> {
   return locks.request(REFRESH_LOCK_NAME, async () => {
     // Another tab refreshed while this one waited for the lock: the cookie it
     // would send is already rotated, so use that tab's session instead.
-    if (lastBroadcastSession && lastBroadcastSession.receivedAt >= requestedAt) {
+    if (
+      lastBroadcastSession &&
+      lastBroadcastSession.receivedAt >= requestedAt
+    ) {
       return lastBroadcastSession.session
     }
 

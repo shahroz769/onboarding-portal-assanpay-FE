@@ -503,16 +503,15 @@ body,
 .app-shell-logo-trail {
   stroke-dasharray: var(--len) 999px;
   animation:
-    app-shell-logo-trail-enter 600ms var(--ease-out)
-      calc(var(--i) * 40ms) both,
+    app-shell-logo-trail-enter 600ms var(--ease-out) calc(var(--i) * 40ms) both,
     app-shell-logo-trail-flare 1200ms var(--ease-in-out)
       calc(600ms + var(--i) * 40ms) infinite;
 }
 
 .app-shell-logo-dot {
   animation:
-    app-shell-logo-dot-enter 500ms var(--ease-out)
-      calc(150ms + var(--i) * 40ms) both,
+    app-shell-logo-dot-enter 500ms var(--ease-out) calc(150ms + var(--i) * 40ms)
+      both,
     app-shell-logo-dot-flare 1200ms var(--ease-in-out)
       calc(600ms + var(--i) * 40ms) infinite;
 }

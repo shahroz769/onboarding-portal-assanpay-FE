@@ -59,6 +59,14 @@ export function resolveQueueWorkflowType(queue: {
   return 'generic'
 }
 
+/**
+ * Starts downloading a workflow's renderer so it is ready when the page
+ * renders. A failed download resurfaces through the lazy component.
+ */
+export function preloadQueueRenderer(workflowType: QueueWorkflowType) {
+  registry[workflowType]().catch(() => {})
+}
+
 export function getQueueRenderer(
   workflowTypeOrSlug: string,
 ): LazyQueueRenderer {

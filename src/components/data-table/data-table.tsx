@@ -278,9 +278,7 @@ export function DataTable<TData>({
       <ScrollArea
         className="min-h-0 flex-1"
         viewportRef={viewportRef}
-        viewportClassName={
-          showEndOfResults ? 'flex flex-col' : undefined
-        }
+        viewportClassName={showEndOfResults ? 'flex flex-col' : undefined}
         onScroll={syncHeaderScroll}
       >
         <Table className="table-fixed">
@@ -308,7 +306,10 @@ export function DataTable<TData>({
             })}
             {isFetchingMore && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-4 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="py-4 text-center"
+                >
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Spinner className="size-4" />
                     Loading more...

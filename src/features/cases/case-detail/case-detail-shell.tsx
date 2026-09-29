@@ -19,10 +19,7 @@ import type {
 } from '#/schemas/cases.schema'
 
 import { CaseSidePanel } from './case-side-panel'
-import {
-  CaseDetailShellSkeleton,
-  CaseQueueWorkspaceSkeleton,
-} from './case-detail-skeletons'
+import { CaseQueueWorkspaceSkeleton } from './case-detail-skeletons'
 import { getQueueRenderer, resolveQueueWorkflowType } from './queue-registry'
 import { DocumentsReviewDraftProvider } from './renderers/documents-review-draft-context'
 
@@ -31,18 +28,9 @@ interface CaseDetailShellProps {
 }
 
 export function CaseDetailShell({ caseId }: CaseDetailShellProps) {
-  const detailQuery = useCaseDetailPageQuery(caseId)
-  const data = detailQuery.data
-
-  if (detailQuery.error && !data) {
-    // Handled by the route's errorComponent (404 renders "Case not found").
-    throw detailQuery.error
-  }
-
-  if (!data) {
-    return <CaseDetailShellSkeleton />
-  }
-
+  // Suspends until the route loader's case request settles; a failed request
+  // lands in the route's errorComponent (404 renders "Case not found").
+  const { data } = useCaseDetailPageQuery(caseId)
   const workflowType = resolveQueueWorkflowType(data.queue)
   const queueRenderer = getQueueRenderer(workflowType)
   const merchantName =
