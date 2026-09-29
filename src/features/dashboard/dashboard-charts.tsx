@@ -84,7 +84,7 @@ function DailyCountBarChart({
             value={granularity}
             onValueChange={(value) => setGranularity(value as Granularity)}
           >
-            <TabsList className="h-7">
+            <TabsList className="group-data-[orientation=horizontal]/tabs:h-7">
               <TabsTrigger value="daily" className="px-2.5 text-xs">
                 Daily
               </TabsTrigger>

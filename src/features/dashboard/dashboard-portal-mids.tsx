@@ -70,6 +70,7 @@ import { EmptyState } from '#/components/empty-state'
 import { useAuth } from '#/features/auth/auth-client'
 import { fetchPendingPortalMidValues } from '#/apis/dashboard'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { cn } from '#/lib/utils'
 import { useMorph } from '#/hooks/use-morph'
 import {
   pendingPortalMidsInfiniteQueryOptions,
@@ -468,6 +469,40 @@ function useCopiedFlag() {
   return [copied, flag] as const
 }
 
+/**
+ * Stacks every icon in one cell and cross-fades to the `active` one (scale,
+ * opacity and blur), so a state change never pops. All stay mounted, which
+ * lets the outgoing icon animate out too.
+ */
+function IconSwap<Key extends string>({
+  active,
+  icons,
+}: {
+  active: Key
+  icons: Record<Key, React.ReactNode>
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid shrink-0 place-items-center *:col-start-1 *:row-start-1"
+    >
+      {(Object.keys(icons) as Key[]).map((key) => (
+        <span
+          key={key}
+          className={cn(
+            'flex transition-[opacity,filter,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
+            key === active
+              ? 'scale-100 opacity-100 blur-[0px]'
+              : 'scale-[0.25] opacity-0 blur-xs',
+          )}
+        >
+          {icons[key]}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 function CopyMidButton({ mid }: { mid: number }) {
   const [copied, flagCopied] = useCopiedFlag()
 
@@ -480,11 +515,16 @@ function CopyMidButton({ mid }: { mid: number }) {
         if (await copyText(String(mid))) flagCopied()
       }}
     >
-      {copied ? (
-        <Check className="size-3.5 text-primary" />
-      ) : (
-        <Copy className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/mid:opacity-100 group-focus-visible/mid:opacity-100" />
-      )}
+      <IconSwap
+        active={copied ? 'check' : 'copy'}
+        icons={{
+          // Revealed on hover/focus only; the swap handles the copied check.
+          copy: (
+            <Copy className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/mid:opacity-100 group-focus-visible/mid:opacity-100" />
+          ),
+          check: <Check className="size-3.5 text-primary" />,
+        }}
+      />
       {mid}
     </button>
   )
@@ -547,13 +587,16 @@ function CopyMidsMenu({
           />
         }
       >
-        {isCopying ? (
-          <Spinner data-icon="inline-start" />
-        ) : copied ? (
-          <Check data-icon="inline-start" className="text-primary" />
-        ) : (
-          <Copy data-icon="inline-start" />
-        )}
+        <IconSwap
+          active={isCopying ? 'loading' : copied ? 'check' : 'copy'}
+          icons={{
+            copy: <Copy />,
+            check: <Check className="text-primary" />,
+            // Only spins while shown; the button's disabled state and the
+            // toast carry the status, so the hidden spinner isn't announced.
+            loading: <Spinner className={cn(!isCopying && 'animate-none')} />,
+          }}
+        />
         Copy MIDs
         <ChevronDown data-icon="inline-end" className="text-muted-foreground" />
       </DropdownMenuTrigger>

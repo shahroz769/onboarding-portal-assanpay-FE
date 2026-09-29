@@ -30,9 +30,8 @@ function ChartCardSkeleton({
           <CardDescription>{description}</CardDescription>
         </div>
         <div className="flex flex-col items-end gap-3">
-          {/* h-9 = the rendered TabsList height (the horizontal-tabs h-9 rule
-              outranks the chart's h-7) */}
-          <Skeleton className="h-9 w-30 rounded-lg" />
+          {/* h-7 = the chart's compact TabsList height */}
+          <Skeleton className="h-7 w-30 rounded-lg" />
           <div className="flex items-start gap-5 text-right">
             <HeaderStatSkeleton label="Total" />
             <HeaderStatSkeleton label="Daily avg" />

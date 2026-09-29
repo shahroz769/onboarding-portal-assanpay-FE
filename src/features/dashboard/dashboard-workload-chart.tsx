@@ -80,7 +80,16 @@ export function WorkloadBarChart({
   return (
     <ChartContainer
       config={workloadChartConfig}
-      className="aspect-auto w-full"
+      // Hovering a segment dims the rest, so it's clear which cases a click
+      // opens. Every segment sits in a .recharts-bar-rectangle wrapper.
+      // Dimming and the hovered segment are instant; only the return to full
+      // opacity waits 150ms, so crossing the gap between rows doesn't flash.
+      className={cn(
+        'aspect-auto w-full',
+        '[&_.recharts-bar-rectangle]:transition-opacity [&_.recharts-bar-rectangle]:delay-150 [&_.recharts-bar-rectangle]:duration-150 [&_.recharts-bar-rectangle]:ease-out',
+        '[&_.recharts-bar-rectangle:hover]:delay-0',
+        'has-[.recharts-bar-rectangle:hover]:[&_.recharts-bar-rectangle:not(:hover)]:opacity-50 has-[.recharts-bar-rectangle:hover]:[&_.recharts-bar-rectangle:not(:hover)]:delay-0',
+      )}
       style={{ height: rows.length * ROW_HEIGHT + CHART_CHROME_HEIGHT }}
     >
       <BarChart
