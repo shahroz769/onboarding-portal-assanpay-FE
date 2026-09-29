@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import {
   applyPortalMidLimits,
   fetchAwaitingPhysicalAgreements,
+  fetchCaseWorkload,
   fetchDashboard,
   fetchPendingPortalMids,
 } from '#/apis/dashboard'
@@ -28,6 +29,16 @@ export function dashboardQueryOptions(search: DashboardRouteSearch) {
     queryKey: [...DASHBOARD_KEY, search],
     queryFn: () => fetchDashboard(search),
     placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+}
+
+// Live counts, independent of the date range. Nested under DASHBOARD_KEY so
+// the dashboard refresh button refetches it.
+export function caseWorkloadQueryOptions() {
+  return queryOptions({
+    queryKey: [...DASHBOARD_KEY, 'workload'],
+    queryFn: fetchCaseWorkload,
     staleTime: 30_000,
   })
 }

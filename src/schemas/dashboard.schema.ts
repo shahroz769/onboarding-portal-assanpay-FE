@@ -187,3 +187,30 @@ export const applyPortalMidLimitsResponseSchema = z.object({
 export type ApplyPortalMidLimitsResponse = z.infer<
   typeof applyPortalMidLimitsResponseSchema
 >
+
+// ─── Case Workload ──────────────────────────────────────────────────────────
+
+const caseWorkloadCellSchema = z.object({
+  queueId: z.string(),
+  // null = the queue's unassigned pool.
+  ownerId: z.string().nullable(),
+  new: z.number(),
+  working: z.number(),
+  awaitingMerchant: z.number(),
+})
+
+export type CaseWorkloadCell = z.infer<typeof caseWorkloadCellSchema>
+
+export const caseWorkloadResponseSchema = z.object({
+  queues: z.array(z.object({ id: z.string(), name: z.string() })),
+  members: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      status: z.enum(['active', 'inactive']),
+    }),
+  ),
+  cells: z.array(caseWorkloadCellSchema),
+})
+
+export type CaseWorkloadResponse = z.infer<typeof caseWorkloadResponseSchema>

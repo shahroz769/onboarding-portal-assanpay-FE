@@ -81,7 +81,7 @@ export function DataTableRouteSkeleton({
       <div className="shrink-0" />
 
       <div className="min-h-0 flex-1">
-        <div className="view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background">
+        <div className="view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-card">
           <div className="shrink-0 overflow-hidden shadow-[0_1px_0_0_var(--border)]">
             <Table className="table-fixed">
               <SkeletonColumnGroup columns={resolvedColumns} />

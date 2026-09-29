@@ -192,7 +192,7 @@ export function DataTable<TData>({
     return (
       <div
         className={cn(
-          'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background',
+          'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-card',
           className,
         )}
       >
@@ -228,7 +228,7 @@ export function DataTable<TData>({
     return (
       <div
         className={cn(
-          'view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background',
+          'view-transition-none flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-card',
           className,
         )}
       >
@@ -270,7 +270,7 @@ export function DataTable<TData>({
   return (
     <div
       className={cn(
-        'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-background',
+        'view-transition-none flex h-full flex-col overflow-hidden rounded-md border bg-card',
         className,
       )}
     >
@@ -335,7 +335,7 @@ export function DataTable<TData>({
       {onScrollEnd && (
         <div
           aria-live="polite"
-          className="shrink-0 border-t bg-muted/40 px-3 py-2 text-xs text-muted-foreground tabular-nums"
+          className="shrink-0 border-t bg-muted px-3 py-2 text-xs text-muted-foreground tabular-nums"
         >
           {totalCount === null
             ? `Showing ${data.length} ${data.length === 1 ? 'row' : 'rows'}`

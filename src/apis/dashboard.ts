@@ -3,6 +3,7 @@ import type {
   ApplyPortalMidLimitsInput,
   ApplyPortalMidLimitsResponse,
   AwaitingPhysicalAgreementsPage,
+  CaseWorkloadResponse,
   DashboardResponse,
   DashboardRouteSearch,
   PendingPortalMidKind,
@@ -11,6 +12,7 @@ import type {
 import {
   applyPortalMidLimitsResponseSchema,
   awaitingPhysicalAgreementsPageSchema,
+  caseWorkloadResponseSchema,
   dashboardResponseSchema,
   pendingPortalMidValuesSchema,
   pendingPortalMidsPageSchema,
@@ -28,6 +30,11 @@ export async function fetchDashboard(
 
   const response = await apiClient.get('/api/dashboard', { params: query })
   return dashboardResponseSchema.parse(response.data)
+}
+
+export async function fetchCaseWorkload(): Promise<CaseWorkloadResponse> {
+  const response = await apiClient.get('/api/dashboard/workload')
+  return caseWorkloadResponseSchema.parse(response.data)
 }
 
 export async function applyPortalMidLimits(

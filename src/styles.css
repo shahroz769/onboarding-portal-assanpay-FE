@@ -62,31 +62,33 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  /* Neutral monochrome theme: light grey canvas, white cards, near-black
+     primary. */
+  --background: oklch(0.992 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  /* AssanPay brand teal — drives primary buttons, links, checkboxes,
-     switches, checkmarks, calendar selection, and notification accents. */
-  --primary: rgb(74 109 101);
+  --popover-foreground: oklch(0.145 0 0);
+  /* Drives primary buttons, links, checkboxes, switches, checkmarks,
+     calendar selection, and notification accents. */
+  --primary: oklch(0.145 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: #f6f6f4;
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: #f6f6f4;
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  /* Softened brand tint: focus borders/rings read lighter than solid --primary. */
-  --ring: color-mix(in oklab, var(--primary) 55%, var(--background));
-  /* Chart palette — chart-1 is the brand teal; 2-5 harmonize with it for
-     multi-series use. */
-  --chart-1: var(--primary);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  /* Softened tint: focus borders/rings read lighter than solid --primary. */
+  --ring: color-mix(in oklab, var(--primary) 40%, var(--background));
+  /* Chart palette — chart-1 keeps the original brand teal so charts are
+     unaffected by the neutral theme. */
+  --chart-1: rgb(74 109 101);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
@@ -102,40 +104,39 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --sidebar: #f6f6f4;
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: color-mix(in oklab, var(--primary) 10%, transparent);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-accent: oklch(0.96 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: var(--ring);
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  /* Lighter brand teal for dark surfaces — keeps text/links above contrast
-     thresholds where light mode uses the deeper shade. */
-  --primary: rgb(106 174 159);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
+  /* Inverted for dark surfaces: near-white primary, dark foreground. */
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.274 0.006 286.033);
-  --input: oklch(0.274 0.006 286.033);
-  /* Softened brand tint: focus borders/rings read lighter than solid --primary. */
-  --ring: color-mix(in oklab, var(--primary) 55%, var(--background));
-  --chart-1: var(--primary);
+  --border: oklch(0.309 0 0);
+  --input: oklch(0.309 0 0);
+  /* Softened tint: focus borders/rings read lighter than solid --primary. */
+  --ring: color-mix(in oklab, var(--primary) 40%, var(--background));
+  --chart-1: rgb(106 174 159);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
@@ -145,13 +146,13 @@
   --flow-trigger: oklch(0.72 0.09 256);
   --flow-close: oklch(0.8 0.1 80);
   --flow-create: oklch(0.72 0.1 293);
-  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.274 0.006 286.033);
+  --sidebar-border: oklch(0.309 0 0);
   --sidebar-ring: var(--ring);
 }
 

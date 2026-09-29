@@ -113,8 +113,8 @@ function AppLayout() {
     <SidebarProvider>
       <NotificationsProvider />
       <AppSidebar />
-      <SidebarInset className="h-svh overflow-hidden bg-muted/30">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+      <SidebarInset className="h-svh overflow-hidden bg-muted/15">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-sidebar px-4">
           <Tooltip>
             <TooltipTrigger render={<SidebarTrigger className="-ml-1" />} />
             <TooltipContent side="bottom">

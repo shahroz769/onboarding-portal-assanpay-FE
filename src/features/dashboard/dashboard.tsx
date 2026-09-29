@@ -17,6 +17,7 @@ import { DashboardFilterBar } from './dashboard-filter-bar'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
 import { DashboardAwaitingAgreements } from './dashboard-awaiting-agreements'
 import { DashboardPortalMids } from './dashboard-portal-mids'
+import { DashboardWorkload } from './dashboard-workload'
 import {
   DashboardChartsSkeleton,
   DashboardSkeleton,
@@ -65,6 +66,7 @@ export function Dashboard({ search, onChange }: DashboardProps) {
           <Suspense fallback={<DashboardChartsSkeleton />}>
             <DashboardCharts data={query.data} />
           </Suspense>
+          <DashboardWorkload enabled />
           {/* Two columns, matching the chart grid above. */}
           <div className="grid gap-4 lg:grid-cols-2">
             <DashboardPortalMids data={query.data} />

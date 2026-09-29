@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
@@ -14,11 +14,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '#/components/ui/chart'
-import { NumberFlip } from '#/components/number-flip'
 import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useReducedMotion } from '#/hooks/use-reduced-motion'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { DailyCountPoint } from './dashboard-utils'
+import { HeaderStat } from './dashboard-header-stat'
+
+// Workload charts share this lazy chunk so recharts loads once.
+export { WorkloadBarChart } from './dashboard-workload-chart'
 import {
   DASHBOARD_CHARTS,
   aggregateByWeek,
@@ -45,37 +48,6 @@ export function DashboardCharts({ data }: { data: DashboardResponse }) {
 
 const formatAverage = (value: number) => value.toFixed(1)
 
-function HeaderStat({
-  label,
-  value,
-  format,
-  hint,
-}: {
-  label: string
-  value: number
-  format: (value: number) => string
-  hint?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-        {label}
-      </span>
-      {/* Digits roll on a range or granularity change, like the KPI cards. */}
-      <NumberFlip
-        value={value}
-        format={format}
-        className="justify-end text-lg leading-none font-semibold"
-      />
-      {hint ? (
-        <span className="text-[11px] leading-none text-muted-foreground">
-          {hint}
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
 type Granularity = 'daily' | 'weekly'
 
 function DailyCountBarChart({
@@ -89,7 +61,6 @@ function DailyCountBarChart({
   data: DailyCountPoint[]
   config: ChartConfig
 }) {
-  const gradientId = `daily-count-fill-${useId().replace(/:/g, '')}`
   const [granularity, setGranularity] = useState<Granularity>('daily')
   const reducedMotion = useReducedMotion()
 
@@ -148,18 +119,6 @@ function DailyCountBarChart({
             margin={{ top: 8 }}
             barCategoryGap="28%"
           >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="0%"
-                  style={{ stopColor: 'var(--color-count)', stopOpacity: 1 }}
-                />
-                <stop
-                  offset="100%"
-                  style={{ stopColor: 'var(--color-count)', stopOpacity: 0.45 }}
-                />
-              </linearGradient>
-            </defs>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
@@ -189,7 +148,7 @@ function DailyCountBarChart({
             />
             <Bar
               dataKey="count"
-              fill={`url(#${gradientId})`}
+              fill="var(--color-count)"
               radius={[6, 6, 0, 0]}
               maxBarSize={36}
               isAnimationActive={!reducedMotion}

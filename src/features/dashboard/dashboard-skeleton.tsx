@@ -9,29 +9,9 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { DashboardKpiCards } from './dashboard-kpi-cards'
 import { DashboardAwaitingAgreements } from './dashboard-awaiting-agreements'
 import { DashboardPortalMids } from './dashboard-portal-mids'
+import { DashboardWorkload } from './dashboard-workload'
 import { DASHBOARD_CHARTS } from './dashboard-utils'
-
-// Mirrors HeaderStat in dashboard-charts.tsx: the label is real text so its
-// line box matches; the value/hint skeletons equal their leading-none heights.
-function HeaderStatSkeleton({
-  label,
-  hasHint = false,
-}: {
-  label: string
-  hasHint?: boolean
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-        {label}
-      </span>
-      {/* h-4.5 = text-lg leading-none */}
-      <Skeleton className="h-4.5 w-8 self-end" />
-      {/* h-2.75 = text-[11px] leading-none */}
-      {hasHint ? <Skeleton className="h-2.75 w-12 self-end" /> : null}
-    </div>
-  )
-}
+import { HeaderStatSkeleton } from './dashboard-header-stat'
 
 // Mirrors DailyCountBarChart's markup (recharts can't render until its lazy
 // chunk arrives, so this can't reuse the real component like the others).
@@ -81,13 +61,14 @@ export function DashboardChartsSkeleton() {
   )
 }
 
-// KPI cards and portal MIDs render their own loading state, so their layout
+// KPI cards, workload and portal MIDs render their own loading state, so their layout
 // is identical to the loaded page by construction.
 export function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <DashboardKpiCards />
       <DashboardChartsSkeleton />
+      <DashboardWorkload />
       {/* Two columns, matching the chart grid above. */}
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardPortalMids />

@@ -41,21 +41,26 @@ function parseDateKey(value: string) {
   return new Date(year, month - 1, day)
 }
 
-// ─── Brand chart palette ────────────────────────────────────────────────────
-// Single-series charts use the --chart-1 token, which is the brand teal in
-// both themes — charts follow rebrands automatically.
-
-const BRAND_PRIMARY = {
-  light: 'var(--chart-1)',
-  dark: 'var(--chart-1)',
-}
+// ─── Chart palette ──────────────────────────────────────────────────────────
+// Badge hues from status-styles.ts: solid bars in the badge's mid tone
+// (`count`). Submissions start new cases, so
+// they use the New badge's blue; merchants going live use a muted teal.
 
 export const submissionsChartConfig = {
-  count: { label: 'Submissions', theme: BRAND_PRIMARY },
+  count: {
+    label: 'Submissions',
+    theme: { light: 'var(--color-blue-300)', dark: 'var(--color-blue-800)' },
+  },
 } satisfies ChartConfig
 
 export const merchantsLiveChartConfig = {
-  count: { label: 'Went live', theme: BRAND_PRIMARY },
+  count: {
+    label: 'Went live',
+    theme: {
+      light: 'oklch(0.81 0.08 180)',
+      dark: 'oklch(0.45 0.07 180)',
+    },
+  },
 } satisfies ChartConfig
 
 // Shared by DashboardCharts and its skeleton so the static header text (and
