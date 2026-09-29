@@ -201,8 +201,7 @@ function PlainDataTableFilter({
               <button
                 key={option.value}
                 type="button"
-                role="menuitemcheckbox"
-                aria-checked={isSelected}
+                aria-pressed={isSelected}
                 onClick={() => toggleValue(option.value)}
                 className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent"
               >
@@ -312,7 +311,8 @@ function SearchableDataTableFilter({
       <ComboboxContent align="start" className="w-64 min-w-64">
         <ComboboxInput
           showTrigger={false}
-          placeholder={`Search ${title.toLowerCase()}...`}
+          aria-label={`Search ${title.toLowerCase()}`}
+          placeholder={`Search ${title.toLowerCase()}…`}
         >
           {isLoading ? (
             <InputGroupAddon align="inline-end">

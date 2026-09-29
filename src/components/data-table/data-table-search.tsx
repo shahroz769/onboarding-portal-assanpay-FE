@@ -11,6 +11,8 @@ import { Button } from '#/components/ui/button'
 interface DataTableSearchProps {
   value: string
   onChange: (value: string) => void
+  /** Accessible name, e.g. "Search cases"; the placeholder is only a hint. */
+  label: string
   placeholder?: string
   debounceMs?: number
 }
@@ -18,6 +20,7 @@ interface DataTableSearchProps {
 export function DataTableSearch({
   value,
   onChange,
+  label,
   placeholder = 'Search…',
   debounceMs = 300,
 }: DataTableSearchProps) {
@@ -67,6 +70,7 @@ export function DataTableSearch({
         <SearchIcon />
       </InputGroupAddon>
       <InputGroupInput
+        aria-label={label}
         placeholder={placeholder}
         value={localValue}
         onChange={handleChange}

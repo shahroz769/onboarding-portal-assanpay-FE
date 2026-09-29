@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
+import { ChevronDownIcon } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -64,7 +65,9 @@ function OwnerCell({
     <Button
       type="button"
       variant="ghost"
-      className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-foreground no-underline hover:bg-transparent hover:text-foreground hover:underline hover:decoration-dashed hover:underline-offset-4"
+      // A standing dashed underline marks the owner as editable, hover or not.
+      className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-foreground underline decoration-muted-foreground/60 decoration-dashed underline-offset-4 hover:bg-transparent hover:text-foreground hover:decoration-foreground"
+      aria-label={`${ownerName}, change owner`}
       onClick={(event) => onOpenAssignOwner(item, event.currentTarget)}
     >
       {ownerName}
@@ -85,11 +88,12 @@ function PriorityCell({
     priorityBadgeClasses(item.priority),
     canEdit && CLICKABLE_BADGE_CLASSES,
   )
+  const label = item.priority === 'high' ? 'High' : 'Normal'
 
   if (!canEdit) {
     return (
       <Badge variant="secondary" className={className}>
-        {item.priority === 'high' ? 'High' : 'Normal'}
+        {label}
       </Badge>
     )
   }
@@ -99,13 +103,15 @@ function PriorityCell({
       render={
         <button
           type="button"
+          aria-label={`${label} priority, change`}
           onClick={(event) => onOpenPriority(item, event.currentTarget)}
         />
       }
       variant="secondary"
       className={className}
     >
-      {item.priority === 'high' ? 'High' : 'Normal'}
+      {label}
+      <ChevronDownIcon aria-hidden="true" />
     </Badge>
   )
 }
@@ -179,7 +185,7 @@ export function createCaseColumns({
           indeterminate={isSomeSelected}
           onCheckedChange={(value) => onSelectAll(!!value)}
           disabled={!canEdit || allIds.length === 0}
-          aria-label="Select all"
+          aria-label="Select all cases"
         />
       ),
       cell: (item) => (
@@ -187,7 +193,7 @@ export function createCaseColumns({
           checked={selectedIds.has(item.id)}
           onCheckedChange={(value) => onSelectRow(item.id, !!value)}
           disabled={!canEdit || !assignableIdSet.has(item.id)}
-          aria-label="Select row"
+          aria-label={`Select case ${item.caseNumber}`}
         />
       ),
       width: 40,
@@ -196,6 +202,7 @@ export function createCaseColumns({
     // Case Number
     {
       id: 'caseNumber',
+      sortDirection: getSortDirection('caseNumber', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Case Number"
@@ -218,6 +225,7 @@ export function createCaseColumns({
     // Merchant Name
     {
       id: 'merchantName',
+      sortDirection: getSortDirection('merchantName', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Merchant Name"
@@ -275,6 +283,7 @@ export function createCaseColumns({
           <TruncatedTooltip
             render={<Badge variant="secondary" className="max-w-full" />}
             content={item.queueName}
+            focusable
           >
             <span className="truncate">{item.queueName}</span>
           </TruncatedTooltip>
@@ -286,6 +295,7 @@ export function createCaseColumns({
     // Case Status
     {
       id: 'status',
+      sortDirection: getSortDirection('status', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Case Status"
@@ -326,6 +336,7 @@ export function createCaseColumns({
     // Creation Date
     {
       id: 'createdAt',
+      sortDirection: getSortDirection('createdAt', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Creation Date"
@@ -344,6 +355,7 @@ export function createCaseColumns({
     // Closed Date
     {
       id: 'closedAt',
+      sortDirection: getSortDirection('closedAt', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Closed Date"
@@ -362,6 +374,7 @@ export function createCaseColumns({
     // Last Updated At
     {
       id: 'updatedAt',
+      sortDirection: getSortDirection('updatedAt', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Last Updated At"

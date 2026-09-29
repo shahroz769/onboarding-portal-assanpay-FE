@@ -24,6 +24,17 @@ export interface DataTableColumnDef<TData> {
   header: React.ReactNode
   cell: (item: TData) => React.ReactNode
   width?: number
+  /** Current sort of a sortable column (false when sortable but unsorted). */
+  sortDirection?: 'asc' | 'desc' | false
+}
+
+function getAriaSort(
+  sortDirection: 'asc' | 'desc' | false | undefined,
+): React.AriaAttributes['aria-sort'] {
+  if (sortDirection === undefined) return undefined
+  if (sortDirection === 'asc') return 'ascending'
+  if (sortDirection === 'desc') return 'descending'
+  return 'none'
 }
 
 // ─── Props ──────────────────────────────────────────────────────────────────
@@ -128,7 +139,6 @@ export function DataTable<TData>({
   const showEndOfResults = !!onScrollEnd && !hasMore && !isFetchingMore
   const sentinelRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!onScrollEnd || !sentinelRef.current) return
@@ -150,15 +160,8 @@ export function DataTable<TData>({
     return () => observer.disconnect()
   }, [onScrollEnd, hasMore, isFetchingMore])
 
-  // The header lives outside the scroll area so the scrollbar never covers it;
-  // keep it aligned with the body during horizontal scrolling.
-  const syncHeaderScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    if (headerRef.current) {
-      headerRef.current.scrollLeft = event.currentTarget.scrollLeft
-    }
-  }
-
-  // Shared colgroup keeps the fixed-layout header and body tables aligned.
+  // Column widths for the fixed-layout table (and the header-only table the
+  // empty state shows).
   const columnGroup = (
     <colgroup>
       {columns.map((col) => (
@@ -170,23 +173,27 @@ export function DataTable<TData>({
     </colgroup>
   )
 
-  const tableHeader = (
-    <div
-      ref={headerRef}
-      className="shrink-0 overflow-hidden shadow-[0_1px_0_0_var(--border)]"
-    >
-      <Table className="table-fixed">
-        {columnGroup}
-        <TableHeader className="bg-muted">
-          <TableRow>
-            {columns.map((col) => (
-              <TableHead key={col.id}>{col.header}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-      </Table>
-    </div>
+  // Header and rows share one table so screen readers announce each cell with
+  // its column. The header cells stick to the top of the scroll area; the
+  // inset shadow is their bottom border (collapsed borders don't stick).
+  const tableHead = (
+    <TableHeader className="[&_tr]:border-b-0">
+      <TableRow className="hover:bg-transparent">
+        {columns.map((col) => (
+          <TableHead
+            key={col.id}
+            aria-sort={getAriaSort(col.sortDirection)}
+            className="sticky top-0 z-10 bg-muted shadow-[inset_0_-1px_0_var(--border)]"
+          >
+            {col.header}
+          </TableHead>
+        ))}
+      </TableRow>
+    </TableHeader>
   )
+
+  // The overlay scrollbar starts below the sticky header row (h-10).
+  const scrollbarClassName = 'mt-10'
 
   if (isLoading) {
     return (
@@ -196,10 +203,13 @@ export function DataTable<TData>({
           className,
         )}
       >
-        {tableHeader}
-        <ScrollArea className="min-h-0 flex-1" onScroll={syncHeaderScroll}>
-          <Table className="table-fixed">
+        <ScrollArea
+          className="min-h-0 flex-1"
+          verticalScrollbarClassName={scrollbarClassName}
+        >
+          <Table className="table-fixed" aria-busy="true">
             {columnGroup}
+            {tableHead}
             <TableBody>
               {Array.from({ length: 10 }).map((_, rowIndex) => (
                 <TableRow
@@ -232,7 +242,12 @@ export function DataTable<TData>({
           className,
         )}
       >
-        {tableHeader}
+        <div className="shrink-0">
+          <Table className="table-fixed">
+            {columnGroup}
+            {tableHead}
+          </Table>
+        </div>
         <div className="flex min-h-0 flex-1 items-center justify-center">
           {error ? (
             <EmptyState
@@ -274,15 +289,15 @@ export function DataTable<TData>({
         className,
       )}
     >
-      {tableHeader}
       <ScrollArea
         className="min-h-0 flex-1"
         viewportRef={viewportRef}
         viewportClassName={showEndOfResults ? 'flex flex-col' : undefined}
-        onScroll={syncHeaderScroll}
+        verticalScrollbarClassName={scrollbarClassName}
       >
         <Table className="table-fixed">
           {columnGroup}
+          {tableHead}
           <TableBody>
             {data.map((item) => {
               const rowId = getRowId(item)

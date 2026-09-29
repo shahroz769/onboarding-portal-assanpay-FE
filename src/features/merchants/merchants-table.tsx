@@ -61,7 +61,7 @@ function Toolbar() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
   const meta = useMerchantsTableMeta()
-  const { filters, selectedIds, flatData } = state
+  const { filters } = state
 
   return (
     <DataTableToolbar>
@@ -69,6 +69,7 @@ function Toolbar() {
         <DataTableSearch
           value={filters.search ?? ''}
           onChange={(v) => actions.setFilter('search', v || undefined)}
+          label="Search merchants"
           placeholder="Search by ID or name…"
         />
         {/* Filters follow the table's column order; Scope has no column. */}
@@ -100,11 +101,6 @@ function Toolbar() {
         />
       </DataTableToolbar.Filters>
       <DataTableToolbar.Actions>
-        {selectedIds.length > 0 && (
-          <span className="text-sm text-muted-foreground">
-            {selectedIds.length} of {flatData.length} row(s) selected
-          </span>
-        )}
         <TriggerCaseButton />
       </DataTableToolbar.Actions>
     </DataTableToolbar>

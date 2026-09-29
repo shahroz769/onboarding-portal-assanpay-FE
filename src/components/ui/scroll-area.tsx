@@ -8,11 +8,14 @@ function ScrollArea({
   children,
   viewportRef,
   viewportClassName,
+  verticalScrollbarClassName,
   onScroll,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
   viewportRef?: React.Ref<HTMLDivElement>
   viewportClassName?: string
+  /** E.g. a top margin that keeps the scrollbar off a sticky header. */
+  verticalScrollbarClassName?: string
   onScroll?: React.UIEventHandler<HTMLDivElement>
 }) {
   return (
@@ -32,7 +35,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
+      <ScrollBar className={verticalScrollbarClassName} />
       <ScrollBar orientation="horizontal" />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>

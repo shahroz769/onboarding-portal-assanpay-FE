@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import {
   Tooltip,
@@ -20,6 +20,11 @@ type TruncatedTooltipProps = {
   content: React.ReactNode
   contentClassName?: string
   side?: React.ComponentProps<typeof TooltipContent>['side']
+  /**
+   * For a trigger with no focusable element inside: joins the tab order while
+   * its text is cut off, so keyboard users can reach the full value.
+   */
+  focusable?: boolean
 }
 
 /**
@@ -32,9 +37,16 @@ export function TruncatedTooltip({
   content,
   contentClassName = 'max-w-xs',
   side,
+  focusable = false,
 }: TruncatedTooltipProps) {
   const triggerRef = useRef<HTMLElement>(null)
   const [open, setOpen] = useState(false)
+  const [isTruncated, setIsTruncated] = useState(false)
+
+  // Measured once on mount: table columns have fixed widths.
+  useLayoutEffect(() => {
+    if (focusable) setIsTruncated(isTextTruncated(triggerRef.current))
+  }, [focusable])
 
   return (
     <Tooltip
@@ -48,6 +60,7 @@ export function TruncatedTooltip({
           triggerRef.current = node
         }}
         render={render}
+        tabIndex={focusable && isTruncated ? 0 : undefined}
       >
         {children}
       </TooltipTrigger>

@@ -191,6 +191,7 @@ export function UsersTableComposed({
                 <DataTableSearch
                   value={filters.search ?? ''}
                   onChange={(value) => setFilter('search', value || undefined)}
+                  label="Search users"
                   placeholder="Search by name, email, or username…"
                 />
 
@@ -211,11 +212,6 @@ export function UsersTableComposed({
                 />
               </DataTableToolbar.Filters>
               <DataTableToolbar.Actions>
-                {selectedIds.length > 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    {selectedIds.length} of {users.length} row(s) selected
-                  </span>
-                )}
                 <CreateUserButton />
               </DataTableToolbar.Actions>
             </DataTableToolbar>
@@ -236,7 +232,7 @@ export function UsersTableComposed({
                   setBulkStatus(value as 'active' | 'inactive')
                 }
               >
-                <SelectTrigger size="sm">
+                <SelectTrigger size="sm" aria-label="New status">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,7 +263,7 @@ export function UsersTableComposed({
                   }
                 >
                   <MailIcon data-icon="inline-start" />
-                  Send reset email
+                  Send Reset Email
                 </Button>
               ) : null}
             </DataTableSelectionInfo>
@@ -341,7 +337,7 @@ export function UsersTableComposed({
               ) : (
                 <MailIcon data-icon="inline-start" />
               )}
-              {bulkResetMutation.isPending ? 'Sending' : 'Send reset emails'}
+              {bulkResetMutation.isPending ? 'Sending' : 'Send Reset Emails'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

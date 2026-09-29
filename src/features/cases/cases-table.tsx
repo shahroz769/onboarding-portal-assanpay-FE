@@ -123,7 +123,7 @@ function QueueSelector() {
       }
       disabled={state.isQueuesLoading}
     >
-      <SelectTrigger className="w-50">
+      <SelectTrigger className="w-50" aria-label="Queue">
         <SelectValue placeholder="All Queues" />
       </SelectTrigger>
       <SelectContent>
@@ -147,7 +147,7 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const meta = useCasesTableMeta()
-  const { filters, selectedIds, flatData } = state
+  const { filters } = state
 
   const ownerFilterOptions = state.users.map((user) => ({
     label: user.name,
@@ -160,6 +160,7 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
         <DataTableSearch
           value={filters.search ?? ''}
           onChange={(value) => actions.setFilter('search', value || undefined)}
+          label="Search cases"
           placeholder="Search by case number or merchant name…"
         />
         {/* Filters follow the table's column order (the queue picker lives
@@ -196,11 +197,6 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
         />
       </DataTableToolbar.Filters>
       <DataTableToolbar.Actions>
-        {selectedIds.length > 0 ? (
-          <span className="text-sm text-muted-foreground">
-            {selectedIds.length} of {flatData.length} row(s) selected
-          </span>
-        ) : null}
         {extraActions}
       </DataTableToolbar.Actions>
     </DataTableToolbar>
@@ -239,7 +235,7 @@ function BulkActions() {
                   )
                 }
               >
-                <SelectTrigger size="sm">
+                <SelectTrigger size="sm" aria-label="New owner">
                   <SelectValue placeholder="Select owner" />
                 </SelectTrigger>
                 <SelectContent>

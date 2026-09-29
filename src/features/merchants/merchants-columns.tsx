@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BanIcon, EyeIcon, Trash2Icon } from 'lucide-react'
+import { BanIcon, ChevronDownIcon, EyeIcon, Trash2Icon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
@@ -85,14 +85,14 @@ export function createMerchantColumns({
           checked={isAllSelected}
           indeterminate={isSomeSelected}
           onCheckedChange={(value) => onSelectAll(!!value)}
-          aria-label="Select all"
+          aria-label="Select all merchants"
         />
       ),
       cell: (merchant) => (
         <Checkbox
           checked={selectedIds.has(merchant.id)}
           onCheckedChange={(value) => onSelectRow(merchant.id, !!value)}
-          aria-label="Select row"
+          aria-label={`Select ${merchant.businessName}`}
         />
       ),
       width: 40,
@@ -101,6 +101,7 @@ export function createMerchantColumns({
     // Merchant Name
     {
       id: 'businessName',
+      sortDirection: getSortDirection('businessName', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Merchant Name"
@@ -128,6 +129,7 @@ export function createMerchantColumns({
     // Owner Full Name
     {
       id: 'ownerFullName',
+      sortDirection: getSortDirection('ownerFullName', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Owner"
@@ -139,6 +141,7 @@ export function createMerchantColumns({
         <TruncatedTooltip
           render={<span className="block max-w-52 truncate text-sm" />}
           content={merchant.ownerFullName}
+          focusable
         >
           {merchant.ownerFullName}
         </TruncatedTooltip>
@@ -149,6 +152,7 @@ export function createMerchantColumns({
     // Status (derived)
     {
       id: 'status',
+      sortDirection: getSortDirection('status', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Status"
@@ -170,6 +174,7 @@ export function createMerchantColumns({
     // Priority (clickable)
     {
       id: 'priority',
+      sortDirection: getSortDirection('priority', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Priority"
@@ -180,8 +185,24 @@ export function createMerchantColumns({
       cell: (merchant) => {
         const canEditMerchantPriority =
           canEdit && merchant.status !== 'terminated'
+        const label = PRIORITY_LABELS[merchant.priority]
         const priorityBadge = (
           <Badge
+            // A button when editable, so it is reachable by keyboard; a
+            // read-only badge with a note still takes focus to show it.
+            render={
+              canEditMerchantPriority ? (
+                <button
+                  type="button"
+                  aria-label={`${label} priority, change`}
+                  onClick={(event) =>
+                    onPriorityClick(merchant, event.currentTarget)
+                  }
+                />
+              ) : merchant.priorityNote ? (
+                <span tabIndex={0} />
+              ) : undefined
+            }
             variant="secondary"
             className={
               cn(
@@ -189,14 +210,11 @@ export function createMerchantColumns({
                 canEditMerchantPriority && CLICKABLE_BADGE_CLASSES,
               ) || undefined
             }
-            onClick={
-              canEditMerchantPriority
-                ? (event: React.MouseEvent<HTMLElement>) =>
-                    onPriorityClick(merchant, event.currentTarget)
-                : undefined
-            }
           >
-            {PRIORITY_LABELS[merchant.priority]}
+            {label}
+            {canEditMerchantPriority ? (
+              <ChevronDownIcon aria-hidden="true" />
+            ) : null}
           </Badge>
         )
 
@@ -234,6 +252,7 @@ export function createMerchantColumns({
     // Created At
     {
       id: 'createdAt',
+      sortDirection: getSortDirection('createdAt', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Created At"
@@ -270,6 +289,7 @@ export function createMerchantColumns({
     // Last Updated
     {
       id: 'updatedAt',
+      sortDirection: getSortDirection('updatedAt', sortBy, sortOrder),
       header: (
         <DataTableColumnHeader
           title="Last Updated"
@@ -303,7 +323,7 @@ export function createMerchantColumns({
             }
           >
             <EyeIcon className="size-4" />
-            <span className="sr-only">View</span>
+            <span className="sr-only">View {merchant.businessName}</span>
           </ButtonLink>
           {canTerminate && merchant.status !== 'terminated' && (
             <Tooltip>
@@ -320,7 +340,9 @@ export function createMerchantColumns({
                 }
               >
                 <BanIcon className="size-4" />
-                <span className="sr-only">Terminate</span>
+                <span className="sr-only">
+                  Terminate {merchant.businessName}
+                </span>
               </TooltipTrigger>
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
@@ -340,7 +362,9 @@ export function createMerchantColumns({
                 }
               >
                 <Trash2Icon />
-                <span className="sr-only">Delete permanently</span>
+                <span className="sr-only">
+                  Delete {merchant.businessName} permanently
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 Delete terminated merchant permanently
