@@ -89,9 +89,9 @@ function MerchantDetailsHeader({ header }: { header: MerchantHeader }) {
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-semibold tracking-tight">
+              <h1 className="text-xl font-semibold tracking-tight">
                 {header.businessName}
-              </h2>
+              </h1>
               <Badge
                 variant="secondary"
                 className={merchantStatusBadgeClasses(header.status)}

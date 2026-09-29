@@ -53,6 +53,7 @@ export function NavUser() {
   const avatarSrc = getUserAvatarSrc(user.gender)
   const initials = getUserInitials(user.name)
   const RoleIcon = USER_ROLE_ICONS[user.roleType]
+  const triggerInitials = getFirstLastInitials(user.name)
 
   return (
     <DropdownMenu>
@@ -62,11 +63,12 @@ export function NavUser() {
             variant="secondary"
             size="icon"
             className="text-xs font-medium rounded-full hover:bg-foreground/10 dark:hover:bg-foreground/15"
-            aria-label={`Account: ${user.name}`}
+            // Starts with the visible initials so voice control can target it.
+            aria-label={`${triggerInitials}: account menu for ${user.name}`}
           />
         }
       >
-        {getFirstLastInitials(user.name)}
+        {triggerInitials}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-64">
         <DropdownMenuGroup>
@@ -77,8 +79,10 @@ export function NavUser() {
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="grid min-w-0 flex-1 gap-0.5 leading-tight">
-                <span className="text-sm font-medium">{user.name}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm font-medium wrap-anywhere">
+                  {user.name}
+                </span>
+                <span className="text-xs wrap-anywhere text-muted-foreground">
                   {user.email}
                 </span>
                 <span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">

@@ -78,7 +78,6 @@ export function ThemeToggle() {
         }
       >
         <SelectedIcon />
-        <span className="sr-only">{selectedTheme.label}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuGroup>

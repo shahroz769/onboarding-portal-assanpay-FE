@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button, ButtonLink } from '#/components/ui/button'
+import { useInAppShell } from '#/hooks/use-in-app-shell'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 export function DefaultRouteError({
@@ -17,6 +18,8 @@ export function DefaultRouteError({
 }) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  // Inside the app shell this sits in its <main>; elsewhere it is the page.
+  const Root = useInAppShell() ? 'div' : 'main'
   const isForbidden =
     error instanceof AxiosError && error.response?.status === 403
   const title = isForbidden ? 'Access denied' : 'Something went wrong'
@@ -28,7 +31,7 @@ export function DefaultRouteError({
   )
 
   return (
-    <main className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
+    <Root className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
       <Alert variant={isForbidden ? 'warning' : 'destructive'}>
         <AlertTriangle />
         <AlertTitle>{title}</AlertTitle>
@@ -58,6 +61,6 @@ export function DefaultRouteError({
           Go to Dashboard
         </ButtonLink>
       </div>
-    </main>
+    </Root>
   )
 }

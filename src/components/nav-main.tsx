@@ -13,13 +13,13 @@ import {
 } from '#/components/ui/collapsible'
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from '#/components/ui/sidebar'
 
 const NAV_MENU_STATE_STORAGE_KEY = 'app-sidebar-collapsible-state'
@@ -110,6 +110,21 @@ function NavItem({
     const storedState = readStoredNavMenuState()
     return shouldBeOpen || storedState[item.url] === true
   })
+  // Navigating into this group opens it. Adjusted during render rather than
+  // by remounting, so the link that was just activated keeps keyboard focus.
+  const [prevShouldBeOpen, setPrevShouldBeOpen] = useState(shouldBeOpen)
+  if (shouldBeOpen !== prevShouldBeOpen) {
+    setPrevShouldBeOpen(shouldBeOpen)
+    if (shouldBeOpen) setOpen(true)
+  }
+  const {
+    state: sidebarState,
+    isMobile,
+    setOpen: setSidebarOpen,
+  } = useSidebar()
+  // The icon rail hides sub-menus, so a group there reports itself closed and
+  // a click expands the sidebar with the group open instead.
+  const isIconRail = sidebarState === 'collapsed' && !isMobile
   const labelClassName =
     'min-w-0 flex-1 truncate transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0'
 
@@ -143,8 +158,15 @@ function NavItem({
   return (
     <Collapsible
       render={<SidebarMenuItem />}
-      open={open}
-      onOpenChange={setOpen}
+      open={open && !isIconRail}
+      onOpenChange={(nextOpen) => {
+        if (isIconRail) {
+          setSidebarOpen(true)
+          setOpen(true)
+          return
+        }
+        setOpen(nextOpen)
+      }}
       className="group/collapsible"
     >
       <CollapsibleTrigger
@@ -207,17 +229,14 @@ export function NavMain({ items }: { items: SidebarNavItem[] }) {
   })
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => (
-          <NavItem
-            key={`${item.url}-${pathname}`}
-            item={item}
-            pathname={pathname}
-          />
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <nav aria-label="Main">
+      <SidebarGroup>
+        <SidebarMenu>
+          {items.map((item) => (
+            <NavItem key={item.url} item={item} pathname={pathname} />
+          ))}
+        </SidebarMenu>
+      </SidebarGroup>
+    </nav>
   )
 }

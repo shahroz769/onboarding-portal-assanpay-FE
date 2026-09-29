@@ -36,10 +36,12 @@ export function NotificationBell() {
         {hasUnread ? (
           <Badge
             className={cn(
-              'absolute -top-0.5 -right-0.5 rounded-full text-[9px] leading-none tabular-nums',
+              'absolute -top-0.5 -right-0.5 rounded-full text-[10px] leading-none tabular-nums',
               // Pops in when unread first appears; count changes don't animate.
               'transition-[opacity,scale] duration-150 ease-out starting:scale-90 starting:opacity-0 motion-reduce:transition-opacity',
-              displayCount.length === 1 ? 'size-4 p-0' : 'h-4 min-w-4 px-1',
+              displayCount.length === 1
+                ? 'size-4.5 p-0'
+                : 'h-4.5 min-w-4.5 px-1',
             )}
             variant="destructive"
           >

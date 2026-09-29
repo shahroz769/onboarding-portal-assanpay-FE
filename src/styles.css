@@ -84,8 +84,8 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  /* Softened tint: focus borders/rings read lighter than solid --primary. */
-  --ring: color-mix(in oklab, var(--primary) 40%, var(--background));
+  /* Neutral focus colour, kept at 3:1+ against every surface it crosses. */
+  --ring: oklch(0.556 0 0);
   /* Chart palette — chart-1 keeps the original brand teal so charts are
      unaffected by the neutral theme. */
   --chart-1: rgb(74 109 101);
@@ -134,8 +134,8 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.309 0 0);
   --input: oklch(0.309 0 0);
-  /* Softened tint: focus borders/rings read lighter than solid --primary. */
-  --ring: color-mix(in oklab, var(--primary) 40%, var(--background));
+  /* Neutral focus colour, kept at 3:1+ against every surface it crosses. */
+  --ring: oklch(0.708 0 0);
   --chart-1: rgb(106 174 159);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);

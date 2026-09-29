@@ -122,8 +122,8 @@ function CaseDetailsError({ error }: { error: unknown }) {
 
 function RouteStateShell({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
       {children}
-    </main>
+    </div>
   )
 }

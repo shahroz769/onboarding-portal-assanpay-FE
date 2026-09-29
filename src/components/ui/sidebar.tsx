@@ -13,7 +13,6 @@ import { Separator } from '#/components/ui/separator'
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '#/components/ui/sheet'
@@ -200,8 +199,7 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -283,7 +281,7 @@ function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">Toggle sidebar</span>
     </Button>
   )
 }
@@ -295,10 +293,10 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle Sidebar"
+      aria-label="Toggle sidebar"
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title="Toggle sidebar"
       className={cn(
         'absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-colors ease after:transition-colors after:ease group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 hover:after:bg-sidebar-border sm:flex',
         'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
@@ -313,9 +311,9 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
+function SidebarInset({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <main
+    <div
       data-slot="sidebar-inset"
       className={cn(
         'relative flex w-full flex-1 flex-col bg-background',
@@ -647,7 +645,7 @@ function SidebarMenuSubButton({
       {
         className: cn(
           'flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
-          'data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground',
+          'data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground',
           size === 'sm' && 'text-xs',
           size === 'md' && 'text-sm',
           'group-data-[collapsible=icon]:hidden',
