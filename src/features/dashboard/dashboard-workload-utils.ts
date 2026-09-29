@@ -15,7 +15,7 @@ export const WORKLOAD_SERIES: ReadonlyArray<{
   key: OpenStatusKey
   status: CaseStatus
   label: string
-  /** Badge background, as chart fill values per theme. */
+  /** Badge hue, a step darker than the badge background for chart fills. */
   fill: { light: string; dark: string }
   /** Legend/tooltip swatch: badge background with a ring so it stays visible. */
   swatchClassName: string
@@ -24,25 +24,25 @@ export const WORKLOAD_SERIES: ReadonlyArray<{
     key: 'new',
     status: 'new',
     label: 'New',
-    fill: { light: 'var(--color-blue-300)', dark: 'oklch(0.72 0.1 252)' },
+    fill: { light: 'oklch(0.76 0.12 252)', dark: 'oklch(0.74 0.12 252)' },
     swatchClassName:
-      'bg-blue-300 ring-1 ring-blue-300 dark:bg-[oklch(0.72_0.1_252)] dark:ring-[oklch(0.72_0.1_252)]',
+      'bg-[oklch(0.76_0.12_252)] ring-1 ring-[oklch(0.76_0.12_252)] dark:bg-[oklch(0.74_0.12_252)] dark:ring-[oklch(0.74_0.12_252)]',
   },
   {
     key: 'working',
     status: 'working',
     label: 'Working',
-    fill: { light: 'oklch(0.92 0.1 95)', dark: 'oklch(0.78 0.1 80)' },
+    fill: { light: 'oklch(0.88 0.12 92)', dark: 'oklch(0.79 0.12 80)' },
     swatchClassName:
-      'bg-[oklch(0.92_0.1_95)] ring-1 ring-[oklch(0.92_0.1_95)] dark:bg-[oklch(0.78_0.1_80)] dark:ring-[oklch(0.78_0.1_80)]',
+      'bg-[oklch(0.88_0.12_92)] ring-1 ring-[oklch(0.88_0.12_92)] dark:bg-[oklch(0.79_0.12_80)] dark:ring-[oklch(0.79_0.12_80)]',
   },
   {
     key: 'awaitingMerchant',
     status: 'awaiting_merchant',
     label: 'Awaiting merchant',
-    fill: { light: 'oklch(0.86 0.07 10)', dark: 'oklch(0.72 0.1 15)' },
+    fill: { light: 'oklch(0.8 0.1 11)', dark: 'oklch(0.74 0.12 15)' },
     swatchClassName:
-      'bg-[oklch(0.86_0.07_10)] ring-1 ring-[oklch(0.86_0.07_10)] dark:bg-[oklch(0.72_0.1_15)] dark:ring-[oklch(0.72_0.1_15)]',
+      'bg-[oklch(0.8_0.1_11)] ring-1 ring-[oklch(0.8_0.1_11)] dark:bg-[oklch(0.74_0.12_15)] dark:ring-[oklch(0.74_0.12_15)]',
   },
 ]
 
