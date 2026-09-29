@@ -1,9 +1,11 @@
 import type { ComponentType, ReactNode, SVGProps } from 'react'
+import { FilterX, SearchX } from 'lucide-react'
 
+import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 
 // Shared empty state for tables, panels, and feeds. Keep copy pattern:
-// a short title ("No merchants found.") + an optional hint that tells the
+// a short title ("No merchants yet.") + an optional hint that tells the
 // user what to do next, plus an optional action.
 export function EmptyState({
   icon: Icon,
@@ -46,5 +48,45 @@ export function EmptyState({
       ) : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
+  )
+}
+
+// A list that is empty only because of the user's search or filters: name
+// the search when there is one, and offer the way back to the full list.
+export function FilteredEmptyState({
+  noun,
+  search,
+  hasOtherFilters,
+  onClearFilters,
+}: {
+  /** Plural, lowercase: "merchants". */
+  noun: string
+  search?: string
+  hasOtherFilters: boolean
+  onClearFilters: () => void
+}) {
+  return (
+    <EmptyState
+      icon={SearchX}
+      title={
+        search
+          ? `No ${noun} match "${search}".`
+          : `No ${noun} match your filters.`
+      }
+      description={
+        search && hasOtherFilters ? 'Other filters also apply.' : undefined
+      }
+      action={
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onClearFilters}
+        >
+          <FilterX data-icon="inline-start" />
+          Clear filters
+        </Button>
+      }
+    />
   )
 }

@@ -398,7 +398,7 @@ export function CaseChatter({
     <div className="flex min-h-full flex-1 flex-col rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-10">
       <EmptyState
         icon={MessageSquareMore}
-        title="No conversation yet"
+        title="No conversation yet."
         description={canPost ? 'Start the discussion below.' : undefined}
         className="m-auto"
       />
@@ -525,7 +525,7 @@ export function CaseChatter({
               {hasMentionQuery ? (
                 <CommandList className="max-h-none overflow-hidden">
                   {mentionCandidates.length === 0 ? (
-                    <CommandEmpty>No matching users found.</CommandEmpty>
+                    <CommandEmpty>No users found.</CommandEmpty>
                   ) : (
                     <ScrollArea style={{ height: mentionResultsHeight }}>
                       <CommandGroup heading="Team members">

@@ -224,7 +224,8 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
         <CardContent>
           <EmptyState
             icon={History}
-            title="No history recorded for this merchant yet."
+            title="No history yet."
+            description="Milestones and case activity for this merchant appear here."
             className="py-14"
           />
         </CardContent>

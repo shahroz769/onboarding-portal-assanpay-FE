@@ -462,7 +462,8 @@ export function CaseHistoryTimeline({
         <div className="rounded-xl border border-dashed bg-muted/20 px-4">
           <EmptyState
             icon={History}
-            title="No history has been recorded for this case yet."
+            title="No history yet."
+            description="Actions taken on this case appear here."
             className="py-8"
           />
         </div>

@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircleIcon, UserIcon } from 'lucide-react'
+import { AlertCircleIcon, FolderOpen, UserIcon } from 'lucide-react'
 
+import { EmptyState, FilteredEmptyState } from '#/components/empty-state'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -281,6 +282,13 @@ function Grid() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const meta = useCasesTableMeta()
+  const { search, merchantId, priority, ownerId, status } = state.filters
+  const hasOtherFilters = !!(
+    merchantId ||
+    priority ||
+    (!state.hideOwnerFilter && ownerId) ||
+    (!state.hideStatusFilter && status)
+  )
 
   return (
     <DataTable
@@ -295,6 +303,18 @@ function Grid() {
       isFetchingMore={state.isFetchingNextPage}
       hasMore={state.hasNextPage}
       totalCount={state.totalCount}
+      emptyContent={
+        search || hasOtherFilters ? (
+          <FilteredEmptyState
+            noun="cases"
+            search={search}
+            hasOtherFilters={hasOtherFilters}
+            onClearFilters={actions.clearFilters}
+          />
+        ) : (
+          <EmptyState icon={FolderOpen} title="No cases here yet." />
+        )
+      }
     />
   )
 }

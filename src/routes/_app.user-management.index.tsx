@@ -19,9 +19,21 @@ export const Route = createFileRoute('/_app/user-management/')({
 
 function RouteComponent() {
   const search = Route.useSearch()
-  const { setFilter } = useUsersSearchActions('/user-management')
+  const { setFilter, setFilters } = useUsersSearchActions('/user-management')
 
-  return <UsersTableComposed filters={search} setFilter={setFilter} />
+  return (
+    <UsersTableComposed
+      filters={search}
+      setFilter={setFilter}
+      clearFilters={() =>
+        setFilters({
+          search: undefined,
+          roleType: undefined,
+          status: undefined,
+        })
+      }
+    />
+  )
 }
 
 function UsersRoutePending() {

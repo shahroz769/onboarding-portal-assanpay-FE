@@ -53,6 +53,7 @@ interface MerchantsTableState {
 
 interface MerchantsTableActions {
   setFilter: (key: keyof MerchantRouteSearch, value: string | undefined) => void
+  clearFilters: () => void
   fetchNextPage: () => void
   retry: () => void
   clearSelection: () => void
@@ -386,6 +387,15 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
 
   const actionsValue: MerchantsTableActions = {
     setFilter,
+    // Sort order isn't a filter, so it stays.
+    clearFilters: () =>
+      setFilters({
+        search: undefined,
+        status: undefined,
+        priority: undefined,
+        businessScope: undefined,
+        currency: undefined,
+      }),
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
     clearSelection: () => setSelectedIdSet(new Set()),

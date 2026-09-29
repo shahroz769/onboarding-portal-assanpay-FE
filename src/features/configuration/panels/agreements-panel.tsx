@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FileCheck2, FileText, FileUp, Upload, X } from 'lucide-react'
 import { DataTable } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table'
+import { EmptyState } from '#/components/empty-state'
 import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 import {
@@ -77,11 +78,7 @@ export function AgreementsPanel() {
       isLoading={isPending}
       error={error}
       onRetry={() => void refetch()}
-      emptyContent={
-        <div className="flex flex-col items-center gap-1 text-muted-foreground">
-          <p className="text-sm">No business types configured.</p>
-        </div>
-      }
+      emptyContent={<EmptyState title="No business types configured." />}
     />
   )
 }

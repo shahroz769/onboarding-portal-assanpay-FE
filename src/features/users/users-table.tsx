@@ -9,6 +9,7 @@ import {
   DataTableSelectionInfo,
   DataTableToolbar,
 } from '#/components/data-table'
+import { FilteredEmptyState } from '#/components/empty-state'
 import { Button } from '#/components/ui/button'
 import {
   AlertDialog,
@@ -96,11 +97,13 @@ const EMPTY_USERS: never[] = []
 type UsersTableComposedProps = {
   filters: UserRouteSearch
   setFilter: (key: keyof UserRouteSearch, value: string | undefined) => void
+  clearFilters: () => void
 }
 
 export function UsersTableComposed({
   filters,
   setFilter,
+  clearFilters,
 }: UsersTableComposedProps) {
   const [selectedIdSet, setSelectedIdSet] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState<'active' | 'inactive'>('active')
@@ -288,12 +291,14 @@ export function UsersTableComposed({
               hasMore={usersQuery.hasNextPage}
               totalCount={totalCount}
               emptyContent={
-                <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                  <p className="text-sm">No users found.</p>
-                  <p className="text-xs">
-                    Try adjusting your search or filters.
-                  </p>
-                </div>
+                // The signed-in user always exists, so an empty list is
+                // always the filters' doing.
+                <FilteredEmptyState
+                  noun="users"
+                  search={filters.search}
+                  hasOtherFilters={!!(filters.roleType || filters.status)}
+                  onClearFilters={clearFilters}
+                />
               }
             />
           </div>

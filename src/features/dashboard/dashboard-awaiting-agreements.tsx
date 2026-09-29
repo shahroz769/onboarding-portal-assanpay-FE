@@ -174,7 +174,7 @@ export function DashboardAwaitingAgreements() {
               <EmptyState
                 icon={CheckCircle2}
                 tone="success"
-                title="All physical agreements received"
+                title="All physical agreements received."
                 description="No sent agreements are waiting on a signed physical copy."
               />
             }

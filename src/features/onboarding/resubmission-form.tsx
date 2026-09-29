@@ -853,7 +853,7 @@ function FieldControl({
         />
 
         <ComboboxContent>
-          <ComboboxEmpty>No bank found.</ComboboxEmpty>
+          <ComboboxEmpty>No banks found.</ComboboxEmpty>
           <ComboboxList>
             {(item) => (
               <ComboboxItem key={item} value={item}>

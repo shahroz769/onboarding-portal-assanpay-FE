@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AlertTriangleIcon, BanIcon, Play, Store } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
-import { EmptyState } from '#/components/empty-state'
+import { EmptyState, FilteredEmptyState } from '#/components/empty-state'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
   DataTable,
@@ -195,6 +195,14 @@ function Grid() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
   const meta = useMerchantsTableMeta()
+  const { search, status, priority, businessScope, currency } = state.filters
+  // No status in the URL means the default (everything but terminated).
+  const hasOtherFilters = !!(
+    (status && status !== DEFAULT_MERCHANT_STATUS_FILTER) ||
+    priority ||
+    businessScope ||
+    currency
+  )
 
   return (
     <DataTable
@@ -210,11 +218,20 @@ function Grid() {
       hasMore={state.hasNextPage}
       totalCount={state.totalCount}
       emptyContent={
-        <EmptyState
-          icon={Store}
-          title="No merchants found."
-          description="Try adjusting your search or filters."
-        />
+        search || hasOtherFilters ? (
+          <FilteredEmptyState
+            noun="merchants"
+            search={search}
+            hasOtherFilters={hasOtherFilters}
+            onClearFilters={actions.clearFilters}
+          />
+        ) : (
+          <EmptyState
+            icon={Store}
+            title="No merchants yet."
+            description="Merchants appear here once they submit the onboarding form."
+          />
+        )
       }
     />
   )

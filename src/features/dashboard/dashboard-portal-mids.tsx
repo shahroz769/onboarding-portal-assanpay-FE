@@ -288,7 +288,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
               <EmptyState
                 icon={CheckCircle2}
                 tone="success"
-                title="All eligible portal MIDs are complete"
+                title="All eligible portal MIDs are complete."
                 description="No successful MID Creation cases are waiting for testing or limit application. You can still pre-apply limits for MIDs before onboarding."
               />
             }

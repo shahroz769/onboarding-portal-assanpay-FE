@@ -239,7 +239,7 @@ function TeamWorkloadCard({ data, error, onRetry }: WorkloadState) {
           rows={workload ? rows : null}
           error={error}
           onRetry={onRetry}
-          emptyTitle="Nothing open here."
+          emptyTitle="No open cases."
           onSelect={handleSelect}
         />
       </CardContent>

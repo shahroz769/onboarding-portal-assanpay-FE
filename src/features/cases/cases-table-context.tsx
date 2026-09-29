@@ -54,6 +54,7 @@ interface CasesTableState {
 
 interface CasesTableActions {
   setFilter: (key: keyof CaseRouteSearch, value: string | undefined) => void
+  clearFilters: () => void
   fetchNextPage: () => void
   retry: () => void
   setBulkAssignOwnerId: (value: string | null) => void
@@ -326,6 +327,16 @@ function CasesTableProviderState({
 
   const actionsValue: CasesTableActions = {
     setFilter,
+    // Only the toolbar's filters: the queue belongs to the page header, and
+    // hidden filters are fixed by the route.
+    clearFilters: () =>
+      setFilters({
+        search: undefined,
+        merchantId: undefined,
+        priority: undefined,
+        ...(hideOwnerFilter ? {} : { ownerId: undefined }),
+        ...(hideStatusFilter ? {} : { status: undefined }),
+      }),
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
     setBulkAssignOwnerId: (value) => {

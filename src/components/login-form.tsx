@@ -61,6 +61,11 @@ function getErrorMessage(error: unknown) {
   return 'Something went wrong. Please try again.'
 }
 
+// Solid red edge while invalid, like the reference; focus adds a soft halo so
+// the focused invalid field still reads differently from an unfocused one.
+const invalidInputClass =
+  'aria-invalid:ring-1 aria-invalid:ring-destructive dark:aria-invalid:ring-destructive aria-invalid:focus-visible:ring-[3px] aria-invalid:focus-visible:ring-destructive/30 dark:aria-invalid:focus-visible:ring-destructive/40'
+
 export function LoginForm({
   className,
   redirect,
@@ -118,13 +123,13 @@ export function LoginForm({
           form.handleSubmit()
         }}
       >
-        <FieldGroup className="gap-5">
+        <FieldGroup className="gap-1">
           <form.Field name="identifier">
             {(field) => {
               const isInvalid =
                 field.state.meta.isTouched && !field.state.meta.isValid
               return (
-                <Field data-invalid={isInvalid || undefined}>
+                <Field className="gap-2">
                   <FieldLabel htmlFor={field.name}>
                     Email or Username
                   </FieldLabel>
@@ -143,14 +148,19 @@ export function LoginForm({
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
+                    className={invalidInputClass}
                   />
 
-                  {isInvalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={field.state.meta.errors}
-                    />
-                  )}
+                  {/* One line is always reserved so an error appearing doesn't
+                      push the vertically centred form around. */}
+                  <div className="min-h-5">
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
+                  </div>
                 </Field>
               )
             }}
@@ -161,7 +171,7 @@ export function LoginForm({
               const isInvalid =
                 field.state.meta.isTouched && !field.state.meta.isValid
               return (
-                <Field data-invalid={isInvalid || undefined}>
+                <Field className="gap-2">
                   <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                   <div className="relative">
                     <Input
@@ -176,7 +186,7 @@ export function LoginForm({
                         isInvalid ? `${field.name}-error` : undefined
                       }
                       autoComplete="current-password"
-                      className="pr-10"
+                      className={cn('pr-10', invalidInputClass)}
                     />
 
                     <Tooltip>
@@ -205,12 +215,16 @@ export function LoginForm({
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  {isInvalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={field.state.meta.errors}
-                    />
-                  )}
+                  {/* One line is always reserved so an error appearing doesn't
+                      push the vertically centred form around. */}
+                  <div className="min-h-5">
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
+                  </div>
                 </Field>
               )
             }}

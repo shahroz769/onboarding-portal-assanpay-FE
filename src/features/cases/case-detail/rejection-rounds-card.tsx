@@ -539,7 +539,7 @@ function ValueBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border bg-background px-2.5 py-2">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 wrap-anywhere text-sm">{value || 'Empty'}</p>
+      <p className="mt-1 wrap-anywhere text-sm">{value || 'Not provided'}</p>
     </div>
   )
 }

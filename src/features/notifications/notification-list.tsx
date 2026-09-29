@@ -5,9 +5,10 @@ import {
   useRef,
   ViewTransition,
 } from 'react'
-import { BellOff } from 'lucide-react'
+import { AlertTriangle, BellOff, RefreshCw } from 'lucide-react'
 
 import { EmptyState } from '#/components/empty-state'
+import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 
 import { Skeleton } from '#/components/ui/skeleton'
@@ -30,6 +31,7 @@ export function NotificationList({
     data,
     isLoading,
     isError,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -86,18 +88,38 @@ export function NotificationList({
           {isLoading ? <NotificationListSkeleton /> : null}
 
           {isError ? (
-            <div className="px-4 py-6 text-center text-sm text-destructive">
-              Failed to load notifications.
-            </div>
+            <EmptyState
+              icon={AlertTriangle}
+              title="Couldn't load notifications."
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void refetch()}
+                >
+                  <RefreshCw data-icon="inline-start" />
+                  Retry
+                </Button>
+              }
+            />
           ) : null}
 
           {!isLoading && !isError && items.length === 0 ? (
-            <EmptyState
-              icon={BellOff}
-              tone="success"
-              title="You're all caught up."
-              description="New notifications will appear here."
-            />
+            filter === 'unread' ? (
+              <EmptyState
+                icon={BellOff}
+                tone="success"
+                title="You're all caught up."
+                description="New notifications will appear here."
+              />
+            ) : (
+              <EmptyState
+                icon={BellOff}
+                title="No notifications yet."
+                description="New notifications will appear here."
+              />
+            )
           ) : null}
 
           {items.length > 0 ? (
