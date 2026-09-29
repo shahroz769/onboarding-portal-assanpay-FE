@@ -117,9 +117,11 @@ export function UsersTableComposed({
   usePrefetchQuery(queuesQueryOptions())
   const bulkStatusMutation = useBulkUpdateUserStatusMutation()
   const bulkResetMutation = useBulkSendUserResetPasswordsMutation()
+  // Skeleton only while there is nothing to show for these filters: a
+  // background refetch of cached rows keeps them visible and swaps quietly.
   const isTableLoading =
     usersQuery.isLoading ||
-    (usersQuery.isFetching && !usersQuery.isFetchingNextPage)
+    (usersQuery.isFetching && usersQuery.isPlaceholderData)
 
   const users =
     usersQuery.data?.pages.flatMap((page) => page.users) ?? EMPTY_USERS

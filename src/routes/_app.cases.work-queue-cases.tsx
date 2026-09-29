@@ -1,6 +1,7 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
+import { useAuth } from '#/features/auth/auth-client'
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
@@ -12,19 +13,25 @@ export const Route = createFileRoute('/_app/cases/work-queue-cases')({
     fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
-  beforeLoad: ({ context }) => {
-    const user = context.auth.getSnapshot().user
-
-    if (user?.roleType !== 'agent' || user.workQueueIds.length === 0) {
-      throw redirect({ to: '/cases/all-cases' })
-    }
-  },
+  // The access guard lives in the component: a beforeLoad would make every
+  // visit pending and flash the skeleton for pendingMinMs.
   pendingMs: 0,
   pendingComponent: CasesRoutePending,
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { user } = useAuth()
+  const canWork =
+    user?.roleType === 'super_admin' ||
+    (user?.roleType === 'agent' && user.workQueueIds.length > 0)
+
+  if (!canWork) return <Navigate to="/cases/all-cases" replace />
+
+  return <WorkQueueCases />
+}
+
+function WorkQueueCases() {
   const search = Route.useSearch()
   const { setFilter, setFilters } = useCasesSearchActions(
     '/cases/work-queue-cases',

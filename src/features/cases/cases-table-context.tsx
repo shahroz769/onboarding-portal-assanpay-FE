@@ -178,6 +178,7 @@ function CasesTableProviderState({
     data,
     isLoading,
     isFetching,
+    isPlaceholderData,
     error,
     refetch,
     fetchNextPage,
@@ -192,14 +193,16 @@ function CasesTableProviderState({
     }),
   )
 
-  const isTableLoading = isLoading || (isFetching && !isFetchingNextPage)
+  // Skeleton only while there is nothing to show for these filters: a
+  // background refetch of cached rows keeps them visible and swaps quietly.
+  const isTableLoading = isLoading || (isFetching && isPlaceholderData)
 
   const { data: availableQueues = [], isLoading: isQueuesLoading } =
     useQuery(queuesQueryOptions())
 
   const workQueueIds = new Set(user?.workQueueIds ?? [])
   const queues =
-    queueAccess === 'work'
+    queueAccess === 'work' && user?.roleType === 'agent'
       ? availableQueues.filter((queue) => workQueueIds.has(queue.id))
       : availableQueues
 

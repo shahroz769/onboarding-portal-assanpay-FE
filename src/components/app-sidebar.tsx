@@ -24,7 +24,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navItems = getFilteredNavItems(
     user?.roleType ?? 'agent',
-    Boolean(user?.workQueueIds.length),
+    user?.roleType === 'super_admin' || Boolean(user?.workQueueIds.length),
   )
 
   return (

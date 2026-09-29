@@ -62,7 +62,7 @@ const navItems: NavItem[] = [
       {
         title: 'Work Queue Cases',
         url: '/cases/work-queue-cases',
-        roles: ['agent'],
+        roles: ['agent', 'super_admin'],
         requiresWorkAccess: true,
       },
       {

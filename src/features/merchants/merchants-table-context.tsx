@@ -196,6 +196,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     data,
     isLoading,
     isFetching,
+    isPlaceholderData,
     error,
     refetch,
     fetchNextPage,
@@ -203,7 +204,9 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     isFetchingNextPage,
   } = useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
 
-  const isTableLoading = isLoading || (isFetching && !isFetchingNextPage)
+  // Skeleton only while there is nothing to show for these filters: a
+  // background refetch of cached rows keeps them visible and swaps quietly.
+  const isTableLoading = isLoading || (isFetching && isPlaceholderData)
 
   const updatePriority = useUpdatePriorityMutation()
   const terminateMerchant = useTerminateMerchantMutation()
