@@ -61,6 +61,8 @@ function TabsList({
 
 // Slides between tabs instead of the active background jumping. Positioned
 // with `translate` from Base UI's measured --active-tab-* vars.
+// The pill and the triggers use the list radius minus its p-0.75 padding, so
+// the corners stay concentric with the list.
 function TabsIndicator() {
   return (
     <TabsPrimitive.Indicator
@@ -69,7 +71,7 @@ function TabsIndicator() {
       className={cn(
         'pointer-events-none absolute top-0 left-0 z-0 transition-[translate,width,height] duration-250 ease-in-out motion-reduce:transition-none',
         // default: the raised active "pill"
-        'group-data-[variant=default]/tabs-list:h-(--active-tab-height) group-data-[variant=default]/tabs-list:w-(--active-tab-width) group-data-[variant=default]/tabs-list:translate-x-(--active-tab-left) group-data-[variant=default]/tabs-list:translate-y-(--active-tab-top) group-data-[variant=default]/tabs-list:rounded-[5px] group-data-[variant=default]/tabs-list:border group-data-[variant=default]/tabs-list:border-transparent group-data-[variant=default]/tabs-list:bg-background group-data-[variant=default]/tabs-list:shadow-sm dark:group-data-[variant=default]/tabs-list:border-foreground/10',
+        'group-data-[variant=default]/tabs-list:h-(--active-tab-height) group-data-[variant=default]/tabs-list:w-(--active-tab-width) group-data-[variant=default]/tabs-list:translate-x-(--active-tab-left) group-data-[variant=default]/tabs-list:translate-y-(--active-tab-top) group-data-[variant=default]/tabs-list:rounded-[calc(var(--radius-lg)-(--spacing(0.75)))] group-data-[variant=default]/tabs-list:border group-data-[variant=default]/tabs-list:border-transparent group-data-[variant=default]/tabs-list:bg-background group-data-[variant=default]/tabs-list:shadow-sm dark:group-data-[variant=default]/tabs-list:border-foreground/10',
         // line, horizontal: underline below the active tab
         'group-data-[variant=line]/tabs-list:bg-foreground group-data-[orientation=horizontal]/tabs:group-data-[variant=line]/tabs-list:h-0.5 group-data-[orientation=horizontal]/tabs:group-data-[variant=line]/tabs-list:w-(--active-tab-width) group-data-[orientation=horizontal]/tabs:group-data-[variant=line]/tabs-list:translate-x-(--active-tab-left) group-data-[orientation=horizontal]/tabs:group-data-[variant=line]/tabs-list:translate-y-[calc(var(--active-tab-top)+var(--active-tab-height)+(--spacing(1.25))-2px)]',
         // line, vertical: bar to the right of the active tab
@@ -89,7 +91,7 @@ function TabsTrigger({
       className={cn(
         // The active background/underline is drawn by TabsIndicator; triggers
         // sit above it and only transition their text color.
-        "relative z-1 inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors duration-150 ease-out group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring data-disabled:pointer-events-none data-disabled:opacity-50 dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative z-1 inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-[calc(var(--radius-lg)-(--spacing(0.75)))] border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-colors duration-150 ease-out group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring data-disabled:pointer-events-none data-disabled:opacity-50 dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         'data-active:text-foreground dark:data-active:text-foreground',
         className,
       )}

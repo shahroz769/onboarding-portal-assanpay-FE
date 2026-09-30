@@ -224,7 +224,7 @@ export function MerchantHistoryTab({ detail }: MerchantHistoryTabProps) {
         <CardContent>
           <EmptyState
             icon={History}
-            title="No history yet."
+            title="No history yet"
             description="Milestones and case activity for this merchant appear here."
             className="py-14"
           />
@@ -317,7 +317,7 @@ function HistorySection({
         <div className="flex items-center gap-3">
           <SectionIcon icon={icon} tone={tone} />
           <div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle render={<h2 />}>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
         </div>
@@ -341,7 +341,7 @@ function CaseHistoryPanel({ group }: { group: CaseHistoryGroup }) {
               params={{
                 caseId: caseRow.id,
               }}
-              className="font-mono text-sm font-medium tabular-nums text-primary no-underline hover:underline hover:decoration-dashed hover:underline-offset-4"
+              className="font-mono text-sm font-medium tabular-nums text-primary underline underline-offset-4 hover:decoration-dashed"
             >
               {caseRow.caseNumber}
             </Link>

@@ -78,13 +78,13 @@ function Section({
         <div className="flex items-center gap-3">
           <SectionIcon icon={icon} tone={tone} />
           <div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle render={<h2 />}>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-        {children}
+      <CardContent>
+        <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">{children}</dl>
       </CardContent>
     </Card>
   )
@@ -101,12 +101,14 @@ function ReadField({
 }) {
   return (
     <div className={cn('flex flex-col gap-1.5', full && 'sm:col-span-2')}>
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
-      </span>
-      <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm wrap-break-word">
+      </dt>
+      {/* Boxed like the onboarding form fields, so reviewers read the
+          application as the merchant filled it in. */}
+      <dd className="rounded-md border bg-muted/40 px-3 py-2 text-sm wrap-break-word">
         {value || <span className="text-muted-foreground">—</span>}
-      </div>
+      </dd>
     </div>
   )
 }
@@ -118,178 +120,191 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
     documentReviewApproved,
   )
 
+  // Wide screens: application fields on the left, documents and agreements
+  // in a sticky column on the right so they stay in view while reviewing.
   return (
-    <div className="flex flex-col gap-6">
-      <Section
-        icon={Mail}
-        tone="blue"
-        title="Submitter"
-        description="Who submitted this onboarding application."
-      >
-        <ReadField label="Submitter email" value={merchant.submitterEmail} />
-      </Section>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_32rem]">
+      <div className="flex min-w-0 flex-col gap-6">
+        <Section
+          icon={Mail}
+          tone="blue"
+          title="Submitter"
+          description="Who submitted this onboarding application."
+        >
+          <ReadField label="Submitter email" value={merchant.submitterEmail} />
+        </Section>
 
-      <Section
-        icon={User}
-        tone="violet"
-        title="Owner"
-        description="Primary owner of the business."
-      >
-        <ReadField label="Owner full name" value={merchant.ownerFullName} />
-        <ReadField label="Owner phone" value={merchant.ownerPhone} />
-        <ReadField
-          label="Active WhatsApp number"
-          value={merchant.activeWhatsappNumber}
-        />
-      </Section>
-
-      <Section
-        icon={Building2}
-        tone="emerald"
-        title="Business Information"
-        description="Core details about the business."
-      >
-        <ReadField label="Business name" value={merchant.businessName} />
-        <ReadField label="Business phone" value={merchant.businessPhone} />
-        <ReadField label="Business email" value={merchant.businessEmail} />
-        <ReadField
-          label="Website platform"
-          value={websiteCmsLabel(merchant.websiteCms)}
-        />
-        <ReadField
-          label="Business website"
-          value={
-            <a
-              href={merchant.businessWebsite}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
-            >
-              {merchant.businessWebsite}
-              <ExternalLink className="size-3" />
-            </a>
-          }
-        />
-        <ReadField
-          label="Registration date"
-          value={
-            merchant.businessRegistrationDate
-              ? format(
-                  new Date(merchant.businessRegistrationDate),
-                  'dd MMM yyyy',
-                )
-              : '—'
-          }
-        />
-        <ReadField label="Nature of business" value={merchant.businessNature} />
-        <ReadField
-          label="Business address"
-          value={merchant.businessAddress}
-          full
-        />
-        <ReadField
-          label="Business description"
-          value={merchant.businessDescription}
-          full
-        />
-      </Section>
-
-      <Section
-        icon={Briefcase}
-        tone="amber"
-        title="Business Classification"
-        description="Type of entity and transaction estimates."
-      >
-        <ReadField
-          label="Business type"
-          value={merchantTypeLabel(merchant.merchantType)}
-        />
-        <ReadField
-          label="Est. monthly transactions"
-          value={formatNumber(merchant.estimatedMonthlyTransactions)}
-        />
-        <ReadField
-          label="Est. monthly volume"
-          value={formatCurrency(
-            merchant.estimatedMonthlyVolume,
-            merchant.currency,
-          )}
-        />
-      </Section>
-
-      <Section
-        icon={CreditCard}
-        tone="sky"
-        title="Financial Information"
-        description="Settlement bank account details."
-      >
-        <ReadField label="Account title" value={merchant.accountTitle} />
-        <ReadField label="Bank name" value={merchant.bankName} />
-        <ReadField label="Branch name" value={merchant.branchName} />
-        <ReadField
-          label="Account number / IBAN"
-          value={merchant.accountNumberIban}
-        />
-        <ReadField label="SWIFT code" value={merchant.swiftCode ?? '—'} />
-      </Section>
-
-      <Section
-        icon={Users}
-        tone="rose"
-        title="Next of Kin"
-        description="Declared next of kin relationship."
-      >
-        <ReadField
-          label="Relation"
-          value={kinRelationLabel(merchant.nextOfKinRelation)}
-        />
-      </Section>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <SectionIcon icon={FileText} tone="indigo" />
-            <div>
-              <CardTitle>Uploaded Documents</CardTitle>
-              <CardDescription>
-                {documents.length} document
-                {documents.length === 1 ? '' : 's'} submitted with this
-                application.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          {documentSubmissionGroup.files.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No documents uploaded.
-            </p>
-          ) : (
-            <DocumentSubmissionSection group={documentSubmissionGroup} />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <SectionIcon icon={FileText} tone="teal" />
-            <div>
-              <CardTitle>Agreements</CardTitle>
-              <CardDescription>
-                Signed physical agreement received by the office.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <AgreementRow
-            title="Received signed agreement"
-            emptyText="The signed physical agreement has not been received yet."
-            file={agreements.receivedSignedAgreement}
+        <Section
+          icon={User}
+          tone="violet"
+          title="Owner"
+          description="Primary owner of the business."
+        >
+          <ReadField label="Owner full name" value={merchant.ownerFullName} />
+          <ReadField label="Owner phone" value={merchant.ownerPhone} />
+          <ReadField
+            label="Active WhatsApp number"
+            value={merchant.activeWhatsappNumber}
           />
-        </CardContent>
-      </Card>
+        </Section>
+
+        <Section
+          icon={Building2}
+          tone="emerald"
+          title="Business information"
+          description="Core details about the business."
+        >
+          <ReadField label="Business name" value={merchant.businessName} />
+          <ReadField label="Business phone" value={merchant.businessPhone} />
+          <ReadField label="Business email" value={merchant.businessEmail} />
+          <ReadField
+            label="Website platform"
+            value={websiteCmsLabel(merchant.websiteCms)}
+          />
+          <ReadField
+            label="Business website"
+            value={
+              <a
+                href={merchant.businessWebsite}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4 wrap-anywhere"
+              >
+                {merchant.businessWebsite}
+                <span className="sr-only"> (opens in new tab)</span>
+                <ExternalLink className="ms-1 inline size-3 align-baseline" />
+              </a>
+            }
+          />
+          <ReadField
+            label="Registration date"
+            value={
+              merchant.businessRegistrationDate
+                ? format(
+                    new Date(merchant.businessRegistrationDate),
+                    'dd MMM yyyy',
+                  )
+                : '—'
+            }
+          />
+          <ReadField
+            label="Nature of business"
+            value={merchant.businessNature}
+          />
+          <ReadField
+            label="Business address"
+            value={merchant.businessAddress}
+            full
+          />
+          <ReadField
+            label="Business description"
+            value={merchant.businessDescription}
+            full
+          />
+        </Section>
+
+        <Section
+          icon={Briefcase}
+          tone="amber"
+          title="Business classification"
+          description="Type of entity and transaction estimates."
+        >
+          <ReadField
+            label="Business type"
+            value={merchantTypeLabel(merchant.merchantType)}
+          />
+          <ReadField
+            label="Est. monthly transactions"
+            value={formatNumber(merchant.estimatedMonthlyTransactions)}
+          />
+          <ReadField
+            label="Est. monthly volume"
+            value={formatCurrency(
+              merchant.estimatedMonthlyVolume,
+              merchant.currency,
+            )}
+          />
+        </Section>
+
+        <Section
+          icon={CreditCard}
+          tone="sky"
+          title="Financial information"
+          description="Settlement bank account details."
+        >
+          <ReadField label="Account title" value={merchant.accountTitle} />
+          <ReadField label="Bank name" value={merchant.bankName} />
+          <ReadField label="Branch name" value={merchant.branchName} />
+          <ReadField
+            label="Account number / IBAN"
+            value={merchant.accountNumberIban}
+          />
+          <ReadField label="SWIFT code" value={merchant.swiftCode ?? '—'} />
+        </Section>
+
+        <Section
+          icon={Users}
+          tone="rose"
+          title="Next of kin"
+          description="Declared next of kin relationship."
+        >
+          <ReadField
+            label="Relation"
+            value={kinRelationLabel(merchant.nextOfKinRelation)}
+          />
+        </Section>
+      </div>
+
+      {/* Capped to the scroll area (6.5rem = 3.5rem app header + 1.5rem
+          padding above and below) so a long document list scrolls inside the
+          column instead of running past the bottom of the screen. */}
+      <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-6 xl:max-h-[calc(100svh-6.5rem)] xl:overflow-y-auto xl:overscroll-contain">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <SectionIcon icon={FileText} tone="indigo" />
+              <div>
+                <CardTitle render={<h2 />}>Uploaded documents</CardTitle>
+                <CardDescription>
+                  {documents.length} document
+                  {documents.length === 1 ? '' : 's'} submitted with this
+                  application.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {documentSubmissionGroup.files.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No documents uploaded.
+              </p>
+            ) : (
+              <DocumentSubmissionSection group={documentSubmissionGroup} />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <SectionIcon icon={FileText} tone="teal" />
+              <div>
+                <CardTitle render={<h2 />}>Agreements</CardTitle>
+                <CardDescription>
+                  Signed physical agreement received by the office.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <AgreementRow
+              title="Received signed agreement"
+              emptyText="The signed physical agreement has not been received yet."
+              file={agreements.receivedSignedAgreement}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -346,14 +361,14 @@ function DocumentRow({
             <Badge variant="secondary">{file.statusLabel}</Badge>
           ) : null}
           {file.googleDriveWebViewLink ? (
-            <a
+            <ViewFileLink
               href={file.googleDriveWebViewLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              View <ExternalLink className="size-3" />
-            </a>
+              name={
+                file.documentType
+                  ? documentTypeLabel(file.documentType)
+                  : file.label
+              }
+            />
           ) : null}
         </div>
       </div>
@@ -383,7 +398,7 @@ function AgreementRow({
           <p className="truncate text-sm font-medium">{title}</p>
           <p className="truncate text-xs text-muted-foreground">
             {file
-              ? `${file.originalName} - ${formatFileSize(file.sizeBytes)} - ${format(
+              ? `${file.originalName} · ${formatFileSize(file.sizeBytes)} · ${format(
                   new Date(file.createdAt),
                   'dd MMM yyyy',
                 )}`
@@ -398,17 +413,26 @@ function AgreementRow({
           <Badge variant="secondary">Not uploaded</Badge>
         )}
         {file?.googleDriveWebViewLink ? (
-          <a
-            href={file.googleDriveWebViewLink}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-          >
-            View <ExternalLink className="size-3" />
-          </a>
+          <ViewFileLink href={file.googleDriveWebViewLink} name={title} />
         ) : null}
       </div>
     </div>
+  )
+}
+
+// Every file row has a "View" link, so the file name is added for screen
+// reader link lists.
+function ViewFileLink({ href, name }: { href: string; name: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1 text-sm text-primary underline underline-offset-4"
+    >
+      View<span className="sr-only"> {name} (opens in new tab)</span>
+      <ExternalLink className="size-3" />
+    </a>
   )
 }
 
@@ -419,8 +443,8 @@ function getCurrentDocumentSubmissionGroup(
   return {
     id: 'current-documents',
     title: documentReviewApproved
-      ? 'Approved Documents'
-      : 'Latest Submitted Documents',
+      ? 'Approved documents'
+      : 'Latest submitted documents',
     description: documentReviewApproved
       ? 'Documents approved through Document Review.'
       : 'Current submitted documents awaiting Document Review closure.',

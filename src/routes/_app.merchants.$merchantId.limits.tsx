@@ -30,5 +30,12 @@ function MerchantLimitsRoute() {
   const { user } = useAuth()
   const canEdit = user?.roleType === 'super_admin' || user?.roleType === 'admin'
 
-  return <MerchantLimitsMdrTab detail={detail} canEdit={canEdit} />
+  // Keyed on the saved values so the form resets after a save or a revert.
+  return (
+    <MerchantLimitsMdrTab
+      key={JSON.stringify(detail.limitsAndMdr.effective)}
+      detail={detail}
+      canEdit={canEdit}
+    />
+  )
 }

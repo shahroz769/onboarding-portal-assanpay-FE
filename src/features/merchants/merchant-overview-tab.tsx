@@ -38,14 +38,16 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
       ? limitsAndMdr.effective.live
       : limitsAndMdr.effective.testing
   const activeRatesLabel =
-    merchant.status === 'live' ? 'Live Limits' : 'Testing Limits'
+    merchant.status === 'live' ? 'Live limits' : 'Testing limits'
 
+  // Two cards per row on wide screens; Profile spans the full row.
   return (
-    <div className="flex flex-col gap-6">
+    <div className="grid gap-6 xl:grid-cols-2">
       <ProfileSection
         icon={Building2}
         tone="emerald"
         title="Profile"
+        className="xl:col-span-2"
         description="Business identity and onboarding status."
       >
         <Detail label="Business name" value={merchant.businessName} />
@@ -90,16 +92,16 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
         description="Key timestamps across the merchant lifecycle."
       >
         <Detail
-          label="Form Filled"
+          label="Form filled"
           value={formatDate(milestones.formFilledAt, true)}
         />
         <Detail
-          label="Testing Started"
+          label="Testing started"
           value={formatDate(milestones.testStartedAt, true)}
         />
-        <Detail label="Went Live" value={formatDate(milestones.liveAt, true)} />
+        <Detail label="Went live" value={formatDate(milestones.liveAt, true)} />
         <Detail
-          label="Last Updated"
+          label="Last updated"
           value={formatDate(merchant.updatedAt, true)}
         />
       </ProfileSection>
@@ -120,39 +122,42 @@ export function MerchantOverviewTab({ detail }: MerchantOverviewTabProps) {
       <ProfileSection
         icon={Wallet}
         tone="sky"
-        title="MDR &amp; Limits"
+        title="MDR and limits"
         description={`${activeRatesLabel} · ${
           limitsAndMdr.isOverridden
             ? 'Custom for merchant'
             : 'Global configuration'
         }`}
+        after={
+          <MerchantPaymentMethodDetails
+            methods={detail.paymentMethods}
+            currency={merchant.currency}
+          />
+        }
       >
         <RateRow
           label="Disbursement range"
-          value={`${formatNumber(activeRates.disbursementMin)} – ${formatNumber(activeRates.disbursementMax)}`}
+          value={`${merchant.currency} ${formatNumber(activeRates.disbursementMin)} – ${formatNumber(activeRates.disbursementMax)}`}
         />
         <RateRow
           label="Payout MDR"
           value={`${limitsAndMdr.effective.rates.payout}%`}
-        />
-        <MerchantPaymentMethodDetails
-          methods={detail.paymentMethods}
-          className="sm:col-span-2 lg:col-span-3"
         />
       </ProfileSection>
 
       <ProfileSection
         icon={Send}
         tone="sky"
-        title="Payout Methods"
+        title="Payout methods"
         description="Payout methods saved from MID Creation."
-      >
-        <MerchantPaymentMethodDetails
-          methods={detail.payoutMethods}
-          kind="payout"
-          className="sm:col-span-2 lg:col-span-3"
-        />
-      </ProfileSection>
+        after={
+          <MerchantPaymentMethodDetails
+            methods={detail.payoutMethods}
+            currency={merchant.currency}
+            kind="payout"
+          />
+        }
+      />
     </div>
   )
 }
@@ -163,26 +168,39 @@ function ProfileSection({
   title,
   description,
   children,
+  after,
+  className,
 }: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
   tone?: StatusTint
   title: string
   description: string
-  children: ReactNode
+  /** Label/value pairs (`Detail`, `RateRow`), rendered as a description list. */
+  children?: ReactNode
+  /** Content below the pairs, such as the payment method cards. */
+  after?: ReactNode
+  className?: string
 }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <SectionIcon icon={icon} tone={tone} />
           <div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle render={<h2 />}>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-        {children}
+      {/* Columns follow the card's width, not the viewport: a card can be
+          full width or half width. */}
+      <CardContent className="@container flex flex-col gap-5">
+        {children ? (
+          <dl className="grid gap-x-8 gap-y-5 @md:grid-cols-2 @3xl:grid-cols-3">
+            {children}
+          </dl>
+        ) : null}
+        {after}
       </CardContent>
     </Card>
   )
@@ -191,10 +209,10 @@ function ProfileSection({
 function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
-      </span>
-      <span className="text-sm font-medium">{value}</span>
+      </dt>
+      <dd className="text-sm font-medium">{value}</dd>
     </div>
   )
 }
@@ -202,8 +220,8 @@ function Detail({ label, value }: { label: string; value: ReactNode }) {
 function RateRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium tabular-nums">{value}</span>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
 import { cn } from '#/lib/utils'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
@@ -71,9 +71,15 @@ export function MerchantDetailsLayout({
             </TabsTrigger>
           ))}
         </TabsList>
-        <div data-vt="tab-panel" className="min-w-0">
+        {/* One panel for whichever tab the route picked, so the tabs above
+            label a real tabpanel. */}
+        <TabsContent
+          value={activeTab}
+          data-vt="tab-panel"
+          className="min-w-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        >
           <Outlet />
-        </div>
+        </TabsContent>
       </Tabs>
     </div>
   )
@@ -81,34 +87,30 @@ export function MerchantDetailsLayout({
 
 function MerchantDetailsHeader({ header }: { header: MerchantHeader }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
-            {header.businessName.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight">
-                {header.businessName}
-              </h1>
-              <Badge
-                variant="secondary"
-                className={merchantStatusBadgeClasses(header.status)}
-              >
-                {header.status.charAt(0).toUpperCase() + header.status.slice(1)}
-              </Badge>
-              {header.priority === 'high' ? (
-                <Badge variant="default">High priority</Badge>
-              ) : null}
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <span className="font-mono">#{header.merchantNumber}</span> ·{' '}
-              {header.ownerFullName} · Joined{' '}
-              {format(new Date(header.submittedAt), 'dd MMM yyyy')}
-            </p>
-          </div>
+    <div className="flex items-center gap-4">
+      <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
+        {header.businessName.slice(0, 2).toUpperCase()}
+      </div>
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight">
+            {header.businessName}
+          </h1>
+          <Badge
+            variant="secondary"
+            className={merchantStatusBadgeClasses(header.status)}
+          >
+            {header.status.charAt(0).toUpperCase() + header.status.slice(1)}
+          </Badge>
+          {header.priority === 'high' ? (
+            <Badge variant="default">High priority</Badge>
+          ) : null}
         </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <span className="font-mono">#{header.merchantNumber}</span> ·{' '}
+          {header.ownerFullName} · Joined{' '}
+          {format(new Date(header.submittedAt), 'dd MMM yyyy')}
+        </p>
       </div>
     </div>
   )
@@ -116,19 +118,15 @@ function MerchantDetailsHeader({ header }: { header: MerchantHeader }) {
 
 function MerchantDetailsHeaderSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Skeleton className="size-14 rounded-xl" />
-          <div className="flex min-w-0 flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-5 w-20 rounded-md" />
-              <Skeleton className="h-5 w-24 rounded-md" />
-            </div>
-            <Skeleton className="h-4 w-80 max-w-full" />
-          </div>
+    <div className="flex items-center gap-4">
+      <Skeleton className="size-14 rounded-xl" />
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-5 w-20 rounded-md" />
+          <Skeleton className="h-5 w-24 rounded-md" />
         </div>
+        <Skeleton className="h-4 w-80 max-w-full" />
       </div>
     </div>
   )
@@ -136,27 +134,20 @@ function MerchantDetailsHeaderSkeleton() {
 
 export function MerchantOverviewSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <MerchantSectionSkeleton
-        fieldCount={6}
-        columns="sm:grid-cols-2 lg:grid-cols-3"
-      />
-      <MerchantSectionSkeleton
-        fieldCount={4}
-        columns="sm:grid-cols-2 lg:grid-cols-3"
-      />
-      <MerchantSectionSkeleton
-        fieldCount={5}
-        columns="sm:grid-cols-2 lg:grid-cols-3"
-      />
+    <div className="grid gap-6 xl:grid-cols-2">
+      <MerchantSectionSkeleton fieldCount={6} className="xl:col-span-2" />
+      <MerchantSectionSkeleton fieldCount={4} />
+      <MerchantSectionSkeleton fieldCount={5} />
       <Card>
         <CardHeader>
           <MerchantSectionHeaderSkeleton />
         </CardHeader>
-        <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-          <MerchantRateRowSkeleton />
-          <MerchantRateRowSkeleton />
-          <MerchantPaymentMethodsSkeleton className="sm:col-span-2 lg:col-span-3" />
+        <CardContent className="@container flex flex-col gap-5">
+          <div className="grid gap-x-8 gap-y-5 @md:grid-cols-2 @3xl:grid-cols-3">
+            <MerchantRateRowSkeleton />
+            <MerchantRateRowSkeleton />
+          </div>
+          <MerchantPaymentMethodsSkeleton />
         </CardContent>
       </Card>
       <Card>
@@ -173,35 +164,39 @@ export function MerchantOverviewSkeleton() {
 
 export function MerchantFormSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <MerchantReadFieldsSkeleton fieldCount={1} />
-      <MerchantReadFieldsSkeleton fieldCount={3} />
-      <MerchantReadFieldsSkeleton fieldCount={9} />
-      <MerchantReadFieldsSkeleton fieldCount={3} />
-      <MerchantReadFieldsSkeleton fieldCount={5} />
-      <MerchantReadFieldsSkeleton fieldCount={1} />
-      <Card>
-        <CardHeader>
-          <MerchantSectionHeaderSkeleton />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <div className="flex flex-col gap-2 py-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-72 max-w-full" />
-          </div>
-          {Array.from({ length: 4 }).map((_, index) => (
-            <MerchantFileRowSkeleton key={index} />
-          ))}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <MerchantSectionHeaderSkeleton />
-        </CardHeader>
-        <CardContent>
-          <MerchantFileRowSkeleton />
-        </CardContent>
-      </Card>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_32rem]">
+      <div className="flex min-w-0 flex-col gap-6">
+        <MerchantReadFieldsSkeleton fieldCount={1} />
+        <MerchantReadFieldsSkeleton fieldCount={3} />
+        <MerchantReadFieldsSkeleton fieldCount={9} />
+        <MerchantReadFieldsSkeleton fieldCount={3} />
+        <MerchantReadFieldsSkeleton fieldCount={5} />
+        <MerchantReadFieldsSkeleton fieldCount={1} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <MerchantSectionHeaderSkeleton />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 py-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-72 max-w-full" />
+            </div>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <MerchantFileRowSkeleton key={index} />
+            ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <MerchantSectionHeaderSkeleton />
+          </CardHeader>
+          <CardContent>
+            <MerchantFileRowSkeleton />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -295,17 +290,17 @@ export function MerchantHistorySkeleton() {
 
 function MerchantSectionSkeleton({
   fieldCount,
-  columns,
+  className,
 }: {
   fieldCount: number
-  columns: string
+  className?: string
 }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <MerchantSectionHeaderSkeleton />
       </CardHeader>
-      <CardContent className={`grid gap-x-8 gap-y-5 ${columns}`}>
+      <CardContent className="@container grid gap-x-8 gap-y-5 @md:grid-cols-2 @3xl:grid-cols-3">
         {Array.from({ length: fieldCount }).map((_, index) => (
           <div key={index} className="flex flex-col gap-1.5">
             <Skeleton className="h-3 w-24" />
@@ -337,25 +332,27 @@ function MerchantReadFieldsSkeleton({ fieldCount }: { fieldCount: number }) {
 
 function MerchantPaymentMethodsSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('grid gap-4 md:grid-cols-2', className)}>
-      {Array.from({ length: 2 }).map((_, index) => (
-        <div
-          key={index}
-          className="flex flex-col gap-4 rounded-md border bg-muted/20 p-4"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-3 w-40" />
+    <div className={cn('@container', className)}>
+      <div className="grid gap-4 @2xl:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="@container flex flex-col gap-4 rounded-xl border bg-muted/20 p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <Skeleton className="h-12 w-24 rounded-md" />
             </div>
-            <Skeleton className="h-12 w-24 rounded-md" />
+            <div className="grid gap-3 @xs:grid-cols-2">
+              <Skeleton className="h-16 w-full rounded-md" />
+              <Skeleton className="h-16 w-full rounded-md" />
+            </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Skeleton className="h-16 w-full rounded-md" />
-            <Skeleton className="h-16 w-full rounded-md" />
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

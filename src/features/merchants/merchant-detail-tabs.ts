@@ -8,12 +8,12 @@ export const MERCHANT_DETAIL_TABS = [
   },
   {
     to: '/merchants/$merchantId/form',
-    label: 'Form and Agreement',
+    label: 'Form and agreement',
     icon: FileText,
   },
   {
     to: '/merchants/$merchantId/limits',
-    label: 'MDR & Limits',
+    label: 'MDR and limits',
     icon: Wallet,
   },
   {

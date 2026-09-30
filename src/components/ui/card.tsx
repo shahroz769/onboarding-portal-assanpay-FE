@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { mergeProps } from '@base-ui/react/merge-props'
+import { useRender } from '@base-ui/react/use-render'
 
 import { cn } from '#/lib/utils'
 
@@ -28,14 +30,22 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="card-title"
-      className={cn('leading-tight font-semibold', className)}
-      {...props}
-    />
-  )
+// Renders a div by default; pass `render={<h2 />}` where the title should be
+// a real heading in the page outline.
+function CardTitle({
+  className,
+  render,
+  ...props
+}: useRender.ComponentProps<'div'>) {
+  return useRender({
+    defaultTagName: 'div',
+    props: mergeProps<'div'>(
+      { className: cn('leading-tight font-semibold', className) },
+      props,
+    ),
+    render,
+    state: { slot: 'card-title' },
+  })
 }
 
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {

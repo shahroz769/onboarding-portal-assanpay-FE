@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import { RotateCcw, Save } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -10,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
-import { Field, FieldLabel } from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { cn } from '#/lib/utils'
@@ -51,17 +62,25 @@ const RATE_FIELDS: { key: RateKey; label: string }[] = [
   { key: 'payout', label: 'Payout (%)' },
 ]
 
+// Error keys are `testing.disbursementMax` / `rates.payout`; input ids are
+// `testing-disbursementMax` / `rate-payout`.
+function inputId(errorKey: string) {
+  const [group, key] = errorKey.split('.')
+  return group === 'rates' ? `rate-${key}` : `${group}-${key}`
+}
+
 function validate(form: MerchantLimitsMdr) {
   const errors: Record<string, string> = {}
   for (const group of ['testing', 'live'] as const) {
     if (form[group].disbursementMax < form[group].disbursementMin) {
-      errors[`${group}.disbursementMax`] = 'Max must be ≥ min.'
+      errors[`${group}.disbursementMax`] =
+        'Enter a maximum at or above the minimum.'
     }
   }
   for (const { key } of RATE_FIELDS) {
     const value = form.rates[key]
     if (value < 0 || value > 100) {
-      errors[`rates.${key}`] = 'Must be between 0 and 100.'
+      errors[`rates.${key}`] = 'Enter a rate between 0 and 100.'
     }
   }
   return errors
@@ -75,9 +94,12 @@ export function MerchantLimitsMdrTab({
   const updateMutation = useUpdateMerchantLimitsMdrMutation(merchantId)
   const resetMutation = useResetMerchantLimitsMdrMutation(merchantId)
 
+  // Seeded once: the route keys this tab on the effective values, so a save
+  // or a revert remounts it with the new server state.
   const [form, setForm] = useState<MerchantLimitsMdr>(() =>
     structuredClone(detail.limitsAndMdr.effective),
   )
+  const [revertOpen, setRevertOpen] = useState(false)
 
   const activeGroup: LimitGroup =
     detail.merchant.status === 'live' ? 'live' : 'testing'
@@ -98,6 +120,15 @@ export function MerchantLimitsMdrTab({
     }))
   }
 
+  function save() {
+    if (hasErrors) {
+      // Validation runs on submit: focus the first invalid field.
+      document.getElementById(inputId(Object.keys(errors)[0]))?.focus()
+      return
+    }
+    updateMutation.mutate(form)
+  }
+
   function updateRate(key: RateKey, value: number) {
     setForm((current) => ({
       ...current,
@@ -109,20 +140,23 @@ export function MerchantLimitsMdrTab({
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Collection Payment Methods</CardTitle>
+          <CardTitle render={<h2 />}>Collection payment methods</CardTitle>
           <CardDescription>
             Method-wise testing limits, live limits, and commission rates saved
             for this merchant.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MerchantPaymentMethodDetails methods={detail.paymentMethods} />
+          <MerchantPaymentMethodDetails
+            methods={detail.paymentMethods}
+            currency={detail.merchant.currency}
+          />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Payout Methods</CardTitle>
+          <CardTitle render={<h2 />}>Payout methods</CardTitle>
           <CardDescription>
             Method-wise testing limits, live limits, and commission rates saved
             for this merchant.
@@ -131,6 +165,7 @@ export function MerchantLimitsMdrTab({
         <CardContent>
           <MerchantPaymentMethodDetails
             methods={detail.payoutMethods}
+            currency={detail.merchant.currency}
             kind="payout"
           />
         </CardContent>
@@ -138,7 +173,7 @@ export function MerchantLimitsMdrTab({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <LimitSection
-          title="Testing Limits"
+          title="Testing limits"
           group="testing"
           active={activeGroup === 'testing'}
           values={form.testing}
@@ -148,7 +183,7 @@ export function MerchantLimitsMdrTab({
         />
 
         <LimitSection
-          title="Live Limits"
+          title="Live limits"
           group="live"
           active={activeGroup === 'live'}
           values={form.live}
@@ -159,7 +194,7 @@ export function MerchantLimitsMdrTab({
 
         <Card>
           <CardHeader>
-            <CardTitle>Commission Rates (MDR)</CardTitle>
+            <CardTitle render={<h2 />}>Commission rates (MDR)</CardTitle>
             <CardDescription>Applied across all transactions.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -171,6 +206,12 @@ export function MerchantLimitsMdrTab({
                   {...numberInputProps}
                   max={100}
                   disabled={!canEdit}
+                  aria-invalid={Boolean(errors[`rates.${key}`]) || undefined}
+                  aria-describedby={
+                    errors[`rates.${key}`]
+                      ? `${inputId(`rates.${key}`)}-error`
+                      : undefined
+                  }
                   value={
                     Number.isFinite(form.rates[key]) ? form.rates[key] : ''
                   }
@@ -180,9 +221,9 @@ export function MerchantLimitsMdrTab({
                 />
 
                 {errors[`rates.${key}`] ? (
-                  <p className="text-xs text-destructive">
+                  <FieldError id={`${inputId(`rates.${key}`)}-error`}>
                     {errors[`rates.${key}`]}
-                  </p>
+                  </FieldError>
                 ) : null}
               </Field>
             ))}
@@ -193,22 +234,54 @@ export function MerchantLimitsMdrTab({
       {canEdit ? (
         <div className="flex flex-wrap items-center justify-end gap-3">
           {detail.limitsAndMdr.isOverridden ? (
-            <Button
-              variant="outline"
-              onClick={() => resetMutation.mutate()}
-              disabled={resetMutation.isPending || updateMutation.isPending}
-            >
-              {resetMutation.isPending ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
+            <AlertDialog open={revertOpen} onOpenChange={setRevertOpen}>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={
+                      resetMutation.isPending || updateMutation.isPending
+                    }
+                  />
+                }
+              >
                 <RotateCcw data-icon="inline-start" />
-              )}
-              Revert to global
-            </Button>
+                Revert to global
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Revert to global limits?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes the custom limits and MDR saved for this
+                    merchant. The global configuration applies instead.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={resetMutation.isPending}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    disabled={resetMutation.isPending}
+                    onClick={() =>
+                      resetMutation.mutate(undefined, {
+                        onSuccess: () => setRevertOpen(false),
+                      })
+                    }
+                  >
+                    {resetMutation.isPending ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : null}
+                    Revert to global
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           ) : null}
           <Button
-            onClick={() => updateMutation.mutate(form)}
-            disabled={updateMutation.isPending || hasErrors || !isDirty}
+            onClick={save}
+            disabled={updateMutation.isPending || !isDirty}
           >
             {updateMutation.isPending ? (
               <Spinner data-icon="inline-start" />
@@ -251,7 +324,10 @@ function LimitSection({
   return (
     <Card className={cn(active && 'ring-2 ring-primary/40')}>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle
+          render={<h2 />}
+          className="flex items-center justify-between"
+        >
           {title}
           {active ? <Badge>In effect</Badge> : null}
         </CardTitle>
@@ -267,6 +343,10 @@ function LimitSection({
                 id={`${group}-${key}`}
                 {...numberInputProps}
                 disabled={disabled}
+                aria-invalid={Boolean(errors[errorKey]) || undefined}
+                aria-describedby={
+                  errors[errorKey] ? `${group}-${key}-error` : undefined
+                }
                 value={Number.isFinite(values[key]) ? values[key] : ''}
                 onChange={(event) =>
                   onChange(group, key, Number(event.target.value))
@@ -274,7 +354,9 @@ function LimitSection({
               />
 
               {errors[errorKey] ? (
-                <p className="text-xs text-destructive">{errors[errorKey]}</p>
+                <FieldError id={`${group}-${key}-error`}>
+                  {errors[errorKey]}
+                </FieldError>
               ) : null}
             </Field>
           )

@@ -328,6 +328,7 @@ const merchantLimitsResponseSchema = z.object({
   merchant: z.object({
     id: z.string(),
     status: z.enum(MERCHANT_STATUSES),
+    currency: z.string(),
   }),
   limitsAndMdr: merchantLimitsAndMdrSchema,
   paymentMethods: paymentMethodSettingsSchema,
