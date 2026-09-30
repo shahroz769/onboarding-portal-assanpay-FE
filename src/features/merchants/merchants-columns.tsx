@@ -42,10 +42,12 @@ interface CreateColumnsOptions {
   sortBy?: MerchantSortableColumn
   sortOrder?: 'asc' | 'desc'
   onSort: (columnId: MerchantSortableColumn) => void
-  selectedIds: Set<string>
-  allIds: string[]
+  /**
+   * The select-all checkbox. It reads the selection itself, so these columns
+   * (and every row rendered from them) stay put while rows are selected.
+   */
+  selectAllHeader: React.ReactNode
   onSelectRow: (id: string, selected: boolean) => void
-  onSelectAll: (selected: boolean) => void
   onPriorityClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
   onTerminateClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
   onDeleteClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
@@ -65,10 +67,8 @@ export function createMerchantColumns({
   sortBy,
   sortOrder,
   onSort,
-  selectedIds,
-  allIds,
+  selectAllHeader,
   onSelectRow,
-  onSelectAll,
   onPriorityClick,
   onTerminateClick,
   onDeleteClick,
@@ -77,26 +77,14 @@ export function createMerchantColumns({
   const canTerminate = userRole === 'super_admin' || userRole === 'admin'
   const canDelete = userRole === 'super_admin'
 
-  const isAllSelected =
-    allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
-  const isSomeSelected =
-    !isAllSelected && allIds.some((id) => selectedIds.has(id))
-
   return [
     // Select
     {
       id: 'select',
-      header: (
+      header: selectAllHeader,
+      cell: (merchant, { isSelected }) => (
         <Checkbox
-          checked={isAllSelected}
-          indeterminate={isSomeSelected}
-          onCheckedChange={(value) => onSelectAll(!!value)}
-          aria-label="Select all merchants"
-        />
-      ),
-      cell: (merchant) => (
-        <Checkbox
-          checked={selectedIds.has(merchant.id)}
+          checked={isSelected}
           onCheckedChange={(value) => onSelectRow(merchant.id, !!value)}
           aria-label={`Select ${merchant.businessName}`}
         />

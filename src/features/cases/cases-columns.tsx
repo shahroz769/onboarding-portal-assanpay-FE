@@ -139,10 +139,12 @@ interface CreateColumnsOptions {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   onSort: (columnId: CaseSortableColumn) => void
-  selectedIds: Set<string>
-  allIds: string[]
+  /**
+   * The select-all checkbox. It reads the selection itself, so these columns
+   * (and every row rendered from them) stay put while rows are selected.
+   */
+  selectAllHeader: React.ReactNode
   onSelectRow: (id: string, checked: boolean) => void
-  onSelectAll: (checked: boolean) => void
   onOpenAssignOwner: (item: CaseListItem, trigger: HTMLElement) => void
   onOpenPriority: (item: CaseListItem, trigger: HTMLElement) => void
 }
@@ -161,38 +163,24 @@ export function createCaseColumns({
   sortBy,
   sortOrder,
   onSort,
-  selectedIds,
-  allIds,
+  selectAllHeader,
   onSelectRow,
-  onSelectAll,
   onOpenAssignOwner,
   onOpenPriority,
 }: CreateColumnsOptions): DataTableColumnDef<CaseListItem>[] {
-  const assignableIdSet = new Set(allIds)
-  const isAllSelected =
-    allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
-  const isSomeSelected =
-    !isAllSelected && allIds.some((id) => selectedIds.has(id))
   const canEdit = userRole === 'super_admin' || userRole === 'admin'
 
   return [
     // Select
     {
       id: 'select',
-      header: (
+      header: selectAllHeader,
+      cell: (item, { isSelected }) => (
         <Checkbox
-          checked={isAllSelected}
-          indeterminate={isSomeSelected}
-          onCheckedChange={(value) => onSelectAll(!!value)}
-          disabled={!canEdit || allIds.length === 0}
-          aria-label="Select all cases"
-        />
-      ),
-      cell: (item) => (
-        <Checkbox
-          checked={selectedIds.has(item.id)}
+          checked={isSelected}
           onCheckedChange={(value) => onSelectRow(item.id, !!value)}
-          disabled={!canEdit || !assignableIdSet.has(item.id)}
+          // Closed cases can't be reassigned, so they can't be selected.
+          disabled={!canEdit || isCaseClosed(item)}
           aria-label={`Select case ${item.caseNumber}`}
         />
       ),

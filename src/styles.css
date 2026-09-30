@@ -848,17 +848,8 @@ body,
   }
 }
 
-/* Performance: content-visibility for table rows */
 @utility view-transition-none {
   view-transition-name: none;
-}
-
-@utility content-visibility-auto {
-  content-visibility: auto;
-}
-
-@utility contain-intrinsic-size-auto-48px {
-  contain-intrinsic-size: auto 48px;
 }
 
 @utility scrollbar-none {

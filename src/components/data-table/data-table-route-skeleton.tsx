@@ -105,10 +105,7 @@ export function DataTableRouteSkeleton({
               <SkeletonColumnGroup columns={resolvedColumns} />
               <TableBody>
                 {Array.from({ length: rowCount }).map((_, rowIndex) => (
-                  <TableRow
-                    key={rowIndex}
-                    className="h-12 content-visibility-auto contain-intrinsic-size-auto-48px"
-                  >
+                  <TableRow key={rowIndex} className="h-12">
                     {resolvedColumns.map((column, cellIndex) => (
                       <TableCell key={cellIndex} className="h-12 py-0">
                         <CellSkeleton column={column} rowIndex={rowIndex} />

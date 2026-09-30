@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 
+import { Checkbox } from '#/components/ui/checkbox'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   CASES_KEY,
@@ -57,6 +58,7 @@ interface CasesTableActions {
   clearFilters: () => void
   fetchNextPage: () => void
   retry: () => void
+  selectAll: (selected: boolean) => void
   setBulkAssignOwnerId: (value: string | null) => void
   submitBulkAssign: () => void
   openAssignOwnerDialog: (item: CaseListItem, trigger?: HTMLElement) => void
@@ -68,6 +70,8 @@ interface CasesTableActions {
 interface CasesTableMeta {
   columns: DataTableColumnDef<CaseListItem>[]
   selectedIdSet: Set<string>
+  /** Rows the current user can select (open cases, admins only). */
+  assignableIds: string[]
   commaToSet: (value: string | undefined) => Set<string>
   setToCommaString: (set: Set<string>) => string | undefined
 }
@@ -106,6 +110,28 @@ export function useCasesTableActions() {
 
 export function useCasesTableMeta() {
   return useRequiredContext(CasesTableMetaContext)
+}
+
+function CasesSelectAllCheckbox() {
+  const { userRole } = useCasesTableState()
+  const { selectAll } = useCasesTableActions()
+  const { assignableIds, selectedIdSet } = useCasesTableMeta()
+  const canEdit = userRole === 'super_admin' || userRole === 'admin'
+  const isAllSelected =
+    assignableIds.length > 0 &&
+    assignableIds.every((id) => selectedIdSet.has(id))
+  const isSomeSelected =
+    !isAllSelected && assignableIds.some((id) => selectedIdSet.has(id))
+
+  return (
+    <Checkbox
+      checked={isAllSelected}
+      indeterminate={isSomeSelected}
+      onCheckedChange={(value) => selectAll(!!value)}
+      disabled={!canEdit || assignableIds.length === 0}
+      aria-label="Select all cases"
+    />
+  )
 }
 
 function CasesTableProviderState({
@@ -230,19 +256,24 @@ function CasesTableProviderState({
     Array.from(selectedIdCandidates).filter((id) => assignableIdSet.has(id)),
   )
 
+  // An emptied selection drops the bulk-assign owner draft too. Adjusted in
+  // render so handleSelectRow can stay stable (it's baked into the columns).
+  if (selectedIdCandidates.size === 0 && bulkAssignOwnerId !== null) {
+    setBulkAssignOwnerId(null)
+  }
+
   const handleSelectRow = (id: string, selected: boolean) => {
-    const next = new Set(selectedIdCandidates)
+    setSelectedIdSet((prev) => {
+      const next = new Set(prev)
 
-    if (selected) {
-      next.add(id)
-    } else {
-      next.delete(id)
-    }
+      if (selected) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
 
-    setSelectedIdSet(next)
-    if (next.size === 0) {
-      setBulkAssignOwnerId(null)
-    }
+      return next
+    })
   }
 
   const handleSelectAll = (selected: boolean) => {
@@ -259,10 +290,8 @@ function CasesTableProviderState({
     sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
     onSort: handleSort,
-    selectedIds: selectedIdSet,
-    allIds: assignableIds,
+    selectAllHeader: <CasesSelectAllCheckbox />,
     onSelectRow: handleSelectRow,
-    onSelectAll: handleSelectAll,
     onOpenAssignOwner: openAssignOwner,
     onOpenPriority: openPriority,
   })
@@ -286,9 +315,12 @@ function CasesTableProviderState({
           setBulkAssignOwnerId(null)
           setBulkAssignError(null)
         },
-        onError: (error) =>
+        onError: (mutationError) =>
           setBulkAssignError(
-            getApiErrorMessage(error, 'Unable to assign the selected cases.'),
+            getApiErrorMessage(
+              mutationError,
+              'Unable to assign the selected cases.',
+            ),
           ),
       },
     )
@@ -339,6 +371,7 @@ function CasesTableProviderState({
       }),
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
+    selectAll: handleSelectAll,
     setBulkAssignOwnerId: (value) => {
       setBulkAssignOwnerId(value)
       setBulkAssignError(null)
@@ -353,6 +386,7 @@ function CasesTableProviderState({
   const metaValue: CasesTableMeta = {
     columns,
     selectedIdSet,
+    assignableIds,
     commaToSet,
     setToCommaString,
   }

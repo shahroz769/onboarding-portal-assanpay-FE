@@ -2,6 +2,7 @@ import { createContext, use, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 
+import { Checkbox } from '#/components/ui/checkbox'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   MERCHANTS_KEY,
@@ -56,6 +57,7 @@ interface MerchantsTableActions {
   clearFilters: () => void
   fetchNextPage: () => void
   retry: () => void
+  selectAll: (selected: boolean) => void
   clearSelection: () => void
   openPriorityDialog: (
     merchant: MerchantListItem,
@@ -107,6 +109,27 @@ export function useMerchantsTableActions() {
 
 export function useMerchantsTableMeta() {
   return useRequiredContext(MerchantsTableMetaContext)
+}
+
+function MerchantsSelectAllCheckbox() {
+  const { flatData } = useMerchantsTableState()
+  const { selectAll } = useMerchantsTableActions()
+  const { selectedIdSet } = useMerchantsTableMeta()
+  const isAllSelected =
+    flatData.length > 0 &&
+    flatData.every((merchant) => selectedIdSet.has(merchant.id))
+  const isSomeSelected =
+    !isAllSelected &&
+    flatData.some((merchant) => selectedIdSet.has(merchant.id))
+
+  return (
+    <Checkbox
+      checked={isAllSelected}
+      indeterminate={isSomeSelected}
+      onCheckedChange={(value) => selectAll(!!value)}
+      aria-label="Select all merchants"
+    />
+  )
 }
 
 function cleanEmptyParams(search: Record<string, unknown>) {
@@ -256,10 +279,8 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
     onSort: handleSort,
-    selectedIds: selectedIdSet,
-    allIds,
+    selectAllHeader: <MerchantsSelectAllCheckbox />,
     onSelectRow: handleSelectRow,
-    onSelectAll: handleSelectAll,
     onPriorityClick: (merchant, trigger) => openPriority(merchant, trigger),
     onTerminateClick: (merchant, trigger) =>
       openTerminate({ type: 'single', merchant }, trigger),
@@ -398,6 +419,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
       }),
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),
+    selectAll: handleSelectAll,
     clearSelection: () => setSelectedIdSet(new Set()),
     openPriorityDialog: openPriority,
     closePriorityDialog: () => setPriorityTarget(null),
