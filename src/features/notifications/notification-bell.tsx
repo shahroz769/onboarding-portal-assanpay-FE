@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
 
+import { NumberFlip } from '#/components/number-flip'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -13,12 +14,19 @@ import { cn } from '#/lib/utils'
 
 import { NotificationsPopoverContent } from './notifications-popover'
 
+const formatBadgeCount = (count: number) => (count > 99 ? '99+' : String(count))
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { data: unreadCount = 0 } = useUnreadCountQuery()
 
-  const displayCount = unreadCount > 99 ? '99+' : String(unreadCount)
   const hasUnread = unreadCount > 0
+
+  // Keep the last count visible while the badge animates out at 0.
+  const lastCount = useRef(unreadCount)
+  if (hasUnread) lastCount.current = unreadCount
+  const shownValue = Math.min(hasUnread ? unreadCount : lastCount.current, 100)
+  const shownLength = formatBadgeCount(shownValue).length
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -33,21 +41,23 @@ export function NotificationBell() {
         }
       >
         <Bell />
-        {hasUnread ? (
+        {/* Always mounted so the badge can animate out; slides + pops in when
+            unread first appears, count changes roll (NumberFlip). */}
+        <span className="t-badge" data-open={hasUnread} aria-hidden>
           <Badge
             className={cn(
-              'absolute -top-0.5 -right-0.5 rounded-full text-[10px] leading-none tabular-nums',
-              // Pops in when unread first appears; count changes don't animate.
-              'transition-[opacity,scale] duration-150 ease-out starting:scale-90 starting:opacity-0 motion-reduce:transition-opacity',
-              displayCount.length === 1
-                ? 'size-4.5 p-0'
-                : 'h-4.5 min-w-4.5 px-1',
+              't-badge-dot rounded-full text-[10px] leading-none tabular-nums',
+              shownLength === 1 ? 'size-4.5 p-0' : 'h-4.5 min-w-4.5 px-1',
             )}
             variant="destructive"
           >
-            {displayCount}
+            <NumberFlip
+              value={shownValue}
+              format={formatBadgeCount}
+              className="leading-none"
+            />
           </Badge>
-        ) : null}
+        </span>
       </PopoverTrigger>
       <PopoverContent
         align="end"
