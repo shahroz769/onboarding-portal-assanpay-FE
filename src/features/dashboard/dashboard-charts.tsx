@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { BarChart3 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
+import { EmptyState } from '#/components/empty-state'
 import {
   Card,
   CardContent,
@@ -38,6 +40,7 @@ export function DashboardCharts({ data }: { data: DashboardResponse }) {
           key={chart.key}
           title={chart.title}
           description={chart.description}
+          emptyTitle={chart.emptyTitle}
           data={data.trends[chart.key]}
           config={chart.config}
         />
@@ -53,11 +56,13 @@ type Granularity = 'daily' | 'weekly'
 function DailyCountBarChart({
   title,
   description,
+  emptyTitle,
   data,
   config,
 }: {
   title: string
   description: string
+  emptyTitle: string
   data: DailyCountPoint[]
   config: ChartConfig
 }) {
@@ -100,7 +105,8 @@ function DailyCountBarChart({
               value={average}
               format={formatAverage}
             />
-            {peak ? (
+            {/* With every point at 0, the first day would win "peak". */}
+            {peak && peak.count > 0 ? (
               <HeaderStat
                 label="Peak"
                 value={peak.count}
@@ -112,49 +118,59 @@ function DailyCountBarChart({
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config} className="aspect-auto h-64 w-full">
-          <BarChart
-            accessibilityLayer
-            data={points}
-            margin={{ top: 8 }}
-            barCategoryGap="28%"
-          >
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={24}
-              tickFormatter={formatDay}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              width={32}
-              allowDecimals={false}
-            />
-            <ChartTooltip
-              cursor={{ opacity: 0.5 }}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    granularity === 'weekly'
-                      ? formatWeekRange(String(value))
-                      : formatDay(String(value))
-                  }
-                />
-              }
-            />
-            <Bar
-              dataKey="count"
-              fill="var(--color-count)"
-              radius={[6, 6, 0, 0]}
-              maxBarSize={36}
-              isAnimationActive={!reducedMotion}
-            />
-          </BarChart>
-        </ChartContainer>
+        {total === 0 ? (
+          // Same height as the chart, so the card doesn't shrink.
+          <EmptyState
+            icon={BarChart3}
+            title={emptyTitle}
+            description="Try a wider date range."
+            className="h-64 py-0"
+          />
+        ) : (
+          <ChartContainer config={config} className="aspect-auto h-64 w-full">
+            <BarChart
+              accessibilityLayer
+              data={points}
+              margin={{ top: 8 }}
+              barCategoryGap="28%"
+            >
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={24}
+                tickFormatter={formatDay}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={32}
+                allowDecimals={false}
+              />
+              <ChartTooltip
+                cursor={{ opacity: 0.5 }}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) =>
+                      granularity === 'weekly'
+                        ? formatWeekRange(String(value))
+                        : formatDay(String(value))
+                    }
+                  />
+                }
+              />
+              <Bar
+                dataKey="count"
+                fill="var(--color-count)"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={36}
+                isAnimationActive={!reducedMotion}
+              />
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )

@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -102,7 +102,8 @@ export function DashboardWorkload({ enabled = false }: { enabled?: boolean }) {
   }
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2">
+    // Cards stretch to the taller one; queue and team row counts differ.
+    <div className="grid gap-4 lg:grid-cols-2">
       <QueueCasesCard {...state} />
       <TeamWorkloadCard {...state} />
     </div>
@@ -139,7 +140,8 @@ function QueueCasesCard({ data, error, onRetry }: WorkloadState) {
           rows={data ? rows : null}
           error={error}
           onRetry={onRetry}
-          emptyTitle="No queues to show."
+          emptyTitle="No open cases."
+          emptyDescription="New cases appear here when merchants submit the form."
           onSelect={(row, key) =>
             void navigate({
               to: '/cases/all-cases',
@@ -239,7 +241,12 @@ function TeamWorkloadCard({ data, error, onRetry }: WorkloadState) {
           rows={workload ? rows : null}
           error={error}
           onRetry={onRetry}
-          emptyTitle="No open cases."
+          emptyTitle={isAgent ? 'You have no open cases.' : 'No open cases.'}
+          emptyDescription={
+            isAgent
+              ? 'New cases land in the unassigned pool first.'
+              : "Cases appear here per person once they're open."
+          }
           onSelect={handleSelect}
         />
       </CardContent>
@@ -254,6 +261,7 @@ function ChartBody({
   error,
   onRetry,
   emptyTitle,
+  emptyDescription,
   onSelect,
 }: {
   /** null while loading. */
@@ -261,6 +269,7 @@ function ChartBody({
   error: unknown
   onRetry: () => void
   emptyTitle: string
+  emptyDescription: string
   onSelect: (row: WorkloadChartRow, key: OpenStatusKey) => void
 }) {
   if (error) {
@@ -279,17 +288,27 @@ function ChartBody({
     )
   }
 
+  const loadingHeight = LOADING_ROWS * CHART_ROW_HEIGHT + CHART_CHROME_HEIGHT
   const loading = (
-    <Skeleton
-      className="w-full rounded-md"
-      style={{
-        height: LOADING_ROWS * CHART_ROW_HEIGHT + CHART_CHROME_HEIGHT,
-      }}
-    />
+    <Skeleton className="w-full rounded-md" style={{ height: loadingHeight }} />
   )
 
   if (!rows) return loading
-  if (rows.length === 0) return <EmptyState title={emptyTitle} />
+  // Queue and Unassigned rows always exist, so check for cases, not rows.
+  // Holds the skeleton's height so loading → empty doesn't shift the card.
+  if (rows.every((row) => row.open === 0)) {
+    return (
+      <div style={{ height: loadingHeight }}>
+        <EmptyState
+          icon={CheckCircle2}
+          tone="success"
+          title={emptyTitle}
+          description={emptyDescription}
+          className="h-full py-0"
+        />
+      </div>
+    )
+  }
 
   return (
     <Suspense fallback={loading}>

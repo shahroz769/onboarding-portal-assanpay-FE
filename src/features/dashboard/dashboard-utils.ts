@@ -70,12 +70,14 @@ export const DASHBOARD_CHARTS = [
     key: 'submissions',
     title: 'Form submissions',
     description: 'Daily merchant form submissions',
+    emptyTitle: 'No form submissions in this range.',
     config: submissionsChartConfig,
   },
   {
     key: 'merchantsLive',
     title: 'Merchants live',
     description: 'Daily merchants that went live',
+    emptyTitle: 'No merchants went live in this range.',
     config: merchantsLiveChartConfig,
   },
 ] as const
