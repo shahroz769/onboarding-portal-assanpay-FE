@@ -12,7 +12,7 @@
   - Local PostgreSQL 18.6 copy of the production schema, seeded to scale (see Method).
   - PlanetScale skills pack (query-insights-and-tags, mcp-agent-operating-model, readonly-inventory, schema-recommendations-agent-loop, customer-report-template).
 - Time window: Insights, last 8 days
-- Changes applied: none
+- Changes applied: none at report time; APP-1 implemented and deployed to production afterwards (2026-09-30, see APP-1 section)
 
 ## Executive summary
 
@@ -308,15 +308,15 @@ Only routes tested were affected; queries not exercised by the harness are not c
 
 | ID | Recommendation | Target | Benefit (measured) | Risk | Approval needed | Test first? | Evidence |
 |---|---|---|---|---|---|---|---|
-| APP-1 | Replace the per-request `latest_mid` CTE with a merchant-level rollup (one row per merchant: case_id, portal_mid, internal_mid, saved_at). | `dashboard.service.ts` (~225–410); new table and migration | Pending-count step 82 → 5.5 ms; buffers ~287k → ~380. Addresses about 50% of production DB time. | Rollup must remain consistent with `case_history`, case status/outcome and `merchants.deleted_at`. | Yes (schema and code) | Yes | Q1; Insights table |
-| APP-1a | Interim: compute `latest_mid` once per request and reuse it across the dashboard queries. | Same file | Dashboard runs about three recomputations per load (273k buffers ≈ 3 × 88k). | Low | Code review | Yes | Q1 |
-| PG-1 | Partial covering index `case_history (case_id, created_at desc) include (details) where action = 'mid_creation_saved'`. | Migration | 82 → 64–67 ms; buffers 88k → 76k. Small gain alone; 8.6 MB locally. | Extra write cost on a hot table | Yes | Yes | Q1 |
-| APP-2 | Rewrite case search as a `UNION` of case-number and merchant-name lookups (list and count). | `case-query.service.ts:304` | 171.6 → 6.1 ms (merchant term); 158.9 → 4.2 ms (number term). | Ordering, pagination and other filters must match. | Code review | Yes | Q2 |
-| PG-2 | Add `gin (owner_full_name gin_trgm_ops)` on `merchants`. | Migration | Merchant search 51.7 → 1.5 ms. | Write cost on merchant updates; table is small | Yes | Yes | Q3 |
-| APP-3 | Skip the `merchants` and `queues` joins in the case list count when no filter needs them. | `case-query.service.ts` | 38.5 → 9.8 ms; buffers 3,053 → 262. | Valid only while FKs stay non-null | Code review | Yes | Q4 |
-| APP-4 | Rewrite `/api/cases/owners` with `EXISTS` (or `distinct` on `owner_id`). | `listCaseOwners` | 38.8 → 0.085 ms. | Low | Code review | Yes | Q5 |
-| PG-3 | Decide whether to keep migration 0094's drop of `cases_updated_id_idx`, or recreate it. | Migration 0094 | Sort by `updatedAt`: 139.7 ms without, 29.0 ms with. | Extra write cost vs. one regressed sort | Yes (owner decision) | Yes | Q6 |
-| APP-5 | Reduce round trips per request (case detail 8–16 queries; comment write about 15; session check plus access lookup on every authenticated request). | Service layer | Local DB time per request is under 1 ms; benefit depends on app-to-database latency, which was not measured. Measure before changing. | Low | Code review | Yes | Whole-project results |
+| APP-1 ✅ Done | Replace the per-request `latest_mid` CTE with a merchant-level rollup (one row per merchant: case_id, portal_mid, internal_mid, saved_at). **Implemented as a per-case table instead (see APP-1 section below).** | `dashboard.service.ts` (~225–410); new table and migration | Pending-count step 82 → 5.5 ms; buffers ~287k → ~380. Addresses about 50% of production DB time. | Rollup must remain consistent with `case_history`, case status/outcome and `merchants.deleted_at`. | Yes (schema and code) | Yes | Q1; Insights table |
+| APP-1a ✅ Superseded | Interim: compute `latest_mid` once per request and reuse it across the dashboard queries. **Not needed: APP-1 removed the CTE, and the duplicate pending count per dashboard load was removed.** | Same file | Dashboard runs about three recomputations per load (273k buffers ≈ 3 × 88k). | Low | Code review | Yes | Q1 |
+| PG-1 ❌ Dropped | Partial covering index `case_history (case_id, created_at desc) include (details) where action = 'mid_creation_saved'`. **Re-measured at scale: 125.2 → 123.8 ms, no real gain; not needed after APP-1.** | Migration | 82 → 64–67 ms; buffers 88k → 76k. Small gain alone; 8.6 MB locally. | Extra write cost on a hot table | Yes | Yes | Q1 |
+| APP-2 ⏸ Deferred | Rewrite case search as a `UNION` of case-number and merchant-name lookups (list and count). **Re-checked: the rewrite as written regresses broad terms; not needed at current volume (see re-check below).** | `case-query.service.ts:304` | 171.6 → 6.1 ms (merchant term); 158.9 → 4.2 ms (number term). | Ordering, pagination and other filters must match. | Code review | Yes | Q2 |
+| PG-2 ✅ Done | Add `gin (owner_full_name gin_trgm_ops)` on `merchants`. **Migration `0096`; applied to the test DB.** | Migration | Merchant search 51.7 → 1.5 ms. | Write cost on merchant updates; table is small | Yes | Yes | Q3 |
+| APP-3 ✅ Done | Skip the `merchants` and `queues` joins in the case list count when no filter needs them. | `case-query.service.ts` | 38.5 → 9.8 ms; buffers 3,053 → 262. | Valid only while FKs stay non-null | Code review | Yes | Q4 |
+| APP-4 ✅ Done | Rewrite `/api/cases/owners` with `EXISTS` (or `distinct` on `owner_id`). | `listCaseOwners` | 38.8 → 0.085 ms. | Low | Code review | Yes | Q5 |
+| PG-3 ❌ Keep 0094 | Decide whether to keep migration 0094's drop of `cases_updated_id_idx`, or recreate it. **Keep the drop: the sort ran 0 times in production in 8 days.** | Migration 0094 | Sort by `updatedAt`: 139.7 ms without, 29.0 ms with. | Extra write cost vs. one regressed sort | Yes (owner decision) | Yes | Q6 |
+| APP-5 ❌ No change | Reduce round trips per request (case detail 8–16 queries; comment write about 15; session check plus access lookup on every authenticated request). **No change: the session check is the revocation check, and the gain is unmeasured.** | Service layer | Local DB time per request is under 1 ms; benefit depends on app-to-database latency, which was not measured. Measure before changing. | Low | Code review | Yes | Whole-project results |
 | OBS-1 | Add SQLCommenter tags: `application`, `route` (normalized template), `release_sha`, `source`, and `job` for the close-job poller. Do not tag user or request IDs. | Backend DB layer | Enables attribution of load per route and per background job; today none exists. | Low | Yes (code) | Yes | Tag inventory |
 | OBS-2 | Identify what runs the index-bloat query (17.35% of total time, 8 executions at 217.6 ms p50). | External tool/schedule | Largest single share of measured time; not application traffic. | None | No | No | Insights table |
 | OBS-3 | Evaluate raw query collection for the dashboard MID family. | Cluster parameter `pginsights.raw_queries` | Would expose literal parameters per execution; applicable only if pattern-level data proves insufficient after APP-1. Literal values become visible to the observability pipeline. | Data-handling review | Yes | n/a | Capability gap |
@@ -324,9 +324,42 @@ Only routes tested were affected; queries not exercised by the harness are not c
 
 ## Proposed change set requiring approval
 
-For all items: no change has been made. All items change code, and PG-1, PG-2, PG-3 and APP-1 also change the schema.
+APP-1 is done and live on production (2026-09-30); APP-1a is superseded and PG-1 is dropped. APP-3, APP-4 and PG-2 are implemented in the BE and verified on the test DB (not yet deployed). APP-2 is deferred, and PG-3 and APP-5 need no change (see the re-check below).
 
-### APP-1 / APP-1a: dashboard MID rollup
+### APP-1 / APP-1a: dashboard MID rollup ✅ Done (2026-09-30)
+
+**What was implemented** (differs from the proposal below):
+
+- Migration `0095_mid_case_portal_mids` (BE): per-case table `mid_case_portal_mids (case_id uuid pk → cases on delete cascade, portal_mid int not null, internal_portal_mid int, saved_at timestamptz not null)`, backfilled from `case_history`. It holds MID values only; case status/outcome, queue and `merchants.deleted_at` are still read live, so none of the ~17 case-status write paths needed hooks (the merchant-level shape would have).
+- Kept current by an `AFTER INSERT` trigger on `case_history` (`action = 'mid_creation_saved'`, latest `saved_at` wins), created in the same migration as the backfill, so saves from the old release between migrate and deploy are not missed.
+- `pendingPortalMidCtes` rewritten: unapplied MIDs are filtered first, then case/merchant checks run only for those rows, plus a `NOT EXISTS` for a newer successful MID case of the same merchant. Cost now follows pending MIDs, not all MIDs ever saved.
+- Same migration backfilled `NULL` `portal_mid_limit_applications.category` (1 row on the test DB, 0 on production) and made it `NOT NULL`; the applied list now reads the column directly.
+- Applied list removed from `GET /api/dashboard`; new `GET /api/dashboard/portal-mids/applied` (MIDs grouped by category), fetched when the Applied button is clicked.
+- Duplicate pending count removed from `GET /api/dashboard`; the pending list's first page carries the counts, now `{ total, internal, customWordpress, shopify }`. Copy MIDs takes `?group=internal|custom_wordpress|shopify` (portal MIDs split by merchant website CMS).
+
+**Measured at scale** (24k merchants, 104k cases, 360k history, 18k MID saves; results md5-identical to the old queries):
+
+| Query | Before | After |
+|---|---|---|
+| Pending count | 168 ms / 157k buffers | 52 ms / 28k buffers |
+| List, first page | 175 ms | 56 ms |
+| List, later page | 149 ms | 36 ms |
+| Copy-all MIDs | 170 ms | 54 ms |
+| Applied list | 321 ms (every dashboard load) | plain table read, only when opened |
+
+**Verified on the test DB:** old vs new pending results identical on real data; end-to-end API run (save refused without password code, save twice → latest wins, out-of-order save ignored, working case not pending, successful close → pending, apply/re-apply/pre-apply, agent 403, keyset paging), plus supersede, merchant soft-delete, unsuccessful close, case-delete cascade and CMS-based copy groups.
+
+**Deploy order:** run migration → deploy FE → deploy BE (old FE requires `portalMids` in the dashboard response).
+
+**Production verification (PlanetScale `main`, 2026-09-30, read-only MCP queries):**
+
+- Migration 0095 recorded (latest `__drizzle_migrations` entry); `mid_case_portal_mids` exists; trigger `case_history_sync_mid_case_portal_mids` present and enabled; `portal_mid_limit_applications.category` is `NOT NULL` with 0 nulls (401 rows).
+- Backfill + trigger exact: 57 rows for 57 MID cases, 0 mismatches against each case's latest `mid_creation_saved` row. A MID save made after the deploy (10:35 UTC) was written by the trigger (`insert … on conflict` pattern seen in Insights).
+- Old vs new pending logic on production data: 55 = 55 MIDs, 0 rows differ in either direction.
+- Insights, last 15 min after deploy: 0 executions of the old `latest_mid` patterns; the new patterns are serving traffic. New pending count 0.54 ms p50 (old 5.27 ms p50); new first page 2.6 ms p50 (old 8.5 ms p50).
+- `GET /api/dashboard/portal-mids/applied` only runs when the Applied dialog is opened; the old applied query (3.9% of DB time) no longer runs on dashboard load.
+
+**Original proposal (kept for reference):**
 
 - Exact target: `src/modules/dashboard/dashboard.service.ts` (~225–410) and, for APP-1, a new forward-only migration plus journal entry.
 - Exact change: APP-1a computes `latest_mid` once per request. APP-1 adds a narrow table (proposed shape, subject to review): `merchant_latest_mid (merchant_id uuid primary key, case_id uuid, portal_mid int, internal_mid int, saved_at timestamptz)`, backfilled from the current CTE and maintained where MID details are saved or the case closes.
@@ -336,6 +369,40 @@ For all items: no change has been made. All items change code, and PG-1, PG-2, P
 - Test plan: compare rollup output to the current CTE on the scale copy and on a non-production branch; check merchant soft-delete and MID-edit cases.
 - Rollback: revert the PR; the extra table is harmless.
 - Changes production: yes, once migrated and deployed.
+
+### Re-check of APP-2, PG-2, APP-3, APP-4, PG-3, APP-5 (2026-09-30)
+
+**Method.** Production facts from read-only PlanetScale MCP queries and Insights (8 days). Scale timings from one transaction on the Neon test DB that was always rolled back. Inside it, temp `cases` (128k) and `merchants` (30k, padded to about 860 bytes per row to match production's 858) were created `LIKE public.* INCLUDING ALL`, so they have the same indexes. The first run used narrow merchant rows. That made a seq scan look cheap, and the planner ignored every trigram index, so the widths were padded for the second run. Every rewrite was checked md5-identical against the current query.
+
+**Production context.** 392 cases and 124 merchants. About 150 cases were created in August and 260 in September. `cases.merchant_id` and `cases.queue_id` are `NOT NULL` with FKs. `ORDER BY cases.updated_at` ran 0 times in 8 days. Case search ran about 70 times (p50 0.2–0.6 ms) and merchant search about 140 times (p50 about 0.25 ms).
+
+| ID | Current → new at scale | Verdict |
+|---|---|---|
+| APP-3 | Count with no filter 77–90 → 18–22 ms; count with queue filter 25 → 10.5 ms | Done. Count reads `cases` alone and joins `merchants` only when searching. |
+| APP-4 | 53 → 0.1 ms | Done. `EXISTS` per user. |
+| PG-2 | Merchant search 25–27 → 1.3–5 ms. The planner now combines all three trigram indexes (`BitmapOr`). A term under 3 characters is unchanged (about 24 ms count). | Done. Migration `0096_merchants_owner_full_name_trgm_idx`. |
+| APP-2 (db.md form, unlimited `IN (… UNION …)`) | Narrow term 105 → 7 ms. **Broad term list 0.4 → 736–1,515 ms; count 120 → 690 ms.** 2-character term 6 → 86 ms. | Rejected. |
+| APP-2 (per-branch `ORDER BY … LIMIT` union) | Narrow 100 → 4–7 ms; miss 95 → 1.8 ms; broad 0.4 → 3.5 ms. 2-character term 6 → 39 ms. | Viable later. It needs a length ≥ 3 guard, the sort expression and keyset cursor repeated in each branch, and a join for `merchantName` sort. |
+| PG-3 | `updatedAt` sort 117 → 0.3 ms with the index | Keep 0094's drop. |
+| APP-5 | Not measurable here | No change. |
+
+**Why APP-2 is deferred.** At production volume both search queries take under 1 ms. At the current rate of about 260 cases a month, the table stays far below the tens of thousands of cases where search reaches double-digit milliseconds. Revisit when `cases` passes about 20k, using the per-branch-limit design above.
+
+**Why PG-3 keeps the drop.** No one used the sort in 8 days, and `updated_at` changes on every case write, so the index costs a write on every case update. At under 400 rows the sort runs in memory in well under a millisecond. Recreate the index if the Updated column gets regular use once `cases` passes about 20k.
+
+**Why APP-5 has no change.**
+- The per-request `users` lookup in `requireAuth` is the session revocation check (`status` and `session_version`). It is a primary-key probe at 0.033 ms p50 and must stay.
+- The queue-access lookup only runs for agents.
+- Case detail's 8–16 queries each take under 1 ms. Batching them only pays off if app-to-database latency is high, and that latency hasn't been measured.
+
+**Verified on the test DB.**
+- Migration 0096 applied and the index exists.
+- The new count equals the old joined count, and the returned list length, for these filters: none, status, unsuccessful, queue, owner, priority, merchant, date range, name search, number search, miss, combined filters, and both agent `queueAccess` modes.
+- The owners list is identical to the old `DISTINCT` join (8 owners).
+- Merchant search totals are unchanged.
+- The test DB is too small for the planner to choose the new index. Index use was confirmed only in the scale run.
+
+**Deploy.** Run migration 0096, then deploy the BE. The migration uses a plain `CREATE INDEX`, because the migrator runs inside a transaction. On production's 124-row `merchants` table the lock is momentary.
 
 ### APP-2 / APP-3 / APP-4: query rewrites
 
@@ -380,11 +447,11 @@ For all items: no change has been made. All items change code, and PG-1, PG-2, P
 ## Changes intentionally not applied
 
 - No PlanetScale settings changed.
-- No schema changed on production or any branch.
+- No schema changed on production at report time. (Later: APP-1 migration 0095 applied to the test DB and then production, 2026-09-30.)
 - No traffic controls changed.
 - No roles or credentials changed.
 - No webhooks changed.
-- No code changed in your repositories.
+- No code changed in your repositories at report time. (Later: APP-1 implemented in BE and FE and deployed to production.)
 - No branches, backups, restores, deploy requests or migrations created.
 - Local scratch experiments (extra indexes, temp tables, pipeline test data) exist only in a throwaway local PostgreSQL.
 
@@ -409,4 +476,4 @@ For all items: no change has been made. All items change code, and PG-1, PG-2, P
 - Test harness scripts had hard-coded state paths and merchant names; copies were adapted in the scratch directory.
 - Access tokens expire after 15 minutes; refreshed between runs.
 
-No changes have been applied. Approve specific change IDs before any mutation.
+APP-1 is live on production. Approve other change IDs before any further mutation.
