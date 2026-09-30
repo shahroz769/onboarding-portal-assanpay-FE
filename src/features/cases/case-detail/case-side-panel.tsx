@@ -39,7 +39,7 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Card, CardContent } from '#/components/ui/card'
-import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
@@ -338,6 +338,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const saveSubMerchant = useSaveDocumentReviewSubMerchant(caseId)
 
   const [closeReason, setCloseReason] = useState('')
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  // The close-unsuccessful confirmation grows out of its trigger button.
+  const closeDialogMorph = useMorph()
   // Morph Dialog: the review modal grows out of the Review button, then
   // closes with the regular dialog fade/zoom like every other modal.
   const reviewModal = useMorph({ morphClose: false })
@@ -404,6 +407,20 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'testing' &&
     primaryAction.actionKind !== 'agreement'
+
+  // These states have their own alert saying the same thing, so the action
+  // card (which has no action while waiting) stays hidden.
+  const showAwaitingMerchantAlert =
+    hasOwner &&
+    status === 'awaiting_merchant' &&
+    (isDocumentReviewCase || isAgreementCase)
+  const showActionCard = !isClosed && !showAwaitingMerchantAlert
+  const actionCardDescription =
+    primaryAction.actionKind === 'review' && !isCaseOwner
+      ? 'Only the current case owner can review rejected fields and request a resubmission.'
+      : primaryAction.actionKind === 'mark-successful' && !isCaseOwner
+        ? 'Only the current case owner can complete this case.'
+        : primaryAction.description
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
   const primaryButtonPending =
@@ -503,15 +520,83 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryActionLockedRef.current = true
     setActionInFlight('unsuccessful')
 
-    await closeUnsuccessful
-      .mutateAsync({
+    try {
+      await closeUnsuccessful.mutateAsync({
         reason: closeReason.trim(),
       })
-      .finally(() => {
-        primaryActionLockedRef.current = false
-        setActionInFlight(null)
-      })
+      setCloseDialogOpen(false)
+      setCloseReason('')
+    } catch {
+      // The mutation hook displays the backend error and keeps the dialog open.
+    } finally {
+      primaryActionLockedRef.current = false
+      setActionInFlight(null)
+    }
   }
+
+  const closeUnsuccessfulControl = canCloseUnsuccessfully ? (
+    <AlertDialog
+      open={closeDialogOpen}
+      onOpenChange={(next) => {
+        if (next) closeDialogMorph.run(() => setCloseDialogOpen(true))
+        else if (!unsuccessfulButtonPending) setCloseDialogOpen(false)
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            disabled={actionPending}
+            {...closeDialogMorph.triggerProps}
+          />
+        }
+      >
+        <ShieldAlert data-icon="inline-start" />
+        Close as unsuccessful
+      </AlertDialogTrigger>
+      <AlertDialogContent {...closeDialogMorph.popupProps}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Close case as unsuccessful?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The reason is saved on the case and shown once it is closed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Field>
+          <FieldLabel htmlFor="close-reason">Reason</FieldLabel>
+          <Textarea
+            value={closeReason}
+            id="close-reason"
+            onChange={(event) => setCloseReason(event.target.value)}
+            placeholder="Write closing reason"
+            className="min-h-28 resize-none"
+          />
+        </Field>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={unsuccessfulButtonPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={(event) => {
+              event.preventDefault()
+              void handleCloseUnsuccessful()
+            }}
+            disabled={unsuccessfulDisabled}
+          >
+            {unsuccessfulButtonPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <ShieldAlert data-icon="inline-start" />
+            )}
+            {unsuccessfulButtonPending
+              ? 'Closing unsuccessfully'
+              : 'Close as unsuccessful'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ) : null
 
   return (
     <Card className="min-h-128 w-full min-w-0 max-w-full gap-4 overflow-hidden py-4 xl:h-[calc(100dvh-7rem)] xl:min-h-0">
@@ -562,7 +647,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                 className="min-h-0 w-full min-w-0 flex-1 overflow-hidden not-data-hidden:flex data-hidden:hidden"
               >
                 <Suspense fallback={<ResolutionTabSkeleton />}>
-                  <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden overflow-y-auto pb-1">
+                  <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-4 overflow-x-hidden overflow-y-auto pb-1">
                     {isClosed ? (
                       <Alert
                         className="min-w-0"
@@ -602,91 +687,77 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                       />
                     ) : null}
 
-                    {!isClosed ? (
-                      <div className="rounded-xl border bg-background p-3">
-                        <div className="flex flex-col gap-2">
-                          <p className="text-sm text-muted-foreground">
-                            {primaryAction.actionKind === 'take-ownership'
-                              ? 'Take ownership first to move the case into active review.'
-                              : primaryAction.actionKind === 'review'
-                                ? isCaseOwner
-                                  ? 'Review the rejected fields and email the merchant to request a resubmission.'
-                                  : 'Only the current case owner can review rejected fields and request a resubmission.'
-                                : primaryAction.actionKind ===
-                                    'awaiting-merchant'
-                                  ? 'Waiting for the merchant to update the requested fields.'
-                                  : primaryAction.actionKind ===
-                                      'sub-merchant-form'
-                                    ? 'Upload the Final Form for the inherited sub-merchant in the case workspace.'
-                                    : primaryAction.actionKind ===
-                                        'mid-creation'
-                                      ? 'Save the email, MID, and Branch Code for both merchant IDs before closing this case.'
-                                      : primaryAction.actionKind === 'testing'
-                                        ? 'Complete testing limits and send credentials by auto Resend, manual Gmail, or WhatsApp in the case workspace.'
-                                        : primaryAction.actionKind ===
-                                            'agreement'
-                                          ? 'Send the final agreement link to the merchant, then upload the scanned physical copy when it arrives.'
-                                          : isCaseOwner
-                                            ? 'When everything checks out, close this case successfully.'
-                                            : 'Only the current case owner can complete this case.'}
+                    {showActionCard ? (
+                      <div className="flex flex-col gap-3 rounded-xl border bg-background p-3">
+                        <div className="flex flex-col gap-1">
+                          <h3 className="text-sm font-medium">
+                            {primaryAction.title}
+                          </h3>
+                          <p className="text-sm text-pretty text-muted-foreground">
+                            {actionCardDescription}
                           </p>
-                          {showPrimaryActionButton ? (
-                            <Button
-                              {...(primaryAction.actionKind === 'review'
-                                ? reviewModal.triggerProps
-                                : null)}
-                              onClick={handlePrimaryAction}
-                              disabled={
-                                actionPending ||
-                                (primaryAction.actionKind !==
-                                  'take-ownership' &&
-                                  primaryAction.actionKind !==
+                        </div>
+                        {showPrimaryActionButton || closeUnsuccessfulControl ? (
+                          <div className="flex flex-col gap-2">
+                            {showPrimaryActionButton ? (
+                              <Button
+                                {...(primaryAction.actionKind === 'review'
+                                  ? reviewModal.triggerProps
+                                  : null)}
+                                onClick={handlePrimaryAction}
+                                disabled={
+                                  actionPending ||
+                                  (primaryAction.actionKind !==
+                                    'take-ownership' &&
+                                    primaryAction.actionKind !==
+                                      'mark-successful' &&
+                                    primaryAction.actionKind !== 'review') ||
+                                  (primaryAction.actionKind === 'review' &&
+                                    (!hasActiveRejections || !isCaseOwner)) ||
+                                  (primaryAction.actionKind ===
                                     'mark-successful' &&
-                                  primaryAction.actionKind !== 'review') ||
-                                (primaryAction.actionKind === 'review' &&
-                                  (!hasActiveRejections || !isCaseOwner)) ||
-                                (primaryAction.actionKind ===
-                                  'mark-successful' &&
-                                  ((hasOwner && !isCaseOwner) ||
-                                    // The latest merchant email isn't
-                                    // delivered (the server refuses too).
-                                    Boolean(
-                                      caseDetail.emailDelivery
-                                        ?.closeBlockedReason,
-                                    )))
-                              }
-                            >
-                              {/* Spinner and label both follow
+                                    ((hasOwner && !isCaseOwner) ||
+                                      // The latest merchant email isn't
+                                      // delivered (the server refuses too).
+                                      Boolean(
+                                        caseDetail.emailDelivery
+                                          ?.closeBlockedReason,
+                                      )))
+                                }
+                              >
+                                {/* Spinner and label both follow
                               primaryButtonPending, which is set on click, so
                               the spinner shows at once, including while a
                               sub-merchant save runs before the action. */}
-                              {primaryButtonPending ? (
-                                <Spinner data-icon="inline-start" />
-                              ) : primaryAction.actionKind ===
-                                'take-ownership' ? (
-                                <UserRoundPlus data-icon="inline-start" />
-                              ) : primaryAction.actionKind === 'review' ? (
-                                <Send data-icon="inline-start" />
-                              ) : (
-                                <CheckCircle2 data-icon="inline-start" />
-                              )}
-                              {primaryAction.actionKind === 'take-ownership'
-                                ? primaryButtonPending
-                                  ? 'Taking ownership'
-                                  : 'Take ownership'
-                                : primaryAction.actionKind === 'review'
+                                {primaryButtonPending ? (
+                                  <Spinner data-icon="inline-start" />
+                                ) : primaryAction.actionKind ===
+                                  'take-ownership' ? (
+                                  <UserRoundPlus data-icon="inline-start" />
+                                ) : primaryAction.actionKind === 'review' ? (
+                                  <Send data-icon="inline-start" />
+                                ) : (
+                                  <CheckCircle2 data-icon="inline-start" />
+                                )}
+                                {primaryAction.actionKind === 'take-ownership'
                                   ? primaryButtonPending
-                                    ? 'Opening review'
-                                    : 'Review'
-                                  : primaryAction.actionKind ===
-                                      'mark-successful'
+                                    ? 'Taking ownership'
+                                    : 'Take ownership'
+                                  : primaryAction.actionKind === 'review'
                                     ? primaryButtonPending
-                                      ? 'Closing case'
-                                      : 'Mark as successful'
-                                    : 'No successful action available'}
-                            </Button>
-                          ) : null}
-                        </div>
+                                      ? 'Opening review'
+                                      : 'Review'
+                                    : primaryAction.actionKind ===
+                                        'mark-successful'
+                                      ? primaryButtonPending
+                                        ? 'Closing case'
+                                        : 'Mark as successful'
+                                      : 'No successful action available'}
+                              </Button>
+                            ) : null}
+                            {closeUnsuccessfulControl}
+                          </div>
+                        ) : null}
                       </div>
                     ) : null}
 
@@ -728,43 +799,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                       </Alert>
                     ) : null}
 
-                    {canCloseUnsuccessfully ? (
-                      <div className="rounded-xl border bg-background p-3">
-                        <FieldGroup>
-                          <Field>
-                            <FieldLabel htmlFor="close-reason">
-                              Reason
-                            </FieldLabel>
-                            <Textarea
-                              value={closeReason}
-                              id="close-reason"
-                              onChange={(event) =>
-                                setCloseReason(event.target.value)
-                              }
-                              placeholder="Write closing reason"
-                              className="min-h-28 resize-none"
-                            />
-                          </Field>
-                        </FieldGroup>
-
-                        <div className="mt-4 flex justify-end">
-                          <Button
-                            variant="destructive"
-                            onClick={handleCloseUnsuccessful}
-                            disabled={unsuccessfulDisabled}
-                          >
-                            {unsuccessfulButtonPending ? (
-                              <Spinner data-icon="inline-start" />
-                            ) : (
-                              <ShieldAlert data-icon="inline-start" />
-                            )}
-                            {unsuccessfulButtonPending
-                              ? 'Closing unsuccessfully'
-                              : 'Close as unsuccessful'}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
+                    {/* Without the action card (awaiting-merchant alert
+                        showing), the owner can still close from here. */}
+                    {showActionCard ? null : closeUnsuccessfulControl}
 
                     {!isClosed && hasOwner && !isInProgress && !isNew ? (
                       <div className="rounded-xl border border-dashed bg-background px-3 py-4 text-sm text-muted-foreground">
@@ -1073,7 +1110,7 @@ function CaseEmailDeliveryNotice({
 
 function ResolutionTabSkeleton() {
   return (
-    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
+    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-col gap-4 overflow-hidden">
       {/* Same card as the page skeleton's side panel, so this fallback and
           the real card line up. */}
       <ResolutionActionCardSkeleton />
@@ -1124,49 +1161,49 @@ function ResolutionTabSkeleton() {
 function ChatterTabSkeleton() {
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden">
-      <div className="min-w-0 rounded-2xl border border-border/70 bg-background p-3 shadow-sm">
+      <div className="min-w-0 rounded-xl border border-border/70 bg-background p-3 shadow-sm">
         <Skeleton className="h-6 w-full rounded-md" />
         <div className="mt-3 flex justify-end">
           <Skeleton className="h-9 w-28 rounded-md" />
         </div>
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+      {/* Threads sit gap-6 apart; a thread's replies gap-3 below it. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden">
         {Array.from({ length: 2 }).map((_, index) => (
-          <div
-            key={index}
-            className="w-full min-w-0 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
-          >
-            <div className="flex min-w-0 items-start gap-3">
-              <Skeleton className="size-9 shrink-0 rounded-full" />
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                  <div className="min-w-0 flex-1">
-                    <Skeleton className="h-4 w-32 max-w-full" />
-                    <Skeleton className="mt-1 h-3 w-24 max-w-full" />
+          <div key={index} className="flex min-w-0 flex-col gap-3">
+            <div className="w-full min-w-0 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+              <div className="flex min-w-0 items-start gap-3">
+                <Skeleton className="size-9 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Skeleton className="h-4 w-32 max-w-full" />
+                      <Skeleton className="mt-1 h-3 w-24 max-w-full" />
+                    </div>
+                    <Skeleton className="h-3 w-24 shrink-0" />
                   </div>
-                  <Skeleton className="h-3 w-24 shrink-0" />
-                </div>
-                <Skeleton className="mt-3 h-4 w-full" />
-                <Skeleton className="mt-2 h-4 w-3/4" />
-                <div className="mt-3 border-t border-border/60 pt-2">
-                  <Skeleton className="h-6 w-16 rounded-md" />
+                  <Skeleton className="mt-3 h-4 w-full" />
+                  <Skeleton className="mt-2 h-4 w-3/4" />
+                  <Skeleton className="mt-3 h-6 w-16 rounded-md" />
                 </div>
               </div>
             </div>
+            {index === 0 ? (
+              <div className="ml-3 min-w-0 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
+                <div className="w-full min-w-0 rounded-xl border border-border/70 bg-background/95 p-3 shadow-sm">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <Skeleton className="size-9 shrink-0 rounded-full" />
+                    <div className="min-w-0 flex-1">
+                      <Skeleton className="h-4 w-28 max-w-full" />
+                      <Skeleton className="mt-3 h-4 w-full" />
+                      <Skeleton className="mt-2 h-4 w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         ))}
-        <div className="ml-3 min-w-0 border-l border-border/80 pl-4 sm:ml-5 sm:pl-5">
-          <div className="w-full min-w-0 rounded-xl border border-border/70 bg-background/95 p-3 shadow-sm">
-            <div className="flex min-w-0 items-start gap-3">
-              <Skeleton className="size-9 shrink-0 rounded-full" />
-              <div className="min-w-0 flex-1">
-                <Skeleton className="h-4 w-28 max-w-full" />
-                <Skeleton className="mt-3 h-4 w-full" />
-                <Skeleton className="mt-2 h-4 w-2/3" />
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )
@@ -1174,42 +1211,34 @@ function ChatterTabSkeleton() {
 
 function HistoryTabSkeleton() {
   return (
-    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden rounded-xl border bg-muted/10 p-3">
-      {/* Bars match the real line heights: the heading and actor names are
-          text-sm (20px lines), details are leading-6 (24px lines). */}
-      <div className="flex flex-col gap-1">
-        <Skeleton className="h-5 w-28" />
-        <Skeleton className="h-5 w-full" />
-        <Skeleton className="h-5 w-3/5" />
-      </div>
+    <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+      {/* Bars match the real line heights: the event title is text-sm (20px
+          line), actor and time text-xs (16px), details leading-6 (24px). */}
       <div className="flex min-w-0 flex-col gap-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="relative min-w-0 pl-8">
             {index > 0 ? (
-              <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
+              <div className="absolute left-3.5 top-0 h-3 w-px -translate-x-1/2 bg-border" />
             ) : null}
             {index < 3 ? (
-              <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
+              <div className="absolute -bottom-4 left-3.5 top-10 w-px -translate-x-1/2 bg-border" />
             ) : null}
-            <Skeleton className="absolute left-3.5 top-1/2 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+            <Skeleton className="absolute left-3.5 top-3 size-7 -translate-x-1/2 rounded-full" />
             <div className="relative rounded-xl border bg-background p-4">
-              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <Skeleton className="h-5 w-28 max-w-full" />
-                  <div className="flex flex-col">
-                    <div className="flex h-6 items-center">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                    {index % 2 === 0 ? (
-                      <div className="flex h-6 items-center">
-                        <Skeleton className="h-4 w-3/4" />
-                      </div>
-                    ) : null}
-                  </div>
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <Skeleton className="h-5 w-40 max-w-full" />
+                  <Skeleton className="h-4 w-36 max-w-full" />
                 </div>
-                <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
-                  <Skeleton className="h-5 w-28 max-w-full rounded-full" />
-                  <Skeleton className="h-4 w-24 max-w-full rounded-full" />
+                <div className="flex flex-col">
+                  <div className="flex h-6 items-center">
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  {index % 2 === 0 ? (
+                    <div className="flex h-6 items-center">
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

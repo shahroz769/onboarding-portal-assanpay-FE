@@ -447,166 +447,151 @@ export function CaseHistoryTimeline({
   // Query data lands as a synchronous update, and <ViewTransition> only
   // animates Transitions: the deferred list re-renders the entries in one.
   const history = useDeferredValue(loadedHistory)
-  const content = (
-    <>
-      {embedded ? (
-        <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-semibold">Case history</h3>
-          <p className="text-sm text-muted-foreground">
-            Ownership changes, review activity, and key stage transitions stay
-            visible here.
-          </p>
-        </div>
-      ) : null}
-      {history.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-muted/20 px-4">
-          <EmptyState
-            icon={History}
-            title="No history yet."
-            description="Actions taken on this case appear here."
-            className="py-8"
-          />
-        </div>
-      ) : (
-        <div className="flex min-w-0 flex-col gap-4">
-          {history.map((entry, index) => {
-            const meta = ACTION_META[entry.action] ?? {
-              label: formatActionLabel(entry.action),
-              icon: Clock3,
-              iconClassName: 'text-muted-foreground',
-              iconWrapperClassName: 'border-border bg-background',
-            }
-            const Icon = meta.icon
-            const detailsText = formatDetails(entry.action, entry.details)
-            const proofFile = getHistoryProofFile(entry.details)
-            const proofLabel = getHistoryProofLabel(entry.action)
-            const emailRecipientsText = formatEmailRecipients(
-              entry.emailDelivery,
-            )
+  const content =
+    history.length === 0 ? (
+      <div className="rounded-xl border border-dashed bg-muted/20 px-4">
+        <EmptyState
+          icon={History}
+          title="No history yet."
+          description="Actions taken on this case appear here."
+          className="py-8"
+        />
+      </div>
+    ) : (
+      <div className="flex min-w-0 flex-col gap-4">
+        {history.map((entry, index) => {
+          const meta = ACTION_META[entry.action] ?? {
+            label: formatActionLabel(entry.action),
+            icon: Clock3,
+            iconClassName: 'text-muted-foreground',
+            iconWrapperClassName: 'border-border bg-background',
+          }
+          const Icon = meta.icon
+          const detailsText = formatDetails(entry.action, entry.details)
+          const proofFile = getHistoryProofFile(entry.details)
+          const proofLabel = getHistoryProofLabel(entry.action)
+          const emailRecipientsText = formatEmailRecipients(entry.emailDelivery)
 
-            return (
-              <ViewTransition
-                key={entry.id}
-                // Entries animate on their own when the list changes, but
-                // not while the side panel's tab slides (they'd rise in one
-                // by one as the History tab appears).
-                default={{
-                  'tab-next': 'none',
-                  'tab-prev': 'none',
-                  default: 'vt-move vt-presence',
-                }}
-              >
-                <div className="relative min-w-0 pl-8">
-                  {index > 0 ? (
-                    <div className="absolute left-3.5 top-0 h-[calc(50%-0.875rem)] w-px -translate-x-1/2 bg-border" />
-                  ) : null}
-                  {index < history.length - 1 ? (
-                    <div className="absolute -bottom-4 left-3.5 top-[calc(50%+0.875rem)] w-px -translate-x-1/2 bg-border" />
-                  ) : null}
+          return (
+            <ViewTransition
+              key={entry.id}
+              // Entries animate on their own when the list changes, but
+              // not while the side panel's tab slides (they'd rise in one
+              // by one as the History tab appears).
+              default={{
+                'tab-next': 'none',
+                'tab-prev': 'none',
+                default: 'vt-move vt-presence',
+              }}
+            >
+              <div className="relative min-w-0 pl-8">
+                {/* The node sits on the title line: the card's 16px
+                      padding plus half the 20px line, less half the 28px
+                      node, puts its top at 12px. */}
+                {index > 0 ? (
+                  <div className="absolute left-3.5 top-0 h-3 w-px -translate-x-1/2 bg-border" />
+                ) : null}
+                {index < history.length - 1 ? (
+                  <div className="absolute -bottom-4 left-3.5 top-10 w-px -translate-x-1/2 bg-border" />
+                ) : null}
 
-                  <div
-                    className={`absolute left-3.5 top-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border ${meta.iconWrapperClassName}`}
-                  >
-                    <Icon className={`size-4 ${meta.iconClassName}`} />
-                  </div>
+                <div
+                  className={`absolute left-3.5 top-3 z-10 flex size-7 -translate-x-1/2 items-center justify-center rounded-full border ${meta.iconWrapperClassName}`}
+                >
+                  <Icon className={`size-4 ${meta.iconClassName}`} />
+                </div>
 
-                  <div className="relative min-w-0 rounded-xl border bg-background p-4">
-                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 flex-col gap-2">
-                          <TruncatedTooltip
-                            render={
-                              <p className="truncate text-sm font-semibold tracking-tight" />
-                            }
-                            content={entry.actorName ?? 'System'}
-                          >
-                            {entry.actorName ?? 'System'}
-                          </TruncatedTooltip>
-                          {detailsText ? (
-                            <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                              {detailsText}
-                            </p>
-                          ) : null}
-                          {proofFile ? (
-                            <div className="flex min-w-0 flex-wrap items-center gap-2">
-                              <TruncatedTooltip
-                                render={
-                                  <Badge
-                                    variant="outline"
-                                    className="min-w-0 max-w-full truncate"
-                                  />
-                                }
-                                content={proofFile.originalName}
-                              >
-                                {proofFile.originalName}
-                              </TruncatedTooltip>
-                              <ButtonLink
-                                variant="outline"
-                                size="sm"
-                                className="max-w-full"
-                                render={
-                                  <a
-                                    href={proofFile.googleDriveWebViewLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  />
-                                }
-                              >
-                                <ExternalLink data-icon="inline-start" />
-                                <TruncatedTooltip
-                                  render={<span className="truncate" />}
-                                  content={proofLabel}
-                                >
-                                  {proofLabel}
-                                </TruncatedTooltip>
-                              </ButtonLink>
-                            </div>
-                          ) : null}
-                          {emailRecipientsText ? (
-                            <p className="wrap-anywhere text-xs text-muted-foreground">
-                              {emailRecipientsText}
-                            </p>
-                          ) : null}
+                <div className="relative min-w-0 rounded-xl border bg-background p-4">
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-col gap-2">
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <p className="wrap-break-word text-sm font-semibold tracking-tight">
+                            {meta.label}
+                          </p>
+                          <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                            <TruncatedTooltip
+                              render={<span className="min-w-0 truncate" />}
+                              content={entry.actorName ?? 'System'}
+                            >
+                              {entry.actorName ?? 'System'}
+                            </TruncatedTooltip>
+                            <span aria-hidden="true">·</span>
+                            <span className="shrink-0">
+                              {formatDateTime(entry.createdAt)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex min-w-0 max-w-full flex-col items-start gap-2 sm:shrink-0 sm:items-end">
-                        <TruncatedTooltip
-                          render={
-                            <Badge
-                              variant="secondary"
-                              className="min-w-0 max-w-full truncate"
-                            />
-                          }
-                          content={meta.label}
-                        >
-                          {meta.label}
-                        </TruncatedTooltip>
-                        {entry.emailDelivery ? (
-                          <EmailDeliveryBadge
-                            status={entry.emailDelivery.status}
-                            detail={entry.emailDelivery.detail}
-                            updatedAt={entry.emailDelivery.updatedAt}
-                            tracked={entry.emailDelivery.tracked}
-                          />
+                        {detailsText ? (
+                          <p className="wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                            {detailsText}
+                          </p>
                         ) : null}
-                        <span className="max-w-full rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {formatDateTime(entry.createdAt)}
-                        </span>
+                        {proofFile ? (
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <TruncatedTooltip
+                              render={
+                                <Badge
+                                  variant="outline"
+                                  className="min-w-0 max-w-full truncate"
+                                />
+                              }
+                              content={proofFile.originalName}
+                            >
+                              {proofFile.originalName}
+                            </TruncatedTooltip>
+                            <ButtonLink
+                              variant="outline"
+                              size="sm"
+                              className="max-w-full"
+                              render={
+                                <a
+                                  href={proofFile.googleDriveWebViewLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                />
+                              }
+                            >
+                              <ExternalLink data-icon="inline-start" />
+                              <TruncatedTooltip
+                                render={<span className="truncate" />}
+                                content={proofLabel}
+                              >
+                                {proofLabel}
+                              </TruncatedTooltip>
+                            </ButtonLink>
+                          </div>
+                        ) : null}
+                        {emailRecipientsText ? (
+                          <p className="wrap-anywhere text-xs text-muted-foreground">
+                            {emailRecipientsText}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
+                    {entry.emailDelivery ? (
+                      <EmailDeliveryBadge
+                        status={entry.emailDelivery.status}
+                        detail={entry.emailDelivery.detail}
+                        updatedAt={entry.emailDelivery.updatedAt}
+                        tracked={entry.emailDelivery.tracked}
+                        className="shrink-0"
+                      />
+                    ) : null}
                   </div>
                 </div>
-              </ViewTransition>
-            )
-          })}
-        </div>
-      )}
-    </>
-  )
+              </div>
+            </ViewTransition>
+          )
+        })}
+      </div>
+    )
 
   if (embedded) {
+    // The tab already names the section, so the body is just the list, like
+    // the Chatter and Resolution tabs.
     return (
-      <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/10 p-3">
+      <div className="scrollbar-none flex h-full min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-y-auto pb-1">
         {content}
       </div>
     )

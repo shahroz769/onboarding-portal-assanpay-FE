@@ -292,6 +292,7 @@ export function CaseChatter({
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
   const threads = buildCommentThreads(comments)
+  const commentsById = new Map(comments.map((comment) => [comment.id, comment]))
   // Comments present when the thread first renders appear instantly; only
   // ones added afterwards (posted or pushed live) animate in.
   const [initialCommentIds] = useState(
@@ -396,7 +397,7 @@ export function CaseChatter({
   }
 
   const emptyState = (
-    <div className="flex min-h-full flex-1 flex-col rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-10">
+    <div className="flex min-h-full flex-1 flex-col rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-10">
       <EmptyState
         icon={MessageSquareMore}
         title="No conversation yet."
@@ -413,7 +414,7 @@ export function CaseChatter({
           <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="relative min-w-0 rounded-2xl border border-border/70 bg-background p-3 shadow-sm"
+            className="relative min-w-0 rounded-xl border border-border/70 bg-background p-3 shadow-sm"
           >
             <span
               ref={mentionAnchorRef}
@@ -429,7 +430,7 @@ export function CaseChatter({
               {replyTarget ? (
                 <div
                   data-motion={isClosingReplyTarget ? 'exiting' : 'entering'}
-                  className="motion-reply-target flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+                  className="motion-reply-target flex min-w-0 flex-wrap items-center gap-2 rounded-xs border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
                   onTransitionEnd={handleReplyTargetTransitionEnd}
                 >
                   <CornerDownRight className="size-3.5 shrink-0" />
@@ -488,7 +489,7 @@ export function CaseChatter({
                       ? `Reply to ${replyTarget.authorName ?? 'this comment'}...`
                       : 'Write a review note. Use @ to mention a teammate.'
                   }
-                  className={`scrollbar-none relative z-10 h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0 ${composerTypographyClassName}`}
+                  className={`scrollbar-none relative z-10 min-h-6 max-h-24 resize-none overflow-y-auto border-0 bg-transparent px-0 py-0 text-transparent shadow-none caret-foreground selection:bg-primary/20 placeholder:text-muted-foreground focus-visible:ring-0 ${composerTypographyClassName}`}
                 />
               </div>
 
@@ -569,12 +570,13 @@ export function CaseChatter({
         {threads.roots.length === 0 ? (
           emptyState
         ) : (
-          <div className="flex w-full min-w-0 flex-col gap-4">
+          <div className="flex w-full min-w-0 flex-col gap-6">
             {threads.roots.map((comment) => (
               <CommentThread
                 key={comment.id}
                 comment={comment}
                 childrenByParent={threads.childrenByParent}
+                commentsById={commentsById}
                 initialCommentIds={initialCommentIds}
                 onReply={canPost ? handleSelectReply : undefined}
               />
@@ -614,15 +616,28 @@ export function CaseChatter({
 function CommentThread({
   comment,
   childrenByParent,
+  commentsById,
   initialCommentIds,
   onReply,
 }: {
   comment: CaseComment
   childrenByParent: Map<string, CaseComment[]>
+  commentsById: Map<string, CaseComment>
   initialCommentIds: Set<string>
   onReply?: (comment: CaseComment) => void
 }) {
   const replies = getThreadReplies(comment.id, childrenByParent)
+
+  // Replies share one indent level, so a reply to another reply names who
+  // it answers.
+  function getReplyTarget(reply: CaseComment) {
+    if (!reply.parentId || reply.parentId === comment.id) return undefined
+    const parent = commentsById.get(reply.parentId)
+    if (!parent) return undefined
+    return (
+      formatUsername(parent.authorUsername) ?? parent.authorName ?? 'Unknown'
+    )
+  }
 
   return (
     <div
@@ -648,7 +663,12 @@ function CommentThread({
               }
             >
               <div className="absolute -left-5.25 top-5 hidden h-px w-4 bg-border sm:block" />
-              <CommentCard comment={reply} onReply={onReply} nested />
+              <CommentCard
+                comment={reply}
+                onReply={onReply}
+                replyTo={getReplyTarget(reply)}
+                nested
+              />
             </div>
           ))}
         </div>
@@ -660,20 +680,21 @@ function CommentThread({
 function CommentCard({
   comment,
   onReply,
+  replyTo,
   nested = false,
 }: {
   comment: CaseComment
   onReply?: (comment: CaseComment) => void
+  /** Who a reply-to-a-reply answers, shown above its text. */
+  replyTo?: string
   nested?: boolean
 }) {
   return (
     <div
-      className={[
-        'w-full min-w-0 rounded-xl border border-border/70 p-3 shadow-sm transition-colors sm:p-4',
-        nested
-          ? 'bg-background/95 shadow-[0_1px_2px_rgba(15,23,42,0.04)]'
-          : 'bg-card',
-      ].join(' ')}
+      className={cn(
+        'w-full min-w-0 rounded-xl border border-border/70 p-3 shadow-sm sm:p-4',
+        nested ? 'bg-background/95' : 'bg-card',
+      )}
     >
       <div className="flex min-w-0 items-start gap-3">
         <Avatar className="size-9 shrink-0 sm:size-10">
@@ -705,11 +726,24 @@ function CommentCard({
               {formatDateTime(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-3 wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-foreground/90">
+          {replyTo ? (
+            <p className="mt-2 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+              <CornerDownRight className="size-3 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 wrap-anywhere">
+                Replying to {replyTo}
+              </span>
+            </p>
+          ) : null}
+          <p
+            className={cn(
+              'wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-foreground/90',
+              replyTo ? 'mt-1' : 'mt-3',
+            )}
+          >
             {renderCommentText(comment.content)}
           </p>
           {onReply ? (
-            <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-2">
+            <div className="mt-3 flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"

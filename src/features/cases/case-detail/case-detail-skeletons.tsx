@@ -89,16 +89,18 @@ export function CaseQueueWorkspaceSkeleton() {
 }
 
 /**
- * The Resolution tab's primary action card: a one-line hint (text-sm) above a
- * full-width button, like the real card.
+ * The Resolution tab's primary action card: a title and a two-line
+ * description (text-sm) above a full-width button, like the real card.
  */
 export function ResolutionActionCardSkeleton() {
   return (
-    <div className="rounded-xl border bg-background p-3">
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-5 w-4/5" />
-        <Skeleton className="h-9 w-full rounded-md" />
+    <div className="flex flex-col gap-3 rounded-xl border bg-background p-3">
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-5 w-36 max-w-full" />
+        <Skeleton className="h-5 w-full" />
+        <Skeleton className="h-5 w-3/5" />
       </div>
+      <Skeleton className="h-9 w-full rounded-md" />
     </div>
   )
 }
