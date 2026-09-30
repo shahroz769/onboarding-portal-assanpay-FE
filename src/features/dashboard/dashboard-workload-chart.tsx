@@ -52,13 +52,6 @@ const BAR_SIZE = 12
 const BAR_END_RADIUS: [number, number, number, number] = [0, 6, 6, 0]
 // X axis + legend below the rows.
 const CHART_CHROME_HEIGHT = 64
-const LABEL_MAX_CHARS = 18
-
-function truncateLabel(value: string) {
-  return value.length > LABEL_MAX_CHARS
-    ? `${value.slice(0, LABEL_MAX_CHARS - 1)}…`
-    : value
-}
 
 /**
  * Horizontal stacked bars, one row per queue or person; the tooltip carries
@@ -113,7 +106,8 @@ export function WorkloadBarChart({
           axisLine={false}
           tickMargin={8}
           width={136}
-          tickFormatter={truncateLabel}
+          // Wrap by word; ellipsis only past two lines.
+          tick={{ maxLines: 2 }}
         />
         <ChartTooltip
           cursor={{ opacity: 0.5 }}
