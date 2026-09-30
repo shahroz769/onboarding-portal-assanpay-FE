@@ -7,7 +7,7 @@ import type {
   CaseWorkloadResponse,
   DashboardResponse,
   DashboardRouteSearch,
-  PendingPortalMidKind,
+  PendingPortalMidGroup,
   PendingPortalMidsPage,
 } from '#/schemas/dashboard.schema'
 import {
@@ -69,11 +69,11 @@ export async function fetchAppliedPortalMids(): Promise<AppliedPortalMids> {
 
 /** Every pending MID in the DB (not just loaded rows); all kinds when omitted. */
 export async function fetchPendingPortalMidValues(
-  midKind?: PendingPortalMidKind,
+  group?: PendingPortalMidGroup,
 ): Promise<number[]> {
   const response = await apiClient.get(
     '/api/dashboard/portal-mids/pending/mids',
-    { params: midKind ? { midKind } : {} },
+    { params: group ? { group } : {} },
   )
   return pendingPortalMidValuesSchema.parse(response.data).mids
 }

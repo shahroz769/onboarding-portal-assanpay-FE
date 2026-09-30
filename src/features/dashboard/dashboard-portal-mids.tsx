@@ -85,7 +85,8 @@ import type {
   ApplyPortalMidLimitsInput,
   DashboardPendingPortalMidLimit,
   DashboardResponse,
-  PendingPortalMidKind,
+  PendingPortalMidCounts,
+  PendingPortalMidGroup,
 } from '#/schemas/dashboard.schema'
 
 const pastedMidsSchema = z
@@ -125,7 +126,12 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
   ]
 
 const EMPTY_PENDING: DashboardPendingPortalMidLimit[] = []
-const EMPTY_COUNTS = { total: 0, portal: 0, internal: 0 }
+const EMPTY_COUNTS: PendingPortalMidCounts = {
+  total: 0,
+  internal: 0,
+  customWordpress: 0,
+  shopify: 0,
+}
 
 /** Without `data`, renders the loading state with the exact loaded layout. */
 export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
@@ -541,22 +547,29 @@ function CopyMidButton({ mid }: { mid: number }) {
   )
 }
 
+// Internal copies internal portal MIDs; Custom/WordPress and Shopify copy the
+// portal MIDs of merchants on that website CMS.
 const COPY_OPTIONS = [
-  { key: 'all', label: 'All pending', midKind: undefined },
-  { key: 'internal', label: 'Internal', midKind: 'internal' },
-  { key: 'portal', label: 'Standard', midKind: 'portal' },
+  { key: 'total', label: 'All pending', group: undefined },
+  { key: 'internal', label: 'Internal', group: 'internal' },
+  {
+    key: 'customWordpress',
+    label: 'Custom/WordPress',
+    group: 'custom_wordpress',
+  },
+  { key: 'shopify', label: 'Shopify', group: 'shopify' },
 ] as const satisfies readonly {
-  key: 'all' | PendingPortalMidKind
+  key: keyof PendingPortalMidCounts
   label: string
-  midKind?: PendingPortalMidKind
+  group?: PendingPortalMidGroup
 }[]
 
-/** Copies every pending MID of a kind from the DB, not just the loaded rows. */
+/** Copies every pending MID of a group from the DB, not just the loaded rows. */
 function CopyMidsMenu({
   counts,
   disabled,
 }: {
-  counts: { total: number; portal: number; internal: number }
+  counts: PendingPortalMidCounts
   disabled: boolean
 }) {
   const [isCopying, setIsCopying] = useState(false)
@@ -565,16 +578,21 @@ function CopyMidsMenu({
   async function handleCopy(option: (typeof COPY_OPTIONS)[number]) {
     setIsCopying(true)
     try {
-      const mids = await fetchPendingPortalMidValues(option.midKind)
+      const mids = await fetchPendingPortalMidValues(option.group)
+      // "Custom/WordPress" keeps its casing; the other labels read lowercase.
+      const groupLabel = option.group
+        ? option.group === 'custom_wordpress'
+          ? option.label
+          : option.label.toLowerCase()
+        : ''
       if (mids.length === 0) {
-        toast.info(`No ${option.label.toLowerCase()} MIDs to copy`)
+        toast.info(`No ${groupLabel || 'pending'} MIDs to copy`)
         return
       }
       if (await copyText(mids.join(','))) {
         flagCopied()
-        const kind = option.midKind ? `${option.label.toLowerCase()} ` : ''
         toast.success(
-          `${mids.length} ${kind}MID${mids.length === 1 ? '' : 's'} copied`,
+          `${mids.length} ${groupLabel ? `${groupLabel} ` : ''}MID${mids.length === 1 ? '' : 's'} copied`,
         )
       }
     } catch (error) {
@@ -584,8 +602,7 @@ function CopyMidsMenu({
     }
   }
 
-  const countFor = (key: (typeof COPY_OPTIONS)[number]['key']) =>
-    key === 'all' ? counts.total : counts[key]
+  const countFor = (key: (typeof COPY_OPTIONS)[number]['key']) => counts[key]
 
   return (
     <DropdownMenu>

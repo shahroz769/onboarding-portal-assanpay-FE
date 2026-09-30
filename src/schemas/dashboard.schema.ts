@@ -70,9 +70,14 @@ export type AppliedPortalMids = z.infer<typeof appliedPortalMidsSchema>
 
 const pendingPortalMidCountsSchema = z.object({
   total: z.number(),
-  portal: z.number(),
   internal: z.number(),
+  customWordpress: z.number(),
+  shopify: z.number(),
 })
+
+export type PendingPortalMidCounts = z.infer<
+  typeof pendingPortalMidCountsSchema
+>
 
 export const pendingPortalMidsPageSchema = z.object({
   data: z.array(pendingPortalMidLimitSchema),
@@ -90,7 +95,9 @@ export const pendingPortalMidValuesSchema = z.object({
   csv: z.string(),
 })
 
-export type PendingPortalMidKind = DashboardPendingPortalMidLimit['midKind']
+// Copy groups, matching the Apply limits categories: internal MIDs, and
+// portal MIDs split by the merchant's website CMS.
+export type PendingPortalMidGroup = 'internal' | 'custom_wordpress' | 'shopify'
 
 const awaitingPhysicalAgreementSchema = z.object({
   caseId: z.string(),
