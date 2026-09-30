@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 
 import {
   applyPortalMidLimits,
+  fetchAppliedPortalMids,
   fetchAwaitingPhysicalAgreements,
   fetchCaseWorkload,
   fetchDashboard,
@@ -65,6 +66,16 @@ export function pendingPortalMidsInfiniteQueryOptions() {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
     ...LOADER_STARTED,
+  })
+}
+
+// Loaded when the Applied dialog opens. Nested under DASHBOARD_KEY so refresh
+// and apply-limits invalidate it too.
+export function appliedPortalMidsQueryOptions() {
+  return queryOptions({
+    queryKey: [...DASHBOARD_KEY, 'portal-mids', 'applied'],
+    queryFn: fetchAppliedPortalMids,
+    staleTime: 30_000,
   })
 }
 

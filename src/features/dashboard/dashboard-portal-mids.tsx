@@ -1,5 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import {
   Check,
@@ -73,6 +77,7 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { cn } from '#/lib/utils'
 import { useMorph } from '#/hooks/use-morph'
 import {
+  appliedPortalMidsQueryOptions,
   pendingPortalMidsInfiniteQueryOptions,
   useApplyPortalMidLimits,
 } from '#/hooks/use-dashboard-query'
@@ -121,7 +126,6 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
 
 const EMPTY_PENDING: DashboardPendingPortalMidLimit[] = []
 const EMPTY_COUNTS = { total: 0, portal: 0, internal: 0 }
-const EMPTY_APPLIED: DashboardResponse['portalMids']['appliedLimits'] = []
 
 /** Without `data`, renders the loading state with the exact loaded layout. */
 export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
@@ -132,26 +136,23 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   const pending = pendingQuery.data
     ? pendingQuery.data.pages.flatMap((page) => page.data)
     : EMPTY_PENDING
-  // The first page carries fresh totals; fall back to the dashboard summary.
-  const counts =
-    pendingQuery.data?.pages[0]?.counts ??
-    data?.portalMids.pendingCounts ??
-    EMPTY_COUNTS
-  const appliedCsv = data?.portalMids.appliedCsv ?? ''
-  const appliedLimits = data?.portalMids.appliedLimits ?? EMPTY_APPLIED
-  const appliedCount = appliedLimits.length
-  const appliedGroups = {
-    customWordpress: appliedLimits.filter(
-      (item) => item.category === 'custom_wordpress',
-    ),
-    shopify: appliedLimits.filter((item) => item.category === 'shopify'),
-    internal: appliedLimits.filter((item) => item.category === 'internal'),
-  }
+  // Only the first page carries the totals.
+  const counts = pendingQuery.data?.pages[0]?.counts ?? EMPTY_COUNTS
 
   const canApply =
     user?.roleType === 'super_admin' || user?.roleType === 'admin'
   const [open, setOpen] = useState(false)
   const [appliedOpen, setAppliedOpen] = useState(false)
+  const [isOpeningApplied, setIsOpeningApplied] = useState(false)
+  // Every applied MID can be a long list, so it loads only for the dialog:
+  // the Applied button fetches it first and opens the dialog once it's in.
+  const queryClient = useQueryClient()
+  const appliedQuery = useQuery({
+    ...appliedPortalMidsQueryOptions(),
+    enabled: appliedOpen,
+  })
+  const applied = appliedQuery.data
+  const appliedCsv = applied?.csv ?? ''
   // Both dialogs grow out of the buttons that open them.
   const applyMorph = useMorph()
   const appliedMorph = useMorph()
@@ -160,6 +161,24 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
     useState<ApplyPortalMidLimitsInput['category']>('custom_wordpress')
   const [error, setError] = useState<string | null>(null)
   const parsedPortalMids = parsePortalMids(value)
+
+  async function handleOpenApplied(trigger: HTMLElement) {
+    if (isOpeningApplied) return
+    setIsOpeningApplied(true)
+    try {
+      // Served from cache while fresh; otherwise the button shows a spinner.
+      await queryClient.fetchQuery(appliedPortalMidsQueryOptions())
+      appliedMorph.run(() => {
+        setIsOpeningApplied(false)
+        setAppliedOpen(true)
+      }, trigger)
+    } catch (fetchError) {
+      setIsOpeningApplied(false)
+      toast.error(
+        getApiErrorMessage(fetchError, 'Could not load applied portal MIDs'),
+      )
+    }
+  }
 
   async function handleCopyApplied() {
     if (!appliedCsv) return
@@ -222,7 +241,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
                 their limits are applied.
               </TooltipContent>
             </Tooltip>
-            {isLoading ? (
+            {isLoading || pendingQuery.isPending ? (
               // h-5.5 = Badge height (py-0.5 + text-xs line + border)
               <Skeleton className="h-5.5 w-9 rounded-full" />
             ) : (
@@ -237,15 +256,15 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={(event) =>
-                appliedMorph.run(
-                  () => setAppliedOpen(true),
-                  event.currentTarget,
-                )
-              }
+              onClick={(event) => void handleOpenApplied(event.currentTarget)}
               disabled={isLoading}
+              aria-busy={isOpeningApplied}
             >
-              <History data-icon="inline-start" />
+              {isOpeningApplied ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <History data-icon="inline-start" />
+              )}
               Applied
             </Button>
             <Button
@@ -312,25 +331,17 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             </DialogDescription>
           </DialogHeader>
 
-          {appliedCount > 0 ? (
+          {applied && appliedCsv ? (
             <ScrollArea viewportClassName="max-h-[min(60vh,calc(100dvh-16rem))]">
               <div className="flex flex-col gap-4 pr-3">
                 <AppliedMidSection
                   title="Custom/WordPress"
-                  mids={appliedGroups.customWordpress.map(
-                    (item) => item.portalMid,
-                  )}
+                  mids={applied.customWordpress}
                 />
 
-                <AppliedMidSection
-                  title="Shopify"
-                  mids={appliedGroups.shopify.map((item) => item.portalMid)}
-                />
+                <AppliedMidSection title="Shopify" mids={applied.shopify} />
 
-                <AppliedMidSection
-                  title="Internal"
-                  mids={appliedGroups.internal.map((item) => item.portalMid)}
-                />
+                <AppliedMidSection title="Internal" mids={applied.internal} />
               </div>
             </ScrollArea>
           ) : (
@@ -347,7 +358,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             <Button variant="outline" onClick={() => setAppliedOpen(false)}>
               Close
             </Button>
-            <Button onClick={handleCopyApplied} disabled={appliedCount === 0}>
+            <Button onClick={handleCopyApplied} disabled={!appliedCsv}>
               <ClipboardCopy data-icon="inline-start" />
               Copy
             </Button>

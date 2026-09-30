@@ -58,13 +58,15 @@ export type DashboardPendingPortalMidLimit = z.infer<
   typeof pendingPortalMidLimitSchema
 >
 
-const appliedPortalMidLimitSchema = z.object({
-  portalMid: z.number(),
-  merchantId: z.string().nullable(),
-  appliedByName: z.string().nullable(),
-  appliedAt: z.string(),
-  category: z.enum(['custom_wordpress', 'shopify', 'internal']),
+export const appliedPortalMidsSchema = z.object({
+  customWordpress: z.array(z.number()),
+  shopify: z.array(z.number()),
+  internal: z.array(z.number()),
+  // Every applied MID, in MID order.
+  csv: z.string(),
 })
+
+export type AppliedPortalMids = z.infer<typeof appliedPortalMidsSchema>
 
 const pendingPortalMidCountsSchema = z.object({
   total: z.number(),
@@ -162,11 +164,6 @@ export const dashboardResponseSchema = z.object({
       }),
     ),
     merchantsLive: z.array(z.object({ date: z.string(), count: z.number() })),
-  }),
-  portalMids: z.object({
-    pendingCounts: pendingPortalMidCountsSchema,
-    appliedLimits: z.array(appliedPortalMidLimitSchema),
-    appliedCsv: z.string(),
   }),
 })
 

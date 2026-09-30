@@ -1,5 +1,6 @@
 import { apiClient } from '#/lib/api-client'
 import type {
+  AppliedPortalMids,
   ApplyPortalMidLimitsInput,
   ApplyPortalMidLimitsResponse,
   AwaitingPhysicalAgreementsPage,
@@ -10,6 +11,7 @@ import type {
   PendingPortalMidsPage,
 } from '#/schemas/dashboard.schema'
 import {
+  appliedPortalMidsSchema,
   applyPortalMidLimitsResponseSchema,
   awaitingPhysicalAgreementsPageSchema,
   caseWorkloadResponseSchema,
@@ -58,6 +60,11 @@ export async function fetchPendingPortalMids(params: {
     },
   })
   return pendingPortalMidsPageSchema.parse(response.data)
+}
+
+export async function fetchAppliedPortalMids(): Promise<AppliedPortalMids> {
+  const response = await apiClient.get('/api/dashboard/portal-mids/applied')
+  return appliedPortalMidsSchema.parse(response.data)
 }
 
 /** Every pending MID in the DB (not just loaded rows); all kinds when omitted. */
