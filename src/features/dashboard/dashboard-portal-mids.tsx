@@ -93,6 +93,12 @@ const pastedMidsSchema = z
   .array(z.number().int().positive())
   .min(1, 'Paste at least one portal MID.')
 
+const MID_GROUP_LABELS: Record<PendingPortalMidGroup, string> = {
+  internal: 'Internal',
+  custom_wordpress: 'Custom/WordPress',
+  shopify: 'Shopify',
+}
+
 const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
   [
     {
@@ -110,10 +116,10 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
     {
       id: 'midKind',
       header: 'MID type',
-      width: 110,
+      width: 140,
       cell: (item) => (
-        <Badge variant={item.midKind === 'internal' ? 'secondary' : 'outline'}>
-          {item.midKind === 'internal' ? 'Internal' : 'Standard'}
+        <Badge variant={item.group === 'internal' ? 'secondary' : 'outline'}>
+          {MID_GROUP_LABELS[item.group]}
         </Badge>
       ),
     },

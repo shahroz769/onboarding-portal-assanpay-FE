@@ -51,6 +51,7 @@ const pendingPortalMidLimitSchema = z.object({
   caseNumber: z.string(),
   portalMid: z.number(),
   midKind: z.enum(['portal', 'internal']),
+  group: z.enum(['internal', 'custom_wordpress', 'shopify']),
   savedAt: z.string(),
 })
 

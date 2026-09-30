@@ -1,5 +1,10 @@
 import { AxiosError } from 'axios'
-import { AlertTriangle, RefreshCw, ShieldAlert } from 'lucide-react'
+import {
+  AlertTriangle,
+  LayoutDashboard,
+  RefreshCw,
+  ShieldAlert,
+} from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 import { ErrorPage } from '#/components/error-state'
@@ -30,7 +35,10 @@ export function DefaultRouteError({
           'Your account does not have access to this page. Ask an administrator if you need it.',
         )}
         actions={
-          <ButtonLink render={<Link to="/" />}>Go to dashboard</ButtonLink>
+          <ButtonLink render={<Link to="/" />}>
+            <LayoutDashboard />
+            Go to dashboard
+          </ButtonLink>
         }
       />
     )
@@ -52,6 +60,7 @@ export function DefaultRouteError({
             Try again
           </Button>
           <ButtonLink variant="outline" render={<Link to="/" />}>
+            <LayoutDashboard />
             Go to dashboard
           </ButtonLink>
         </>
