@@ -1,12 +1,11 @@
 import { AxiosError } from 'axios'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { Link, useRouter } from '@tanstack/react-router'
-import { useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, RefreshCw, ShieldAlert } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { ErrorPage } from '#/components/error-state'
 import { Button, ButtonLink } from '#/components/ui/button'
-import { useInAppShell } from '#/hooks/use-in-app-shell'
-import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { useRouteRetry } from '#/hooks/use-route-retry'
+import { getErrorStateMessage } from '#/lib/get-api-error-message'
 
 export function DefaultRouteError({
   error,
@@ -16,51 +15,47 @@ export function DefaultRouteError({
   /** Defaults to refetching failed queries and re-running route loaders. */
   onRetry?: () => void
 }) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  // Inside the app shell this sits in its <main>; elsewhere it is the page.
-  const Root = useInAppShell() ? 'div' : 'main'
+  const retryRoute = useRouteRetry()
   const isForbidden =
     error instanceof AxiosError && error.response?.status === 403
-  const title = isForbidden ? 'Access denied' : 'Something went wrong'
-  const message = getApiErrorMessage(
-    error,
-    isForbidden
-      ? 'You do not have access to this page.'
-      : 'This page could not be loaded. Please try again.',
-  )
+
+  if (isForbidden) {
+    return (
+      <ErrorPage
+        tone="warning"
+        icon={<ShieldAlert />}
+        title="Access denied"
+        description={getErrorStateMessage(
+          error,
+          'Your account does not have access to this page. Ask an administrator if you need it.',
+        )}
+        actions={
+          <ButtonLink render={<Link to="/" />}>Go to dashboard</ButtonLink>
+        }
+      />
+    )
+  }
 
   return (
-    <Root className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
-      <Alert variant={isForbidden ? 'warning' : 'destructive'}>
-        <AlertTriangle />
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{message}</AlertDescription>
-      </Alert>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          onClick={() => {
-            if (onRetry) {
-              onRetry()
-              return
-            }
-            // Pages fetch their own data, so a failed query has to be reset
-            // for the retry to request it again (invalidate only re-runs
-            // loaders).
-            void queryClient.resetQueries({
-              predicate: (query) => query.state.status === 'error',
-            })
-            void router.invalidate()
-          }}
-        >
-          <RefreshCw />
-          Retry
-        </Button>
-        <ButtonLink variant="outline" render={<Link to="/" />}>
-          Go to Dashboard
-        </ButtonLink>
-      </div>
-    </Root>
+    <ErrorPage
+      icon={<AlertTriangle />}
+      title="Unable to load this page"
+      description={getErrorStateMessage(
+        error,
+        'Try again. If it keeps happening, go to the dashboard and come back to this page.',
+      )}
+      error={error}
+      actions={
+        <>
+          <Button type="button" onClick={onRetry ?? retryRoute}>
+            <RefreshCw />
+            Try again
+          </Button>
+          <ButtonLink variant="outline" render={<Link to="/" />}>
+            Go to dashboard
+          </ButtonLink>
+        </>
+      }
+    />
   )
 }

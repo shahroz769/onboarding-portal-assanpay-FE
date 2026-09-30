@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { CheckIcon, PlusCircleIcon } from 'lucide-react'
+import { PlusCircleIcon } from 'lucide-react'
 
-import { cn } from '#/lib/utils'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
 import {
   Combobox,
   ComboboxContent,
@@ -198,30 +198,19 @@ function PlainDataTableFilter({
           {options.map((option) => {
             const isSelected = draft.has(option.value)
             return (
-              <button
+              <label
                 key={option.value}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => toggleValue(option.value)}
-                className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent"
+                className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm select-none hover:bg-accent hover:text-accent-foreground has-focus-visible:bg-accent"
               >
-                <div
-                  data-slot="data-table-filter-tick"
-                  data-selected={isSelected || undefined}
-                  className={cn(
-                    'flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary',
-                    isSelected
-                      ? 'bg-primary text-primary-foreground'
-                      : 'opacity-50 [&_svg]:invisible',
-                  )}
-                >
-                  <CheckIcon className="size-3" />
-                </div>
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => toggleValue(option.value)}
+                />
                 {option.icon && (
                   <option.icon className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 <span>{option.label}</span>
-              </button>
+              </label>
             )
           })}
         </div>

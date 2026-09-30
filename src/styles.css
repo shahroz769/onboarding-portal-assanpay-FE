@@ -268,16 +268,6 @@ body,
   color: var(--primary);
 }
 
-/* Data-table faceted filter tick boxes (e.g. merchants Priority filter). */
-[data-slot='data-table-filter-tick'] {
-  border-color: var(--primary);
-}
-
-[data-slot='data-table-filter-tick'][data-selected] {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
 /* ── View transitions ─────────────────────────────────────────
    Motion classes (vt-blur, vt-push, vt-slide, …) come from morph.css,
    vendored from Morph UI. Route changes get view transition types from
@@ -1002,6 +992,42 @@ body,
   .t-badge,
   .t-badge-dot {
     animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Checkbox check (transitions.dev) — the box fills, then the mark strokes in
+   (ui/checkbox). Base UI sets aria-checked, 'mixed' when indeterminate; each
+   icon sets its own --check-len from getTotalLength(), and --check-from:
+   -len to draw from the path's end instead of its start. */
+:root {
+  --check-box: 150ms;
+  --check-draw: 350ms;
+  --check-delay: 0ms;
+  --check-uncheck: 150ms;
+  --check-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-check {
+  transition:
+    background var(--check-box) var(--check-ease),
+    box-shadow var(--check-box) var(--check-ease);
+}
+.t-check svg path {
+  stroke-dasharray: var(--check-len, 15);
+  stroke-dashoffset: var(--check-from, var(--check-len, 15));
+  transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+}
+.t-check[aria-checked='true'] svg path,
+.t-check[aria-checked='mixed'] svg path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--check-draw) var(--check-ease)
+    var(--check-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-check,
+  .t-check svg path {
     transition: none !important;
   }
 }

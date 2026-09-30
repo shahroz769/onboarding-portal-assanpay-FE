@@ -1,11 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, Clock3, RefreshCw } from 'lucide-react'
 import axios from 'axios'
 
 import { resubmissionContextQueryOptions } from '#/apis/merchant-onboarding'
+import { ErrorState } from '#/components/error-state'
+import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 import { ResubmissionForm } from '#/features/onboarding/resubmission-form'
+import {
+  getErrorStateMessage,
+  getServerErrorMessage,
+} from '#/lib/get-api-error-message'
 import { parseTokenParam } from '#/lib/route-params'
 
 export const Route = createFileRoute('/onboarding-form/resubmit/$token')({
@@ -41,11 +47,7 @@ function ResubmissionPageFrame({ children }: { children: React.ReactNode }) {
 function ResubmissionLinkNotFound() {
   return (
     <ResubmissionPageFrame>
-      <LinkStatusScreen
-        tone="error"
-        title="Link not found"
-        message="Please check the link and try again, or contact support."
-      />
+      <LinkNotFound />
     </ResubmissionPageFrame>
   )
 }
@@ -62,68 +64,80 @@ function ResubmissionContent({ token }: { token: string }) {
   }
 
   if (query.error) {
-    return <TokenErrorScreen error={query.error} />
+    return (
+      <TokenErrorScreen
+        error={query.error}
+        onRetry={() => void query.refetch()}
+      />
+    )
   }
 
   return <ResubmissionForm token={token} context={query.data} />
 }
 
-function TokenErrorScreen({ error }: { error: unknown }) {
-  const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  const message =
-    axios.isAxiosError(error) && error.response?.data
-      ? typeof error.response.data === 'string'
-        ? error.response.data
-        : (error.response.data as { error?: string }).error
-      : null
-
-  const isGone = status === 410
-  const isTimeExpired =
-    isGone && message?.toLowerCase().includes('expired') === true
-  const isMissing = status === 404
-
+function LinkNotFound() {
   return (
-    <LinkStatusScreen
-      tone={isGone ? 'neutral' : 'error'}
-      title={
-        isGone
-          ? isTimeExpired
-            ? 'This link has expired'
-            : 'This link was already used or replaced'
-          : isMissing
-            ? 'Link not found'
-            : 'Unable to load resubmission'
-      }
-      message={
-        message ??
-        (isGone
-          ? 'Ask your account contact to send a new resubmission link.'
-          : 'Please check the link and try again, or contact support.')
-      }
+    <ErrorState
+      surface
+      className="mx-auto"
+      icon={<AlertCircle />}
+      title="Link not found"
+      description="Check that you opened the complete link from your email, or contact support for a new one."
     />
   )
 }
 
-function LinkStatusScreen({
-  tone,
-  title,
-  message,
+function TokenErrorScreen({
+  error,
+  onRetry,
 }: {
-  tone: 'neutral' | 'error'
-  title: string
-  message: string
+  error: unknown
+  onRetry: () => void
 }) {
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined
+  const serverMessage = getServerErrorMessage(error)
+
+  if (status === 404) return <LinkNotFound />
+
+  if (status === 410) {
+    const isTimeExpired =
+      serverMessage?.toLowerCase().includes('expired') === true
+    return (
+      <ErrorState
+        surface
+        className="mx-auto"
+        tone="muted"
+        icon={<Clock3 />}
+        title={
+          isTimeExpired
+            ? 'This link has expired'
+            : 'This link was already used or replaced'
+        }
+        description={
+          serverMessage ??
+          'Ask your account contact to send a new resubmission link.'
+        }
+      />
+    )
+  }
+
   return (
-    <div className="rounded-xl border bg-background p-8">
-      <div className="flex flex-col items-center gap-3 text-center">
-        {tone === 'neutral' ? (
-          <CheckCircle2 className="size-10 text-muted-foreground" />
-        ) : (
-          <AlertCircle className="size-10 text-destructive" />
-        )}
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="max-w-md text-sm text-muted-foreground">{message}</p>
-      </div>
-    </div>
+    <ErrorState
+      surface
+      className="mx-auto"
+      icon={<AlertCircle />}
+      title="Unable to open this link"
+      description={getErrorStateMessage(
+        error,
+        'Try again. If it keeps happening, contact support.',
+      )}
+      error={error}
+      actions={
+        <Button type="button" onClick={onRetry}>
+          <RefreshCw />
+          Try again
+        </Button>
+      }
+    />
   )
 }

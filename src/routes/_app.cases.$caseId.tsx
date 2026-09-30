@@ -1,10 +1,13 @@
 import { AxiosError } from 'axios'
-import type { ReactNode } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, FileQuestion, RefreshCw } from 'lucide-react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import {
+  AlertTriangle,
+  FileQuestion,
+  RefreshCw,
+  ShieldAlert,
+} from 'lucide-react'
 
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { ErrorPage } from '#/components/error-state'
 import { Button, ButtonLink } from '#/components/ui/button'
 import {
   CaseDetailShell,
@@ -15,7 +18,8 @@ import {
   resolveQueueWorkflowType,
 } from '#/features/cases/case-detail/queue-registry'
 import { loadCaseDetailPage } from '#/hooks/use-case-detail-query'
-import { getApiErrorMessage } from '#/lib/get-api-error-message'
+import { useRouteRetry } from '#/hooks/use-route-retry'
+import { getErrorStateMessage } from '#/lib/get-api-error-message'
 import { parseUuidParam } from '#/lib/route-params'
 
 export const Route = createFileRoute('/_app/cases/$caseId')({
@@ -57,73 +61,66 @@ function CaseDetailsNotFound() {
   const { caseId } = Route.useParams()
 
   return (
-    <RouteStateShell>
-      <Alert variant="warning">
-        <FileQuestion />
-        <AlertTitle>Case not found</AlertTitle>
-        <AlertDescription>
-          Case {caseId} could not be found. It may have been removed or you may
-          be using an old link.
-        </AlertDescription>
-      </Alert>
-      <ButtonLink variant="outline" render={<Link to="/cases/all-cases" />}>
-        Back to cases
-      </ButtonLink>
-    </RouteStateShell>
+    <ErrorPage
+      tone="warning"
+      icon={<FileQuestion />}
+      title="Case not found"
+      description={`No case matches ID ${caseId}. It may have been removed, or the link may be out of date.`}
+      actions={
+        <ButtonLink render={<Link to="/cases/all-cases" />}>
+          Back to cases
+        </ButtonLink>
+      }
+    />
   )
 }
 
 function CaseDetailsError({ error }: { error: unknown }) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
+  const retryRoute = useRouteRetry()
 
   if (error instanceof AxiosError && error.response?.status === 404) {
     return <CaseDetailsNotFound />
   }
 
-  const isForbidden =
-    error instanceof AxiosError && error.response?.status === 403
-  const title = isForbidden ? 'Access denied' : 'Case could not be loaded'
-  const message = getApiErrorMessage(
-    error,
-    isForbidden
-      ? 'You do not have access to this case.'
-      : 'The case detail request failed. Please try again.',
-  )
+  if (error instanceof AxiosError && error.response?.status === 403) {
+    return (
+      <ErrorPage
+        tone="warning"
+        icon={<ShieldAlert />}
+        title="Access denied"
+        description={getErrorStateMessage(
+          error,
+          'Your account does not have access to this case. Ask an administrator if you need it.',
+        )}
+        actions={
+          <ButtonLink render={<Link to="/cases/all-cases" />}>
+            Back to cases
+          </ButtonLink>
+        }
+      />
+    )
+  }
 
   return (
-    <RouteStateShell>
-      <Alert variant={isForbidden ? 'warning' : 'destructive'}>
-        <AlertTriangle />
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{message}</AlertDescription>
-      </Alert>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          onClick={() => {
-            // Reset the failed query so the re-run loader requests it again.
-            void queryClient.resetQueries({
-              predicate: (query) => query.state.status === 'error',
-            })
-            void router.invalidate()
-          }}
-        >
-          <RefreshCw />
-          Retry
-        </Button>
-        <ButtonLink variant="outline" render={<Link to="/cases/all-cases" />}>
-          Back to cases
-        </ButtonLink>
-      </div>
-    </RouteStateShell>
-  )
-}
-
-function RouteStateShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col justify-center gap-4 p-6">
-      {children}
-    </div>
+    <ErrorPage
+      icon={<AlertTriangle />}
+      title="Unable to load this case"
+      description={getErrorStateMessage(
+        error,
+        'Try again, or go back to the case list.',
+      )}
+      error={error}
+      actions={
+        <>
+          <Button type="button" onClick={retryRoute}>
+            <RefreshCw />
+            Try again
+          </Button>
+          <ButtonLink variant="outline" render={<Link to="/cases/all-cases" />}>
+            Back to cases
+          </ButtonLink>
+        </>
+      }
+    />
   )
 }

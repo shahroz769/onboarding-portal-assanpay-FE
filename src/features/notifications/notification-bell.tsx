@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
+import { CatchBoundary, useLocation } from '@tanstack/react-router'
 
 import { NumberFlip } from '#/components/number-flip'
 import { Badge } from '#/components/ui/badge'
@@ -16,7 +17,39 @@ import { NotificationsPopoverContent } from './notifications-popover'
 
 const formatBadgeCount = (count: number) => (count > 99 ? '99+' : String(count))
 
+/**
+ * The bell is a header widget: if it crashes, show a quiet placeholder rather
+ * than letting the error take down the whole app shell. Navigating retries it.
+ */
 export function NotificationBell() {
+  const pathname = useLocation({ select: (location) => location.pathname })
+
+  return (
+    <CatchBoundary
+      getResetKey={() => pathname}
+      errorComponent={NotificationBellUnavailable}
+    >
+      <NotificationBellButton />
+    </CatchBoundary>
+  )
+}
+
+function NotificationBellUnavailable() {
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      className="rounded-full"
+      disabled
+      aria-label="Notifications unavailable"
+      title="Notifications unavailable"
+    >
+      <Bell />
+    </Button>
+  )
+}
+
+function NotificationBellButton() {
   const [open, setOpen] = useState(false)
   const { data: unreadCount = 0 } = useUnreadCountQuery()
 

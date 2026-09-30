@@ -7,6 +7,9 @@ import {
   createRootRouteWithContext,
 } from '@tanstack/react-router'
 
+import { FileQuestion } from 'lucide-react'
+
+import { ErrorPage } from '#/components/error-state'
 import { ThemeProvider } from '#/components/theme-provider'
 import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
@@ -111,22 +114,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 function NotFoundPage() {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
-      <div className="w-full max-w-md">
-        <div className="rounded-xl border bg-background p-8 text-center shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">404</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            Page not found
-          </h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            The page you&apos;re looking for doesn&apos;t exist or may have
-            moved.
-          </p>
-          <ButtonLink className="mt-6" render={<Link to="/" />}>
-            Go to Dashboard
-          </ButtonLink>
-        </div>
-      </div>
-    </main>
+    <ErrorPage
+      tone="muted"
+      icon={<FileQuestion />}
+      title="Page not found"
+      description="This page does not exist or has moved. Check the address, or go to the dashboard."
+      actions={
+        <ButtonLink render={<Link to="/" />}>Go to dashboard</ButtonLink>
+      }
+    />
   )
 }
