@@ -43,7 +43,7 @@
     "react-day-picker": "10.0.2",
     "react-dom": "^19.3.0",
     "recharts": "3.10.1",
-    "shadcn": "^4.21.0",
+    "shadcn": "^4.21.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
@@ -70,7 +70,7 @@
     "oxlint-tsgolint": "^7.0.2003",
     "react-doctor": "^0.9.14",
     "typescript": "7.0.2",
-    "vite": "^8.3.1",
+    "vite": "^8.3.2",
     "wrangler": "^4.145.0"
   }
 }
