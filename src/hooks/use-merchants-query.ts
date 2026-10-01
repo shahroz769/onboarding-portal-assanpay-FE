@@ -4,10 +4,12 @@ import {
   queryOptions,
   useMutation,
   useQueryClient,
-  type FetchQueryOptions,
-  type InfiniteData,
-  type QueryClient,
-  type QueryKey,
+} from '@tanstack/react-query'
+import type {
+  FetchQueryOptions,
+  InfiniteData,
+  QueryClient,
+  QueryKey,
 } from '@tanstack/react-query'
 import { toast } from 'sonner'
 

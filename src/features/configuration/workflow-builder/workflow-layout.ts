@@ -73,7 +73,9 @@ export function layoutWorkflowGraph(
   const column = new Map<string, number>()
   for (const id of flowIds) column.set(id, id === SUBMISSION_NODE_ID ? 0 : 1)
   const relax = (edgeList: WorkflowEdge[]) => {
-    for (let pass = 0; pass < flowIds.length; pass++) {
+    // One pass per node is enough for any acyclic path.
+    const maxPasses = flowIds.length
+    for (let pass = 0; pass < maxPasses; pass++) {
       let changed = false
       for (const edge of edgeList) {
         const next = column.get(edge.source)! + 1

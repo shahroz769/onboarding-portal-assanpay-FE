@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { PlusCircleIcon } from 'lucide-react'
 
@@ -243,12 +243,17 @@ function SearchableDataTableFilter({
 
   // Labels of every option seen so far, so a draft selection stays labelled
   // after a server search stops returning it.
-  const seenLabels = useRef(new Map<string, string>())
-  for (const option of options) {
-    seenLabels.current.set(option.value, option.label)
+  const [seenLabels, setSeenLabels] = useState(() => new Map<string, string>())
+  if (options.some((option) => seenLabels.get(option.value) !== option.label)) {
+    setSeenLabels(
+      new Map([
+        ...seenLabels,
+        ...options.map((option) => [option.value, option.label] as const),
+      ]),
+    )
   }
   const labelFor = (value: string) =>
-    seenLabels.current.get(value) ?? selectedLabels?.get(value)
+    seenLabels.get(value) ?? selectedLabels?.get(value)
 
   // Selected values missing from the current results are listed first, so
   // they can still be unticked while searching for something else.

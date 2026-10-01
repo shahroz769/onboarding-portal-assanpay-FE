@@ -263,9 +263,15 @@ function TokenText({
   /** Tag tokens so a click in the variables list can scroll to them. */
   markPlainText?: boolean
 }) {
+  // Key tokens by name + occurrence so edits elsewhere in the text don't
+  // shift tooltip state onto a different variable.
+  const seen = new Map<string, number>()
   return text.split(TOKEN_SPLIT).map((part, index) => {
     if (index % 2 === 0) return part
     const name = part.slice(2, -2)
+    const occurrence = seen.get(name) ?? 0
+    seen.set(name, occurrence + 1)
+    const key = `${name}-${occurrence}`
     const token = (
       <span
         data-plain-var={markPlainText ? name : undefined}
@@ -276,9 +282,9 @@ function TokenText({
       />
     )
     const description = descriptions.get(name)
-    if (!description) return cloneElement(token, { key: index }, part)
+    if (!description) return cloneElement(token, { key }, part)
     return (
-      <Tooltip key={index}>
+      <Tooltip key={key}>
         <TooltipTrigger render={token}>{part}</TooltipTrigger>
         <TooltipContent className="max-w-64">{description}</TooltipContent>
       </Tooltip>
@@ -339,7 +345,11 @@ function EmailFrame({
   descriptions: ReadonlyMap<string, string>
 }) {
   // The token under the pointer inside the frame, for the tooltip.
-  const [hovered, setHovered] = useState<HTMLElement | null>(null)
+  // The frame rides along so render never reads the ref.
+  const [hovered, setHovered] = useState<{
+    token: HTMLElement
+    frame: HTMLIFrameElement
+  } | null>(null)
   const [height, setHeight] = useState(640)
   // Hidden until the email has loaded and the frame has its height, so the
   // blank frame and the resize never show.
@@ -368,9 +378,11 @@ function EmailFrame({
     markActive(doc, activeRef.current)
     // Listeners from this page still run in the script-less frame; a reload
     // replaces the document, so they never stack.
+    const frame = ref.current
     doc.addEventListener('mouseover', (event) => {
       const target = event.target as Element | null
-      setHovered(target?.closest<HTMLElement>('[data-var]') ?? null)
+      const token = target?.closest<HTMLElement>('[data-var]')
+      setHovered(token && frame ? { token, frame } : null)
     })
     doc.addEventListener('mouseleave', () => setHovered(null))
     doc.addEventListener('click', (event) => event.preventDefault())
@@ -394,19 +406,19 @@ function EmailFrame({
   }
 
   const description = hovered
-    ? descriptions.get(hovered.dataset.var ?? '')
+    ? descriptions.get(hovered.token.dataset.var ?? '')
     : undefined
   // The token's box is relative to the frame, so shift it by the frame's own
   // position. contextElement lets the tooltip follow page scrolls.
   const anchor = hovered
     ? {
-        contextElement: ref.current ?? undefined,
+        contextElement: hovered.frame,
         getBoundingClientRect: () => {
-          const token = hovered.getBoundingClientRect()
-          const frame = ref.current?.getBoundingClientRect()
+          const token = hovered.token.getBoundingClientRect()
+          const frame = hovered.frame.getBoundingClientRect()
           return new DOMRect(
-            token.x + (frame?.x ?? 0),
-            token.y + (frame?.y ?? 0),
+            token.x + frame.x,
+            token.y + frame.y,
             token.width,
             token.height,
           )

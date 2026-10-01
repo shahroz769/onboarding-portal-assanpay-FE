@@ -593,9 +593,7 @@ function CopyMidsMenu({
         : ''
       if (mids.length === 0) {
         toast.info(`No ${groupLabel || 'pending'} MIDs to copy`)
-        return
-      }
-      if (await copyText(mids.join(','))) {
+      } else if (await copyText(mids.join(','))) {
         flagCopied()
         toast.success(
           `${mids.length} ${groupLabel ? `${groupLabel} ` : ''}MID${mids.length === 1 ? '' : 's'} copied`,
@@ -603,9 +601,8 @@ function CopyMidsMenu({
       }
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Could not load MIDs to copy'))
-    } finally {
-      setIsCopying(false)
     }
+    setIsCopying(false)
   }
 
   const countFor = (key: (typeof COPY_OPTIONS)[number]['key']) => counts[key]

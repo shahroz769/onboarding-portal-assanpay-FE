@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { MarkerType } from '@xyflow/react'
-
 import type { Connection, EdgeChange, NodeChange } from '@xyflow/react'
 
-import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
+import { applyEdgeChanges, applyNodeChanges, MarkerType } from '@xyflow/react'
 
 import { Save, Undo2 } from 'lucide-react'
 
@@ -478,9 +476,11 @@ export function WorkflowBuilderPanel() {
       initializeFromConfig(latest)
 
       setStaleRevisionOpen(false)
-    } finally {
+    } catch (error) {
       setReloadingStale(false)
+      throw error
     }
+    setReloadingStale(false)
   }
 
   if (isError) {

@@ -51,9 +51,10 @@ const credentialsSchema = z.object({
   apiSecret: credentialValue('API Secret'),
 })
 
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
 })
 
 // Keeps browsers and password managers from saving or autofilling secrets.

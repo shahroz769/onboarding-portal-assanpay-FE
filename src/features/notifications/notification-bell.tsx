@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Bell } from 'lucide-react'
 import { CatchBoundary, useLocation } from '@tanstack/react-router'
 
@@ -56,9 +56,9 @@ function NotificationBellButton() {
   const hasUnread = unreadCount > 0
 
   // Keep the last count visible while the badge animates out at 0.
-  const lastCount = useRef(unreadCount)
-  if (hasUnread) lastCount.current = unreadCount
-  const shownValue = Math.min(hasUnread ? unreadCount : lastCount.current, 100)
+  const [lastCount, setLastCount] = useState(unreadCount)
+  if (hasUnread && unreadCount !== lastCount) setLastCount(unreadCount)
+  const shownValue = Math.min(hasUnread ? unreadCount : lastCount, 100)
   const shownLength = formatBadgeCount(shownValue).length
 
   return (

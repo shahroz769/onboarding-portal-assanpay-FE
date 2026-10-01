@@ -28,10 +28,10 @@ export function AppShellPending() {
         animations.find((animation) => animation.startTime !== null)
           ?.startTime ?? document.timeline.currentTime
     }
-    mountedCount++
+    mountedCount += 1
 
     return () => {
-      mountedCount--
+      mountedCount -= 1
       // The replacement copy mounts in the same commit, before this runs.
       queueMicrotask(() => {
         if (mountedCount === 0) bootStartTime = null

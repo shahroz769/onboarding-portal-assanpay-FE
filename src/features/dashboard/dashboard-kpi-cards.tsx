@@ -26,10 +26,8 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { cn } from '#/lib/utils'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { CaseFilterStatus } from '#/schemas/cases.schema'
-import {
-  MERCHANT_STATUSES,
-  type MerchantStatus,
-} from '#/schemas/merchants.schema'
+import { MERCHANT_STATUSES } from '#/schemas/merchants.schema'
+import type { MerchantStatus } from '#/schemas/merchants.schema'
 import { formatCount } from './dashboard-utils'
 
 /** Opens the cases or merchants list pre-filtered to the card's statuses. */

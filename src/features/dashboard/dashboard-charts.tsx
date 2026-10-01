@@ -21,9 +21,6 @@ import { useReducedMotion } from '#/hooks/use-reduced-motion'
 import type { DashboardResponse } from '#/schemas/dashboard.schema'
 import type { DailyCountPoint } from './dashboard-utils'
 import { HeaderStat } from './dashboard-header-stat'
-
-// Workload charts share this lazy chunk so recharts loads once.
-export { WorkloadBarChart } from './dashboard-workload-chart'
 import {
   DASHBOARD_CHARTS,
   aggregateByWeek,
@@ -31,6 +28,9 @@ import {
   formatDay,
   formatWeekRange,
 } from './dashboard-utils'
+
+// Workload charts share this lazy chunk so recharts loads once.
+export { WorkloadBarChart } from './dashboard-workload-chart'
 
 export function DashboardCharts({ data }: { data: DashboardResponse }) {
   return (

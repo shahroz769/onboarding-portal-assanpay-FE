@@ -45,6 +45,11 @@ export function DataTableRouteSkeleton({
 }) {
   const resolvedFilterWidths =
     filterWidths ?? Array.from({ length: filterCount ?? 0 }, () => 112)
+  // Widths repeat (e.g. [104, 104, 96]), so key by width plus occurrence.
+  const filterSlots = resolvedFilterWidths.map((width, position, widths) => ({
+    width,
+    id: `${width}-${widths.slice(0, position).filter((w) => w === width).length}`,
+  }))
   const resolvedColumns: SkeletonColumn[] =
     columns ??
     (columnWidths ?? Array.from({ length: 10 }, () => 140)).map((width) => ({
@@ -65,12 +70,8 @@ export function DataTableRouteSkeleton({
               <Skeleton className="size-4 shrink-0 rounded-sm" />
               <Skeleton className="h-4 w-1/2" />
             </div>
-            {resolvedFilterWidths.map((width, index) => (
-              <Skeleton
-                key={index}
-                className="h-8 rounded-md"
-                style={{ width }}
-              />
+            {filterSlots.map(({ id, width }) => (
+              <Skeleton key={id} className="h-8 rounded-md" style={{ width }} />
             ))}
           </div>
           {actionWidth > 0 ? (

@@ -42,7 +42,7 @@ export type WorkloadChartRow = {
   awaitingMerchant: number
   open: number
   /** Series that don't apply to this row; hidden from its tooltip. */
-  omit?: ReadonlyArray<OpenStatusKey>
+  omit?: ReadonlySet<OpenStatusKey>
 }
 
 const ROW_HEIGHT = 36
@@ -177,7 +177,7 @@ function WorkloadTooltip({
     <div className="grid min-w-44 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-medium">{row.label}</div>
       <div className="grid gap-1.5">
-        {WORKLOAD_SERIES.filter((item) => !row.omit?.includes(item.key)).map(
+        {WORKLOAD_SERIES.filter((item) => !row.omit?.has(item.key)).map(
           (item) => (
             <TooltipRow
               key={item.key}

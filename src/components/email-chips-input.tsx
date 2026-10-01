@@ -66,13 +66,17 @@ export function EmailChipsInput({
       .map((part) => part.trim().toLowerCase())
       .filter(Boolean)
     const next = [...value]
+    const seen = new Set(value)
     const rejected: string[] = []
     let overLimit = false
     for (const part of parts) {
       if (!isEmail(part)) rejected.push(part)
-      else if (next.includes(part)) continue
+      else if (seen.has(part)) continue
       else if (max !== undefined && next.length >= max) overLimit = true
-      else next.push(part)
+      else {
+        next.push(part)
+        seen.add(part)
+      }
     }
     if (next.length !== value.length) onChange(next)
     setInputValue(rejected.join(' '))

@@ -405,9 +405,9 @@ export function EmailTemplateSkeleton() {
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        {[3, 5].map((lines, index) => (
+        {[3, 5].map((lines) => (
           <div
-            key={index}
+            key={lines}
             className="flex flex-col gap-3 rounded-xl border bg-card p-4"
           >
             <Skeleton className="h-4 w-24" />

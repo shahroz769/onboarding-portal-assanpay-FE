@@ -291,6 +291,7 @@ export function CaseChatter({
   const pendingCursorRef = useRef<number | null>(null)
   const deferredContent = useDeferredValue(content)
   const activeMention = getMentionMatch(deferredContent, cursorPosition)
+  const mentionStart = activeMention?.start
   const threads = buildCommentThreads(comments)
   const commentsById = new Map(comments.map((comment) => [comment.id, comment]))
   // Comments present when the thread first renders appear instantly; only
@@ -303,11 +304,12 @@ export function CaseChatter({
   )
 
   useLayoutEffect(() => {
-    if (!activeMention || !textareaRef.current || !formRef.current) return
+    if (mentionStart === undefined || !textareaRef.current || !formRef.current)
+      return
 
     const nextPosition = getTextareaCaretPosition(
       textareaRef.current,
-      activeMention.start,
+      mentionStart,
       formRef.current,
     )
 
@@ -317,7 +319,7 @@ export function CaseChatter({
         ? currentPosition
         : nextPosition,
     )
-  }, [activeMention?.start])
+  }, [mentionStart])
 
   useLayoutEffect(() => {
     if (pendingCursorRef.current === null || !textareaRef.current) return

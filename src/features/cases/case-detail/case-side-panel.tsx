@@ -528,10 +528,9 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
       setCloseReason('')
     } catch {
       // The mutation hook displays the backend error and keeps the dialog open.
-    } finally {
-      primaryActionLockedRef.current = false
-      setActionInFlight(null)
     }
+    primaryActionLockedRef.current = false
+    setActionInFlight(null)
   }
 
   const closeUnsuccessfulControl = canCloseUnsuccessfully ? (

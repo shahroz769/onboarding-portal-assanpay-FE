@@ -59,9 +59,10 @@ function buildPortalPassword(email: string, code: string) {
   return `${localPart.trim().toLowerCase()}@${code}`
 }
 
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
+  timeZone: 'Asia/Karachi',
 })
 
 export function PortalPasswordCodeCard({

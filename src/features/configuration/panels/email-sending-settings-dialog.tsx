@@ -365,7 +365,7 @@ function EmailSendingSettingsForm({ onDone }: { onDone: () => void }) {
   if (recipientsResult && !recipientsResult.success) {
     for (const issue of recipientsResult.error.issues) {
       const field = issue.path[0] as RecipientListField
-      recipientErrors[field] ??= issue.message
+      recipientErrors[field] = recipientErrors[field] ?? issue.message
     }
   }
 
