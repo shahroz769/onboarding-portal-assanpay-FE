@@ -392,7 +392,10 @@ export function useCreateComment(caseId: string) {
       })
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to post comment'))
+      // The composer keeps its text on failure, so say so.
+      toast.error(getApiErrorMessage(error, 'Unable to post comment'), {
+        description: 'Your draft is kept, so you can try again.',
+      })
     },
   })
 }

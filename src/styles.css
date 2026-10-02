@@ -100,6 +100,9 @@
   --flow-trigger: oklch(0.6 0.11 258);
   --flow-close: oklch(0.72 0.11 72);
   --flow-create: oklch(0.6 0.12 293);
+  /* @mention chips in chatter (composer and posted comments). */
+  --mention: oklch(0.685 0.169 237.323 / 10%);
+  --mention-foreground: oklch(0.5 0.134 242.749);
   --radius: 0.625rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -146,6 +149,8 @@
   --flow-trigger: oklch(0.72 0.09 256);
   --flow-close: oklch(0.8 0.1 80);
   --flow-create: oklch(0.72 0.1 293);
+  --mention: oklch(0.685 0.169 237.323 / 20%);
+  --mention-foreground: oklch(0.828 0.111 230.318);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: var(--primary);
@@ -190,6 +195,8 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-mention: var(--mention);
+  --color-mention-foreground: var(--mention-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

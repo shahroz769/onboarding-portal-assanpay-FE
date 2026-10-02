@@ -105,6 +105,28 @@ export function caseStatusBadgeClasses(
   return tint === 'plain' ? '' : TINTS[tint]
 }
 
+// ─── User identity ──────────────────────────────────────────────────────────
+
+// Hues that carry no status meaning elsewhere: red/rose, green/emerald and
+// amber/orange stay out so an avatar never reads as danger/success/warning.
+const USER_TINTS: readonly StatusTint[] = [
+  'blue',
+  'sky',
+  'violet',
+  'purple',
+  'teal',
+  'indigo',
+  'cyan',
+]
+
+/**
+ * The tint for the nth distinct user in a list, e.g. for initials avatars.
+ * Every hue is used once before any repeats.
+ */
+export function userTint(index: number): string {
+  return TINTS[USER_TINTS[index % USER_TINTS.length]]
+}
+
 // ─── Merchant status ────────────────────────────────────────────────────────
 
 const MERCHANT_STATUS_TINTS: Record<string, StatusTint> = {
