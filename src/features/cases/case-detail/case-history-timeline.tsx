@@ -282,6 +282,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
   },
+  email_delivery_confirmed: {
+    label: 'Delivery confirmed by owner',
+    icon: MailCheck,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
   email_undelivered: {
     label: 'Email not delivered',
     icon: MailWarning,
@@ -646,6 +653,16 @@ function formatDetails(
         ? `: ${details.detail}`
         : '.'
     return `${email}${recipient} ${UNDELIVERED_TEXT[String(details.status)] ?? 'was not delivered'}${reason} Send it again or send it manually before closing the case; if the case is awaiting the merchant, move it back to Working first.`
+  }
+
+  if (action === 'email_delivery_confirmed') {
+    const email =
+      typeof details.templateLabel === 'string'
+        ? `${details.templateLabel} email`
+        : 'Email'
+    const recipient =
+      typeof details.recipient === 'string' ? details.recipient : 'the merchant'
+    return `Checked on Resend: the ${email} reached ${recipient} and only a CC address failed, so the case can close successfully.`
   }
 
   if (

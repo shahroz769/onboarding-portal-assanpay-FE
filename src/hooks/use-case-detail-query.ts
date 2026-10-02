@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import {
   advanceStage,
   closeUnsuccessful,
+  confirmCaseEmailDelivered,
   createCaseComment,
   fetchCaseComments,
   fetchCaseDetail,
@@ -339,6 +340,21 @@ export function useMoveCaseBackToWorking(caseId: string) {
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Failed to move the case'))
+    },
+    onSettled: () => {
+      void invalidateCaseWorkflowQueries(queryClient, caseId)
+    },
+  })
+}
+
+export function useConfirmCaseEmailDelivered(caseId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (emailLogId: string) =>
+      confirmCaseEmailDelivered(caseId, emailLogId),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to confirm delivery'))
     },
     onSettled: () => {
       void invalidateCaseWorkflowQueries(queryClient, caseId)

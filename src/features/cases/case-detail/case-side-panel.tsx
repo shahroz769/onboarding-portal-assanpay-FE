@@ -50,6 +50,7 @@ import {
   caseHistoryQueryOptions,
   useAdvanceStage,
   useCloseUnsuccessful,
+  useConfirmCaseEmailDelivered,
   useMoveCaseBackToWorking,
   useRegenerateResubmissionLink,
   useSaveDocumentReviewSubMerchant,
@@ -533,6 +534,20 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     setActionInFlight(null)
   }
 
+  // The latest email bounced with CC addresses on it, and Resend can't say
+  // which address failed. After checking Resend, the owner may confirm the To
+  // address got it and close anyway.
+  const forceCloseControl = (
+    <ForceCloseControl
+      caseId={caseId}
+      delivery={caseDetail.emailDelivery}
+      isCaseOwner={isCaseOwner}
+      actionKind={primaryAction.actionKind}
+      disabled={actionPending}
+      onConfirmed={() => void handlePrimaryAction()}
+    />
+  )
+
   const closeUnsuccessfulControl = canCloseUnsuccessfully ? (
     <AlertDialog
       open={closeDialogOpen}
@@ -754,6 +769,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
                                       : 'No successful action available'}
                               </Button>
                             ) : null}
+                            {forceCloseControl}
                             {closeUnsuccessfulControl}
                           </div>
                         ) : null}
@@ -1020,6 +1036,102 @@ function AwaitingMerchantAlert({
   )
 }
 
+/**
+ * Owner-only override for a bounced email that was copied to CC addresses:
+ * after checking Resend shows it Delivered to the To address, the owner
+ * confirms (recorded in history) and the case closes successfully.
+ */
+function ForceCloseControl({
+  caseId,
+  delivery,
+  isCaseOwner,
+  actionKind,
+  disabled,
+  onConfirmed,
+}: {
+  caseId: string
+  delivery: CaseDetail['emailDelivery']
+  isCaseOwner: boolean
+  actionKind: string | null
+  disabled: boolean
+  /** Runs the regular Mark as successful action. */
+  onConfirmed: () => void
+}) {
+  const confirmDelivery = useConfirmCaseEmailDelivered(caseId)
+  const [open, setOpen] = useState(false)
+
+  if (
+    !delivery?.canForceClose ||
+    !isCaseOwner ||
+    actionKind !== 'mark-successful'
+  )
+    return null
+
+  const { emailLogId } = delivery
+
+  async function handleConfirm() {
+    if (disabled || confirmDelivery.isPending) return
+    try {
+      await confirmDelivery.mutateAsync(emailLogId)
+    } catch {
+      // The mutation hook displays the backend error and keeps the dialog open.
+      return
+    }
+    setOpen(false)
+    onConfirmed()
+  }
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next || !confirmDelivery.isPending) setOpen(next)
+      }}
+    >
+      <AlertDialogTrigger
+        render={<Button type="button" variant="outline" disabled={disabled} />}
+      >
+        <MailCheck data-icon="inline-start" />
+        Force close
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Close this case despite the bounce?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="wrap-anywhere">
+            Only continue if Resend shows this email as Delivered to{' '}
+            <span className="font-medium text-foreground">
+              {delivery.recipient}
+            </span>{' '}
+            and only a CC address ({delivery.cc.join(', ')}) bounced. Your
+            confirmation is recorded in the case history.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={confirmDelivery.isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(event) => {
+              event.preventDefault()
+              void handleConfirm()
+            }}
+            disabled={confirmDelivery.isPending || disabled}
+          >
+            {confirmDelivery.isPending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <CheckCircle2 data-icon="inline-start" />
+            )}
+            {confirmDelivery.isPending ? 'Confirming' : 'Confirm and close'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 const UNDELIVERED_STATUSES = new Set([
   'bounced',
   'complained',
@@ -1084,6 +1196,13 @@ function CaseEmailDeliveryNotice({
           )}
         >
           {delivery.closeBlockedReason}
+        </p>
+      ) : null}
+      {delivery.confirmedByOwner ? (
+        <p className="text-sm text-pretty text-muted-foreground">
+          The case owner checked Resend and confirmed this email reached{' '}
+          {delivery.recipient}; only a CC address failed. The case can be
+          closed.
         </p>
       ) : null}
       {showMoveBack ? (

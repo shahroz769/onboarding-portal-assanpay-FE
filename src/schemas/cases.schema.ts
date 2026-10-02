@@ -240,6 +240,10 @@ const caseEmailDeliverySchema = z.object({
   sentAt: z.string(),
   statusUpdatedAt: z.string().nullable(),
   supersededByManual: z.boolean(),
+  /** The owner confirmed on Resend that the To address received it. */
+  confirmedByOwner: z.boolean(),
+  /** A CC address may be the one that failed: the owner can force close. */
+  canForceClose: z.boolean(),
   closeBlockedReason: z.string().nullable(),
 })
 

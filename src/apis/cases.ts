@@ -180,6 +180,23 @@ export async function moveCaseBackToWorking(caseId: string) {
   return response.data
 }
 
+// ─── Confirm Email Delivery ─────────────────────────────────────────────────
+
+/**
+ * Records the owner's check on Resend that the latest email reached its To
+ * address and only a CC address bounced, so the case can close successfully.
+ */
+export async function confirmCaseEmailDelivered(
+  caseId: string,
+  emailLogId: string,
+) {
+  const response = await apiClient.post(
+    `/api/cases/${caseId}/email-delivery/confirm-delivered`,
+    { emailLogId },
+  )
+  return response.data
+}
+
 // ─── Save Field Reviews ─────────────────────────────────────────────────────
 
 export async function saveFieldReviews(
