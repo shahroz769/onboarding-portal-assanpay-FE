@@ -93,6 +93,7 @@ import { OnboardingSectionNav } from './onboarding-section-nav'
 import type { OnboardingNavSection } from './onboarding-section-nav'
 import type { StatusTint } from '#/lib/status-styles'
 import { SubmissionSuccess } from './submission-success'
+import type { SubmissionSummary } from './submission-success'
 
 // ── Sections & draft autosave ───────────────────────────────────────────────
 
@@ -160,6 +161,64 @@ function writeOnboardingDraftValues(values: MerchantOnboardingFormValues) {
     values: persisted,
   }
   window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload))
+}
+
+// ── Submission key & remembered submission ──────────────────────────────────
+// The key is sent as Idempotency-Key and survives reloads, so a retry after a
+// lost response returns the existing application. The summary lets a
+// returning visitor see they already applied instead of a blank form.
+
+const SUBMISSION_KEY_STORAGE_KEY = 'assanpay:merchant-onboarding-submission-key'
+const SUBMITTED_STORAGE_KEY = 'assanpay:merchant-onboarding-submitted'
+const SUBMISSION_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/
+
+function readStoredSubmissionKey(): string | null {
+  const key = window.localStorage.getItem(SUBMISSION_KEY_STORAGE_KEY)
+  return key && SUBMISSION_KEY_PATTERN.test(key) ? key : null
+}
+
+function toSubmissionSummary(
+  response: MerchantSubmissionResponse,
+): SubmissionSummary {
+  return {
+    reference: response.merchant.id,
+    merchantNumber: response.merchant.merchantNumber ?? null,
+    businessName: response.merchant.businessName,
+    submittedAt: response.merchant.submittedAt,
+    documentCount: response.documents.length,
+  }
+}
+
+function readSubmittedSummary(): SubmissionSummary | null {
+  const raw = window.localStorage.getItem(SUBMITTED_STORAGE_KEY)
+  if (!raw) return null
+
+  const parsed: unknown = JSON.parse(raw)
+  if (
+    !isRecord(parsed) ||
+    typeof parsed.reference !== 'string' ||
+    typeof parsed.businessName !== 'string' ||
+    typeof parsed.submittedAt !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    reference: parsed.reference,
+    merchantNumber:
+      typeof parsed.merchantNumber === 'number' ? parsed.merchantNumber : null,
+    businessName: parsed.businessName,
+    submittedAt: parsed.submittedAt,
+    documentCount: null,
+  }
+}
+
+function writeSubmittedSummary(summary: SubmissionSummary) {
+  const { reference, merchantNumber, businessName, submittedAt } = summary
+  window.localStorage.setItem(
+    SUBMITTED_STORAGE_KEY,
+    JSON.stringify({ reference, merchantNumber, businessName, submittedAt }),
+  )
 }
 
 function createDebouncedTask(task: () => void, delay: number) {
@@ -307,8 +366,14 @@ function handleNumericKeyDown(
 export function MerchantOnboardingForm({
   onSubmittedChange,
 }: MerchantOnboardingFormProps) {
-  const [submissionData, setSubmissionData] =
-    useState<MerchantSubmissionResponse | null>(null)
+  const [submission, setSubmission] = useState<{
+    summary: SubmissionSummary
+    isReturning: boolean
+  } | null>(null)
+  // Falls back to memory when storage is blocked; still stable per page.
+  const submissionKeyRef = useRef<string | null>(null)
+  // Stops the debounced autosave from re-writing the draft after a submit.
+  const isSubmittedRef = useRef(false)
   const [documents, setDocuments] = useState<
     Partial<Record<DocumentFieldName, File>>
   >({})
@@ -392,10 +457,20 @@ export function MerchantOnboardingForm({
       }
 
       try {
-        const response =
-          await submitMerchantOnboardingMutation.mutateAsync(formData)
-        window.localStorage.removeItem(DRAFT_STORAGE_KEY)
-        setSubmissionData(response)
+        const response = await submitMerchantOnboardingMutation.mutateAsync({
+          formData,
+          submissionKey: resolveSubmissionKey(),
+        })
+        const summary = toSubmissionSummary(response)
+        isSubmittedRef.current = true
+        clearSubmissionKey()
+        try {
+          window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+          writeSubmittedSummary(summary)
+        } catch {
+          // Storage blocked — the success view still shows below.
+        }
+        setSubmission({ summary, isReturning: false })
         onSubmittedChange?.(true)
         toast.success('Form submitted successfully!')
       } catch (error: unknown) {
@@ -453,6 +528,18 @@ export function MerchantOnboardingForm({
     if (didRestoreDraftRef.current) return
     didRestoreDraftRef.current = true
     try {
+      // An earlier submission on this device replaces the blank form.
+      const submittedSummary = readSubmittedSummary()
+      if (submittedSummary) {
+        isSubmittedRef.current = true
+        setSubmission({ summary: submittedSummary, isReturning: true })
+        onSubmittedChange?.(true)
+        return
+      }
+    } catch {
+      // Unavailable or corrupted storage — show the form.
+    }
+    try {
       const draftValues = readOnboardingDraftValues()
       if (!draftValues) return
       let restoredCount = 0
@@ -470,10 +557,11 @@ export function MerchantOnboardingForm({
     } catch {
       // Unavailable or corrupted storage — start fresh.
     }
-  }, [form])
+  }, [form, onSubmittedChange])
 
   useEffect(() => {
     const draftSave = createDebouncedTask(() => {
+      if (isSubmittedRef.current) return
       try {
         writeOnboardingDraftValues(form.state.values)
       } catch {
@@ -531,13 +619,52 @@ export function MerchantOnboardingForm({
     return errors
   }
 
+  const resolveSubmissionKey = () => {
+    if (submissionKeyRef.current) return submissionKeyRef.current
+
+    let key: string | null = null
+    try {
+      key = readStoredSubmissionKey()
+    } catch {
+      // Storage blocked — keep the key in memory only.
+    }
+    if (!key) {
+      key = crypto.randomUUID()
+      try {
+        window.localStorage.setItem(SUBMISSION_KEY_STORAGE_KEY, key)
+      } catch {
+        // Storage blocked — keep the key in memory only.
+      }
+    }
+    submissionKeyRef.current = key
+    return key
+  }
+
+  const clearSubmissionKey = () => {
+    submissionKeyRef.current = null
+    try {
+      window.localStorage.removeItem(SUBMISSION_KEY_STORAGE_KEY)
+    } catch {
+      // Storage blocked — nothing persisted to clear.
+    }
+  }
+
+  // A new application: fresh form, fresh submission key, and forget the
+  // remembered submission so the form shows on the next visit.
   const resetFormState = () => {
+    isSubmittedRef.current = false
     form.reset()
     setDocuments({})
     setDocumentErrors({})
     setSubmissionError(null)
-    setSubmissionData(null)
-    window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+    setSubmission(null)
+    clearSubmissionKey()
+    try {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+      window.localStorage.removeItem(SUBMITTED_STORAGE_KEY)
+    } catch {
+      // Storage blocked — nothing persisted to clear.
+    }
     onSubmittedChange?.(false)
   }
 
@@ -588,10 +715,11 @@ export function MerchantOnboardingForm({
 
   // ── Success View ────────────────────────────────────────────────────────
 
-  if (submissionData) {
+  if (submission) {
     return (
       <SubmissionSuccess
-        data={submissionData}
+        summary={submission.summary}
+        isReturning={submission.isReturning}
         onNewSubmission={resetFormState}
       />
     )

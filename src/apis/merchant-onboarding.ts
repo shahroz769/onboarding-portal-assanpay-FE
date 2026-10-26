@@ -25,6 +25,7 @@ export type MerchantDocument = {
 export type MerchantSubmissionResponse = {
   merchant: {
     id: string
+    merchantNumber: number
     submitterEmail: string
     ownerFullName: string
     ownerPhone: string
@@ -55,15 +56,22 @@ export type MerchantSubmissionResponse = {
   documents: MerchantDocument[]
 }
 
-export async function submitMerchantOnboardingForm(
-  formData: FormData,
-): Promise<MerchantSubmissionResponse> {
+export async function submitMerchantOnboardingForm({
+  formData,
+  submissionKey,
+}: {
+  formData: FormData
+  // Same key on every retry of one application, so the server returns the
+  // merchant it already created instead of a duplicate.
+  submissionKey: string
+}): Promise<MerchantSubmissionResponse> {
   const { data } = await apiClient.post<MerchantSubmissionResponse>(
     '/api/public/merchant-form',
     formData,
     {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Idempotency-Key': submissionKey,
       },
     },
   )
