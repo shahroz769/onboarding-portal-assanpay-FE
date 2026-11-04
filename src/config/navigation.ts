@@ -19,6 +19,7 @@ export type NavSubItem = {
   params?: Record<string, string>
   roles?: RoleType[]
   requiresWorkAccess?: boolean
+  requiresEpAccess?: boolean
   group?: string
 }
 
@@ -64,6 +65,11 @@ const navItems: NavItem[] = [
         url: '/cases/work-queue-cases',
         roles: ['agent', 'super_admin'],
         requiresWorkAccess: true,
+      },
+      {
+        title: 'EP Sub-Merchants',
+        url: '/cases/ep-sub-merchants',
+        requiresEpAccess: true,
       },
       {
         title: 'My Open Cases',
@@ -140,6 +146,7 @@ const navItems: NavItem[] = [
 export function getFilteredNavItems(
   roleType: RoleType,
   hasWorkingAccess = false,
+  canManageEpCases = false,
 ): NavItem[] {
   return navItems
     .filter((item) => !item.roles || item.roles.includes(roleType))
@@ -148,7 +155,8 @@ export function getFilteredNavItems(
       const filteredSubItems = item.items.filter(
         (sub) =>
           (!sub.roles || sub.roles.includes(roleType)) &&
-          (!sub.requiresWorkAccess || hasWorkingAccess),
+          (!sub.requiresWorkAccess || hasWorkingAccess) &&
+          (!sub.requiresEpAccess || canManageEpCases),
       )
       return { ...item, items: filteredSubItems }
     })

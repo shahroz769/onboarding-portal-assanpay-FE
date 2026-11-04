@@ -23,8 +23,8 @@ function RouteComponent() {
 function MerchantsRoutePending() {
   return (
     <DataTableRouteSkeleton
-      filterCount={3}
-      filterWidths={[104, 104, 96]}
+      filterCount={4}
+      filterWidths={[104, 104, 96, 112]}
       actionWidth={148}
       columns={[
         { width: 40, kind: 'checkbox' },
@@ -33,6 +33,7 @@ function MerchantsRoutePending() {
         { width: 120, kind: 'badge', header: 'Status', cellWidth: 88 },
         { width: 100, kind: 'badge', header: 'Priority', cellWidth: 64 },
         { width: 110, kind: 'text', header: 'Open Cases', cellWidth: 24 },
+        { width: 280, kind: 'badge', header: 'EP Status', cellWidth: 88 },
         { width: 180, kind: 'date', header: 'Created At' },
         { width: 130, kind: 'date', header: 'Went Live' },
         { width: 180, kind: 'date', header: 'Last Updated' },

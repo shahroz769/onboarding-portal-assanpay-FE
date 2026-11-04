@@ -17,6 +17,10 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { TruncatedTooltip } from '#/components/truncated-tooltip'
+import {
+  EpCaseStatusSummary,
+  EpNotCreatedBadge,
+} from '#/features/ep-sub-merchants/ep-case-status'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
@@ -248,6 +252,25 @@ export function createMerchantColumns({
         </Link>
       ),
       width: 110,
+    },
+
+    // EP Sub-Merchant cases
+    {
+      id: 'epStatus',
+      header: 'EP Status',
+      cell: (merchant) =>
+        merchant.epCases.length > 0 ? (
+          <EpCaseStatusSummary
+            entries={merchant.epCases.map((epCase) => ({
+              key: epCase.id,
+              name: epCase.subMerchantName,
+              epCase,
+            }))}
+          />
+        ) : (
+          <EpNotCreatedBadge />
+        ),
+      width: 280,
     },
 
     // Created At

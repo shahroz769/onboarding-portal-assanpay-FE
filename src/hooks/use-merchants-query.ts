@@ -73,6 +73,7 @@ export function merchantOptionsQueryOptions(search = '') {
         priority: undefined,
         businessScope: undefined,
         currency: undefined,
+        epStatus: undefined,
         sortBy: 'merchantNumber',
         sortOrder: 'desc',
         createdAtFrom: undefined,

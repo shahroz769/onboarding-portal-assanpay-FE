@@ -12,6 +12,8 @@ export type User = {
   status: 'active' | 'inactive'
   queueViewScope: 'all' | 'selected'
   workQueueIds: string[]
+  /** Admins, or agents with working access to the EP queue. */
+  canManageEpCases: boolean
   createdByUserId: string | null
   lastLoginAt: string | null
   createdAt: string

@@ -49,7 +49,6 @@ export async function fetchCases(
 interface CreateCaseParams {
   merchantId: string
   queueId: string
-  subMerchantId?: string
 }
 
 export async function createCase(params: CreateCaseParams) {
@@ -60,7 +59,6 @@ export async function createCase(params: CreateCaseParams) {
 interface BulkCreateCasesParams {
   merchantIds: string[]
   queueId: string
-  subMerchantId?: string
 }
 
 export interface BulkCreateCasesResult {

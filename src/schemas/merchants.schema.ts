@@ -1,4 +1,6 @@
 import * as z from 'zod'
+
+import { searchParamSchema } from './search-param.schema'
 import {
   paymentMethodSettingsSchema,
   payoutMethodSettingsSchema,
@@ -54,6 +56,41 @@ export const MERCHANT_SORTABLE_COLUMNS = [
 
 export type MerchantSortableColumn = (typeof MERCHANT_SORTABLE_COLUMNS)[number]
 
+// ─── EP Sub-Merchant Status ─────────────────────────────────────────────────
+
+export const EP_CASE_STATUS_FILTERS = [
+  'not_created',
+  'new',
+  'working',
+  'awaiting_merchant',
+  'closed_successful',
+  'closed_unsuccessful',
+] as const
+
+export const EP_CASE_STATUS_FILTER_LABELS: Record<
+  (typeof EP_CASE_STATUS_FILTERS)[number],
+  string
+> = {
+  not_created: 'Not Created',
+  new: 'New',
+  working: 'Working',
+  awaiting_merchant: 'Awaiting Merchant',
+  closed_successful: 'Closed Successful',
+  closed_unsuccessful: 'Closed Unsuccessful',
+}
+
+export const epCaseSummarySchema = z.object({
+  id: z.string(),
+  caseNumber: z.string(),
+  subMerchantId: z.string().nullable(),
+  subMerchantName: z.string().nullable(),
+  status: z.enum(['new', 'working', 'closed', 'awaiting_merchant']),
+  closeOutcome: z.enum(['successful', 'unsuccessful']).nullable(),
+  ownerName: z.string().nullable(),
+})
+
+export type EpCaseSummary = z.infer<typeof epCaseSummarySchema>
+
 // ─── Zod Schemas ────────────────────────────────────────────────────────────
 
 export const merchantListItemSchema = z.object({
@@ -70,6 +107,7 @@ export const merchantListItemSchema = z.object({
   ownerFullName: z.string(),
   updatedAt: z.string(),
   openCasesCount: z.number(),
+  epCases: z.array(epCaseSummarySchema),
 })
 
 export type MerchantListItem = z.infer<typeof merchantListItemSchema>
@@ -110,11 +148,12 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
 }
 
 export const merchantRouteSearchSchema = z.object({
-  search: z.string().optional().transform(normalizeOptionalString),
+  search: searchParamSchema,
   status: createCsvEnumFilterSchema(MERCHANT_STATUSES),
   priority: createCsvEnumFilterSchema(PRIORITIES),
   businessScope: createCsvEnumFilterSchema(BUSINESS_SCOPES),
   currency: z.string().optional().transform(normalizeOptionalString),
+  epStatus: createCsvEnumFilterSchema(EP_CASE_STATUS_FILTERS),
   sortBy: z
     .enum(MERCHANT_SORTABLE_COLUMNS)
     .catch('merchantNumber')

@@ -1,4 +1,6 @@
 import * as z from 'zod'
+
+import { searchParamSchema } from './search-param.schema'
 import {
   limitsAndMdrSettingsSchema,
   paymentMethodSettingsSchema,
@@ -153,7 +155,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
 }
 
 export const caseRouteSearchSchema = z.object({
-  search: z.string().optional().transform(normalizeOptionalString),
+  search: searchParamSchema,
   queueId: z.string().optional().transform(normalizeOptionalString),
   ownerId: z.string().optional().transform(normalizeOptionalString),
   priority: createCsvEnumFilterSchema(CASE_PRIORITIES),

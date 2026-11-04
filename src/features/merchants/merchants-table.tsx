@@ -17,6 +17,8 @@ import {
   BUSINESS_SCOPES,
   BUSINESS_SCOPE_LABELS,
   DEFAULT_MERCHANT_STATUS_FILTER,
+  EP_CASE_STATUS_FILTERS,
+  EP_CASE_STATUS_FILTER_LABELS,
   MERCHANT_STATUSES,
   MERCHANT_STATUS_DISPLAY,
 } from '#/schemas/merchants.schema'
@@ -52,6 +54,11 @@ const scopeFilterOptions = BUSINESS_SCOPES.map((s) => ({
 
 const statusFilterOptions = MERCHANT_STATUSES.map((status) => ({
   label: MERCHANT_STATUS_DISPLAY[status],
+  value: status,
+}))
+
+const epStatusFilterOptions = EP_CASE_STATUS_FILTERS.map((status) => ({
+  label: EP_CASE_STATUS_FILTER_LABELS[status],
   value: status,
 }))
 
@@ -97,6 +104,14 @@ function Toolbar() {
           selectedValues={meta.commaToSet(filters.businessScope)}
           onChange={(set) =>
             actions.setFilter('businessScope', meta.setToCommaString(set))
+          }
+        />
+        <DataTableFilter
+          title="EP Status"
+          options={epStatusFilterOptions}
+          selectedValues={meta.commaToSet(filters.epStatus)}
+          onChange={(set) =>
+            actions.setFilter('epStatus', meta.setToCommaString(set))
           }
         />
       </DataTableToolbar.Filters>
@@ -191,13 +206,15 @@ function Grid() {
   const state = useMerchantsTableState()
   const actions = useMerchantsTableActions()
   const meta = useMerchantsTableMeta()
-  const { search, status, priority, businessScope, currency } = state.filters
+  const { search, status, priority, businessScope, currency, epStatus } =
+    state.filters
   // No status in the URL means the default (everything but terminated).
   const hasOtherFilters = !!(
     (status && status !== DEFAULT_MERCHANT_STATUS_FILTER) ||
     priority ||
     businessScope ||
-    currency
+    currency ||
+    epStatus
   )
 
   return (

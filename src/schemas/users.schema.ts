@@ -1,5 +1,7 @@
 import * as z from 'zod'
 
+import { searchParamSchema } from './search-param.schema'
+
 import { roleTypes } from '#/types/auth'
 
 export { roleTypes }
@@ -55,7 +57,7 @@ function createCsvEnumFilterSchema<const TValues extends readonly string[]>(
 }
 
 export const userRouteSearchSchema = z.object({
-  search: z.string().optional().transform(normalizeOptionalString),
+  search: searchParamSchema,
   roleType: createCsvEnumFilterSchema(roleTypes),
   status: createCsvEnumFilterSchema(userStatuses),
 })

@@ -416,6 +416,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
         priority: undefined,
         businessScope: undefined,
         currency: undefined,
+        epStatus: undefined,
       }),
     fetchNextPage: handleFetchNextPage,
     retry: () => void refetch(),

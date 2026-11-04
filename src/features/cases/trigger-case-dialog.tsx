@@ -24,7 +24,6 @@ import {
 } from '#/components/ui/dialog'
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -37,13 +36,11 @@ import {
   useBulkCreateCasesMutation,
   useCreateCaseMutation,
 } from '#/hooks/use-cases-query'
-import { subMerchantOptionsQueryOptions } from '#/hooks/use-configuration-query'
 import { useDebouncedValue } from '#/hooks/use-debounced-value'
 import { useMorph } from '#/hooks/use-morph'
 import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
-import type { SubMerchantOption } from '#/schemas/configuration.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 
 /** Manual case creation is limited to admins (matches `POST /api/cases`). */
@@ -140,8 +137,6 @@ function TriggerCaseForm({
     null,
   )
   const [queueId, setQueueId] = useState('')
-  const [selectedSubMerchant, setSelectedSubMerchant] =
-    useState<SubMerchantOption | null>(null)
   // Debounced so typing sends one request after a pause, not one per key.
   const debouncedMerchantSearch = useDebouncedValue(merchantSearch)
   const merchantsQuery = useQuery({
@@ -149,7 +144,6 @@ function TriggerCaseForm({
     enabled: !hasPreselection,
   })
   const queuesQuery = useQuery(queuesQueryOptions({ includeInactive: true }))
-  const subMerchantsQuery = useQuery(subMerchantOptionsQueryOptions())
   const createCase = useCreateCaseMutation()
   const bulkCreateCases = useBulkCreateCasesMutation()
   const isPending = createCase.isPending || bulkCreateCases.isPending
@@ -159,27 +153,23 @@ function TriggerCaseForm({
     : pickedMerchant
       ? [pickedMerchant]
       : []
-  const queues = queuesQuery.data ?? []
+  // EP cases have their own eligibility rules and are triggered one at a time
+  // from the EP Sub-Merchants page.
+  const queues = (queuesQuery.data ?? []).filter(
+    (queue) => queue.workflowType !== 'sub_merchant_form',
+  )
   const selectedQueue = queues.find((queue) => queue.id === queueId)
-  const isSubMerchantFormQueue =
-    selectedQueue?.workflowType === 'sub_merchant_form' ||
-    selectedQueue?.slug === 'sub-merchant-form'
   const canSubmit =
-    targetMerchants.length > 0 &&
-    Boolean(queueId && selectedQueue?.isActive) &&
-    (!isSubMerchantFormQueue || selectedSubMerchant !== null)
+    targetMerchants.length > 0 && Boolean(queueId && selectedQueue?.isActive)
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!canSubmit || isPending) return
-    const subMerchantId = isSubMerchantFormQueue
-      ? selectedSubMerchant?.id
-      : undefined
     const [onlyMerchant] = targetMerchants
 
     if (targetMerchants.length === 1 && onlyMerchant) {
       createCase.mutate(
-        { merchantId: onlyMerchant.id, queueId, subMerchantId },
+        { merchantId: onlyMerchant.id, queueId },
         { onSuccess: onTriggered },
       )
       return
@@ -189,7 +179,6 @@ function TriggerCaseForm({
       {
         merchantIds: targetMerchants.map((merchant) => merchant.id),
         queueId,
-        subMerchantId,
       },
       { onSuccess: onTriggered },
     )
@@ -244,10 +233,7 @@ function TriggerCaseForm({
             placeholder={
               queuesQuery.isPending ? 'Loading queues…' : 'Select queue'
             }
-            onValueChange={(value) => {
-              setQueueId(value)
-              setSelectedSubMerchant(null)
-            }}
+            onValueChange={setQueueId}
           />
           {queuesQuery.error ? (
             <FieldError>Failed to load queues.</FieldError>
@@ -255,22 +241,6 @@ function TriggerCaseForm({
             <FieldError>This queue is inactive.</FieldError>
           ) : null}
         </Field>
-
-        {isSubMerchantFormQueue ? (
-          <Field>
-            <FieldLabel>Sub-merchant</FieldLabel>
-            <SubMerchantCombobox
-              subMerchants={subMerchantsQuery.data ?? []}
-              value={selectedSubMerchant}
-              onValueChange={setSelectedSubMerchant}
-            />
-            <FieldDescription>
-              {targetMerchants.length > 1
-                ? 'Each EP case and its form will be linked to this sub-merchant.'
-                : 'This EP case and its form will be linked to this sub-merchant.'}
-            </FieldDescription>
-          </Field>
-        ) : null}
       </FieldGroup>
 
       <DialogFooter>
@@ -289,44 +259,6 @@ function TriggerCaseForm({
         </Button>
       </DialogFooter>
     </form>
-  )
-}
-
-function SubMerchantCombobox({
-  subMerchants,
-  value,
-  onValueChange,
-}: {
-  subMerchants: SubMerchantOption[]
-  value: SubMerchantOption | null
-  onValueChange: (subMerchant: SubMerchantOption | null) => void
-}) {
-  return (
-    <Combobox
-      items={subMerchants}
-      value={value}
-      autoHighlight
-      itemToStringLabel={(item) => item.name}
-      itemToStringValue={(item) => item.id}
-      isItemEqualToValue={(item, selected) => item.id === selected.id}
-      onValueChange={onValueChange}
-    >
-      <ComboboxInput
-        className="w-full"
-        placeholder="Search and select sub-merchant"
-        showClear
-      />
-      <ComboboxContent>
-        <ComboboxEmpty>No sub-merchants found.</ComboboxEmpty>
-        <ComboboxList>
-          {(subMerchant: SubMerchantOption) => (
-            <ComboboxItem key={subMerchant.id} value={subMerchant}>
-              {subMerchant.name}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
   )
 }
 

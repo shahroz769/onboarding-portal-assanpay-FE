@@ -22,6 +22,7 @@ import { Route as SetPasswordTokenRouteImport } from './routes/set-password.$tok
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 import { Route as AppCasesAllCasesRouteImport } from './routes/_app.cases.all-cases'
+import { Route as AppCasesEpSubMerchantsRouteImport } from './routes/_app.cases.ep-sub-merchants'
 import { Route as AppCasesMyClosedCasesRouteImport } from './routes/_app.cases.my-closed-cases'
 import { Route as AppCasesMyOpenCasesRouteImport } from './routes/_app.cases.my-open-cases'
 import { Route as AppCasesWorkQueueCasesRouteImport } from './routes/_app.cases.work-queue-cases'
@@ -110,6 +111,11 @@ const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
 const AppCasesAllCasesRoute = AppCasesAllCasesRouteImport.update({
   id: '/all-cases',
   path: '/all-cases',
+  getParentRoute: () => AppCasesRoute,
+} as any)
+const AppCasesEpSubMerchantsRoute = AppCasesEpSubMerchantsRouteImport.update({
+  id: '/ep-sub-merchants',
+  path: '/ep-sub-merchants',
   getParentRoute: () => AppCasesRoute,
 } as any)
 const AppCasesMyClosedCasesRoute = AppCasesMyClosedCasesRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/cases/ep-sub-merchants': typeof AppCasesEpSubMerchantsRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/onboarding-form': typeof OnboardingFormIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/cases/ep-sub-merchants': typeof AppCasesEpSubMerchantsRoute
   '/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
@@ -340,6 +348,7 @@ export interface FileRoutesById {
   '/onboarding-form/': typeof OnboardingFormIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
   '/_app/cases/all-cases': typeof AppCasesAllCasesRoute
+  '/_app/cases/ep-sub-merchants': typeof AppCasesEpSubMerchantsRoute
   '/_app/cases/my-closed-cases': typeof AppCasesMyClosedCasesRoute
   '/_app/cases/my-open-cases': typeof AppCasesMyOpenCasesRoute
   '/_app/cases/work-queue-cases': typeof AppCasesWorkQueueCasesRoute
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/onboarding-form/'
     | '/cases/$caseId'
     | '/cases/all-cases'
+    | '/cases/ep-sub-merchants'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
     | '/cases/work-queue-cases'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/onboarding-form'
     | '/cases/$caseId'
     | '/cases/all-cases'
+    | '/cases/ep-sub-merchants'
     | '/cases/my-closed-cases'
     | '/cases/my-open-cases'
     | '/cases/work-queue-cases'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/onboarding-form/'
     | '/_app/cases/$caseId'
     | '/_app/cases/all-cases'
+    | '/_app/cases/ep-sub-merchants'
     | '/_app/cases/my-closed-cases'
     | '/_app/cases/my-open-cases'
     | '/_app/cases/work-queue-cases'
@@ -579,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/all-cases'
       fullPath: '/cases/all-cases'
       preLoaderRoute: typeof AppCasesAllCasesRouteImport
+      parentRoute: typeof AppCasesRoute
+    }
+    '/_app/cases/ep-sub-merchants': {
+      id: '/_app/cases/ep-sub-merchants'
+      path: '/ep-sub-merchants'
+      fullPath: '/cases/ep-sub-merchants'
+      preLoaderRoute: typeof AppCasesEpSubMerchantsRouteImport
       parentRoute: typeof AppCasesRoute
     }
     '/_app/cases/my-closed-cases': {
@@ -762,6 +781,7 @@ declare module '@tanstack/react-router' {
 interface AppCasesRouteChildren {
   AppCasesCaseIdRoute: typeof AppCasesCaseIdRoute
   AppCasesAllCasesRoute: typeof AppCasesAllCasesRoute
+  AppCasesEpSubMerchantsRoute: typeof AppCasesEpSubMerchantsRoute
   AppCasesMyClosedCasesRoute: typeof AppCasesMyClosedCasesRoute
   AppCasesMyOpenCasesRoute: typeof AppCasesMyOpenCasesRoute
   AppCasesWorkQueueCasesRoute: typeof AppCasesWorkQueueCasesRoute
@@ -771,6 +791,7 @@ interface AppCasesRouteChildren {
 const AppCasesRouteChildren: AppCasesRouteChildren = {
   AppCasesCaseIdRoute: AppCasesCaseIdRoute,
   AppCasesAllCasesRoute: AppCasesAllCasesRoute,
+  AppCasesEpSubMerchantsRoute: AppCasesEpSubMerchantsRoute,
   AppCasesMyClosedCasesRoute: AppCasesMyClosedCasesRoute,
   AppCasesMyOpenCasesRoute: AppCasesMyOpenCasesRoute,
   AppCasesWorkQueueCasesRoute: AppCasesWorkQueueCasesRoute,
