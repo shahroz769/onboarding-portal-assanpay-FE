@@ -3,6 +3,8 @@ import type {
   CaseFlowConfiguration,
   CaseFlowBackfillPreview,
   CaseFlowBackfillResult,
+  CaseFlowMerchantMovePreview,
+  CaseFlowMerchantMoveResult,
   AgreementDraft,
   EmailRecipientSettings,
   EmailSendingMode,
@@ -18,6 +20,8 @@ import {
   caseFlowConfigurationSchema,
   caseFlowBackfillPreviewSchema,
   caseFlowBackfillResultSchema,
+  caseFlowMerchantMovePreviewSchema,
+  caseFlowMerchantMoveResultSchema,
   agreementDraftSchema,
   emailRecipientSettingsSchema,
   emailSendingModeSchema,
@@ -128,10 +132,8 @@ export async function fetchCaseFlowConfiguration(
   return caseFlowConfigurationSchema.parse(response.data)
 }
 
-export async function updateCaseFlowConfiguration(
-  input: CaseFlowConfiguration,
-): Promise<CaseFlowConfiguration> {
-  const payload = {
+function toCaseFlowPayload(input: CaseFlowConfiguration) {
+  return {
     revision: input.revision,
     changeNote: input.changeNote,
     startRules: input.startRules.map((rule) => ({
@@ -160,9 +162,44 @@ export async function updateCaseFlowConfiguration(
       isActive: rule.isActive,
     })),
   }
+}
 
-  const response = await apiClient.put('/api/configuration/case-flow', payload)
+export async function updateCaseFlowConfiguration(
+  input: CaseFlowConfiguration & { moveExistingMerchants?: boolean },
+): Promise<CaseFlowConfiguration> {
+  const response = await apiClient.put('/api/configuration/case-flow', {
+    ...toCaseFlowPayload(input),
+    moveExistingMerchants: input.moveExistingMerchants ?? false,
+  })
   return caseFlowConfigurationSchema.parse(response.data)
+}
+
+export async function fetchCaseFlowMerchantMovePreview(): Promise<CaseFlowMerchantMovePreview> {
+  const response = await apiClient.get(
+    '/api/configuration/case-flow/merchant-move/preview',
+  )
+  return caseFlowMerchantMovePreviewSchema.parse(response.data)
+}
+
+export async function previewCaseFlowMerchantMoveForDraft(
+  input: CaseFlowConfiguration,
+): Promise<CaseFlowMerchantMovePreview> {
+  const response = await apiClient.post(
+    '/api/configuration/case-flow/merchant-move/preview',
+    toCaseFlowPayload(input),
+  )
+  return caseFlowMerchantMovePreviewSchema.parse(response.data)
+}
+
+export async function moveCaseFlowMerchants(input: {
+  revision: number
+  reason: string
+}): Promise<CaseFlowMerchantMoveResult> {
+  const response = await apiClient.post(
+    '/api/configuration/case-flow/merchant-move',
+    input,
+  )
+  return caseFlowMerchantMoveResultSchema.parse(response.data)
 }
 
 export async function previewMissingCloseTriggerCases(

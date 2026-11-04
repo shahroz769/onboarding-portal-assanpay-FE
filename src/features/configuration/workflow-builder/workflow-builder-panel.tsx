@@ -38,7 +38,15 @@ import {
   DialogTitle,
 } from '#/components/ui/dialog'
 
-import { Field, FieldLabel, FieldSet } from '#/components/ui/field'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldSet,
+  FieldTitle,
+} from '#/components/ui/field'
+import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import {
   Select,
   SelectContent,
@@ -61,6 +69,8 @@ import { useMorph } from '#/hooks/use-morph'
 
 import {
   caseFlowConfigurationQueryOptions,
+  caseFlowDraftMerchantMovePreviewQueryOptions,
+  caseFlowMerchantMovePreviewQueryOptions,
   isCaseFlowRevisionConflict,
   useUpdateCaseFlowConfigurationMutation,
 } from '#/hooks/use-configuration-query'
@@ -72,6 +82,10 @@ import { WorkflowBuilderSkeleton } from '../configuration-route-skeleton'
 import { ConfigurationHeaderActions } from '../panels/configuration-panel-shared'
 
 import { CaseFlowBackfillDialog } from './backfill-dialog'
+
+import { MerchantMoveImpact } from './merchant-move-impact'
+
+import { MoveMerchantsDialog } from './move-merchants-dialog'
 
 import { WorkflowCanvas } from './workflow-canvas'
 
@@ -119,6 +133,12 @@ export function WorkflowBuilderPanel() {
 
   const mutation = useUpdateCaseFlowConfigurationMutation()
 
+  const [moveExisting, setMoveExisting] = useState(false)
+
+  const [moveOpen, setMoveOpen] = useState(false)
+
+  const moveMorph = useMorph()
+
   const [base, setBase] = useState<CaseFlowConfiguration | null>(null)
 
   const [nodes, setNodes] = useState<WorkflowNode[]>([])
@@ -141,6 +161,25 @@ export function WorkflowBuilderPanel() {
   )
 
   const readOnly = Boolean(base && base.versionId !== base.activeVersionId)
+
+  const { data: movePreview } = useQuery({
+    ...caseFlowMerchantMovePreviewQueryOptions(),
+    enabled: Boolean(base) && !readOnly,
+  })
+
+  const draftConfig = base && dirty ? graphToConfig(base, edges) : null
+
+  const {
+    data: draftMovePreview,
+    isPending: draftMovePreviewPending,
+    isError: draftMovePreviewFailed,
+  } = useQuery({
+    ...caseFlowDraftMerchantMovePreviewQueryOptions(
+      draftConfig,
+      draftConfig ? canonicalizeFlowRules(draftConfig) : '',
+    ),
+    enabled: publishOpen && Boolean(draftConfig),
+  })
 
   const dirtyRef = useRef(false)
 
@@ -168,6 +207,8 @@ export function WorkflowBuilderPanel() {
     setDirty(false)
 
     setChangeNote('')
+
+    setMoveExisting(false)
   }
 
   // Sync from the query cache whenever the server config changes and the
@@ -435,7 +476,11 @@ export function WorkflowBuilderPanel() {
 
     if (!current || readOnly) return
 
-    const payload = { ...graphToConfig(current, edges), changeNote }
+    const payload = {
+      ...graphToConfig(current, edges),
+      changeNote,
+      moveExistingMerchants: moveExisting,
+    }
 
     try {
       const saved = await mutation.mutateAsync(payload)
@@ -503,6 +548,16 @@ export function WorkflowBuilderPanel() {
   const publication = base.versions.find(
     (version) => version.id === base.versionId,
   )
+
+  const pendingMoveCount = readOnly
+    ? 0
+    : (movePreview?.eligibleMerchantCount ?? 0)
+
+  const draftMoveCount = draftMovePreview?.eligibleMerchantCount ?? 0
+
+  const moveBlocked =
+    moveExisting &&
+    (draftMovePreviewPending || !draftMovePreview || !changeNote.trim())
 
   const backfillRuleId =
     readOnly &&
@@ -603,7 +658,7 @@ export function WorkflowBuilderPanel() {
         ) : null}
       </ConfigurationHeaderActions>
 
-      <div className="flex min-w-0 shrink-0 items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Badge
           variant={readOnly ? 'outline' : 'secondary'}
           className="shrink-0"
@@ -612,12 +667,26 @@ export function WorkflowBuilderPanel() {
             ? `v${base.versionId} · Read-only`
             : `v${base.versionId} · Current`}
         </Badge>
-        <span className="min-w-0 text-pretty">
+        <span className="min-w-0 flex-1 basis-60 text-pretty">
           {readOnly
             ? 'Published rules are read-only. Select the current version to make changes.'
-            : 'New submissions use this version. Publishing creates a new version; existing merchants keep theirs.'}
+            : pendingMoveCount > 0
+              ? `New submissions use this version. ${pendingMoveCount} in-progress merchant${pendingMoveCount === 1 ? ' is' : 's are'} still on an older version.`
+              : 'New submissions use this version. Publishing creates a new version; existing merchants keep theirs unless you move them.'}
           {publication?.changeNote ? ` — “${publication.changeNote}”` : null}
         </span>
+        {!readOnly && !dirty && pendingMoveCount > 0 ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={(event) =>
+              moveMorph.run(() => setMoveOpen(true), event.currentTarget)
+            }
+          >
+            Move to v{base.versionId}
+          </Button>
+        ) : null}
       </div>
 
       {!readOnly && formError ? (
@@ -695,20 +764,73 @@ export function WorkflowBuilderPanel() {
       >
         <DialogContent
           {...publishMorph.popupProps}
-          className={cn('sm:max-w-md', publishMorph.popupProps.className)}
+          className={cn('sm:max-w-lg', publishMorph.popupProps.className)}
         >
           <DialogHeader>
             <DialogTitle>Publish new version</DialogTitle>
 
             <DialogDescription>
-              New submissions will use the published version. Existing merchants
-              keep the version they started on.
+              New submissions will always use the published version.
             </DialogDescription>
           </DialogHeader>
 
+          <RadioGroup
+            aria-label="Apply this version to"
+            value={moveExisting ? 'existing' : 'new'}
+            disabled={mutation.isPending}
+            onValueChange={(value) => setMoveExisting(value === 'existing')}
+          >
+            <FieldLabel>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="new" />
+                <FieldContent>
+                  <FieldTitle>New merchants only</FieldTitle>
+                  <FieldDescription>
+                    Merchants already in progress stay on their current version.
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+            </FieldLabel>
+
+            <FieldLabel>
+              <Field
+                orientation="horizontal"
+                data-disabled={!draftMovePreviewPending && draftMoveCount === 0}
+              >
+                <RadioGroupItem
+                  value="existing"
+                  disabled={
+                    mutation.isPending ||
+                    draftMovePreviewPending ||
+                    draftMoveCount === 0
+                  }
+                />
+                <FieldContent>
+                  <FieldTitle>New and in-progress merchants</FieldTitle>
+                  <FieldDescription>
+                    {draftMovePreviewFailed
+                      ? "Couldn't check in-progress merchants. Close this dialog and try again."
+                      : draftMovePreviewPending
+                        ? 'Checking in-progress merchants…'
+                        : draftMoveCount === 0
+                          ? 'No in-progress merchants to move.'
+                          : `${draftMoveCount} merchant${draftMoveCount === 1 ? '' : 's'} will move to this version.`}
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+            </FieldLabel>
+          </RadioGroup>
+
+          {moveExisting && draftMovePreview ? (
+            <MerchantMoveImpact
+              preview={draftMovePreview}
+              targetLabel="this version"
+            />
+          ) : null}
+
           <Field data-disabled={mutation.isPending}>
             <FieldLabel htmlFor="flow-change-note">
-              Change note (optional)
+              {moveExisting ? 'Change note' : 'Change note (optional)'}
             </FieldLabel>
 
             <Textarea
@@ -736,7 +858,7 @@ export function WorkflowBuilderPanel() {
             </DialogClose>
 
             <Button
-              disabled={mutation.isPending || Boolean(formError)}
+              disabled={mutation.isPending || Boolean(formError) || moveBlocked}
               onClick={() => void handleSave()}
             >
               {mutation.isPending ? (
@@ -744,7 +866,9 @@ export function WorkflowBuilderPanel() {
               ) : (
                 <Save data-icon="inline-start" />
               )}
-              Publish
+              {moveExisting
+                ? `Publish and move ${draftMoveCount} merchant${draftMoveCount === 1 ? '' : 's'}`
+                : 'Publish'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -779,6 +903,14 @@ export function WorkflowBuilderPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <MoveMerchantsDialog
+        open={moveOpen}
+        preview={movePreview}
+        versionId={base.versionId}
+        popupProps={moveMorph.popupProps}
+        onOpenChange={setMoveOpen}
+      />
 
       <CaseFlowBackfillDialog
         triggerId={backfillTriggerId}

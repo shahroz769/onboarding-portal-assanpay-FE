@@ -1,5 +1,6 @@
 import {
   queryOptions,
+  skipToken,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
@@ -11,6 +12,7 @@ import {
   createMissingCloseTriggerCases,
   fetchAgreementDrafts,
   fetchCaseFlowConfiguration,
+  fetchCaseFlowMerchantMovePreview,
   fetchEmailRecipients,
   fetchEmailSendingMode,
   fetchEmailTemplatePreview,
@@ -20,6 +22,8 @@ import {
   fetchPayoutMethods,
   fetchSubMerchantDrafts,
   fetchSubMerchantOptions,
+  moveCaseFlowMerchants,
+  previewCaseFlowMerchantMoveForDraft,
   previewMissingCloseTriggerCases,
   updateCaseFlowConfiguration,
   updateEmailRecipients,
@@ -192,6 +196,57 @@ export function caseFlowConfigurationQueryOptions(versionId?: number) {
   })
 }
 
+/** Impact of moving merchants onto the active version. */
+export function caseFlowMerchantMovePreviewQueryOptions() {
+  return queryOptions({
+    queryKey: [...CASE_FLOW_CONFIGURATION_KEY, 'merchant-move'],
+    queryFn: fetchCaseFlowMerchantMovePreview,
+    staleTime: 60_000,
+  })
+}
+
+/** Impact of publishing these unsaved rules and moving merchants with them. */
+export function caseFlowDraftMerchantMovePreviewQueryOptions(
+  config: CaseFlowConfiguration | null,
+  rulesKey: string,
+) {
+  return queryOptions({
+    queryKey: [
+      ...CASE_FLOW_CONFIGURATION_KEY,
+      'merchant-move',
+      'draft',
+      config?.revision,
+      rulesKey,
+    ],
+    queryFn: config
+      ? () => previewCaseFlowMerchantMoveForDraft(config)
+      : skipToken,
+    staleTime: 0,
+  })
+}
+
+export function useMoveCaseFlowMerchantsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: moveCaseFlowMerchants,
+    onSuccess: async (result) => {
+      toast.success(
+        `Moved ${result.movedMerchantCount} merchant${result.movedMerchantCount === 1 ? '' : 's'} to the current version.`,
+      )
+      await queryClient.invalidateQueries({
+        queryKey: CASE_FLOW_CONFIGURATION_KEY,
+      })
+    },
+    onError: async (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to move merchants.'))
+      // Counts or the revision may be stale. Show the current ones.
+      await queryClient.invalidateQueries({
+        queryKey: CASE_FLOW_CONFIGURATION_KEY,
+      })
+    },
+  })
+}
+
 export function useUpdateEmailSendingModeMutation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -273,11 +328,15 @@ export function useUpdatePayoutMethodsMutation() {
 export function useUpdateCaseFlowConfigurationMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: CaseFlowConfiguration) =>
-      updateCaseFlowConfiguration(input),
-    onSuccess: async () => {
+    mutationFn: (
+      input: CaseFlowConfiguration & { moveExistingMerchants?: boolean },
+    ) => updateCaseFlowConfiguration(input),
+    onSuccess: async (result) => {
+      const moved = result.merchantMove?.movedMerchantCount
       toast.success(
-        'New flow version published. Existing merchants keep their flow.',
+        moved === undefined
+          ? 'New flow version published. Existing merchants keep their flow.'
+          : `New flow version published. Moved ${moved} merchant${moved === 1 ? '' : 's'} to it.`,
       )
       await queryClient.invalidateQueries({
         queryKey: CASE_FLOW_CONFIGURATION_KEY,

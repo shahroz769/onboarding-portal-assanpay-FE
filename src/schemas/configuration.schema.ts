@@ -119,6 +119,57 @@ export const caseFlowConfigurationSchema = z.object({
   closeTriggers: z.array(caseFlowCloseTriggerSchema),
   closeBlockers: z.array(caseFlowCloseBlockerSchema),
   creationRequirements: z.array(caseFlowCreationRequirementSchema).default([]),
+  // Present on the response to a publish that also moved existing merchants.
+  merchantMove: z
+    .object({
+      movedMerchantCount: z.number().int().nonnegative(),
+      cancelledJobCount: z.number().int().nonnegative(),
+    })
+    .nullish(),
+})
+
+const caseFlowMerchantMoveRuleChangeSchema = z.object({
+  type: z.enum(['added', 'removed']),
+  kind: z.enum([
+    'start',
+    'closeTrigger',
+    'closeBlocker',
+    'creationRequirement',
+  ]),
+  sourceQueueName: z.string().nullable(),
+  targetQueueName: z.string(),
+})
+
+export const caseFlowMerchantMovePreviewSchema = z.object({
+  targetVersionId: z.number().int().positive().nullable(),
+  revision: z.number().int().min(1),
+  eligibleMerchantCount: z.number().int().nonnegative(),
+  stayingMerchantCount: z.number().int().nonnegative(),
+  sourceVersions: z.array(
+    z.object({
+      versionId: z.number().int().positive(),
+      merchantCount: z.number().int().nonnegative(),
+      changes: z.array(caseFlowMerchantMoveRuleChangeSchema),
+    }),
+  ),
+  openCasesOnRemovedSteps: z.array(
+    z.object({
+      queueName: z.string(),
+      caseCount: z.number().int().nonnegative(),
+    }),
+  ),
+  jobsToCancel: z.array(
+    z.object({
+      sourceQueueName: z.string(),
+      targetQueueName: z.string(),
+      jobCount: z.number().int().nonnegative(),
+    }),
+  ),
+})
+
+export const caseFlowMerchantMoveResultSchema = z.object({
+  movedMerchantCount: z.number().int().nonnegative(),
+  cancelledJobCount: z.number().int().nonnegative(),
 })
 
 const caseFlowBackfillTriggerSchema = z.object({
@@ -355,6 +406,15 @@ export type CaseFlowCloseTrigger = z.infer<typeof caseFlowCloseTriggerSchema>
 export type CaseFlowCloseBlocker = z.infer<typeof caseFlowCloseBlockerSchema>
 export type CaseFlowCreationRequirement = z.infer<
   typeof caseFlowCreationRequirementSchema
+>
+export type CaseFlowMerchantMovePreview = z.infer<
+  typeof caseFlowMerchantMovePreviewSchema
+>
+export type CaseFlowMerchantMoveRuleChange = z.infer<
+  typeof caseFlowMerchantMoveRuleChangeSchema
+>
+export type CaseFlowMerchantMoveResult = z.infer<
+  typeof caseFlowMerchantMoveResultSchema
 >
 export type CaseFlowBackfillPreview = z.infer<
   typeof caseFlowBackfillPreviewSchema
