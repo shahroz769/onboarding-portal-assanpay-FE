@@ -4,6 +4,8 @@ import {
   BanIcon,
   ChevronDownIcon,
   EyeIcon,
+  FolderCheckIcon,
+  FolderXIcon,
   Trash2Icon,
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
@@ -55,6 +57,10 @@ interface CreateColumnsOptions {
   onPriorityClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
   onTerminateClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
   onDeleteClick: (merchant: MerchantListItem, trigger: HTMLElement) => void
+  onDeleteDriveFilesClick: (
+    merchant: MerchantListItem,
+    trigger: HTMLElement,
+  ) => void
 }
 
 function getSortDirection(
@@ -76,6 +82,7 @@ export function createMerchantColumns({
   onPriorityClick,
   onTerminateClick,
   onDeleteClick,
+  onDeleteDriveFilesClick,
 }: CreateColumnsOptions): DataTableColumnDef<MerchantListItem>[] {
   const canEdit = userRole === 'super_admin' || userRole === 'admin'
   const canTerminate = userRole === 'super_admin' || userRole === 'admin'
@@ -371,6 +378,51 @@ export function createMerchantColumns({
               <TooltipContent>Terminate</TooltipContent>
             </Tooltip>
           )}
+          {canDelete &&
+          merchant.status === 'terminated' &&
+          !merchant.driveFilesDeletedAt ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={(event) =>
+                      onDeleteDriveFilesClick(merchant, event.currentTarget)
+                    }
+                  />
+                }
+              >
+                <FolderXIcon className="size-4" />
+                <span className="sr-only">
+                  Move Google Drive files of {merchant.businessName} to trash
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Move Google Drive files to trash</TooltipContent>
+            </Tooltip>
+          ) : null}
+          {merchant.driveFilesDeletedAt ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span
+                    tabIndex={0}
+                    className="inline-flex size-8 items-center justify-center text-muted-foreground"
+                  />
+                }
+              >
+                <FolderCheckIcon className="size-4" />
+                <span className="sr-only">
+                  Google Drive files moved to trash
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Drive files moved to trash on{' '}
+                {format(new Date(merchant.driveFilesDeletedAt), 'MMM dd, yyyy')}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
           {canDelete && merchant.status === 'terminated' ? (
             <Tooltip>
               <TooltipTrigger
@@ -397,7 +449,7 @@ export function createMerchantColumns({
           ) : null}
         </div>
       ),
-      width: 140,
+      width: 180,
     },
   ]
 }

@@ -34,6 +34,7 @@ import { useRetainedValue } from '#/hooks/use-retained-value'
 import { useMorph } from '#/hooks/use-morph'
 import { MerchantTerminateDialog } from './merchants-terminate-dialog'
 import { MerchantDeleteDialog } from './merchant-delete-dialog'
+import { MerchantDriveFilesDialog } from './merchant-drive-files-dialog'
 import {
   TriggerCaseButton,
   TriggerCaseDialog,
@@ -258,6 +259,7 @@ function Dialogs() {
   const priorityTarget = useRetainedValue(state.priorityTarget)
   const terminateTarget = useRetainedValue(state.terminateTarget)
   const deleteTarget = useRetainedValue(state.deleteTarget)
+  const driveFilesTarget = useRetainedValue(state.driveFilesTarget)
 
   return (
     <>
@@ -279,6 +281,7 @@ function Dialogs() {
         }}
         onConfirm={actions.confirmTerminate}
         isPending={state.isTerminatePending}
+        canDeleteDriveFiles={state.userRole === 'super_admin'}
         popupProps={state.terminatePopupProps}
       />
       <MerchantDeleteDialog
@@ -290,6 +293,16 @@ function Dialogs() {
         onConfirm={actions.confirmDelete}
         isPending={state.isDeletePending}
         popupProps={state.deletePopupProps}
+      />
+      <MerchantDriveFilesDialog
+        merchant={driveFilesTarget}
+        open={state.driveFilesTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) actions.closeDriveFilesDialog()
+        }}
+        onConfirm={actions.confirmDeleteDriveFiles}
+        isPending={state.isDriveFilesPending}
+        popupProps={state.driveFilesPopupProps}
       />
     </>
   )

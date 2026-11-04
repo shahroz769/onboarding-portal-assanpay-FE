@@ -106,6 +106,7 @@ export const merchantListItemSchema = z.object({
   liveAt: z.string().nullable(),
   ownerFullName: z.string(),
   updatedAt: z.string(),
+  driveFilesDeletedAt: z.string().nullable(),
   openCasesCount: z.number(),
   epCases: z.array(epCaseSummarySchema),
 })
@@ -203,6 +204,7 @@ export const merchantDetailRecordSchema = z.object({
   businessScope: z.enum(BUSINESS_SCOPES),
   currency: z.string(),
   liveAt: z.string().nullable(),
+  driveFilesDeletedAt: z.string().nullable(),
   submittedAt: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),

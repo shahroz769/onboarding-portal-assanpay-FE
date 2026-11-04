@@ -79,8 +79,8 @@ function DeleteForm({
         <DialogTitle>Permanently delete merchant?</DialogTitle>
         <DialogDescription>
           This permanently deletes {merchant.businessName}, all related cases
-          and database records, and every owned Google Drive file and folder.
-          This cannot be undone.
+          and database records, and moves every owned Google Drive file and
+          folder to the Drive trash. This cannot be undone from the portal.
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit}>

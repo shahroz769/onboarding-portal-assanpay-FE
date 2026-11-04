@@ -9,6 +9,7 @@ import {
   merchantsInfiniteQueryOptions,
   useBulkPriorityMutation,
   useBulkTerminateMutation,
+  useDeleteMerchantDriveFilesMutation,
   usePermanentlyDeleteMerchantMutation,
   useTerminateMerchantMutation,
   useUpdatePriorityMutation,
@@ -43,13 +44,16 @@ interface MerchantsTableState {
   priorityTarget: MerchantPriorityTarget | null
   terminateTarget: TerminateTarget | null
   deleteTarget: MerchantListItem | null
+  driveFilesTarget: MerchantListItem | null
   isPriorityPending: boolean
   isTerminatePending: boolean
   isDeletePending: boolean
+  isDriveFilesPending: boolean
   isBulkPriorityPending: boolean
   priorityPopupProps: MorphPopupProps
   terminatePopupProps: MorphPopupProps
   deletePopupProps: MorphPopupProps
+  driveFilesPopupProps: MorphPopupProps
 }
 
 interface MerchantsTableActions {
@@ -68,9 +72,11 @@ interface MerchantsTableActions {
   openTerminateDialog: (target: TerminateTarget, trigger?: HTMLElement) => void
   closeTerminateDialog: () => void
   closeDeleteDialog: () => void
+  closeDriveFilesDialog: () => void
   submitPriority: (priority: Priority, note?: string) => void
-  confirmTerminate: (reason: string) => void
+  confirmTerminate: (reason: string, deleteDriveFiles: boolean) => void
   confirmDelete: (confirmation: string) => void
+  confirmDeleteDriveFiles: () => void
 }
 
 interface MerchantsTableMeta {
@@ -204,10 +210,13 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const [deleteTarget, setDeleteTarget] = useState<MerchantListItem | null>(
     null,
   )
+  const [driveFilesTarget, setDriveFilesTarget] =
+    useState<MerchantListItem | null>(null)
   // Dialogs grow out of the badge or button that opened them.
   const priorityMorph = useMorph()
   const terminateMorph = useMorph()
   const deleteMorph = useMorph()
+  const driveFilesMorph = useMorph()
 
   const queryFilters: MerchantFilters = {
     ...filters,
@@ -236,6 +245,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const terminateMerchant = useTerminateMerchantMutation()
   const bulkTerminate = useBulkTerminateMutation()
   const permanentlyDeleteMerchant = usePermanentlyDeleteMerchantMutation()
+  const driveFilesDeletion = useDeleteMerchantDriveFilesMutation()
   const bulkPriority = useBulkPriorityMutation()
 
   const flatData = data?.pages.flatMap((page) => page.merchants) ?? []
@@ -289,6 +299,11 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
         deleteMorph.run(() => setDeleteTarget(merchant), trigger)
       }
     },
+    onDeleteDriveFilesClick: (merchant, trigger) => {
+      if (merchant.status === 'terminated' && !merchant.driveFilesDeletedAt) {
+        driveFilesMorph.run(() => setDriveFilesTarget(merchant), trigger)
+      }
+    },
   })
 
   const commaToSet = (value: string | undefined) =>
@@ -329,14 +344,14 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const confirmTerminate = (reason: string) => {
+  const confirmTerminate = (reason: string, deleteDriveFiles: boolean) => {
     if (!terminateTarget) {
       return
     }
 
     if (terminateTarget.type === 'single') {
       terminateMerchant.mutate(
-        { merchantId: terminateTarget.merchant.id, reason },
+        { merchantId: terminateTarget.merchant.id, reason, deleteDriveFiles },
         {
           onSuccess: () => {
             setTerminateTarget(null)
@@ -349,7 +364,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     }
 
     bulkTerminate.mutate(
-      { ids: terminateTarget.ids, reason },
+      { ids: terminateTarget.ids, reason, deleteDriveFiles },
       {
         onSuccess: () => {
           setTerminateTarget(null)
@@ -378,6 +393,14 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const confirmDeleteDriveFiles = () => {
+    if (!driveFilesTarget) return
+
+    driveFilesDeletion.mutate(driveFilesTarget.id, {
+      onSuccess: () => setDriveFilesTarget(null),
+    })
+  }
+
   const handleFetchNextPage = () => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
@@ -397,13 +420,16 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     priorityTarget,
     terminateTarget,
     deleteTarget,
+    driveFilesTarget,
     isPriorityPending: updatePriority.isPending,
     isTerminatePending: terminateMerchant.isPending || bulkTerminate.isPending,
     isDeletePending: permanentlyDeleteMerchant.isPending,
+    isDriveFilesPending: driveFilesDeletion.isPending,
     isBulkPriorityPending: bulkPriority.isPending,
     priorityPopupProps: priorityMorph.popupProps,
     terminatePopupProps: terminateMorph.popupProps,
     deletePopupProps: deleteMorph.popupProps,
+    driveFilesPopupProps: driveFilesMorph.popupProps,
   }
 
   const actionsValue: MerchantsTableActions = {
@@ -442,9 +468,11 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     openTerminateDialog: openTerminate,
     closeTerminateDialog: () => setTerminateTarget(null),
     closeDeleteDialog: () => setDeleteTarget(null),
+    closeDriveFilesDialog: () => setDriveFilesTarget(null),
     submitPriority,
     confirmTerminate,
     confirmDelete,
+    confirmDeleteDriveFiles,
   }
 
   const metaValue: MerchantsTableMeta = {

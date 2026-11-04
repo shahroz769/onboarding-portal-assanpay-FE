@@ -115,9 +115,11 @@ function ReadField({
 
 export function MerchantFormTab({ detail }: MerchantFormTabProps) {
   const { agreements, documentReviewApproved, documents, merchant } = detail
+  const filesDeleted = Boolean(merchant.driveFilesDeletedAt)
   const documentSubmissionGroup = getCurrentDocumentSubmissionGroup(
     documents,
     documentReviewApproved,
+    filesDeleted,
   )
 
   // Wide screens: application fields on the left, documents and agreements
@@ -301,6 +303,7 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
               title="Received signed agreement"
               emptyText="The signed physical agreement has not been received yet."
               file={agreements.receivedSignedAgreement}
+              filesDeleted={filesDeleted}
             />
           </CardContent>
         </Card>
@@ -380,10 +383,12 @@ function AgreementRow({
   title,
   emptyText,
   file,
+  filesDeleted,
 }: {
   title: string
   emptyText: string
   file: MerchantAgreementFile | null
+  filesDeleted: boolean
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 py-1.5">
@@ -408,11 +413,13 @@ function AgreementRow({
       </div>
       <div className="flex items-center gap-2">
         {file ? (
-          <Badge variant="outline">Uploaded</Badge>
+          <Badge variant={filesDeleted ? 'secondary' : 'outline'}>
+            {filesDeleted ? 'File deleted' : 'Uploaded'}
+          </Badge>
         ) : (
           <Badge variant="secondary">Not uploaded</Badge>
         )}
-        {file?.googleDriveWebViewLink ? (
+        {file?.googleDriveWebViewLink && !filesDeleted ? (
           <ViewFileLink href={file.googleDriveWebViewLink} name={title} />
         ) : null}
       </div>
@@ -439,7 +446,25 @@ function ViewFileLink({ href, name }: { href: string; name: string }) {
 function getCurrentDocumentSubmissionGroup(
   documents: MerchantDocument[],
   documentReviewApproved: boolean,
+  filesDeleted: boolean,
 ): DocumentSubmissionGroup {
+  if (filesDeleted) {
+    return {
+      id: 'current-documents',
+      title: 'Deleted documents',
+      description:
+        'These files were moved to the Google Drive trash after termination.',
+      files: documents.map((doc) => ({
+        id: doc.id,
+        documentType: doc.documentType,
+        label: documentTypeLabel(doc.documentType),
+        originalName: doc.originalName,
+        statusLabel: 'File deleted',
+        googleDriveWebViewLink: null,
+      })),
+    }
+  }
+
   return {
     id: 'current-documents',
     title: documentReviewApproved

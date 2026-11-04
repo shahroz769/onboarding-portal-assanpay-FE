@@ -125,13 +125,32 @@ export async function updateMerchantPriority({
 
 // ─── Terminate Merchant ─────────────────────────────────────────────────────
 
-export async function terminateMerchant(merchantId: string, reason: string) {
-  const response = await apiClient.patch(
-    `/api/merchants/${merchantId}/terminate`,
-    {
-      reason,
-    },
-  )
+type TerminateDriveFilesResult =
+  | { status: 'deleted'; deletedStorageObjectCount: number }
+  | { status: 'failed'; message: string }
+
+export async function terminateMerchant(
+  merchantId: string,
+  reason: string,
+  deleteDriveFiles: boolean,
+) {
+  const response = await apiClient.patch<{
+    id: string
+    closedCaseCount: number
+    driveFiles: TerminateDriveFilesResult | null
+  }>(`/api/merchants/${merchantId}/terminate`, {
+    reason,
+    deleteDriveFiles,
+  })
+  return response.data
+}
+
+export async function deleteMerchantDriveFiles(merchantId: string) {
+  const response = await apiClient.delete<{
+    id: string
+    deletedStorageObjectCount: number
+    driveFilesDeletedAt: string
+  }>(`/api/merchants/${merchantId}/drive-files`)
   return response.data
 }
 
@@ -150,10 +169,19 @@ export async function permanentlyDeleteMerchant(
 
 // ─── Bulk Terminate ─────────────────────────────────────────────────────────
 
-export async function bulkTerminateMerchants(ids: string[], reason: string) {
-  const response = await apiClient.post('/api/merchants/bulk-terminate', {
+export async function bulkTerminateMerchants(
+  ids: string[],
+  reason: string,
+  deleteDriveFiles: boolean,
+) {
+  const response = await apiClient.post<{
+    terminatedCount: number
+    closedCaseCount: number
+    driveFilesQueuedCount: number
+  }>('/api/merchants/bulk-terminate', {
     ids,
     reason,
+    deleteDriveFiles,
   })
   return response.data
 }

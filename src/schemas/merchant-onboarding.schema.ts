@@ -90,36 +90,70 @@ export const digitsOnlyPhoneNumberSchema = z
   .string()
   .trim()
   .min(1, 'Business phone number is required.')
+  .max(32, 'Business phone number must be 32 digits or fewer.')
   .regex(/^\d+$/, 'Business phone number must contain numbers only.')
+
+// The API enforces these same rules; here they only give earlier feedback.
+function boundedText(label: string, maxLength: number) {
+  return z
+    .string()
+    .min(1, `${label} is required.`)
+    .max(maxLength, `${label} must be ${maxLength} characters or fewer.`)
+}
+
+function isReservedDomain(domain: string) {
+  const normalized = domain.toLowerCase().replace(/\.$/, '')
+  return (
+    /(^|\.)example\.(com|net|org)$/.test(normalized) ||
+    /\.(example|test|invalid|localhost)$/.test(normalized)
+  )
+}
+
+function realEmail(label: string) {
+  return z
+    .string()
+    .min(1, `${label} is required.`)
+    .max(255, 'Email must be 255 characters or fewer.')
+    .pipe(z.email('Must be a valid email address.'))
+    .refine(
+      (value) => !isReservedDomain(value.split('@')[1] ?? ''),
+      'Please use a real email address.',
+    )
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 
 // ── Form Schema ─────────────────────────────────────────────────────────────
 
 export const merchantOnboardingSchema = z.object({
   // Section 1: Submitter
-  email: z
-    .string()
-    .min(1, 'Submitter email is required.')
-    .pipe(z.email('Must be a valid email address.')),
+  email: realEmail('Submitter email'),
   activeWhatsappNumber: localMobileNumberSchema,
 
   // Section 2: Owner
-  ownerFullName: z.string().min(1, 'Owner full name is required.'),
+  ownerFullName: boundedText('Owner full name', 160),
   ownerPhone: localMobileNumberSchema,
 
   // Section 3: Business Information
-  businessName: z.string().min(1, 'Business name is required.'),
+  businessName: boundedText('Business name', 200),
   businessPhone: digitsOnlyPhoneNumberSchema,
-  businessEmail: z
-    .string()
-    .min(1, 'Business email is required.')
-    .pipe(z.email('Must be a valid email address.')),
-  businessAddress: z.string().min(1, 'Business address is required.'),
+  businessEmail: realEmail('Business email'),
+  businessAddress: boundedText('Business address', 1000),
   businessWebsite: z
     .string()
     .min(1, 'Business website is required.')
-    .pipe(z.url('Must be a valid URL (include https://).')),
+    .max(500, 'Business website must be 500 characters or fewer.')
+    .pipe(z.url('Must be a valid URL (include https://).'))
+    .refine(isHttpUrl, 'Must start with http:// or https://.'),
   websiteCms: z.enum(websiteCmsValues, 'Please select a website platform.'),
-  businessDescription: z.string().min(1, 'Business description is required.'),
+  businessDescription: boundedText('Business description', 5000),
   businessRegistrationDate: z
     .string()
     .min(1, 'Business registration date is required.')
@@ -127,7 +161,7 @@ export const merchantOnboardingSchema = z.object({
       const date = new Date(val)
       return !isNaN(date.getTime()) && date <= new Date()
     }, 'Registration date cannot be in the future.'),
-  businessNature: z.string().min(1, 'Nature of business is required.'),
+  businessNature: boundedText('Nature of business', 160),
 
   // Section 4: Business Classification
   merchantType: z.enum(merchantTypeValues, 'Please select a business type.'),
@@ -136,22 +170,22 @@ export const merchantOnboardingSchema = z.object({
     .min(1, 'Estimated monthly transactions is required.')
     .refine((val) => {
       const num = Number(val)
-      return Number.isInteger(num) && num > 0
+      return Number.isInteger(num) && num > 0 && num <= 2_147_483_647
     }, 'Must be a whole number greater than 0.'),
   estimatedMonthlyVolume: z
     .string()
     .min(1, 'Estimated monthly volume is required.')
     .refine((val) => {
       const num = Number(val)
-      return !isNaN(num) && num > 0
+      return !isNaN(num) && num > 0 && num <= 999_999_999_999.99
     }, 'Must be a number greater than 0.'),
 
   // Section 5: Financial Information
-  accountTitle: z.string().min(1, 'Account title is required.'),
+  accountTitle: boundedText('Account title', 200),
   bankName: z.enum(bankNameValues, 'Please select a bank.'),
-  branchName: z.string().min(1, 'Branch name is required.'),
-  accountNumberIban: z.string().min(1, 'Account number / IBAN is required.'),
-  swiftCode: z.string(),
+  branchName: boundedText('Branch name', 160),
+  accountNumberIban: boundedText('Account number / IBAN', 64),
+  swiftCode: z.string().max(64, 'SWIFT code must be 64 characters or fewer.'),
 
   // Section 6: Next of Kin
   nextOfKinRelation: z.enum(kinRelationValues, 'Please select a relation.'),
@@ -307,3 +341,5 @@ export const ALLOWED_FILE_TYPES = [
   'image/webp',
 ]
 export const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp']
+export const MIN_FILE_SIZE_BYTES = 500
+export const MAX_FILE_NAME_LENGTH = 255

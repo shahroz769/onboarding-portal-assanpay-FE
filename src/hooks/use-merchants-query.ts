@@ -17,6 +17,7 @@ import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 import {
   bulkUpdatePriority,
+  deleteMerchantDriveFiles,
   fetchMerchantForm,
   fetchMerchantHeader,
   fetchMerchantHistory,
@@ -267,10 +268,12 @@ export function useTerminateMerchantMutation() {
     mutationFn: ({
       merchantId,
       reason,
+      deleteDriveFiles,
     }: {
       merchantId: string
       reason: string
-    }) => terminateMerchant(merchantId, reason),
+      deleteDriveFiles: boolean
+    }) => terminateMerchant(merchantId, reason, deleteDriveFiles),
     onMutate: async ({ merchantId }) => {
       await queryClient.cancelQueries({ queryKey: MERCHANTS_KEY })
 
@@ -295,11 +298,42 @@ export function useTerminateMerchantMutation() {
       }
       toast.error(getApiErrorMessage(error, 'Failed to terminate merchant.'))
     },
-    onSuccess: () => {
-      toast.success('Merchant terminated.')
+    onSuccess: ({ driveFiles }) => {
+      // The merchant is terminated either way; only the Drive step can fail.
+      if (driveFiles?.status === 'failed') {
+        toast.warning(
+          `Merchant terminated, but its Drive files were not moved to trash: ${driveFiles.message} You can retry from the merchants list.`,
+        )
+        return
+      }
+      toast.success(
+        driveFiles
+          ? 'Merchant terminated and Google Drive files moved to trash.'
+          : 'Merchant terminated.',
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
+    },
+  })
+}
+
+export function useDeleteMerchantDriveFilesMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (merchantId: string) => deleteMerchantDriveFiles(merchantId),
+    onSuccess: () => {
+      toast.success('Google Drive files moved to trash.')
+      queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
+    },
+    onError: (error) => {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          'Failed to move Google Drive files to trash.',
+        ),
+      )
     },
   })
 }
@@ -332,10 +366,21 @@ export function useBulkTerminateMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ids, reason }: { ids: string[]; reason: string }) =>
-      bulkTerminateMerchants(ids, reason),
-    onSuccess: () => {
-      toast.success('Selected merchants terminated.')
+    mutationFn: ({
+      ids,
+      reason,
+      deleteDriveFiles,
+    }: {
+      ids: string[]
+      reason: string
+      deleteDriveFiles: boolean
+    }) => bulkTerminateMerchants(ids, reason, deleteDriveFiles),
+    onSuccess: ({ driveFilesQueuedCount }) => {
+      toast.success(
+        driveFilesQueuedCount > 0
+          ? 'Selected merchants terminated. Their Drive files are moving to trash in the background.'
+          : 'Selected merchants terminated.',
+      )
       queryClient.invalidateQueries({ queryKey: MERCHANTS_KEY })
     },
     onError: (error) => {

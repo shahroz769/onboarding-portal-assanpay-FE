@@ -7,6 +7,8 @@ import { Button } from '#/components/ui/button'
 import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
+  MAX_FILE_NAME_LENGTH,
+  MIN_FILE_SIZE_BYTES,
 } from '#/schemas/merchant-onboarding.schema'
 import { MAX_FILE_SIZE_BYTES } from '#/lib/file-limits'
 import { cn } from '#/lib/utils'
@@ -32,8 +34,20 @@ function validateFile(file: File): string | null {
     return `File exceeds 10 MB limit (${formatFileSize(file.size)}).`
   }
 
-  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+  if (file.size < MIN_FILE_SIZE_BYTES) {
+    return 'This file is too small to be a valid document. Please upload a clear copy.'
+  }
+
+  const fileName = file.name.toLowerCase()
+  if (
+    !ALLOWED_FILE_TYPES.includes(file.type) ||
+    !ALLOWED_EXTENSIONS.some((extension) => fileName.endsWith(extension))
+  ) {
     return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`
+  }
+
+  if (file.name.length > MAX_FILE_NAME_LENGTH) {
+    return `File name is longer than ${MAX_FILE_NAME_LENGTH} characters. Please rename it.`
   }
 
   return null

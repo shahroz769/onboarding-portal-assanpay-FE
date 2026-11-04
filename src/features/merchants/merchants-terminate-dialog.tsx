@@ -5,6 +5,7 @@ import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
 
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
-import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '#/components/ui/field'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
@@ -26,8 +33,10 @@ interface MerchantTerminateDialogProps {
   target: TerminateTarget | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onConfirm: (reason: string) => void
+  onConfirm: (reason: string, deleteDriveFiles: boolean) => void
   isPending: boolean
+  /** Deleting Drive files is limited to Super Admins; others never see it. */
+  canDeleteDriveFiles: boolean
   /** From useMorph: the dialog grows out of the button that opened it. */
   popupProps?: MorphPopupProps
 }
@@ -57,14 +66,16 @@ function TerminateForm({
   onOpenChange,
   onConfirm,
   isPending,
+  canDeleteDriveFiles,
 }: Omit<MerchantTerminateDialogProps, 'open'>) {
   const [reason, setReason] = useState('')
+  const [deleteDriveFiles, setDeleteDriveFiles] = useState(false)
   const trimmedReason = reason.trim()
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!trimmedReason) return
-    onConfirm(trimmedReason)
+    onConfirm(trimmedReason, deleteDriveFiles)
   }
 
   const targetDescription =
@@ -93,6 +104,24 @@ function TerminateForm({
               required
             />
           </Field>
+          {canDeleteDriveFiles ? (
+            <Field orientation="horizontal">
+              <Checkbox
+                id="merchant-terminate-delete-drive-files"
+                checked={deleteDriveFiles}
+                onCheckedChange={(value) => setDeleteDriveFiles(!!value)}
+              />
+              <FieldContent>
+                <FieldLabel htmlFor="merchant-terminate-delete-drive-files">
+                  Also move Google Drive files to trash
+                </FieldLabel>
+                <FieldDescription>
+                  Moves this merchant&apos;s Drive files and folders to the
+                  Drive trash. Google removes them for good after 30 days.
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+          ) : null}
         </FieldGroup>
         <DialogFooter className="mt-4">
           <Button
@@ -108,7 +137,7 @@ function TerminateForm({
             disabled={isPending || !trimmedReason}
           >
             {isPending && <Spinner data-icon="inline-start" />}
-            Terminate
+            {deleteDriveFiles ? 'Terminate and trash files' : 'Terminate'}
           </Button>
         </DialogFooter>
       </form>
