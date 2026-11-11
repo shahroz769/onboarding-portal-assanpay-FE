@@ -39,6 +39,7 @@ interface AssignOwnerTarget {
   caseNumber: string
   currentOwnerId: string | null
   isClosed: boolean
+  isAwaitingMerchant: boolean
 }
 
 interface CaseAssignOwnerDialogProps {
@@ -82,8 +83,12 @@ function AssignOwnerForm({
   caseNumber,
   currentOwnerId,
   isClosed,
+  isAwaitingMerchant,
 }: AssignOwnerTarget & { onOpenChange: (open: boolean) => void }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
+  // The backend rejects returning an owned case to AP System while it waits
+  // on the merchant; it can only be transferred.
+  const apSystemBlocked = isAwaitingMerchant && currentOwnerId !== null
   // Start from the current owner so the picker shows who owns the case and
   // Save stays disabled until the owner actually changes.
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
@@ -126,8 +131,10 @@ function AssignOwnerForm({
         <DialogTitle>Assign Case Owner</DialogTitle>
         <DialogDescription>
           Assign or transfer case{' '}
-          <span className="font-mono font-medium">{caseNumber}</span>. Setting
-          AP System returns the case to New.
+          <span className="font-mono font-medium">{caseNumber}</span>.{' '}
+          {apSystemBlocked
+            ? "This case is waiting on the merchant, so it can't return to AP System. You can transfer it to another owner."
+            : 'Setting AP System returns the case to New.'}
         </DialogDescription>
       </DialogHeader>
 
@@ -167,7 +174,10 @@ function AssignOwnerForm({
                     <CommandItem
                       key={option.value}
                       value={option.label}
-                      disabled={isClosed}
+                      disabled={
+                        isClosed ||
+                        (apSystemBlocked && option.value === 'ap-system')
+                      }
                       onSelect={() => handleSelect(option.value)}
                     >
                       {option.label}

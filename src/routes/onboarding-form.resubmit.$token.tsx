@@ -100,23 +100,36 @@ function TokenErrorScreen({
   if (status === 404) return <LinkNotFound />
 
   if (status === 410) {
-    const isTimeExpired =
-      serverMessage?.toLowerCase().includes('expired') === true
+    const message = serverMessage?.toLowerCase() ?? ''
+    // The API says whether the link was used, or replaced or closed.
+    const content = message.includes('already been used')
+      ? {
+          title: 'This link was already used',
+          description:
+            'Your changes were submitted with this link. If something else needs updating, ask your account contact for a new link.',
+        }
+      : message.includes('no longer active')
+        ? {
+            title: 'This link is no longer active',
+            description:
+              'A newer link may have been sent to you, or this request is closed. Use the latest link, or ask your account contact for a new one.',
+          }
+        : {
+            title: message.includes('expired')
+              ? 'This link has expired'
+              : 'This link was already used or replaced',
+            description:
+              serverMessage ??
+              'Ask your account contact to send a new resubmission link.',
+          }
     return (
       <ErrorState
         surface
         className="mx-auto"
         tone="muted"
         icon={<Clock3 />}
-        title={
-          isTimeExpired
-            ? 'This link has expired'
-            : 'This link was already used or replaced'
-        }
-        description={
-          serverMessage ??
-          'Ask your account contact to send a new resubmission link.'
-        }
+        title={content.title}
+        description={content.description}
       />
     )
   }

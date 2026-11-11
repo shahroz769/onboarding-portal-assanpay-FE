@@ -107,6 +107,13 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-red-200 bg-red-100 dark:border-red-800 dark:bg-red-950/60',
   },
+  case_reopened_in_error: {
+    label: 'Reopened in error (audit note)',
+    icon: ShieldAlert,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
   rejections_prepared: {
     label: 'Rejections finalized',
     icon: Send,
@@ -130,6 +137,13 @@ const ACTION_META: Record<
   },
   resubmission_email_failed: {
     label: 'Resubmission email failed',
+    icon: MailWarning,
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    iconWrapperClassName:
+      'border-rose-200 bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60',
+  },
+  merchant_request_interrupted: {
+    label: 'Sending not completed, back to Working',
     icon: MailWarning,
     iconClassName: 'text-rose-700 dark:text-rose-300',
     iconWrapperClassName:

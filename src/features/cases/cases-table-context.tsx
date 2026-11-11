@@ -45,6 +45,8 @@ interface CasesTableState {
   users: UserDirectoryItem[]
   isUsersLoading: boolean
   bulkAssignOwnerId: string | null
+  /** Selected cases waiting on the merchant, which cannot go back to AP System. */
+  awaitingMerchantSelectedCount: number
   isBulkAssignPending: boolean
   bulkAssignError: string | null
   assignOwnerCase: CaseListItem | null
@@ -284,6 +286,14 @@ function CasesTableProviderState({
   }
 
   const selectedIds = Array.from(selectedIdSet)
+  // The backend rejects returning an owned case to AP System while it waits
+  // on the merchant; it can only be transferred.
+  const awaitingMerchantSelectedCount = flatData.filter(
+    (item) =>
+      selectedIdSet.has(item.id) &&
+      item.status === 'awaiting_merchant' &&
+      item.ownerId !== null,
+  ).length
 
   const columns = createCaseColumns({
     userRole,
@@ -349,6 +359,7 @@ function CasesTableProviderState({
     users: caseUsers,
     isUsersLoading,
     bulkAssignOwnerId,
+    awaitingMerchantSelectedCount,
     isBulkAssignPending: bulkAssign.isPending,
     bulkAssignError,
     assignOwnerCase,

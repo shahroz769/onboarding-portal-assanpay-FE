@@ -196,9 +196,7 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
           }
         />
       </DataTableToolbar.Filters>
-      <DataTableToolbar.Actions>
-        {extraActions}
-      </DataTableToolbar.Actions>
+      <DataTableToolbar.Actions>{extraActions}</DataTableToolbar.Actions>
     </DataTableToolbar>
   )
 }
@@ -208,6 +206,7 @@ function BulkActions() {
   const actions = useCasesTableActions()
   const canAssign =
     state.userRole === 'super_admin' || state.userRole === 'admin'
+  const apSystemBlocked = state.awaitingMerchantSelectedCount > 0
 
   return (
     <DataTableSelectionInfo
@@ -240,7 +239,9 @@ function BulkActions() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="ap-system">AP System (New)</SelectItem>
+                    <SelectItem value="ap-system" disabled={apSystemBlocked}>
+                      AP System (New)
+                    </SelectItem>
                     {state.users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.name}
@@ -255,13 +256,24 @@ function BulkActions() {
               size="sm"
               onClick={actions.submitBulkAssign}
               disabled={
-                state.isBulkAssignPending || state.selectedIds.length === 0
+                state.isBulkAssignPending ||
+                state.selectedIds.length === 0 ||
+                (apSystemBlocked && state.bulkAssignOwnerId === null)
               }
             >
               <UserIcon data-icon="inline-start" />
               Assign Owner
             </Button>
           </div>
+          {apSystemBlocked && state.bulkAssignOwnerId === null ? (
+            <p className="max-w-xl text-right text-sm text-muted-foreground">
+              {state.awaitingMerchantSelectedCount === 1
+                ? '1 selected case is'
+                : `${state.awaitingMerchantSelectedCount} selected cases are`}{' '}
+              waiting on the merchant and can't return to AP System. Choose an
+              owner to transfer them to.
+            </p>
+          ) : null}
           {state.bulkAssignError ? (
             <Alert variant="destructive" className="max-w-xl">
               <AlertCircleIcon />
@@ -339,6 +351,8 @@ function Dialogs() {
                 isClosed:
                   assignOwnerCase.status === 'closed' ||
                   !!assignOwnerCase.closedAt,
+                isAwaitingMerchant:
+                  assignOwnerCase.status === 'awaiting_merchant',
               }
             : null
         }

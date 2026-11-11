@@ -41,6 +41,7 @@ import { useMorph } from '#/hooks/use-morph'
 import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
+import { DEFAULT_MERCHANT_STATUS_FILTER } from '#/schemas/merchants.schema'
 import type { MerchantListItem } from '#/schemas/merchants.schema'
 
 /** Manual case creation is limited to admins (matches `POST /api/cases`). */
@@ -139,8 +140,12 @@ function TriggerCaseForm({
   const [queueId, setQueueId] = useState('')
   // Debounced so typing sends one request after a pause, not one per key.
   const debouncedMerchantSearch = useDebouncedValue(merchantSearch)
+  // Terminated merchants cannot get new cases, so they are not offered.
   const merchantsQuery = useQuery({
-    ...merchantOptionsQueryOptions(debouncedMerchantSearch),
+    ...merchantOptionsQueryOptions(
+      debouncedMerchantSearch,
+      DEFAULT_MERCHANT_STATUS_FILTER,
+    ),
     enabled: !hasPreselection,
   })
   const queuesQuery = useQuery(queuesQueryOptions({ includeInactive: true }))

@@ -100,6 +100,8 @@ const ACTION_LABELS: Record<string, string> = {
   sub_merchant_inherited: 'Sub-merchant inherited',
   closed_unsuccessful: 'Closed — unsuccessful',
   closed_successful: 'Closed — successful',
+  case_reopened_in_error: 'Reopened in error (audit note)',
+  merchant_request_interrupted: 'Sending not completed, back to Working',
 }
 function actionLabel(action: string) {
   return ACTION_LABELS[action] ?? humanize(action)

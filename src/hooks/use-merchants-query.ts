@@ -64,13 +64,14 @@ export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
   })
 }
 
-export function merchantOptionsQueryOptions(search = '') {
+/** `status`: comma-separated filter; omit to list every status. */
+export function merchantOptionsQueryOptions(search = '', status?: string) {
   return queryOptions({
-    queryKey: [...MERCHANT_OPTIONS_KEY, search],
+    queryKey: [...MERCHANT_OPTIONS_KEY, search, status ?? 'all'],
     queryFn: () =>
       fetchMerchants({
         search,
-        status: undefined,
+        status,
         priority: undefined,
         businessScope: undefined,
         currency: undefined,
