@@ -488,6 +488,12 @@ const caseDetailSchema = z.object({
     })
     .nullable(),
   emailDelivery: caseEmailDeliverySchema.nullable().optional(),
+  // What still blocks a successful close, in the order the server checks it.
+  // Null for workflows that advance to their next stage instead.
+  closeReadiness: z
+    .object({ blockers: z.array(z.string()) })
+    .nullable()
+    .optional(),
 })
 
 export type CaseDetail = z.infer<typeof caseDetailSchema>

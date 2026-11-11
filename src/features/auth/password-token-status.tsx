@@ -26,12 +26,13 @@ export function PasswordTokenError({
   const status = axios.isAxiosError(error) ? error.response?.status : undefined
 
   if (status === 410) {
+    const copy = CLOSED_LINK_COPY[getClosedLinkReason(error)]
     return (
       <ErrorPage
         tone="muted"
         icon={<Clock3 />}
-        title="This password link is no longer valid"
-        description="This link may have expired or already been used. Ask your administrator to send you a new password link."
+        title={copy.title}
+        description={copy.description}
         actions={<BackToLogin />}
       />
     )
@@ -57,6 +58,57 @@ export function PasswordTokenError({
       }
     />
   )
+}
+
+// The server says why a link is closed (410 with `reason`); older servers
+// send no reason and get the general copy.
+type ClosedLinkReason =
+  | 'used'
+  | 'superseded'
+  | 'invalidated'
+  | 'expired'
+  | 'unknown'
+
+const CLOSED_LINK_COPY: Record<
+  ClosedLinkReason,
+  { title: string; description: string }
+> = {
+  used: {
+    title: 'This password link was already used',
+    description:
+      'Your password is set. Log in with it, or ask your administrator for a new link if you have forgotten it.',
+  },
+  superseded: {
+    title: 'A newer password link was sent',
+    description:
+      'Sending a new link turns off the older ones. Open the link in the most recent email.',
+  },
+  invalidated: {
+    title: 'This password link no longer works',
+    description:
+      'Your password was set with another link. Log in with it, or ask your administrator for a new link.',
+  },
+  expired: {
+    title: 'This password link has expired',
+    description: 'Ask your administrator to send you a new password link.',
+  },
+  unknown: {
+    title: 'This password link is no longer valid',
+    description:
+      'This link may have expired or already been used. Ask your administrator to send you a new password link.',
+  },
+}
+
+function getClosedLinkReason(error: unknown): ClosedLinkReason {
+  const data = axios.isAxiosError(error) ? error.response?.data : undefined
+  const reason =
+    data && typeof data === 'object' && 'reason' in data ? data.reason : null
+  return reason === 'used' ||
+    reason === 'superseded' ||
+    reason === 'invalidated' ||
+    reason === 'expired'
+    ? reason
+    : 'unknown'
 }
 
 function BackToLogin({ variant }: { variant?: 'outline' }) {

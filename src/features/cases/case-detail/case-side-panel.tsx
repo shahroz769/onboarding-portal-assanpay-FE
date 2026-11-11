@@ -63,6 +63,7 @@ import type { CaseDetail } from '#/schemas/cases.schema'
 import { formatExpiryLabel, NO_EXPIRY_LABEL } from '#/lib/expiry'
 
 import { AgreementRoundsCard } from './agreement-rounds-card'
+import { isCaseClosed } from './case-closed'
 import { CaseChatter } from './case-chatter'
 import { CaseHistoryTimeline } from './case-history-timeline'
 import { ResolutionActionCardSkeleton } from './case-detail-skeletons'
@@ -71,12 +72,6 @@ import { RejectionRoundsCard } from './rejection-rounds-card'
 import { resolveQueueWorkflowType } from './queue-registry'
 import { getDocumentsReviewSummary } from './renderers/documents-review-shared'
 import { useOptionalDocumentsReviewDraft } from './renderers/documents-review-draft-context'
-
-const TESTING_CREDENTIALS_SENT_ACTIONS = new Set([
-  'mid_creation_email_sent',
-  'mid_creation_email_sent_manual',
-  'mid_creation_whatsapp_sent_manual',
-])
 
 const DOCUMENT_REVIEW_LINK_ACTIONS = new Set([
   'resubmission_link_regenerated',
@@ -124,23 +119,18 @@ function getPrimaryActionCopy(
     isSubMerchantFormCase: boolean
     hasSubMerchantFinalForm: boolean
     isMidCreationCase: boolean
-    hasMidCreationCredentials: boolean
     isTestingCase: boolean
-    hasTestingCredentialsSent: boolean
-    isTestingHistoryPending: boolean
     isAgreementCase: boolean
     hasAgreementFinal: boolean
-    hasReceivedAgreement: boolean
+    isLiveCase: boolean
+    isWordpressCase: boolean
+    /** First unmet close requirement from the server; null when ready. */
+    closeBlocker: string | null
   },
 ) {
   const status = caseDetail.case.status
-  const category = caseDetail.currentStage?.category ?? null
   const hasOwner = Boolean(caseDetail.owner)
-  const isClosed =
-    status === 'closed' ||
-    category === 'closed' ||
-    Boolean(caseDetail.case.closedAt) ||
-    Boolean(caseDetail.case.closeOutcome)
+  const isClosed = isCaseClosed(caseDetail)
 
   if (!isClosed && !hasOwner) {
     return {
@@ -175,7 +165,7 @@ function getPrimaryActionCopy(
   if (
     options.isAgreementCase &&
     status === 'working' &&
-    options.hasReceivedAgreement
+    !options.closeBlocker
   ) {
     return {
       title: 'Signed agreement received',
@@ -220,37 +210,26 @@ function getPrimaryActionCopy(
   }
 
   if (options.isMidCreationCase && status === 'working') {
-    if (options.hasMidCreationCredentials) {
+    if (!options.closeBlocker) {
       return {
         title: 'Merchant IDs saved',
         description:
-          'Both merchant IDs are saved. You can now close this case successfully.',
+          'Both merchant IDs and the API credentials are saved. You can now close this case successfully.',
         actionLabel: 'Mark as successful',
         actionKind: 'mark-successful' as const,
       }
     }
 
     return {
-      title: 'Merchant IDs required',
-      description:
-        'Save the email, MID, and Branch Code for both merchant IDs before closing this case successfully.',
+      title: 'MID details required',
+      description: options.closeBlocker,
       actionLabel: null,
       actionKind: 'mid-creation' as const,
     }
   }
 
   if (options.isTestingCase && status === 'working') {
-    if (options.isTestingHistoryPending) {
-      return {
-        title: 'Checking credentials send',
-        description:
-          'Checking whether credentials were sent by auto Resend, manual Gmail, or WhatsApp before closure.',
-        actionLabel: null,
-        actionKind: 'testing' as const,
-      }
-    }
-
-    if (!options.hasTestingCredentialsSent) {
+    if (options.closeBlocker) {
       return {
         title: 'Credentials send required',
         description:
@@ -267,6 +246,40 @@ function getPrimaryActionCopy(
       actionLabel: 'Mark as successful',
       actionKind: 'mark-successful' as const,
     }
+  }
+
+  if (options.isLiveCase && status === 'working') {
+    return options.closeBlocker
+      ? {
+          title: 'Live limits required',
+          description: options.closeBlocker,
+          actionLabel: null,
+          actionKind: 'close-requirements' as const,
+        }
+      : {
+          title: 'Live limits applied',
+          description:
+            'The live limits are confirmed. You can now close this case successfully.',
+          actionLabel: 'Mark as successful',
+          actionKind: 'mark-successful' as const,
+        }
+  }
+
+  if (options.isWordpressCase && status === 'working') {
+    return options.closeBlocker
+      ? {
+          title: 'Website details required',
+          description: options.closeBlocker,
+          actionLabel: null,
+          actionKind: 'close-requirements' as const,
+        }
+      : {
+          title: 'Website details saved',
+          description:
+            'The cloned website link and screenshots are saved. You can now close this case successfully.',
+          actionLabel: 'Mark as successful',
+          actionKind: 'mark-successful' as const,
+        }
   }
 
   if (
@@ -363,20 +376,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isMidCreationCase = workflowType === 'mid'
   const isTestingCase = workflowType === 'testing'
   const isAgreementCase = workflowType === 'agreement'
-  const caseHistoryQuery = useQuery({
-    ...caseHistoryQueryOptions(caseId),
-    enabled: isTestingCase,
-  })
   const reviewSummary = isDocumentReviewCase
     ? (documentsReviewDraft?.reviewSummary ??
       getDocumentsReviewSummary(caseDetail))
     : null
   const isReviewApproved = reviewSummary?.isFullyApproved ?? false
   const hasActiveRejections = (reviewSummary?.rejectedItems.length ?? 0) > 0
-  const hasTestingCredentialsSent =
-    caseHistoryQuery.data?.some((entry) =>
-      TESTING_CREDENTIALS_SENT_ACTIONS.has(entry.action),
-    ) ?? false
 
   const primaryAction = getPrimaryActionCopy(caseDetail, {
     isDocumentReviewCase,
@@ -385,13 +390,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     isSubMerchantFormCase,
     hasSubMerchantFinalForm: Boolean(caseDetail.subMerchantForm?.finalForm),
     isMidCreationCase,
-    hasMidCreationCredentials: Boolean(caseDetail.testing?.credentialsReady),
     isTestingCase,
-    hasTestingCredentialsSent,
-    isTestingHistoryPending: isTestingCase && caseHistoryQuery.isPending,
     isAgreementCase,
     hasAgreementFinal: Boolean(caseDetail.agreement?.finalAgreement),
-    hasReceivedAgreement: Boolean(caseDetail.agreement?.receivedAgreement),
+    isLiveCase: workflowType === 'live',
+    isWordpressCase: workflowType === 'wordpress',
+    closeBlocker: caseDetail.closeReadiness?.blockers[0] ?? null,
   })
   const status = caseDetail.case.status
   const category = caseDetail.currentStage?.category ?? null
@@ -399,7 +403,7 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
   const isCaseOwner = Boolean(
     caseDetail.owner && user?.id === caseDetail.owner.id,
   )
-  const isClosed = category === 'closed'
+  const isClosed = isCaseClosed(caseDetail)
   const isNew = category === 'new'
   const isInProgress = category === 'in_progress'
   const showPrimaryActionButton =
@@ -407,7 +411,8 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     primaryAction.actionKind !== 'sub-merchant-form' &&
     primaryAction.actionKind !== 'mid-creation' &&
     primaryAction.actionKind !== 'testing' &&
-    primaryAction.actionKind !== 'agreement'
+    primaryAction.actionKind !== 'agreement' &&
+    primaryAction.actionKind !== 'close-requirements'
 
   // These states have their own alert saying the same thing, so the action
   // card (which has no action while waiting) stays hidden.
