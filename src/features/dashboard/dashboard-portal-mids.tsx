@@ -153,9 +153,14 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
 
   const canApply =
     user?.roleType === 'super_admin' || user?.roleType === 'admin'
-  const [open, setOpen] = useState(false)
-  const [appliedOpen, setAppliedOpen] = useState(false)
-  const [isOpeningApplied, setIsOpeningApplied] = useState(false)
+  // One dialog at a time. `opening_applied` waits for the applied list
+  // before that dialog opens; opening Apply meanwhile wins.
+  const [dialog, setDialog] = useState<
+    'closed' | 'opening_applied' | 'applied' | 'apply'
+  >('closed')
+  const open = dialog === 'apply'
+  const appliedOpen = dialog === 'applied'
+  const isOpeningApplied = dialog === 'opening_applied'
   // Every applied MID can be a long list, so it loads only for the dialog:
   // the Applied button fetches it first and opens the dialog once it's in.
   const queryClient = useQueryClient()
@@ -175,17 +180,20 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   const parsedPortalMids = parsePortalMids(value)
 
   async function handleOpenApplied(trigger: HTMLElement) {
-    if (isOpeningApplied) return
-    setIsOpeningApplied(true)
+    if (dialog !== 'closed') return
+    setDialog('opening_applied')
     try {
       // Served from cache while fresh; otherwise the button shows a spinner.
       await queryClient.fetchQuery(appliedPortalMidsQueryOptions())
       appliedMorph.run(() => {
-        setIsOpeningApplied(false)
-        setAppliedOpen(true)
+        setDialog((current) =>
+          current === 'opening_applied' ? 'applied' : current,
+        )
       }, trigger)
     } catch (fetchError) {
-      setIsOpeningApplied(false)
+      setDialog((current) =>
+        current === 'opening_applied' ? 'closed' : current,
+      )
       toast.error(
         getApiErrorMessage(fetchError, 'Could not load applied portal MIDs'),
       )
@@ -198,8 +206,16 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
     toast.success('Applied portal MIDs copied')
   }
 
+  function handleAppliedOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setDialog((current) => (current === 'applied' ? 'closed' : current))
+    }
+  }
+
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen)
+    setDialog((current) =>
+      nextOpen ? 'apply' : current === 'apply' ? 'closed' : current,
+    )
     if (nextOpen) {
       setValue('')
       setCategory('custom_wordpress')
@@ -224,7 +240,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
       portalMids: result.data,
       category,
     })
-    setOpen(false)
+    handleOpenChange(false)
   }
 
   return (
@@ -334,7 +350,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
         ) : null}
       </CardContent>
 
-      <Dialog open={appliedOpen} onOpenChange={setAppliedOpen}>
+      <Dialog open={appliedOpen} onOpenChange={handleAppliedOpenChange}>
         <DialogContent {...appliedMorph.popupProps}>
           <DialogHeader>
             <DialogTitle>Applied portal MIDs</DialogTitle>
@@ -367,7 +383,10 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAppliedOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => handleAppliedOpenChange(false)}
+            >
               Close
             </Button>
             <Button onClick={handleCopyApplied} disabled={!appliedCsv}>
@@ -447,7 +466,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             <Button
               variant="outline"
               disabled={applyLimits.isPending}
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
             >
               Cancel
             </Button>

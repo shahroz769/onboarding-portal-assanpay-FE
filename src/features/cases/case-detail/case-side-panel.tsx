@@ -429,14 +429,20 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
         : primaryAction.description
 
   const canCloseUnsuccessfully = !isClosed && isCaseOwner
-  const primaryButtonPending =
-    actionInFlight === 'primary' ||
-    takeOwnership.isPending ||
-    advanceStage.isPending ||
-    saveSubMerchant.isPending
-  const unsuccessfulButtonPending =
-    actionInFlight === 'unsuccessful' || closeUnsuccessful.isPending
-  const actionPending = primaryButtonPending || unsuccessfulButtonPending
+  // The action running now: the one started here, or a mutation still
+  // settling (a retry or a refetch can outlast the click handler).
+  const pendingAction: 'primary' | 'unsuccessful' | null =
+    actionInFlight ??
+    (closeUnsuccessful.isPending
+      ? 'unsuccessful'
+      : takeOwnership.isPending ||
+          advanceStage.isPending ||
+          saveSubMerchant.isPending
+        ? 'primary'
+        : null)
+  const primaryButtonPending = pendingAction === 'primary'
+  const unsuccessfulButtonPending = pendingAction === 'unsuccessful'
+  const actionPending = pendingAction !== null
   const unsuccessfulDisabled = !closeReason.trim() || actionPending
 
   async function saveChangedSubMerchantBeforeReview() {
@@ -452,91 +458,89 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     })
   }
 
-  async function handlePrimaryAction() {
-    if (actionPending || primaryActionLockedRef.current) return
+  /**
+   * Runs one case action at a time. The lock is a ref so a double click is
+   * refused before React re-renders; `actionInFlight` drives the spinners.
+   * Both are only set here and always released.
+   */
+  async function runExclusive(
+    kind: 'primary' | 'unsuccessful',
+    run: () => Promise<void>,
+  ) {
+    if (primaryActionLockedRef.current) return
     primaryActionLockedRef.current = true
-    setActionInFlight('primary')
-
-    if (primaryAction.actionKind === 'take-ownership') {
-      takeOwnership.mutate(undefined, {
-        onSettled: () => {
-          primaryActionLockedRef.current = false
-          setActionInFlight(null)
-        },
-      })
-      return
+    setActionInFlight(kind)
+    try {
+      await run()
+    } finally {
+      primaryActionLockedRef.current = false
+      setActionInFlight(null)
     }
+  }
 
-    if (primaryAction.actionKind === 'review') {
-      await saveChangedSubMerchantBeforeReview()
-        .then(() => {
-          reviewModal.setOpen(true, {
-            alongside: () => setReviewModalKey((key) => key + 1),
-          })
-        })
-        .catch(() => {
-          // Mutation hook already surfaces the backend error via toast.
-        })
-        .finally(() => {
-          primaryActionLockedRef.current = false
-          setActionInFlight(null)
-        })
-      return
-    }
+  // Mutation hooks surface backend errors with a toast; a failed step just
+  // ends the action.
+  const ignoreHandledError = () => {}
 
-    if (primaryAction.actionKind === 'mark-successful') {
-      const selectedSubMerchant =
-        documentsReviewDraft?.selectedSubMerchantIds.length ||
-        caseDetail.documentReview?.subMerchants.length
+  async function handlePrimaryAction() {
+    if (actionPending) return
 
-      if (isDocumentReviewCase && !selectedSubMerchant) {
-        toast.error(
-          'Select at least one sub-merchant before marking this case as successful.',
-        )
-        primaryActionLockedRef.current = false
-        setActionInFlight(null)
+    await runExclusive('primary', async () => {
+      if (primaryAction.actionKind === 'take-ownership') {
+        await takeOwnership.mutateAsync(undefined).catch(ignoreHandledError)
         return
       }
 
-      if (isDocumentReviewCase) {
-        try {
-          await saveChangedSubMerchantBeforeReview()
-        } catch {
-          primaryActionLockedRef.current = false
-          setActionInFlight(null)
-          return
-        }
+      if (primaryAction.actionKind === 'review') {
+        await saveChangedSubMerchantBeforeReview()
+          .then(() => {
+            reviewModal.setOpen(true, {
+              alongside: () => setReviewModalKey((key) => key + 1),
+            })
+          })
+          .catch(ignoreHandledError)
+        return
       }
 
-      advanceStage.mutate(undefined, {
-        onSettled: () => {
-          primaryActionLockedRef.current = false
-          setActionInFlight(null)
-        },
-      })
-      return
-    }
+      if (primaryAction.actionKind === 'mark-successful') {
+        const selectedSubMerchant =
+          documentsReviewDraft?.selectedSubMerchantIds.length ||
+          caseDetail.documentReview?.subMerchants.length
 
-    primaryActionLockedRef.current = false
-    setActionInFlight(null)
+        if (isDocumentReviewCase && !selectedSubMerchant) {
+          toast.error(
+            'Select at least one sub-merchant before marking this case as successful.',
+          )
+          return
+        }
+
+        if (isDocumentReviewCase) {
+          try {
+            await saveChangedSubMerchantBeforeReview()
+          } catch {
+            return
+          }
+        }
+
+        await advanceStage.mutateAsync(undefined).catch(ignoreHandledError)
+      }
+    })
   }
 
   async function handleCloseUnsuccessful() {
-    if (unsuccessfulDisabled || primaryActionLockedRef.current) return
-    primaryActionLockedRef.current = true
-    setActionInFlight('unsuccessful')
+    if (unsuccessfulDisabled) return
 
-    try {
-      await closeUnsuccessful.mutateAsync({
-        reason: closeReason.trim(),
-      })
-      setCloseDialogOpen(false)
-      setCloseReason('')
-    } catch {
-      // The mutation hook displays the backend error and keeps the dialog open.
-    }
-    primaryActionLockedRef.current = false
-    setActionInFlight(null)
+    await runExclusive('unsuccessful', async () => {
+      try {
+        await closeUnsuccessful.mutateAsync({
+          reason: closeReason.trim(),
+        })
+        setCloseDialogOpen(false)
+        setCloseReason('')
+      } catch {
+        // The mutation hook displays the backend error and keeps the dialog open.
+      }
+    })
   }
 
   // The latest email bounced with CC addresses on it, and Resend can't say

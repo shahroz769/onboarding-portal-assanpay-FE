@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -64,6 +64,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '#/components/ui/tooltip'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { cn } from '#/lib/utils'
 import { useMorph } from '#/hooks/use-morph'
 
@@ -74,8 +75,6 @@ import {
   isCaseFlowRevisionConflict,
   useUpdateCaseFlowConfigurationMutation,
 } from '#/hooks/use-configuration-query'
-
-import type { CaseFlowConfiguration } from '#/schemas/configuration.schema'
 
 import { WorkflowBuilderSkeleton } from '../configuration-route-skeleton'
 
@@ -90,7 +89,6 @@ import { MoveMerchantsDialog } from './move-merchants-dialog'
 import { WorkflowCanvas } from './workflow-canvas'
 
 import {
-  buildWorkflowGraph,
   canonicalizeFlowRules,
   getNewEdgeError,
   graphToConfig,
@@ -116,6 +114,12 @@ import { layoutWorkflowGraph } from './workflow-layout'
 
 import { getWorkflowFormError } from './workflow-validation'
 
+import {
+  initialWorkflowEditorState,
+  isWorkflowReadOnly,
+  workflowEditorReducer,
+} from './workflow-editor-state'
+
 export function WorkflowBuilderPanel() {
   const queryClient = useQueryClient()
 
@@ -125,42 +129,38 @@ export function WorkflowBuilderPanel() {
     number | undefined
   >()
 
-  const [changeNote, setChangeNote] = useState('')
-
   const { data, isPending, isError, refetch } = useQuery(
     caseFlowConfigurationQueryOptions(selectedVersionId),
   )
 
   const mutation = useUpdateCaseFlowConfigurationMutation()
 
-  const [moveExisting, setMoveExisting] = useState(false)
-
   const [moveOpen, setMoveOpen] = useState(false)
 
   const moveMorph = useMorph()
 
-  const [base, setBase] = useState<CaseFlowConfiguration | null>(null)
+  const [editor, dispatch] = useReducer(
+    workflowEditorReducer,
+    initialWorkflowEditorState,
+  )
 
-  const [nodes, setNodes] = useState<WorkflowNode[]>([])
+  const { base, nodes, edges, dirty, changeNote, moveExisting } = editor
 
-  const [edges, setEdges] = useState<WorkflowEdge[]>([])
+  const publishOpen = editor.dialog === 'publish'
 
-  const [dirty, setDirty] = useState(false)
+  const staleRevisionOpen =
+    editor.dialog === 'stale' || editor.dialog === 'reloading'
 
-  const [staleRevisionOpen, setStaleRevisionOpen] = useState(false)
-
-  const [publishOpen, setPublishOpen] = useState(false)
+  const reloadingStale = editor.dialog === 'reloading'
   // Publish and backfill dialogs grow out of the buttons that open them.
   const publishMorph = useMorph()
   const backfillMorph = useMorph()
-
-  const [reloadingStale, setReloadingStale] = useState(false)
 
   const [backfillTriggerId, setBackfillTriggerId] = useState<string | null>(
     null,
   )
 
-  const readOnly = Boolean(base && base.versionId !== base.activeVersionId)
+  const readOnly = isWorkflowReadOnly(editor)
 
   const { data: movePreview } = useQuery({
     ...caseFlowMerchantMovePreviewQueryOptions(),
@@ -181,63 +181,10 @@ export function WorkflowBuilderPanel() {
     enabled: publishOpen && Boolean(draftConfig),
   })
 
-  const dirtyRef = useRef(false)
-
-  const baseRef = useRef<CaseFlowConfiguration | null>(null)
-
-  function markDirty() {
-    dirtyRef.current = true
-
-    setDirty(true)
-  }
-
-  function initializeFromConfig(config: CaseFlowConfiguration) {
-    const graph = buildWorkflowGraph(config)
-
-    baseRef.current = config
-
-    setBase(config)
-
-    setEdges(graph.edges)
-
-    setNodes(layoutWorkflowGraph(graph.nodes, graph.edges))
-
-    dirtyRef.current = false
-
-    setDirty(false)
-
-    setChangeNote('')
-
-    setMoveExisting(false)
-  }
-
-  // Sync from the query cache whenever the server config changes and the
-
-  // user has no unsaved edits.
-
+  // Server data replaces the graph only while there are no unsaved edits;
+  // the reducer decides.
   useEffect(() => {
-    if (!data || dirtyRef.current) return
-
-    const current = baseRef.current
-
-    if (
-      current &&
-      current.revision === data.revision &&
-      current.versionId === data.versionId &&
-      canonicalizeFlowRules(current) === canonicalizeFlowRules(data)
-    ) {
-      return
-    }
-
-    const graph = buildWorkflowGraph(data)
-
-    baseRef.current = data
-
-    setBase(data)
-
-    setEdges(graph.edges)
-
-    setNodes(layoutWorkflowGraph(graph.nodes, graph.edges))
+    if (data) dispatch({ type: 'server_config', config: data })
   }, [data])
 
   // Keep derived node badges (start-rule count, in-flow styling) in sync
@@ -282,29 +229,40 @@ export function WorkflowBuilderPanel() {
 
   // ─── Canvas callbacks ─────────────────────────────────────────────────────
 
+  function setNodes(update: (current: WorkflowNode[]) => WorkflowNode[]) {
+    dispatch({ type: 'nodes', update })
+  }
+
+  /** `edit` marks the flow as changed; selection alone does not. */
+  function setEdges(
+    update: (current: WorkflowEdge[]) => WorkflowEdge[],
+    edit = true,
+  ) {
+    dispatch({ type: 'edges', update, edit })
+  }
+
   function handleNodesChange(changes: NodeChange<WorkflowNode>[]) {
     setNodes((current) => applyNodeChanges(changes, current))
   }
 
   function handleEdgesChange(changes: EdgeChange<WorkflowEdge>[]) {
     if (readOnly || mutation.isPending) {
-      setEdges((current) =>
-        applyEdgeChanges(
-          changes.filter((change) => change.type === 'select'),
-          current,
-        ),
+      setEdges(
+        (current) =>
+          applyEdgeChanges(
+            changes.filter((change) => change.type === 'select'),
+            current,
+          ),
+        false,
       )
 
       return
     }
 
-    if (changes.some((change) => change.type === 'remove')) {
-      dirtyRef.current = true
-
-      setDirty(true)
-    }
-
-    setEdges((current) => applyEdgeChanges(changes, current))
+    setEdges(
+      (current) => applyEdgeChanges(changes, current),
+      changes.some((change) => change.type === 'remove'),
+    )
   }
 
   function handleConnect(connection: Connection) {
@@ -354,10 +312,6 @@ export function WorkflowBuilderPanel() {
     ])
 
     setNodes((current) => current.map((node) => ({ ...node, selected: false })))
-
-    dirtyRef.current = true
-
-    setDirty(true)
   }
 
   function isValidConnection(connection: Connection | WorkflowEdge) {
@@ -388,8 +342,10 @@ export function WorkflowBuilderPanel() {
   // ─── Inspector callbacks ──────────────────────────────────────────────────
 
   function handleSelectEdge(edgeId: string) {
-    setEdges((current) =>
-      current.map((edge) => ({ ...edge, selected: edge.id === edgeId })),
+    setEdges(
+      (current) =>
+        current.map((edge) => ({ ...edge, selected: edge.id === edgeId })),
+      false,
     )
 
     setNodes((current) => current.map((node) => ({ ...node, selected: false })))
@@ -445,16 +401,12 @@ export function WorkflowBuilderPanel() {
         return { ...edge, data: { ...edge.data, ...patch } }
       }),
     )
-
-    markDirty()
   }
 
   function handleDeleteEdge(edgeId: string) {
     if (readOnly || mutation.isPending) return
 
     setEdges((current) => current.filter((edge) => edge.id !== edgeId))
-
-    markDirty()
   }
 
   function handleDeleteNodeRules(nodeId: string) {
@@ -465,19 +417,15 @@ export function WorkflowBuilderPanel() {
         (edge) => edge.source !== nodeId && edge.target !== nodeId,
       ),
     )
-
-    markDirty()
   }
 
   // ─── Save / reload ────────────────────────────────────────────────────────
 
   async function handleSave() {
-    const current = baseRef.current
-
-    if (!current || readOnly) return
+    if (!base || readOnly) return
 
     const payload = {
-      ...graphToConfig(current, edges),
+      ...graphToConfig(base, edges),
       changeNote,
       moveExistingMerchants: moveExisting,
     }
@@ -487,28 +435,20 @@ export function WorkflowBuilderPanel() {
 
       setSelectedVersionId(undefined)
 
-      initializeFromConfig(saved)
-
-      setPublishOpen(false)
+      dispatch({ type: 'reset', config: saved })
     } catch (error) {
       if (isCaseFlowRevisionConflict(error)) {
-        setPublishOpen(false)
-
-        setStaleRevisionOpen(true)
+        dispatch({ type: 'publish_conflict' })
       }
     }
   }
 
   function handleDiscard() {
-    const current = baseRef.current
-
-    if (!current) return
-
-    initializeFromConfig(current)
+    if (base) dispatch({ type: 'reset', config: base })
   }
 
   async function handleReloadStaleConfig() {
-    setReloadingStale(true)
+    dispatch({ type: 'reload_started' })
 
     try {
       const latest = await queryClient.fetchQuery({
@@ -518,14 +458,13 @@ export function WorkflowBuilderPanel() {
 
       setSelectedVersionId(undefined)
 
-      initializeFromConfig(latest)
-
-      setStaleRevisionOpen(false)
+      dispatch({ type: 'reset', config: latest })
     } catch (error) {
-      setReloadingStale(false)
-      throw error
+      dispatch({ type: 'reload_failed' })
+      toast.error(
+        getApiErrorMessage(error, 'Could not reload the configuration.'),
+      )
     }
-    setReloadingStale(false)
   }
 
   if (isError) {
@@ -599,7 +538,7 @@ export function WorkflowBuilderPanel() {
               value={String(base.versionId)}
               disabled={dirty || mutation.isPending}
               onValueChange={(value) => {
-                setChangeNote('')
+                dispatch({ type: 'change_note', value: '' })
                 setBackfillTriggerId(null)
                 setSelectedVersionId(Number(value))
               }}
@@ -649,7 +588,10 @@ export function WorkflowBuilderPanel() {
             size="sm"
             disabled={mutation.isPending || Boolean(formError) || !dirty}
             onClick={(event) =>
-              publishMorph.run(() => setPublishOpen(true), event.currentTarget)
+              publishMorph.run(
+                () => dispatch({ type: 'publish_dialog', open: true }),
+                event.currentTarget,
+              )
             }
           >
             <Save data-icon="inline-start" />
@@ -759,7 +701,7 @@ export function WorkflowBuilderPanel() {
       <Dialog
         open={publishOpen}
         onOpenChange={(open) => {
-          if (!mutation.isPending) setPublishOpen(open)
+          if (!mutation.isPending) dispatch({ type: 'publish_dialog', open })
         }}
       >
         <DialogContent
@@ -778,7 +720,9 @@ export function WorkflowBuilderPanel() {
             aria-label="Apply this version to"
             value={moveExisting ? 'existing' : 'new'}
             disabled={mutation.isPending}
-            onValueChange={(value) => setMoveExisting(value === 'existing')}
+            onValueChange={(value) =>
+              dispatch({ type: 'move_existing', value: value === 'existing' })
+            }
           >
             <FieldLabel>
               <Field orientation="horizontal">
@@ -839,7 +783,9 @@ export function WorkflowBuilderPanel() {
               maxLength={1000}
               value={changeNote}
               disabled={mutation.isPending}
-              onChange={(event) => setChangeNote(event.target.value)}
+              onChange={(event) =>
+                dispatch({ type: 'change_note', value: event.target.value })
+              }
               placeholder="What changed in this version?"
             />
           </Field>
@@ -874,7 +820,12 @@ export function WorkflowBuilderPanel() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={staleRevisionOpen} onOpenChange={setStaleRevisionOpen}>
+      <AlertDialog
+        open={staleRevisionOpen}
+        onOpenChange={(open) => {
+          if (!open) dispatch({ type: 'stale_dismissed' })
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Configuration was updated</AlertDialogTitle>

@@ -16,6 +16,8 @@ const INITIAL_CONNECT_DELAY_MS = import.meta.env.DEV ? 250 : 0
 /** A stream that stayed open this long resets the reconnect backoff. */
 const STABLE_STREAM_MS = 30_000
 
+const MAX_RECONNECT_DELAY_MS = 30_000
+
 interface SubscribeOptions {
   getAccessToken: () => string | null
   refreshAccessToken: () => Promise<string>
@@ -29,6 +31,23 @@ interface SubscribeOptions {
 }
 
 /**
+ * The connection is always in exactly one state, and each state owns the
+ * timer or request it waits on; leaving a state cancels it.
+ *
+ *   starting ──▶ connecting ──▶ open ──stream ends / fails──▶ backoff
+ *   backoff ──timer──▶ connecting
+ *   any ──tab hidden──▶ paused ──tab visible──▶ connecting
+ *   any ──stop / session ended──▶ stopped (final)
+ */
+type ConnectionState =
+  | { kind: 'starting'; timer: ReturnType<typeof setTimeout> }
+  | { kind: 'connecting'; controller: AbortController }
+  | { kind: 'open'; controller: AbortController; openedAt: number }
+  | { kind: 'backoff'; timer: ReturnType<typeof setTimeout> }
+  | { kind: 'paused' }
+  | { kind: 'stopped' }
+
+/**
  * Connects to /api/notifications/stream with a Bearer token using fetch + ReadableStream
  * (native EventSource cannot send Authorization headers).
  *
@@ -36,43 +55,63 @@ interface SubscribeOptions {
  * and refreshes the access token on 401.
  */
 export function createNotificationsSseClient(options: SubscribeOptions) {
-  let abortController: AbortController | null = null
-  let stopped = false
-  let paused = false
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  let initialConnectTimer: ReturnType<typeof setTimeout> | null = null
+  let state: ConnectionState = {
+    kind: 'starting',
+    timer: setTimeout(() => void connect(), INITIAL_CONNECT_DELAY_MS),
+  }
+  /** Failed connections in a row; drives the backoff delay. */
   let attempts = 0
-  let connectedAt: number | null = null
+  /** A 401 already got a fresh token; a second one in a row backs off. */
+  let retriedAfterRefresh = false
   let invalidEventReported = false
 
-  function reportInvalidEvent() {
-    if (invalidEventReported) return
-    invalidEventReported = true
-    options.onInvalidEvent?.()
+  function transition(next: ConnectionState) {
+    if (state.kind === 'stopped') return
+    if (state.kind === 'starting' || state.kind === 'backoff') {
+      clearTimeout(state.timer)
+    }
+    if (
+      (state.kind === 'connecting' || state.kind === 'open') &&
+      !('controller' in next && next.controller === state.controller)
+    ) {
+      state.controller.abort()
+    }
+    state = next
+  }
+
+  /** Whether `controller` is still the request the client is waiting on. */
+  function owns(controller: AbortController) {
+    return (
+      (state.kind === 'connecting' || state.kind === 'open') &&
+      state.controller === controller
+    )
+  }
+
+  function isHidden() {
+    return (
+      typeof document !== 'undefined' && document.visibilityState === 'hidden'
+    )
   }
 
   function scheduleReconnect() {
-    if (stopped || paused) return
+    if (state.kind === 'stopped' || state.kind === 'paused') return
     // Only a stream that stayed up resets the backoff, so a server or proxy
     // that keeps cutting streams short can't cause a fast reconnect loop.
-    if (connectedAt !== null && Date.now() - connectedAt >= STABLE_STREAM_MS) {
+    if (
+      state.kind === 'open' &&
+      Date.now() - state.openedAt >= STABLE_STREAM_MS
+    ) {
       attempts = 0
     }
-    connectedAt = null
-    const delay = Math.min(30_000, 1000 * Math.pow(2, attempts))
+    const delay = Math.min(MAX_RECONNECT_DELAY_MS, 1000 * 2 ** attempts)
     attempts += 1
-    if (reconnectTimer) clearTimeout(reconnectTimer)
-    reconnectTimer = setTimeout(() => {
-      void connect()
-    }, delay)
-  }
-
-  function isExpectedDisconnect(
-    err: unknown,
-    controller: AbortController,
-  ): boolean {
-    if (stopped || paused || controller.signal.aborted) return true
-    return err instanceof DOMException && err.name === 'AbortError'
+    // The next connect may refresh the token once more: it can have expired
+    // during the wait.
+    retriedAfterRefresh = false
+    transition({
+      kind: 'backoff',
+      timer: setTimeout(() => void connect(), delay),
+    })
   }
 
   function isRetriableStreamError(err: unknown): boolean {
@@ -83,21 +122,15 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   }
 
   async function connect(): Promise<void> {
-    if (stopped) return
-    if (
-      typeof document !== 'undefined' &&
-      document.visibilityState === 'hidden'
-    ) {
-      paused = true
+    if (state.kind === 'stopped') return
+    if (isHidden()) {
+      transition({ kind: 'paused' })
       return
     }
 
-    paused = false
-    abortController?.abort()
     const controller = new AbortController()
-    abortController = controller
-
-    let token = options.getAccessToken()
+    transition({ kind: 'connecting', controller })
+    const token = options.getAccessToken()
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/notifications/stream`, {
@@ -109,19 +142,25 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         credentials: 'include',
         signal: controller.signal,
       })
+      if (!owns(controller)) return
 
       if (response.status === 401) {
+        if (retriedAfterRefresh) {
+          // A fresh token was refused too: back off instead of looping.
+          throw new Error('SSE connect refused after a token refresh.')
+        }
         try {
-          token = await options.refreshAccessToken()
+          await options.refreshAccessToken()
         } catch (error) {
           if (isTerminalSessionRefreshError(error)) {
-            stopped = true
+            transition({ kind: 'stopped' })
             options.onError?.(error)
             return
           }
           throw error
         }
-        attempts = 0
+        if (!owns(controller)) return
+        retriedAfterRefresh = true
         return connect()
       }
 
@@ -129,8 +168,9 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
         throw new Error(`SSE connect failed: ${response.status}`)
       }
 
-      connectedAt = Date.now()
+      retriedAfterRefresh = false
       invalidEventReported = false
+      transition({ kind: 'open', controller, openedAt: Date.now() })
       options.onOpen?.()
 
       const reader = response.body
@@ -158,19 +198,22 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
       }
 
       // Stream ended; reconnect
-      if (abortController !== controller) return
-      abortController = null
-      scheduleReconnect()
+      if (owns(controller)) scheduleReconnect()
     } catch (err) {
-      if (abortController === controller) {
-        abortController = null
-      }
-      if (isExpectedDisconnect(err, controller)) return
+      // A request the client already moved past (paused, replaced, stopped)
+      // was aborted on purpose.
+      if (!owns(controller)) return
       if (!isRetriableStreamError(err)) {
         options.onError?.(err)
       }
       scheduleReconnect()
     }
+  }
+
+  function reportInvalidEvent() {
+    if (invalidEventReported) return
+    invalidEventReported = true
+    options.onInvalidEvent?.()
   }
 
   function handleSseFrame(raw: string) {
@@ -210,32 +253,23 @@ export function createNotificationsSseClient(options: SubscribeOptions) {
   }
 
   function handleVisibilityChange() {
-    if (stopped) return
+    if (state.kind === 'stopped') return
     if (document.visibilityState === 'visible') {
-      paused = false
       attempts = 0
       options.onVisible?.()
-      void connect()
+      // Leaving starting or backoff cancels its pending connect.
+      if (state.kind !== 'connecting' && state.kind !== 'open') void connect()
     } else {
-      paused = true
-      abortController?.abort()
+      transition({ kind: 'paused' })
     }
   }
-
-  initialConnectTimer = setTimeout(() => {
-    initialConnectTimer = null
-    void connect()
-  }, INITIAL_CONNECT_DELAY_MS)
 
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', handleVisibilityChange)
   }
 
   return function stop() {
-    stopped = true
-    if (initialConnectTimer) clearTimeout(initialConnectTimer)
-    if (reconnectTimer) clearTimeout(reconnectTimer)
-    abortController?.abort()
+    transition({ kind: 'stopped' })
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
