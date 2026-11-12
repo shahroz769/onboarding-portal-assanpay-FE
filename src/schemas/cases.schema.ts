@@ -646,7 +646,15 @@ export type MidCreationEmailResponse = {
 }
 
 const saveWordpressWebsiteInputSchema = z.object({
-  clonedWebsiteLink: z.string().trim().pipe(z.url()),
+  clonedWebsiteLink: z
+    .string()
+    .trim()
+    .pipe(
+      z.url({
+        protocol: /^https?$/,
+        error: 'Enter a valid http or https URL.',
+      }),
+    ),
 })
 
 export type SaveWordpressWebsiteInput = z.infer<

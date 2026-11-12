@@ -156,6 +156,20 @@ const ACTION_META: Record<
     iconWrapperClassName:
       'border-cyan-200 bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/60',
   },
+  resubmission_link_prepared: {
+    label: 'Resubmission message previewed',
+    icon: Eye,
+    iconClassName: 'text-slate-700 dark:text-slate-300',
+    iconWrapperClassName:
+      'border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950/60',
+  },
+  resubmission_link_revoked: {
+    label: 'Unsent resubmission link revoked',
+    icon: ShieldAlert,
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    iconWrapperClassName:
+      'border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60',
+  },
   resubmission_whatsapp_sent_manual: {
     label: 'Manual WhatsApp sent',
     icon: MailCheck,
@@ -715,7 +729,21 @@ function formatDetails(
     }
   }
 
-  if (action === 'resubmission_link_regenerated') {
+  if (action === 'resubmission_link_revoked') {
+    const reasons: Record<string, string> = {
+      case_reassigned: 'The case changed owner',
+      user_deactivated: 'The employee who previewed it was deactivated',
+      user_access_changed: "The previewing employee's access changed",
+    }
+    const reason =
+      typeof details.reason === 'string' ? reasons[details.reason] : undefined
+    return `${reason ?? 'A staff change'} before it was sent. The merchant's current link is unaffected.`
+  }
+
+  if (
+    action === 'resubmission_link_regenerated' ||
+    action === 'resubmission_link_prepared'
+  ) {
     const labels = Array.isArray(details.rejectedFieldLabels)
       ? details.rejectedFieldLabels.filter(
           (value): value is string =>

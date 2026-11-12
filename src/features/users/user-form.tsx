@@ -54,6 +54,8 @@ import {
   USER_GENDER_LABELS,
   USER_ROLE_LABELS,
   USER_STATUS_LABELS,
+  USERNAME_FORMAT_MESSAGE,
+  USERNAME_PATTERN,
   roleTypes,
   userFormSchema,
 } from '#/schemas/users.schema'
@@ -413,7 +415,21 @@ export function UserForm({
               }}
             </form.Field>
 
-            <form.Field name="username">
+            <form.Field
+              name="username"
+              // Format applies to new accounts only; an existing username is
+              // read-only and must not block saving other changes.
+              validators={
+                mode === 'edit'
+                  ? undefined
+                  : {
+                      onChange: ({ value }) =>
+                        value && !USERNAME_PATTERN.test(value)
+                          ? { message: USERNAME_FORMAT_MESSAGE }
+                          : undefined,
+                    }
+              }
+            >
               {(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid
@@ -426,20 +442,25 @@ export function UserForm({
                       id={field.name}
                       value={field.state.value}
                       autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="e.g. ayesha.khan"
                       onBlur={field.handleBlur}
+                      // Sign-in is case-insensitive, so usernames are saved
+                      // lowercase; show that as the user types.
                       onChange={(event) =>
-                        field.handleChange(event.target.value)
+                        field.handleChange(event.target.value.toLowerCase())
                       }
                       aria-invalid={isInvalid}
                       disabled={disabled || mode === 'edit'}
                     />
 
-                    {mode === 'edit' ? (
-                      <FieldDescription>
-                        Username cannot be changed after the account is created.
-                      </FieldDescription>
-                    ) : null}
+                    <FieldDescription>
+                      {mode === 'edit'
+                        ? 'Username cannot be changed after the account is created.'
+                        : 'Lowercase letters, numbers, dots, dashes and underscores.'}
+                    </FieldDescription>
                     {isInvalid ? (
                       <FieldError errors={field.state.meta.errors} />
                     ) : null}

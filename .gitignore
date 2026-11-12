@@ -13,3 +13,14 @@ hono/.env
 __unconfig*
 todos.json
 mcp-todos.json
+
+# Environment files: never commit real values. Examples stay tracked.
+.env.*
+!.env.example
+# Keys, certificates and cloud credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*credentials*.json

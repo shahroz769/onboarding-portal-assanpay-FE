@@ -44,7 +44,12 @@ const formSchema = z.object({
     .string()
     .trim()
     .min(1, 'WordPress website link is required.')
-    .pipe(z.url('Enter a valid URL.')),
+    .pipe(
+      z.url({
+        protocol: /^https?$/,
+        error: 'Enter a valid http or https URL.',
+      }),
+    ),
 })
 
 function getMerchantString(

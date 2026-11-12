@@ -277,14 +277,32 @@ export const emailRecipientSettingsInputSchema =
   })
 
 export const merchantPortalSettingsSchema = z.object({
-  loginUrl: z.string().trim().pipe(z.url()),
+  loginUrl: z
+    .string()
+    .trim()
+    .pipe(
+      z.url({
+        protocol: /^https?$/,
+        error: 'Enter a valid http or https URL.',
+      }),
+    ),
   serverBaseUrl: z
     .string()
     .trim()
     .max(2048)
-    .refine((value) => value === '' || z.url().safeParse(value).success, {
-      error: 'Enter a valid server base URL.',
-    })
+    .refine(
+      (value) =>
+        value === '' ||
+        z
+          .url({
+            protocol: /^https?$/,
+            error: 'Enter a valid http or https URL.',
+          })
+          .safeParse(value).success,
+      {
+        error: 'Enter a valid server base URL.',
+      },
+    )
     .default(''),
   serverCallbackIp: z
     .string()

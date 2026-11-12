@@ -125,6 +125,12 @@ const queueAccessSchema = z
     }
   })
 
+// Same rule as the backend's createUserSchema. Checked on the create form
+// only: existing usernames are read-only and may predate it.
+export const USERNAME_PATTERN = /^[a-z0-9._-]+$/
+export const USERNAME_FORMAT_MESSAGE =
+  'Use lowercase letters, numbers, dots, dashes or underscores.'
+
 export const userFormSchema = z
   .object({
     name: z.string().trim().min(2, 'Name is required').max(120),
