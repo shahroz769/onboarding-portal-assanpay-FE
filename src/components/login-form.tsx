@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { AxiosError } from 'axios'
@@ -9,8 +9,11 @@ import { useLoginMutation } from '#/features/auth/auth-query'
 import { sanitizeRedirect } from '#/features/auth/redirect'
 import { loginSchema } from '#/schemas/auth.schema'
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
+  FieldContent,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -66,6 +69,27 @@ function getErrorMessage(error: unknown) {
 const invalidInputClass =
   'aria-invalid:ring-1 aria-invalid:ring-destructive dark:aria-invalid:ring-destructive aria-invalid:focus-visible:ring-[3px] aria-invalid:focus-visible:ring-destructive/30 dark:aria-invalid:focus-visible:ring-destructive/40'
 
+// The last "Trust this device" choice on this browser, so a trusted browser
+// stays trusted without re-ticking. Only a convenience: the server decides
+// trust from its signed cookie.
+const TRUST_DEVICE_STORAGE_KEY = 'login.trustDevice'
+
+function readTrustDevicePreference() {
+  try {
+    return window.localStorage.getItem(TRUST_DEVICE_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveTrustDevicePreference(value: boolean) {
+  try {
+    window.localStorage.setItem(TRUST_DEVICE_STORAGE_KEY, String(value))
+  } catch {
+    // Storage blocked; the box simply starts unticked next time.
+  }
+}
+
 export function LoginForm({
   className,
   redirect,
@@ -82,6 +106,7 @@ export function LoginForm({
     defaultValues: {
       identifier: '',
       password: '',
+      trustDevice: false,
     },
     validators: {
       onSubmit: loginSchema,
@@ -98,16 +123,23 @@ export function LoginForm({
         await loginMutation.mutateAsync({
           identifier: value.identifier,
           password: value.password,
+          trustDevice: value.trustDevice,
         })
       } catch (error) {
         setSubmitError(getErrorMessage(error))
         return
       }
+      saveTrustDevicePreference(value.trustDevice)
       // Awaited so the form stays submitting (button disabled, spinner on)
       // until the destination route has loaded and this page unmounts.
       await navigate({ href: sanitizeRedirect(redirect) })
     },
   })
+
+  // Read after mount: storage does not exist during server rendering.
+  useEffect(() => {
+    if (readTrustDevicePreference()) form.setFieldValue('trustDevice', true)
+  }, [form])
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
@@ -228,6 +260,31 @@ export function LoginForm({
                 </Field>
               )
             }}
+          </form.Field>
+
+          <form.Field name="trustDevice">
+            {(field) => (
+              <Field orientation="horizontal" className="mb-5">
+                <Checkbox
+                  id={field.name}
+                  name={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={(checked) =>
+                    field.handleChange(checked === true)
+                  }
+                />
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>
+                    Trust this device
+                  </FieldLabel>
+                  <FieldDescription>
+                    Keeps sign-in working here if someone else causes too many
+                    failed attempts on your account. Don&apos;t use on shared
+                    computers.
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+            )}
           </form.Field>
 
           <form.Subscribe

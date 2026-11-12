@@ -10,4 +10,5 @@ export const loginSchema = z.object({
     .string()
     .min(1, 'Enter your password')
     .max(128, 'Invalid username or password'),
+  trustDevice: z.boolean(),
 })

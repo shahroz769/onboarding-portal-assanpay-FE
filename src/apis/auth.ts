@@ -5,6 +5,9 @@ import type { SetPasswordValues } from '#/schemas/users.schema'
 type LoginRequest = {
   identifier: string
   password: string
+  // Sets (or, when false, removes) the backend's signed device cookie. A
+  // trusted browser keeps signing in while others are rate limited.
+  trustDevice: boolean
 }
 
 export async function loginRequest(input: LoginRequest) {
