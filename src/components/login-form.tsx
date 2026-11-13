@@ -13,7 +13,6 @@ import { Checkbox } from '#/components/ui/checkbox'
 import {
   Field,
   FieldContent,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -277,11 +276,6 @@ export function LoginForm({
                   <FieldLabel htmlFor={field.name}>
                     Trust this device
                   </FieldLabel>
-                  <FieldDescription>
-                    Keeps sign-in working here if someone else causes too many
-                    failed attempts on your account. Don&apos;t use on shared
-                    computers.
-                  </FieldDescription>
                 </FieldContent>
               </Field>
             )}

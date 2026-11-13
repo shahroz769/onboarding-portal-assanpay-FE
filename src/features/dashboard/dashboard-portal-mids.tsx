@@ -76,6 +76,7 @@ import { fetchPendingPortalMidValues } from '#/apis/dashboard'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import { cn } from '#/lib/utils'
 import { useMorph } from '#/hooks/use-morph'
+import { useIsMobile } from '#/hooks/use-mobile'
 import {
   appliedPortalMidsQueryOptions,
   pendingPortalMidsInfiniteQueryOptions,
@@ -99,6 +100,21 @@ const MID_GROUP_LABELS: Record<PendingPortalMidGroup, string> = {
   shopify: 'Shopify',
 }
 
+function MidKindBadge({ item }: { item: DashboardPendingPortalMidLimit }) {
+  return (
+    <Badge variant={item.group === 'internal' ? 'secondary' : 'outline'}>
+      {MID_GROUP_LABELS[item.group]}
+    </Badge>
+  )
+}
+
+const portalMidColumn: DataTableColumnDef<DashboardPendingPortalMidLimit> = {
+  id: 'portalMid',
+  header: <span className="block text-right">Portal MID</span>,
+  width: 130,
+  cell: (item) => <CopyMidButton mid={item.portalMid} />,
+}
+
 const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
   [
     {
@@ -117,18 +133,29 @@ const pendingMidColumns: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
       id: 'midKind',
       header: 'MID type',
       width: 140,
+      cell: (item) => <MidKindBadge item={item} />,
+    },
+    portalMidColumn,
+  ]
+
+// Phones have no room for three columns, so the MID type moves under the
+// merchant name.
+const pendingMidColumnsMobile: DataTableColumnDef<DashboardPendingPortalMidLimit>[] =
+  [
+    {
+      id: 'merchant',
+      header: 'Merchant',
       cell: (item) => (
-        <Badge variant={item.group === 'internal' ? 'secondary' : 'outline'}>
-          {MID_GROUP_LABELS[item.group]}
-        </Badge>
+        <div className="flex flex-col items-start gap-1 leading-tight whitespace-normal">
+          <span className="font-medium wrap-anywhere">{item.merchantName}</span>
+          <span className="text-xs text-muted-foreground wrap-anywhere">
+            {item.subMerchantName ?? 'Sub-merchant not selected'}
+          </span>
+          <MidKindBadge item={item} />
+        </div>
       ),
     },
-    {
-      id: 'portalMid',
-      header: <span className="block text-right">Portal MID</span>,
-      width: 130,
-      cell: (item) => <CopyMidButton mid={item.portalMid} />,
-    },
+    portalMidColumn,
   ]
 
 const EMPTY_PENDING: DashboardPendingPortalMidLimit[] = []
@@ -142,6 +169,7 @@ const EMPTY_COUNTS: PendingPortalMidCounts = {
 /** Without `data`, renders the loading state with the exact loaded layout. */
 export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
   const { user } = useAuth()
+  const isMobile = useIsMobile()
   const applyLimits = useApplyPortalMidLimits()
   const pendingQuery = useInfiniteQuery(pendingPortalMidsInfiniteQueryOptions())
   const isLoading = !data
@@ -279,7 +307,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <CopyMidsMenu counts={counts} disabled={isLoading} />
             <Button
               variant="outline"
@@ -319,7 +347,7 @@ export function DashboardPortalMids({ data }: { data?: DashboardResponse }) {
             fixed base height and only grows to match the neighbouring card. */}
         <div className="relative min-h-80 flex-1">
           <DataTable
-            columns={pendingMidColumns}
+            columns={isMobile ? pendingMidColumnsMobile : pendingMidColumns}
             data={pending}
             getRowId={(item) =>
               `${item.caseId}-${item.midKind}-${item.portalMid}`

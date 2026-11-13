@@ -106,6 +106,11 @@ function pageTransitionTypes({
   pathChanged,
 }: LocationChange): Array<string> | false {
   if (!fromLocation || !pathChanged) return false
+  // View transition layers paint above everything, including the open mobile
+  // sidebar sheet, so the page would animate on top of it.
+  if (document.querySelector('[data-slot="sidebar"][data-mobile="true"]')) {
+    return false
+  }
   const from = trimPath(fromLocation.pathname)
   const to = trimPath(toLocation.pathname)
 
