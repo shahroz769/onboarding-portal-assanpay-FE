@@ -1,6 +1,8 @@
 // Typed access to the View Transition API. Every caller must handle it being
 // missing: those browsers get the same UI change without the animation.
 
+import { getPageMotion } from '#/lib/page-motion'
+
 type ViewTransitionHandle = {
   finished: Promise<void>
   updateCallbackDone: Promise<void>
@@ -23,6 +25,7 @@ function viewTransitionDocument() {
 export function canViewTransition() {
   return (
     typeof document !== 'undefined' &&
+    getPageMotion() !== 'off' &&
     typeof viewTransitionDocument().startViewTransition === 'function'
   )
 }
@@ -32,7 +35,11 @@ export function startViewTransition(
   update: ViewTransitionUpdate,
 ): ViewTransitionHandle | null {
   const doc = viewTransitionDocument()
-  if (typeof doc.startViewTransition !== 'function') {
+  // Animations are off (user setting): same UI change, no transition.
+  if (
+    getPageMotion() === 'off' ||
+    typeof doc.startViewTransition !== 'function'
+  ) {
     void update()
     return null
   }

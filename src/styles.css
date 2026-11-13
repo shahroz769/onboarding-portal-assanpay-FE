@@ -5,6 +5,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* motion-reduce / motion-safe follow the topbar animations toggle
+   (lib/page-motion.ts) as well as the OS: "on" forces full motion, "off"
+   forces reduced, "system" (no attribute) follows the OS. */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    &:where(:root:not([data-animations='on']) *) {
+      @slot;
+    }
+  }
+  &:where([data-animations='off'] *) {
+    @slot;
+  }
+}
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-animations='off']) *) {
+      @slot;
+    }
+  }
+  &:where([data-animations='on'] *) {
+    @slot;
+  }
+}
+
 /* Self-hosted variable fonts, split into unicode-range subsets so browsers
    only download what a page actually renders. Latin files are preloaded in
    __root.tsx; Latin Extended loads on demand (accented names etc.). */
@@ -386,9 +410,12 @@ body,
   }
 }
 
-/* Reduced motion: the skeleton just fades in, all at once. */
+/* Reduced motion: the skeleton just fades in, all at once. Every reduced-
+   motion block skips data-animations="on": the topbar toggle's "On" forces
+   full motion even when the OS asks to reduce it (lib/page-motion.ts). */
 @media (prefers-reduced-motion: reduce) {
-  :root[data-vt-pending-enter] [data-vt='page'][data-route-pending] {
+  :root[data-vt-pending-enter]:not([data-animations='on'])
+    [data-vt='page'][data-route-pending] {
     & [data-vt-section] {
       animation-name: vt-dissolve-in;
     }
@@ -449,8 +476,8 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  :root:not([data-animations='on'])::view-transition-old(root),
+  :root:not([data-animations='on'])::view-transition-new(root) {
     animation-duration: 0.01s;
   }
 }
@@ -588,21 +615,23 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-shell-logo-ghost {
-    display: none;
-  }
+  :where(:root:not([data-animations='on'])) {
+    .app-shell-logo-ghost {
+      display: none;
+    }
 
-  .app-shell-logo-spin {
-    animation: app-shell-logo-pulse 1600ms ease-in-out infinite alternate;
-  }
+    .app-shell-logo-spin {
+      animation: app-shell-logo-pulse 1600ms ease-in-out infinite alternate;
+    }
 
-  .app-shell-logo-half {
-    animation-name: app-shell-logo-fade;
-  }
+    .app-shell-logo-half {
+      animation-name: app-shell-logo-fade;
+    }
 
-  .app-shell-logo-trail,
-  .app-shell-logo-dot {
-    animation: none;
+    .app-shell-logo-trail,
+    .app-shell-logo-dot {
+      animation: none;
+    }
   }
 }
 
@@ -731,38 +760,40 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Popups and dialogs keep their fade but drop the scale. */
-  :is(
-    [data-slot='dialog-content'],
-    [data-slot='alert-dialog-content'],
-    [data-slot='popover-content'],
-    [data-slot='dropdown-menu-content'],
-    [data-slot='dropdown-menu-sub-content'],
-    [data-slot='select-content'],
-    [data-slot='combobox-content'],
-    [data-slot='tooltip-content']
-  ) {
-    scale: none !important;
-  }
+  :where(:root:not([data-animations='on'])) {
+    /* Popups and dialogs keep their fade but drop the scale. */
+    :is(
+      [data-slot='dialog-content'],
+      [data-slot='alert-dialog-content'],
+      [data-slot='popover-content'],
+      [data-slot='dropdown-menu-content'],
+      [data-slot='dropdown-menu-sub-content'],
+      [data-slot='select-content'],
+      [data-slot='combobox-content'],
+      [data-slot='tooltip-content']
+    ) {
+      scale: none !important;
+    }
 
-  /* Tooltips also drop their slide (dialogs use translate to centre). */
-  [data-slot='tooltip-content'] {
-    translate: none !important;
-  }
+    /* Tooltips also drop their slide (dialogs use translate to centre). */
+    [data-slot='tooltip-content'] {
+      translate: none !important;
+    }
 
-  /* The sheet fades in place instead of sliding across the screen. */
-  [data-slot='sheet-content'] {
-    translate: none !important;
-    transition-property: opacity !important;
-  }
+    /* The sheet fades in place instead of sliding across the screen. */
+    [data-slot='sheet-content'] {
+      translate: none !important;
+      transition-property: opacity !important;
+    }
 
-  [data-slot='sheet-content']:is([data-starting-style], [data-ending-style]) {
-    opacity: 0;
-  }
+    [data-slot='sheet-content']:is([data-starting-style], [data-ending-style]) {
+      opacity: 0;
+    }
 
-  /* The sidebar resizes instantly. */
-  :is([data-slot='sidebar-gap'], [data-slot='sidebar-container']) {
-    transition-duration: 0s !important;
+    /* The sidebar resizes instantly. */
+    :is([data-slot='sidebar-gap'], [data-slot='sidebar-container']) {
+      transition-duration: 0s !important;
+    }
   }
 }
 
@@ -815,42 +846,44 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .motion-success-enter,
-  .motion-success-icon,
-  .motion-file-state,
-  .motion-reply-target,
-  .motion-list-item,
-  .motion-case-stage,
-  .motion-case-stage-icon {
-    transform: none;
-    transition-duration: 100ms;
-    transition-delay: 0ms;
-  }
-
-  .motion-case-stage-indicator {
-    transition-property: opacity;
-    transition-duration: 100ms;
-  }
-
-  .motion-file-state[data-motion='exiting'],
-  .motion-reply-target[data-motion='exiting'] {
-    transform: none;
-  }
-
-  /* Height snaps; only the fade remains. */
-  .motion-collapsible-content {
-    transition: opacity 100ms var(--ease-out);
-  }
-
-  @starting-style {
+  :where(:root:not([data-animations='on'])) {
     .motion-success-enter,
     .motion-success-icon,
-    .motion-file-state[data-motion='entering'],
-    .motion-file-state[data-motion='returning'],
-    .motion-reply-target[data-motion='entering'],
-    .motion-list-item[data-motion='entering'],
+    .motion-file-state,
+    .motion-reply-target,
+    .motion-list-item,
+    .motion-case-stage,
     .motion-case-stage-icon {
       transform: none;
+      transition-duration: 100ms;
+      transition-delay: 0ms;
+    }
+
+    .motion-case-stage-indicator {
+      transition-property: opacity;
+      transition-duration: 100ms;
+    }
+
+    .motion-file-state[data-motion='exiting'],
+    .motion-reply-target[data-motion='exiting'] {
+      transform: none;
+    }
+
+    /* Height snaps; only the fade remains. */
+    .motion-collapsible-content {
+      transition: opacity 100ms var(--ease-out);
+    }
+
+    @starting-style {
+      .motion-success-enter,
+      .motion-success-icon,
+      .motion-file-state[data-motion='entering'],
+      .motion-file-state[data-motion='returning'],
+      .motion-reply-target[data-motion='entering'],
+      .motion-list-item[data-motion='entering'],
+      .motion-case-stage-icon {
+        transform: none;
+      }
     }
   }
 }
@@ -922,7 +955,7 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .t-digit-group .t-digit {
+  :where(:root:not([data-animations='on'])) .t-digit-group .t-digit {
     animation: none !important;
   }
 }
@@ -987,8 +1020,7 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .t-badge,
-  .t-badge-dot {
+  :where(:root:not([data-animations='on'])) :is(.t-badge, .t-badge-dot) {
     animation: none !important;
     transition: none !important;
   }
@@ -1024,8 +1056,93 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .t-check,
-  .t-check svg path {
+  :where(:root:not([data-animations='on'])) :is(.t-check, .t-check svg path) {
     transition: none !important;
+  }
+}
+
+/* Animations turned off in the topbar (lib/page-motion.ts): every CSS
+   animation and transition becomes instant. 0.01ms, not 0s, so transitions
+   still run and fire transitionend (document-upload-field and case-chatter
+   remove items on it). Loading indicators keep looping: a frozen spinner
+   reads as a hang. View transitions are handled in morph.css. */
+:root[data-animations='off'] {
+  scroll-behavior: auto !important;
+
+  &
+    *:not(
+      .animate-spin,
+      .animate-pulse,
+      .animate-ping,
+      [class*='app-shell-logo']
+    ),
+  & *::before,
+  & *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* Animations forced "on" while the OS asks to reduce motion: undo the
+   reduced-motion rules that third-party styles ship, with their own values.
+   Sonner (sonner/dist/styles.css) strips every toast transition; the shadcn
+   .shimmer utility stops its sweep. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-animations='on'] {
+    & [data-sonner-toast] {
+      transition:
+        transform 400ms,
+        opacity 400ms,
+        height 400ms,
+        box-shadow 200ms !important;
+    }
+    & [data-sonner-toast] > * {
+      transition: opacity 400ms !important;
+    }
+    & [data-sonner-toast][data-styled='true'] [data-button] {
+      transition:
+        opacity 400ms,
+        box-shadow 200ms !important;
+    }
+    & [data-sonner-toast][data-styled='true'] [data-close-button] {
+      transition:
+        opacity 100ms,
+        background 200ms,
+        border-color 200ms !important;
+    }
+    &
+      [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='false'] {
+      transition:
+        transform 500ms,
+        opacity 200ms !important;
+    }
+    & [data-sonner-toast][data-swiping='true'] {
+      transition: none !important;
+    }
+    & .sonner-loading-bar {
+      animation: sonner-spin 1.2s linear infinite !important;
+    }
+
+    & .shimmer {
+      background-image: var(
+        --shimmer-image,
+        linear-gradient(
+          calc(90deg + var(--shimmer-angle)),
+          var(--_base) calc(50% - var(--_spread)),
+          color-mix(in oklch, var(--_highlight), var(--_base) 50%)
+            calc(50% - var(--_spread) * 0.5),
+          var(--_highlight) 50%,
+          color-mix(in oklch, var(--_highlight), var(--_base) 50%)
+            calc(50% + var(--_spread) * 0.5),
+          var(--_base) calc(50% + var(--_spread))
+        )
+      );
+      -webkit-text-fill-color: var(--shimmer-text-fill, transparent);
+      animation: tw-shimmer var(--shimmer-duration, 2s) linear infinite;
+    }
   }
 }

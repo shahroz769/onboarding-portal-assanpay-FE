@@ -10,6 +10,7 @@ import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { AppShellPending } from '#/components/app-shell-pending'
 import { AppSidebar } from '#/components/app-sidebar'
 import { NavUser } from '#/components/nav-user'
+import { MotionToggle } from '#/components/motion-toggle'
 import { ThemeToggle } from '#/components/theme-toggle'
 import {
   NotificationBell,
@@ -206,6 +207,7 @@ function AppLayout() {
             </Breadcrumb>
             <div className="ml-auto flex items-center gap-1">
               <NotificationBell />
+              <MotionToggle />
               <ThemeToggle />
               <NavUser />
             </div>

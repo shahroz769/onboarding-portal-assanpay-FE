@@ -150,6 +150,9 @@ function DailyCountBarChart({
                 allowDecimals={false}
               />
               <ChartTooltip
+                // Explicit, so the tooltip follows the animations setting
+                // (recharts' default 'auto' only reads the OS).
+                isAnimationActive={!reducedMotion}
                 cursor={{ opacity: 0.5 }}
                 content={
                   <ChartTooltipContent

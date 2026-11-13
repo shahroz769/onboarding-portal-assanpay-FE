@@ -2,6 +2,7 @@ import type { AnyRouter, ParsedLocation } from '@tanstack/react-router'
 
 import { EMAIL_TEMPLATE_TABS } from '#/features/configuration/email-template-tabs'
 import { MERCHANT_DETAIL_TABS } from '#/features/merchants/merchant-detail-tabs'
+import { getPageMotion } from '#/lib/page-motion'
 
 // View transition types for route changes, passed to the router as
 // `defaultViewTransition`. styles.css turns each type into Morph UI motion:
@@ -106,6 +107,9 @@ function pageTransitionTypes({
   pathChanged,
 }: LocationChange): Array<string> | false {
   if (!fromLocation || !pathChanged) return false
+  // The user turned page transitions off (topbar motion toggle). Returning
+  // false also keeps the skeleton rise-in off, see trackRouteTransitions.
+  if (getPageMotion() === 'off') return false
   // View transition layers paint above everything, including the open mobile
   // sidebar sheet, so the page would animate on top of it.
   if (document.querySelector('[data-slot="sidebar"][data-mobile="true"]')) {

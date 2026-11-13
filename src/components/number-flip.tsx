@@ -1,5 +1,6 @@
 import { useDeferredValue, useState, ViewTransition } from 'react'
 
+import { usePageMotion } from '#/lib/page-motion'
 import { cn } from '#/lib/utils'
 
 // Morph UI Number Flip: changed digits roll a full line in the direction of
@@ -21,6 +22,7 @@ export function NumberFlip({
 }) {
   // Query data lands as a synchronous update, and <ViewTransition> only
   // animates Transitions: the deferred value re-renders the digits in one.
+  const motion = usePageMotion()
   const shown = useDeferredValue(value)
   const [previous, setPrevious] = useState(shown)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
@@ -30,6 +32,14 @@ export function NumberFlip({
   }
 
   const formatted = format(shown)
+  // Animations off (topbar toggle): plain digits, no roll and no pop-in.
+  if (motion === 'off') {
+    return (
+      <span className={cn('inline-flex tabular-nums', className)}>
+        {formatted}
+      </span>
+    )
+  }
   return (
     <span className={cn('inline-flex tabular-nums', className)}>
       <span className="sr-only">{formatted}</span>

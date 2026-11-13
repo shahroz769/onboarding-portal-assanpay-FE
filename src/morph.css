@@ -679,17 +679,30 @@
   }
 }
 
+/* Animations turned off in the topbar (lib/page-motion.ts). Covers the React
+   <ViewTransition>s, which can't be gated in JS: every transition jumps
+   straight to its end state. */
+:root[data-animations='off']::view-transition-group(*),
+:root[data-animations='off']::view-transition-image-pair(*),
+:root[data-animations='off']::view-transition-old(*),
+:root[data-animations='off']::view-transition-new(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+
+/* Skipped under data-animations="on": the topbar toggle forces full motion
+   even when the OS asks to reduce it. */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-image-pair(*) {
+  :root:not([data-animations='on'])::view-transition-group(*),
+  :root:not([data-animations='on'])::view-transition-image-pair(*) {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
   }
-  ::view-transition-old(*) {
+  :root:not([data-animations='on'])::view-transition-old(*) {
     animation: 150ms var(--vt-ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both
       vt-dissolve-out !important;
   }
-  ::view-transition-new(*) {
+  :root:not([data-animations='on'])::view-transition-new(*) {
     animation: 150ms var(--vt-ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both
       vt-dissolve-in !important;
   }

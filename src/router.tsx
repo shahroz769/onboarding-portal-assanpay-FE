@@ -4,6 +4,7 @@ import { routeTree } from './routeTree.gen'
 
 import { DefaultRouteError } from '#/components/default-route-error'
 import { setApiClientRouter } from '#/lib/api-client'
+import { applyPageMotion } from '#/lib/page-motion'
 import {
   routeTransitionTypes,
   trackRouteTransitions,
@@ -32,7 +33,10 @@ export function getRouter() {
   })
 
   setApiClientRouter(router)
-  if (typeof document !== 'undefined') trackRouteTransitions(router)
+  if (typeof document !== 'undefined') {
+    applyPageMotion()
+    trackRouteTransitions(router)
+  }
 
   return router
 }
