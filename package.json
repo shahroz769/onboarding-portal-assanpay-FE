@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@babel/core": "^8.1.2",
-    "@cloudflare/vite-plugin": "^1.69.0",
+    "@cloudflare/vite-plugin": "^1.69.1",
     "@rolldown/plugin-babel": "^0.3.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tanstack/devtools-vite": "0.8.6",
@@ -68,10 +68,10 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",
-    "oxlint-tsgolint": "^7.0.2006",
-    "react-doctor": "^0.9.22",
+    "oxlint-tsgolint": "^7.0.2007",
+    "react-doctor": "^0.9.23",
     "typescript": "7.0.2",
     "vite": "^8.3.8",
-    "wrangler": "^4.160.1"
+    "wrangler": "^4.161.0"
   }
 }
