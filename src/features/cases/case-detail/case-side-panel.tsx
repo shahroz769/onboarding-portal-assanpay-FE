@@ -470,12 +470,12 @@ export function CaseSidePanel({ caseDetail, caseId }: CaseSidePanelProps) {
     if (primaryActionLockedRef.current) return
     primaryActionLockedRef.current = true
     setActionInFlight(kind)
-    try {
-      await run()
-    } finally {
+    // `.finally()` rather than try/finally: React Compiler can't lower a
+    // try statement without a catch clause and would skip this component.
+    await run().finally(() => {
       primaryActionLockedRef.current = false
       setActionInFlight(null)
-    }
+    })
   }
 
   // Mutation hooks surface backend errors with a toast; a failed step just

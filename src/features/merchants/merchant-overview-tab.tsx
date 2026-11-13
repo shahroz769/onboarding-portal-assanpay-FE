@@ -3,14 +3,8 @@ import { Activity, Building2, CalendarClock, Send, Wallet } from 'lucide-react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 
 import { Badge } from '#/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { SectionIcon } from '#/components/section-icon'
+import { Card, CardContent } from '#/components/ui/card'
+import { SectionCardHeader } from '#/components/section-card-header'
 import { merchantStatusBadgeClasses } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
 import type { MerchantOverviewResponse } from '#/schemas/merchants.schema'
@@ -183,15 +177,12 @@ function ProfileSection({
 }) {
   return (
     <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} tone={tone} />
-          <div>
-            <CardTitle render={<h2 />}>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+      <SectionCardHeader
+        icon={icon}
+        tone={tone}
+        title={title}
+        description={description}
+      />
       {/* Columns follow the card's width, not the viewport: a card can be
           full width or half width. */}
       <CardContent className="@container flex flex-col gap-5">

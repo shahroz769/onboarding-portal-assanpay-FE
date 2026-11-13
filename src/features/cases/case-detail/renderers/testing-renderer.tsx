@@ -28,6 +28,7 @@ import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { LoadPreviewButton } from '#/components/case-email/load-preview-button'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
@@ -363,21 +364,12 @@ export default function TestingRenderer({
             }
             manualContent={
               !manualPreview ? (
-                <Button
+                <LoadPreviewButton
+                  label="Load email preview"
+                  pending={fetchPreview.isPending}
                   onClick={handleLoadManualPreview}
-                  disabled={fetchPreview.isPending}
-                  variant="outline"
                   className="w-full"
-                >
-                  {fetchPreview.isPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <MailCheck data-icon="inline-start" />
-                  )}
-                  {fetchPreview.isPending
-                    ? 'Loading preview…'
-                    : 'Load email preview'}
-                </Button>
+                />
               ) : (
                 <ManualEmailPanel
                   preview={manualPreview}
@@ -388,21 +380,12 @@ export default function TestingRenderer({
             }
             whatsappContent={
               !manualPreview ? (
-                <Button
+                <LoadPreviewButton
+                  label="Load WhatsApp message"
+                  pending={fetchPreview.isPending}
                   onClick={handleLoadManualPreview}
-                  disabled={fetchPreview.isPending}
-                  variant="outline"
                   className="w-full"
-                >
-                  {fetchPreview.isPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <MailCheck data-icon="inline-start" />
-                  )}
-                  {fetchPreview.isPending
-                    ? 'Loading preview…'
-                    : 'Load WhatsApp message'}
-                </Button>
+                />
               ) : (
                 <WhatsAppMessagePanel
                   preview={manualPreview}

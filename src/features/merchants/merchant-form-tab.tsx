@@ -13,14 +13,8 @@ import type { ComponentType, ReactNode, SVGProps } from 'react'
 
 import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { Badge } from '#/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { SectionIcon } from '#/components/section-icon'
+import { Card, CardContent } from '#/components/ui/card'
+import { SectionCardHeader } from '#/components/section-card-header'
 import { Separator } from '#/components/ui/separator'
 import { cn } from '#/lib/utils'
 import type { StatusTint } from '#/lib/status-styles'
@@ -74,15 +68,12 @@ function Section({
 }) {
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} tone={tone} />
-          <div>
-            <CardTitle render={<h2 />}>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+      <SectionCardHeader
+        icon={icon}
+        tone={tone}
+        title={title}
+        description={description}
+      />
       <CardContent>
         <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">{children}</dl>
       </CardContent>
@@ -262,19 +253,18 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
           column instead of running past the bottom of the screen. */}
       <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-6 xl:max-h-[calc(100svh-6.5rem)] xl:overflow-y-auto xl:overscroll-contain">
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <SectionIcon icon={FileText} tone="indigo" />
-              <div>
-                <CardTitle render={<h2 />}>Uploaded documents</CardTitle>
-                <CardDescription>
-                  {documents.length} document
-                  {documents.length === 1 ? '' : 's'} submitted with this
-                  application.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+          <SectionCardHeader
+            icon={FileText}
+            tone="indigo"
+            title="Uploaded documents"
+            description={
+              <>
+                {documents.length} document
+                {documents.length === 1 ? '' : 's'} submitted with this
+                application.
+              </>
+            }
+          />
           <CardContent className="flex flex-col gap-2">
             {documentSubmissionGroup.files.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
@@ -287,17 +277,12 @@ export function MerchantFormTab({ detail }: MerchantFormTabProps) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <SectionIcon icon={FileText} tone="teal" />
-              <div>
-                <CardTitle render={<h2 />}>Agreements</CardTitle>
-                <CardDescription>
-                  Signed physical agreement received by the office.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+          <SectionCardHeader
+            icon={FileText}
+            tone="teal"
+            title="Agreements"
+            description="Signed physical agreement received by the office."
+          />
           <CardContent className="flex flex-col gap-2">
             <AgreementRow
               title="Received signed agreement"

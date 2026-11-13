@@ -13,19 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
 import { Spinner } from '#/components/ui/spinner'
 import { FieldGroup, Field, FieldLabel } from '#/components/ui/field'
+import { PrioritySelectField } from '#/components/priority-select-field'
 import type { MerchantListItem, Priority } from '#/schemas/merchants.schema'
-import { PRIORITIES, PRIORITY_LABELS } from '#/schemas/merchants.schema'
 
 export type MerchantPriorityTarget =
   | { type: 'single'; merchant: MerchantListItem }
@@ -107,30 +99,7 @@ function PriorityForm({
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <FieldGroup>
-          <Field>
-            <FieldLabel>Priority</FieldLabel>
-            <Select
-              items={PRIORITIES.map((p) => ({
-                value: p,
-                label: PRIORITY_LABELS[p],
-              }))}
-              value={priority}
-              onValueChange={(v) => setPriority(v as Priority)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {PRIORITY_LABELS[p]}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </Field>
+          <PrioritySelectField value={priority} onValueChange={setPriority} />
           <Field>
             <FieldLabel>Note (optional)</FieldLabel>
             <Textarea

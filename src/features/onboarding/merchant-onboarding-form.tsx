@@ -532,6 +532,9 @@ export function MerchantOnboardingForm({
       const submittedSummary = readSubmittedSummary()
       if (submittedSummary) {
         isSubmittedRef.current = true
+        // localStorage is only readable after mount on this SSR route, so the
+        // restored submission can't be derived during render.
+        // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
         setSubmission({ summary: submittedSummary, isReturning: true })
         onSubmittedChange?.(true)
         return

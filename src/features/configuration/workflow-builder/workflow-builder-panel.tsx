@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react'
+import { useReducer, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -182,10 +182,13 @@ export function WorkflowBuilderPanel() {
   })
 
   // Server data replaces the graph only while there are no unsaved edits;
-  // the reducer decides.
-  useEffect(() => {
+  // the reducer decides. Synced during render when the query result changes,
+  // so the new graph lands in the same render instead of one effect later.
+  const [syncedData, setSyncedData] = useState<typeof data>(undefined)
+  if (data !== syncedData) {
+    setSyncedData(data)
     if (data) dispatch({ type: 'server_config', config: data })
-  }, [data])
+  }
 
   // Keep derived node badges (start-rule count, in-flow styling) in sync
 
@@ -533,7 +536,7 @@ export function WorkflowBuilderPanel() {
             <Select
               items={base.versions.map((version) => ({
                 value: String(version.id),
-                label: `v${version.id}${version.id === base.activeVersionId ? ' - Current' : ' - History'} (${new Date(version.publishedAt).toLocaleDateString()})`,
+                label: `v${version.id}${version.id === base.activeVersionId ? ' - Current' : ' - History'} (${formatVersionDate(version.publishedAt)})`,
               }))}
               value={String(base.versionId)}
               disabled={dirty || mutation.isPending}
@@ -558,7 +561,7 @@ export function WorkflowBuilderPanel() {
                       {version.id === base.activeVersionId
                         ? ' - Current'
                         : ' - History'}{' '}
-                      ({new Date(version.publishedAt).toLocaleDateString()})
+                      ({formatVersionDate(version.publishedAt)})
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -873,4 +876,13 @@ export function WorkflowBuilderPanel() {
       />
     </div>
   )
+}
+
+const VERSION_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeZone: 'Asia/Karachi',
+})
+
+function formatVersionDate(value: string | Date) {
+  return VERSION_DATE_FORMATTER.format(new Date(value))
 }

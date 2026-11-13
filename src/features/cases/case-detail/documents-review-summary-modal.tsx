@@ -17,6 +17,7 @@ import { Spinner } from '#/components/ui/spinner'
 import { EmailModeChoice } from '#/components/case-email/email-mode-choice'
 import { EmailRecipientSelect } from '#/components/case-email/email-recipient-select'
 import { ManualEmailPanel } from '#/components/case-email/manual-email-panel'
+import { LoadPreviewButton } from '#/components/case-email/load-preview-button'
 import { WhatsAppMessagePanel } from '#/components/case-email/whatsapp-message-panel'
 import { useAuth } from '#/features/auth/auth-client'
 import {
@@ -204,18 +205,13 @@ export function DocumentsReviewSummaryModal({
         disabled={fetchPreview.isPending || confirmManual.isPending}
       />
       {!preview ? (
-        <Button
+        <LoadPreviewButton
+          label="Load email preview"
+          icon={Send}
+          pending={fetchPreview.isPending}
+          disabled={!canTrigger}
           onClick={handleLoadPreview}
-          disabled={!canTrigger || fetchPreview.isPending}
-          variant="outline"
-        >
-          {fetchPreview.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <Send data-icon="inline-start" />
-          )}
-          {fetchPreview.isPending ? 'Loading preview…' : 'Load email preview'}
-        </Button>
+        />
       ) : (
         <ManualEmailPanel
           preview={preview}
@@ -234,20 +230,13 @@ export function DocumentsReviewSummaryModal({
         <EmptyState />
       )}
       {!preview ? (
-        <Button
+        <LoadPreviewButton
+          label="Load WhatsApp message"
+          icon={Send}
+          pending={fetchPreview.isPending}
+          disabled={!canLoadMessage}
           onClick={handleLoadPreview}
-          disabled={!canLoadMessage || fetchPreview.isPending}
-          variant="outline"
-        >
-          {fetchPreview.isPending ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <Send data-icon="inline-start" />
-          )}
-          {fetchPreview.isPending
-            ? 'Loading preview…'
-            : 'Load WhatsApp message'}
-        </Button>
+        />
       ) : (
         <WhatsAppMessagePanel
           preview={preview}

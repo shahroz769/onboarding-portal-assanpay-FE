@@ -11,28 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import { Spinner } from '#/components/ui/spinner'
-import { Field, FieldLabel } from '#/components/ui/field'
+import { PrioritySelectField } from '#/components/priority-select-field'
 import type { CaseListItem } from '#/schemas/cases.schema'
+import type { Priority } from '#/schemas/merchants.schema'
 import { useUpdateCasePriorityMutation } from '#/hooks/use-cases-query'
 import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
-
-const PRIORITIES = ['normal', 'high'] as const
-type Priority = (typeof PRIORITIES)[number]
-
-const PRIORITY_LABELS: Record<Priority, string> = {
-  normal: 'Normal',
-  high: 'High',
-}
 
 interface CasePriorityDialogProps {
   open: boolean
@@ -99,30 +84,7 @@ function PriorityForm({
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
-        <Field>
-          <FieldLabel>Priority</FieldLabel>
-          <Select
-            items={PRIORITIES.map((p) => ({
-              value: p,
-              label: PRIORITY_LABELS[p],
-            }))}
-            value={priority}
-            onValueChange={(v) => setPriority(v as Priority)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {PRIORITY_LABELS[p]}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
+        <PrioritySelectField value={priority} onValueChange={setPriority} />
         <DialogFooter className="mt-4">
           <Button
             type="button"

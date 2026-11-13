@@ -12,14 +12,8 @@ import {
 import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { EmptyState } from '#/components/empty-state'
-import { SectionIcon } from '#/components/section-icon'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { SectionCardHeader } from '#/components/section-card-header'
+import { Card, CardContent } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
 import { statusTint } from '#/lib/status-styles'
 import type { StatusTint } from '#/lib/status-styles'
@@ -315,15 +309,12 @@ function HistorySection({
 }) {
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <SectionIcon icon={icon} tone={tone} />
-          <div>
-            <CardTitle render={<h2 />}>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+      <SectionCardHeader
+        icon={icon}
+        tone={tone}
+        title={title}
+        description={description}
+      />
       <CardContent>{children}</CardContent>
     </Card>
   )
