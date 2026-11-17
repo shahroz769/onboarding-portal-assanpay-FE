@@ -5,13 +5,14 @@ import {
   Panel,
   ReactFlow,
   useReactFlow,
-  useStore,
+  useViewportStore,
 } from '@xyflow/react'
 import type {
   Connection,
-  EdgeChange,
+  EdgeChangeset,
   EdgeTypes,
-  NodeChange,
+  FitViewOptions,
+  NodeChangeset,
   NodeTypes,
 } from '@xyflow/react'
 
@@ -20,7 +21,7 @@ import type { RefObject } from 'react'
 
 import { LayoutGrid } from 'lucide-react'
 
-import '@xyflow/react/dist/style.css'
+import '@xyflow/react/style.css'
 
 import { Button } from '#/components/ui/button'
 import { prefersReducedMotion } from '#/hooks/use-reduced-motion'
@@ -35,7 +36,8 @@ const nodeTypes = {
   queue: QueueNode,
 } satisfies NodeTypes
 
-const FIT_VIEW_OPTIONS = { padding: 0.25, maxZoom: 1 }
+// v13 reads a unitless padding as pixels; '25%' keeps the v12 ratio of 0.25.
+const FIT_VIEW_OPTIONS = { padding: '25%', maxZoom: 1 } satisfies FitViewOptions
 
 const edgeTypes = {
   flow: FlowEdge,
@@ -45,7 +47,6 @@ export function WorkflowCanvas({
   readOnly = false,
   nodes,
   edges,
-  colorMode,
   onNodesChange,
   onEdgesChange,
   onConnect,
@@ -55,9 +56,8 @@ export function WorkflowCanvas({
   readOnly?: boolean
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
-  colorMode: 'light' | 'dark'
-  onNodesChange: (changes: NodeChange<WorkflowNode>[]) => void
-  onEdgesChange: (changes: EdgeChange<WorkflowEdge>[]) => void
+  onNodesChange: (changes: NodeChangeset<WorkflowNode>) => void
+  onEdgesChange: (changes: EdgeChangeset<WorkflowEdge>) => void
   onConnect: (connection: Connection) => void
   isValidConnection: (connection: Connection | WorkflowEdge) => boolean
   onRelayout: () => void
@@ -75,7 +75,6 @@ export function WorkflowCanvas({
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       isValidConnection={isValidConnection}
-      colorMode={colorMode}
       fitView
       fitViewOptions={FIT_VIEW_OPTIONS}
       onMoveStart={(event) => {
@@ -107,8 +106,8 @@ export function WorkflowCanvas({
  */
 function FitOnResize({ userMovedRef }: { userMovedRef: RefObject<boolean> }) {
   const { fitView } = useReactFlow()
-  const width = useStore((state) => state.width)
-  const height = useStore((state) => state.height)
+  const width = useViewportStore((state) => state.width)
+  const height = useViewportStore((state) => state.height)
 
   useEffect(() => {
     if (!width || !height || userMovedRef.current) return

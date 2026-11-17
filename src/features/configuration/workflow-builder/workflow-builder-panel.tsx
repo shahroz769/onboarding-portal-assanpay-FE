@@ -2,13 +2,11 @@ import { useReducer, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import type { Connection, EdgeChange, NodeChange } from '@xyflow/react'
+import type { Connection, NodeChangeset } from '@xyflow/react'
 
-import { applyEdgeChanges, applyNodeChanges, MarkerType } from '@xyflow/react'
+import { EdgeChangeset, MarkerType } from '@xyflow/react'
 
 import { Save, Undo2 } from 'lucide-react'
-
-import { useTheme } from 'next-themes'
 
 import { toast } from 'sonner'
 
@@ -122,8 +120,6 @@ import {
 
 export function WorkflowBuilderPanel() {
   const queryClient = useQueryClient()
-
-  const { resolvedTheme } = useTheme()
 
   const [selectedVersionId, setSelectedVersionId] = useState<
     number | undefined
@@ -244,27 +240,23 @@ export function WorkflowBuilderPanel() {
     dispatch({ type: 'edges', update, edit })
   }
 
-  function handleNodesChange(changes: NodeChange<WorkflowNode>[]) {
-    setNodes((current) => applyNodeChanges(changes, current))
+  function handleNodesChange(changes: NodeChangeset<WorkflowNode>) {
+    setNodes((current) => changes.applyTo(current))
   }
 
-  function handleEdgesChange(changes: EdgeChange<WorkflowEdge>[]) {
+  function handleEdgesChange(changes: EdgeChangeset<WorkflowEdge>) {
     if (readOnly || mutation.isPending) {
-      setEdges(
-        (current) =>
-          applyEdgeChanges(
-            changes.filter((change) => change.type === 'select'),
-            current,
-          ),
-        false,
+      const selectOnly = new EdgeChangeset<WorkflowEdge>(
+        changes.getByType('select'),
       )
+      setEdges((current) => selectOnly.applyTo(current), false)
 
       return
     }
 
     setEdges(
-      (current) => applyEdgeChanges(changes, current),
-      changes.some((change) => change.type === 'remove'),
+      (current) => changes.applyTo(current),
+      changes.getByType('remove').length > 0,
     )
   }
 
@@ -650,8 +642,6 @@ export function WorkflowBuilderPanel() {
             nodes={displayNodes}
 
             edges={edges}
-
-            colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
 
             onNodesChange={handleNodesChange}
 

@@ -1,3 +1,6 @@
+/* React Flow 13 ships its CSS in the `xyflow` layer: after preflight, before utilities. */
+@layer theme, base, xyflow, components, utilities;
+
 @import 'tailwindcss';
 @import 'shadcn/tailwind.css';
 @import 'tw-animate-css';
