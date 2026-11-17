@@ -81,17 +81,8 @@ function AppLayout() {
   )
   const activeMatch = [...matches]
     .reverse()
-    .find(
-      (match) => (match.staticData as { title?: string } | undefined)?.title,
-    )
-  const staticData = activeMatch?.staticData as
-    | {
-        title?: string
-        subtitle?: string
-        hidePageShell?: boolean
-        fitViewport?: boolean
-      }
-    | undefined
+    .find((match) => match.staticData?.title)
+  const staticData = activeMatch?.staticData
   const title = staticData?.title ?? ''
   const subtitle = staticData?.subtitle
   const hidePageShell =

@@ -45,4 +45,12 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof getRouter>
   }
+
+  // Page details read by the app shell (src/routes/_app.tsx).
+  interface StaticDataRouteOption {
+    title?: string
+    subtitle?: string
+    hidePageShell?: boolean
+    fitViewport?: boolean
+  }
 }
