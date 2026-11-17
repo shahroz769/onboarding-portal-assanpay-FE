@@ -42,7 +42,10 @@ import type { MorphPopupProps } from '#/hooks/use-morph'
 import { cn } from '#/lib/utils'
 import { merchantOptionsQueryOptions } from '#/hooks/use-merchants-query'
 import { DEFAULT_MERCHANT_STATUS_FILTER } from '#/schemas/merchants.schema'
-import type { MerchantListItem } from '#/schemas/merchants.schema'
+import type {
+  MerchantListItem,
+  MerchantOption,
+} from '#/schemas/merchants.schema'
 
 /** Manual case creation is limited to admins (matches `POST /api/cases`). */
 export function useCanTriggerCases() {
@@ -134,7 +137,7 @@ function TriggerCaseForm({
 }) {
   const hasPreselection = Boolean(preselectedMerchants?.length)
   const [merchantSearch, setMerchantSearch] = useState('')
-  const [pickedMerchant, setPickedMerchant] = useState<MerchantListItem | null>(
+  const [pickedMerchant, setPickedMerchant] = useState<MerchantOption | null>(
     null,
   )
   const [queueId, setQueueId] = useState('')
@@ -274,11 +277,11 @@ function MerchantCombobox({
   onSearchValueChange,
   onValueChange,
 }: {
-  merchants: MerchantListItem[]
-  value: MerchantListItem | null
+  merchants: MerchantOption[]
+  value: MerchantOption | null
   isFetching: boolean
   onSearchValueChange: (value: string) => void
-  onValueChange: (merchant: MerchantListItem | null) => void
+  onValueChange: (merchant: MerchantOption | null) => void
 }) {
   return (
     <Combobox
@@ -301,7 +304,7 @@ function MerchantCombobox({
           {isFetching ? 'Loading merchants…' : 'No merchants found.'}
         </ComboboxEmpty>
         <ComboboxList>
-          {(merchant: MerchantListItem) => (
+          {(merchant: MerchantOption) => (
             <ComboboxItem key={merchant.id} value={merchant}>
               <span className="min-w-0 flex-1 truncate">
                 {merchant.businessName}

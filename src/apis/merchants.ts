@@ -7,6 +7,7 @@ import type {
   MerchantLimitsMdr,
   MerchantLimitsResponse,
   MerchantListResponse,
+  MerchantOptionsResponse,
   MerchantOverviewResponse,
   Priority,
 } from '#/schemas/merchants.schema'
@@ -32,6 +33,26 @@ export async function fetchMerchants(
   const response = await apiClient.get<MerchantListResponse>('/api/merchants', {
     params: query,
   })
+  return response.data
+}
+
+// ─── Merchant Options ───────────────────────────────────────────────────────
+
+/** Lean merchant picker results: id, number and name only. */
+export async function fetchMerchantOptions(params: {
+  search?: string
+  status?: string
+  limit?: number
+}): Promise<MerchantOptionsResponse> {
+  const query: Record<string, string> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') query[key] = String(value)
+  }
+
+  const response = await apiClient.get<MerchantOptionsResponse>(
+    '/api/merchants/options',
+    { params: query },
+  )
   return response.data
 }
 

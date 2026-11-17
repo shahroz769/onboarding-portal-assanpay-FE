@@ -5,7 +5,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
-import type { QueryClient } from '@tanstack/react-query'
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -63,8 +63,10 @@ import type {
   SaveMidCreationDetailsInput,
   EmailRecipientSelection,
   EmailRecipientType,
+  CaseListResponse,
+  Queue,
 } from '#/schemas/cases.schema'
-import { CASES_KEY } from './use-cases-query'
+import { CASES_KEY, QUEUES_KEY } from './use-cases-query'
 import { userDirectoryQueryOptions } from './use-users-query'
 import {
   emailSendingModeQueryOptions,
@@ -108,11 +110,40 @@ export function caseHistoryQueryOptions(caseId: string) {
 }
 
 /**
+ * The case's workflow from data already in the cache: its row in a loaded
+ * cases list gives the queue, and the loaded queues give the workflow.
+ * Undefined when the case wasn't listed (e.g. a link opened directly).
+ */
+function cachedCaseWorkflowType(queryClient: QueryClient, caseId: string) {
+  let queueId: string | undefined
+  for (const [, data] of queryClient.getQueriesData<
+    InfiniteData<CaseListResponse>
+  >({ queryKey: CASES_KEY })) {
+    queueId = data?.pages
+      ?.flatMap((page) => page.cases ?? [])
+      .find((item) => item.id === caseId)?.queueId
+    if (queueId) break
+  }
+  if (!queueId) return undefined
+
+  for (const [, queues] of queryClient.getQueriesData<Queue[]>({
+    queryKey: QUEUES_KEY,
+  })) {
+    const queue = Array.isArray(queues)
+      ? queues.find((item) => item.id === queueId)
+      : undefined
+    if (queue) return queue.workflowType
+  }
+  return undefined
+}
+
+/**
  * Starts the case page's data from its route loader, as navigation begins:
- * comments, history and the user directory in parallel with the case, and the
- * workflow's configuration as soon as the case says which workflow it is in.
- * Resolves with the case; a failed case request rejects into the route's
- * errorComponent.
+ * comments, history and the user directory in parallel with the case. The
+ * workflow's configuration starts with them too when the cache already knows
+ * the case's workflow (opened from a cases list), otherwise as soon as the
+ * case says which workflow it is in. Resolves with the case; a failed case
+ * request rejects into the route's errorComponent.
  */
 export async function loadCaseDetailPage(
   queryClient: QueryClient,
@@ -121,6 +152,10 @@ export async function loadCaseDetailPage(
   void queryClient.prefetchQuery(caseCommentsQueryOptions(caseId))
   void queryClient.prefetchQuery(caseHistoryQueryOptions(caseId))
   void queryClient.prefetchQuery(userDirectoryQueryOptions())
+  const knownWorkflowType = cachedCaseWorkflowType(queryClient, caseId)
+  if (knownWorkflowType) {
+    prefetchCaseWorkflowConfiguration(queryClient, knownWorkflowType)
+  }
   const detail = await queryClient.ensureQueryData(
     caseDetailQueryOptions(caseId),
   )

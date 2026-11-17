@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircleIcon, FolderOpen, UserIcon } from 'lucide-react'
 
 import { EmptyState, FilteredEmptyState } from '#/components/empty-state'
@@ -63,17 +63,21 @@ const priorityFilterOptions = CASE_PRIORITIES.map((priority) => ({
 
 /**
  * Merchants can number in the thousands, so options come from a debounced
- * server search rather than a preloaded list.
+ * server search rather than a preloaded list. Nothing loads until the
+ * filter is first opened.
  */
 function MerchantFilter() {
   const state = useCasesTableState()
   const actions = useCasesTableActions()
   const meta = useCasesTableMeta()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [opened, setOpened] = useState(false)
   const debouncedSearch = useDebouncedValue(search)
-  const { data, isFetching } = useQuery(
-    merchantOptionsQueryOptions(debouncedSearch.trim()),
-  )
+  const { data, isFetching, isSuccess } = useQuery({
+    ...merchantOptionsQueryOptions(debouncedSearch.trim()),
+    enabled: opened,
+  })
   const options = (data?.merchants ?? []).map((merchant) => ({
     label: merchant.businessName,
     value: merchant.id,
@@ -91,6 +95,11 @@ function MerchantFilter() {
       onSearchChange={setSearch}
       isLoading={isFetching || search !== debouncedSearch}
       selectedLabels={selectedLabels}
+      loadOptions={() => {
+        setOpened(true)
+        return queryClient.ensureQueryData(merchantOptionsQueryOptions())
+      }}
+      optionsLoaded={isSuccess}
       selectedValues={meta.commaToSet(state.filters.merchantId)}
       onChange={(set) =>
         actions.setFilter('merchantId', meta.setToCommaString(set))
@@ -153,6 +162,13 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
     label: user.name,
     value: user.id,
   }))
+  // Selected owners label themselves from the filtered rows (all theirs)
+  // before the user list has loaded.
+  const ownerLabels = new Map(
+    state.flatData.flatMap((item) =>
+      item.ownerId && item.ownerName ? [[item.ownerId, item.ownerName]] : [],
+    ),
+  )
 
   return (
     <DataTableToolbar>
@@ -171,6 +187,9 @@ function Toolbar({ actions: extraActions }: { actions?: ReactNode }) {
             title="Case Owner"
             searchable
             options={ownerFilterOptions}
+            selectedLabels={ownerLabels}
+            loadOptions={actions.loadUsers}
+            optionsLoaded={state.usersLoaded}
             selectedValues={meta.commaToSet(filters.ownerId)}
             onChange={(set) =>
               actions.setFilter('ownerId', meta.setToCommaString(set))

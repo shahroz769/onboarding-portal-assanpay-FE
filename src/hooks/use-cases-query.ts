@@ -17,7 +17,6 @@ import {
   fetchQueues,
   updateCasePriority,
 } from '#/apis/cases'
-import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
 import type { CaseFilters, CaseRouteSearch } from '#/schemas/cases.schema'
 
@@ -64,10 +63,9 @@ export function casesTableQueryOptions(
 }
 
 /**
- * Starts every request a cases table makes on mount, from a route loader.
- * Nothing is awaited: the route skeleton's minimum display time then overlaps
- * the requests instead of preceding them, and the table keeps its own loading
- * and error states.
+ * Starts the requests a cases table makes on mount (its rows and the queue
+ * picker), from a route loader. Nothing is awaited: the table keeps its own
+ * loading and error states. Filter options load when a filter is opened.
  */
 export function prefetchCasesTable(
   queryClient: QueryClient,
@@ -78,7 +76,6 @@ export function prefetchCasesTable(
     casesTableQueryOptions(filters, queueAccess),
   )
   void queryClient.prefetchQuery(queuesQueryOptions())
-  void queryClient.prefetchQuery(userDirectoryQueryOptions())
 }
 
 export function queuesQueryOptions(

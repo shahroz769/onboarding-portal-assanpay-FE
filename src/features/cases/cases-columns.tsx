@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { Link } from '@tanstack/react-router'
 import { ChevronDownIcon } from 'lucide-react'
@@ -5,6 +6,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
+import { Spinner } from '#/components/ui/spinner'
 import { TruncatedTooltip } from '#/components/truncated-tooltip'
 import { DataTableColumnHeader } from '#/components/data-table'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
@@ -51,9 +53,15 @@ function OwnerCell({
 }: {
   item: CaseListItem
   canEdit: boolean
-  onOpenAssignOwner: (item: CaseListItem, trigger: HTMLElement) => void
+  onOpenAssignOwner: (
+    item: CaseListItem,
+    trigger: HTMLElement,
+  ) => Promise<void> | void
 }) {
   const ownerName = item.ownerName ?? 'AP System'
+  // The user list loads on the first owner click; a spinner shows until the
+  // dialog opens.
+  const [isOpening, setIsOpening] = useState(false)
 
   if (!canEdit) {
     return (
@@ -68,9 +76,19 @@ function OwnerCell({
       // A standing dashed underline marks the owner as editable, hover or not.
       className="h-auto cursor-pointer justify-start px-0 text-sm font-medium text-foreground underline decoration-muted-foreground/60 decoration-dashed underline-offset-4 hover:bg-transparent hover:text-foreground hover:decoration-foreground"
       aria-label={`${ownerName}, change owner`}
-      onClick={(event) => onOpenAssignOwner(item, event.currentTarget)}
+      aria-busy={isOpening || undefined}
+      onClick={(event) => {
+        if (isOpening) return
+        const opening = onOpenAssignOwner(item, event.currentTarget)
+        if (!opening) return
+        setIsOpening(true)
+        void opening.finally(() => setIsOpening(false))
+      }}
     >
       {ownerName}
+      {isOpening ? (
+        <Spinner className="size-3.5 text-muted-foreground" />
+      ) : null}
     </Button>
   )
 }
@@ -145,7 +163,10 @@ interface CreateColumnsOptions {
    */
   selectAllHeader: React.ReactNode
   onSelectRow: (id: string, checked: boolean) => void
-  onOpenAssignOwner: (item: CaseListItem, trigger: HTMLElement) => void
+  onOpenAssignOwner: (
+    item: CaseListItem,
+    trigger: HTMLElement,
+  ) => Promise<void> | void
   onOpenPriority: (item: CaseListItem, trigger: HTMLElement) => void
 }
 

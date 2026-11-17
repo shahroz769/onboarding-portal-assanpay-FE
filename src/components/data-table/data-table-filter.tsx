@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { PlusCircleIcon } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -21,6 +22,7 @@ import {
 import { InputGroupAddon } from '#/components/ui/input-group'
 import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
+import { getApiErrorMessage } from '#/lib/get-api-error-message'
 
 interface FilterOption {
   label: string
@@ -48,6 +50,74 @@ interface DataTableFilterProps {
    * server-searched options that aren't in the current results).
    */
   selectedLabels?: ReadonlyMap<string, string>
+  /**
+   * For options that come from the server: called each time the filter is
+   * opened, so nothing loads before the first click. Until `optionsLoaded`,
+   * the button shows a spinner in place of its icon and the filter opens
+   * once the returned promise resolves.
+   */
+  loadOptions?: () => Promise<unknown>
+  /** The options are already loaded, so the filter opens straight away. */
+  optionsLoaded?: boolean
+}
+
+/**
+ * Open state for a filter whose options may have to load first. Opening
+ * waits for `loadOptions` (the button shows a spinner meanwhile) unless the
+ * options are already loaded; a failed load shows a toast and stays closed.
+ */
+function useFilterOpen({
+  title,
+  loadOptions,
+  optionsLoaded = false,
+  onOpen,
+  onClose,
+}: {
+  title: string
+  loadOptions?: () => Promise<unknown>
+  optionsLoaded?: boolean
+  onOpen: () => void
+  onClose?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [isOpening, setIsOpening] = useState(false)
+
+  const openNow = () => {
+    onOpen()
+    setOpen(true)
+  }
+
+  const onOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      onClose?.()
+      setOpen(false)
+      return
+    }
+    if (isOpening) return
+
+    const loading = loadOptions?.()
+    if (!loading || optionsLoaded) {
+      // Already loaded: nothing to wait for, and a failed refresh just
+      // leaves the loaded options showing.
+      loading?.catch(() => {})
+      openNow()
+      return
+    }
+
+    setIsOpening(true)
+    loading
+      .then(openNow, (error: unknown) => {
+        toast.error(
+          getApiErrorMessage(
+            error,
+            `Could not load the ${title.toLowerCase()} list. Please try again.`,
+          ),
+        )
+      })
+      .finally(() => setIsOpening(false))
+  }
+
+  return { open, setOpen, isOpening, onOpenChange }
 }
 
 // Ticking options edits a draft; nothing is applied (and the table doesn't
@@ -61,16 +131,22 @@ function DataTableFilterLabel({
   title,
   selectedValues,
   labelFor,
+  isLoading = false,
 }: {
   title: string
   selectedValues: Set<string>
   labelFor: (value: string) => string | undefined
+  isLoading?: boolean
 }) {
   const labels = [...selectedValues].map(labelFor)
   const allLabelled = labels.every((label) => label !== undefined)
   return (
     <>
-      <PlusCircleIcon data-icon="inline-start" />
+      {isLoading ? (
+        <Spinner data-icon="inline-start" aria-label={`Loading ${title}`} />
+      ) : (
+        <PlusCircleIcon data-icon="inline-start" />
+      )}
       {title}
       {selectedValues.size > 0 && (
         <>
@@ -158,9 +234,16 @@ function PlainDataTableFilter({
   options,
   selectedValues,
   onChange,
+  loadOptions,
+  optionsLoaded,
 }: DataTableFilterProps) {
-  const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Set<string>>(() => new Set())
+  const { open, setOpen, isOpening, onOpenChange } = useFilterOpen({
+    title,
+    loadOptions,
+    optionsLoaded,
+    onOpen: () => setDraft(new Set(selectedValues)),
+  })
 
   const labelFor = (value: string) =>
     options.find((option) => option.value === value)?.label
@@ -175,13 +258,7 @@ function PlainDataTableFilter({
   }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) setDraft(new Set(selectedValues))
-        setOpen(nextOpen)
-      }}
-    >
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm" className="border-dashed" />
@@ -191,6 +268,7 @@ function PlainDataTableFilter({
           title={title}
           selectedValues={selectedValues}
           labelFor={labelFor}
+          isLoading={isOpening}
         />
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">
@@ -236,10 +314,18 @@ function SearchableDataTableFilter({
   onSearchChange,
   isLoading = false,
   selectedLabels,
+  loadOptions,
+  optionsLoaded,
 }: DataTableFilterProps) {
-  const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Set<string>>(() => new Set())
   const serverSearch = Boolean(onSearchChange)
+  const { open, setOpen, isOpening, onOpenChange } = useFilterOpen({
+    title,
+    loadOptions,
+    optionsLoaded,
+    onOpen: () => setDraft(new Set(selectedValues)),
+    onClose: () => onSearchChange?.(''),
+  })
 
   // Labels of every option seen so far, so a draft selection stays labelled
   // after a server search stops returning it.
@@ -272,11 +358,7 @@ function SearchableDataTableFilter({
       multiple
       autoHighlight
       open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) setDraft(new Set(selectedValues))
-        else onSearchChange?.('')
-        setOpen(nextOpen)
-      }}
+      onOpenChange={onOpenChange}
       items={items}
       value={draftOptions}
       // Server-searched options are already filtered.
@@ -300,6 +382,7 @@ function SearchableDataTableFilter({
           title={title}
           selectedValues={selectedValues}
           labelFor={labelFor}
+          isLoading={isOpening}
         />
       </ComboboxPrimitive.Trigger>
       <ComboboxContent align="start" className="w-64 min-w-64">

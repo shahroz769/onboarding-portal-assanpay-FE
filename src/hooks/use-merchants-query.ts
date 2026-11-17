@@ -23,6 +23,7 @@ import {
   fetchMerchantHistory,
   fetchMerchantLimits,
   fetchMerchantOverview,
+  fetchMerchantOptions,
   fetchMerchants,
   bulkTerminateMerchants,
   permanentlyDeleteMerchant,
@@ -84,20 +85,7 @@ export function merchantsTableQueryOptions(search: MerchantRouteSearch) {
 export function merchantOptionsQueryOptions(search = '', status?: string) {
   return queryOptions({
     queryKey: [...MERCHANT_OPTIONS_KEY, search, status ?? 'all'],
-    queryFn: () =>
-      fetchMerchants({
-        search,
-        status,
-        priority: undefined,
-        businessScope: undefined,
-        currency: undefined,
-        epStatus: undefined,
-        sortBy: 'merchantNumber',
-        sortOrder: 'desc',
-        createdAtFrom: undefined,
-        createdAtTo: undefined,
-        limit: 50,
-      }),
+    queryFn: () => fetchMerchantOptions({ search, status, limit: 50 }),
     // Keep the current options listed while a new search term loads.
     placeholderData: keepPreviousData,
     staleTime: 30_000,

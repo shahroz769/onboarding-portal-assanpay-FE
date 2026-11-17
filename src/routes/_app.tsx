@@ -40,6 +40,7 @@ import { InAppShellContext } from '#/hooks/use-in-app-shell'
 import { PageHeaderActionsContext } from '#/hooks/use-page-header-actions'
 import { caseDetailQueryOptions } from '#/hooks/use-case-detail-query'
 import { merchantHeaderQueryOptions } from '#/hooks/use-merchants-query'
+import { unreadCountQueryOptions } from '#/hooks/use-notifications-query'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app')({
@@ -51,6 +52,12 @@ export const Route = createFileRoute('/_app')({
       redirectTo: location.href,
       preload,
     })
+    // The bell's count starts with the page's own data rather than after it:
+    // the layout (and the bell) mounts only once an awaiting child loader
+    // (case detail, merchant tabs) resolves.
+    if (!preload) {
+      void context.queryClient.prefetchQuery(unreadCountQueryOptions())
+    }
   },
   // Server-rendered in place of this ssr:false route (see AppShellPending).
   pendingComponent: AppShellPending,

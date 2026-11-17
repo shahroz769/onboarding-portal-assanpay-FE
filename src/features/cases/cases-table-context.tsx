@@ -1,4 +1,5 @@
 import { createContext, use, useState } from 'react'
+import { toast } from 'sonner'
 import {
   useInfiniteQuery,
   useQuery,
@@ -42,8 +43,10 @@ interface CasesTableState {
   isFetchingNextPage: boolean
   queues: Queue[]
   isQueuesLoading: boolean
+  /** Loaded on demand: by the Case Owner filter, an owner dialog or a selection. */
   users: UserDirectoryItem[]
   isUsersLoading: boolean
+  usersLoaded: boolean
   bulkAssignOwnerId: string | null
   /** Selected cases waiting on the merchant, which cannot go back to AP System. */
   awaitingMerchantSelectedCount: number
@@ -63,7 +66,13 @@ interface CasesTableActions {
   selectAll: (selected: boolean) => void
   setBulkAssignOwnerId: (value: string | null) => void
   submitBulkAssign: () => void
-  openAssignOwnerDialog: (item: CaseListItem, trigger?: HTMLElement) => void
+  /** Resolves once the dialog opens, after the user list loads if needed. */
+  openAssignOwnerDialog: (
+    item: CaseListItem,
+    trigger?: HTMLElement,
+  ) => Promise<void> | void
+  /** Loads the user list (owner filter, owner dialogs). */
+  loadUsers: () => Promise<unknown>
   closeAssignOwnerDialog: () => void
   openPriorityDialog: (item: CaseListItem, trigger?: HTMLElement) => void
   closePriorityDialog: () => void
@@ -198,8 +207,30 @@ function CasesTableProviderState({
   // Row dialogs grow out of the Owner / Priority cell that opened them.
   const assignOwnerMorph = useMorph()
   const priorityMorph = useMorph()
-  const openAssignOwner = (item: CaseListItem, trigger?: HTMLElement) =>
-    assignOwnerMorph.run(() => setAssignOwnerCase(item), trigger)
+  // The user list isn't loaded with the page: the Case Owner filter, the
+  // owner dialog and bulk assign (once rows are selected) load it on demand.
+  const [usersRequested, setUsersRequested] = useState(false)
+  const loadUsers = () => {
+    setUsersRequested(true)
+    return queryClient.ensureQueryData(userDirectoryQueryOptions())
+  }
+  const openAssignOwner = (item: CaseListItem, trigger?: HTMLElement) => {
+    const open = () =>
+      assignOwnerMorph.run(() => setAssignOwnerCase(item), trigger)
+    if (queryClient.getQueryData(userDirectoryQueryOptions().queryKey)) {
+      setUsersRequested(true)
+      open()
+      return
+    }
+    return loadUsers().then(open, (error: unknown) => {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          'Could not load the user list. Please try again.',
+        ),
+      )
+    })
+  }
   const openPriority = (item: CaseListItem, trigger?: HTMLElement) =>
     priorityMorph.run(() => setPriorityCase(item), trigger)
 
@@ -228,9 +259,14 @@ function CasesTableProviderState({
       ? availableQueues.filter((queue) => workQueueIds.has(queue.id))
       : availableQueues
 
-  const { data: caseUsers = [], isLoading: isUsersLoading } = useQuery(
-    userDirectoryQueryOptions(),
-  )
+  const {
+    data: caseUsers = [],
+    isLoading: isUsersLoading,
+    isSuccess: usersLoaded,
+  } = useQuery({
+    ...userDirectoryQueryOptions(),
+    enabled: usersRequested || selectedIdCandidates.size > 0,
+  })
 
   const bulkAssign = useBulkAssignCasesMutation()
 
@@ -351,6 +387,7 @@ function CasesTableProviderState({
     isQueuesLoading,
     users: caseUsers,
     isUsersLoading,
+    usersLoaded,
     bulkAssignOwnerId,
     awaitingMerchantSelectedCount,
     isBulkAssignPending: bulkAssign.isPending,
@@ -382,6 +419,7 @@ function CasesTableProviderState({
     },
     submitBulkAssign,
     openAssignOwnerDialog: openAssignOwner,
+    loadUsers,
     closeAssignOwnerDialog: () => setAssignOwnerCase(null),
     openPriorityDialog: openPriority,
     closePriorityDialog: () => setPriorityCase(null),

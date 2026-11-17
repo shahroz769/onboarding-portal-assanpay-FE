@@ -113,6 +113,19 @@ export const merchantListItemSchema = z.object({
 
 export type MerchantListItem = z.infer<typeof merchantListItemSchema>
 
+/** A merchant picker result (GET /api/merchants/options). */
+export const merchantOptionSchema = merchantListItemSchema.pick({
+  id: true,
+  merchantNumber: true,
+  businessName: true,
+})
+
+export type MerchantOption = z.infer<typeof merchantOptionSchema>
+
+export interface MerchantOptionsResponse {
+  merchants: MerchantOption[]
+}
+
 const merchantListResponseSchema = z.object({
   merchants: z.array(merchantListItemSchema),
   nextCursor: z.string().nullable(),
