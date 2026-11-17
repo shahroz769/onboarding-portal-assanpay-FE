@@ -3,7 +3,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { UsersTableComposed } from '#/features/users/users-table'
 import { useUsersSearchActions } from '#/features/users/users-route-filters'
+import { queuesQueryOptions } from '#/hooks/use-cases-query'
+import { usersInfiniteQueryOptions } from '#/hooks/use-users-query'
 import { userRouteSearchSchema } from '#/schemas/users.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 export const Route = createFileRoute('/_app/user-management/')({
   staticData: {
@@ -12,7 +15,20 @@ export const Route = createFileRoute('/_app/user-management/')({
     fitViewport: true,
   },
   validateSearch: userRouteSearchSchema,
-  pendingMs: 0,
+  // Starts the table's requests (the list, and the queues its dialogs need)
+  // while the route skeleton shows. Not awaited: the table keeps its own
+  // loading and error states. Same parse as validateSearch, so keys match.
+  loader: ({ context: { queryClient }, location, preload }) => {
+    if (preload) return
+    const search = userRouteSearchSchema.safeParse(location.search)
+    if (search.success) {
+      void queryClient.prefetchInfiniteQuery(
+        usersInfiniteQueryOptions(search.data),
+      )
+    }
+    void queryClient.prefetchQuery(queuesQueryOptions())
+  },
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   pendingComponent: UsersRoutePending,
   component: RouteComponent,
 })

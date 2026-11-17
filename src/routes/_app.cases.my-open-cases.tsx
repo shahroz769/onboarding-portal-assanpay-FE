@@ -4,7 +4,9 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { useAuth } from '#/features/auth/auth-client'
+import { prefetchCasesTable } from '#/hooks/use-cases-query'
 import { CASE_STATUSES, caseRouteSearchSchema } from '#/schemas/cases.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 const OPEN_CASE_STATUSES = CASE_STATUSES.filter((status) => status !== 'closed')
 const OPEN_CASES_STATUS_FILTER = OPEN_CASE_STATUSES.join(',')
@@ -16,7 +18,23 @@ export const Route = createFileRoute('/_app/cases/my-open-cases')({
     fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
-  pendingMs: 0,
+  // Starts the table's requests while the route skeleton shows, with the same
+  // owner and status the component pins (see prefetchCasesTable).
+  loader: ({ context: { queryClient, auth }, location, preload }) => {
+    if (preload) return
+    const search = caseRouteSearchSchema.safeParse(location.search)
+    if (!search.success) return
+    prefetchCasesTable(
+      queryClient,
+      {
+        ...search.data,
+        ownerId: auth.getSnapshot().user?.id,
+        status: OPEN_CASES_STATUS_FILTER,
+      },
+      'view',
+    )
+  },
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   pendingComponent: CasesRoutePending,
   component: RouteComponent,
 })

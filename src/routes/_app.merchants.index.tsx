@@ -2,7 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { MerchantsTableComposed } from '#/features/merchants/merchants-table'
+import { merchantsTableQueryOptions } from '#/hooks/use-merchants-query'
 import { merchantRouteSearchSchema } from '#/schemas/merchants.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 export const Route = createFileRoute('/_app/merchants/')({
   staticData: {
@@ -11,7 +13,20 @@ export const Route = createFileRoute('/_app/merchants/')({
     fitViewport: true,
   },
   validateSearch: merchantRouteSearchSchema,
-  pendingMs: 0,
+  // Starts the list request as navigation begins, so it runs while the route
+  // skeleton is held for its minimum display time instead of after it. Not
+  // awaited: the table keeps its own loading and error states. Loaders get the
+  // raw search; this is the same parse validateSearch runs, so the key matches.
+  loader: ({ context: { queryClient }, location, preload }) => {
+    if (preload) return
+    const search = merchantRouteSearchSchema.safeParse(location.search)
+    if (search.success) {
+      void queryClient.prefetchInfiniteQuery(
+        merchantsTableQueryOptions(search.data),
+      )
+    }
+  },
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   pendingComponent: MerchantsRoutePending,
   component: RouteComponent,
 })

@@ -31,11 +31,13 @@ import {
   updateMerchantLimitsMdr,
   updateMerchantPriority,
 } from '#/apis/merchants'
+import { DEFAULT_MERCHANT_STATUS_FILTER } from '#/schemas/merchants.schema'
 import type {
   MerchantFilters,
   MerchantLimitsMdr,
   MerchantListItem,
   MerchantListResponse,
+  MerchantRouteSearch,
   Priority,
 } from '#/schemas/merchants.schema'
 
@@ -61,6 +63,20 @@ export function merchantsInfiniteQueryOptions(filters: MerchantFilters) {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+  })
+}
+
+/**
+ * The list query the merchants table runs for these route search params.
+ * Shared by the table and the /merchants loader, so a prefetch lands on the
+ * exact same key.
+ */
+export function merchantsTableQueryOptions(search: MerchantRouteSearch) {
+  return merchantsInfiniteQueryOptions({
+    ...search,
+    status: search.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
+    createdAtFrom: undefined,
+    createdAtTo: undefined,
   })
 }
 

@@ -6,7 +6,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   MERCHANTS_KEY,
-  merchantsInfiniteQueryOptions,
+  merchantsTableQueryOptions,
   useBulkPriorityMutation,
   useBulkTerminateMutation,
   useDeleteMerchantDriveFilesMutation,
@@ -18,13 +18,11 @@ import { useMorph } from '#/hooks/use-morph'
 import type { MorphPopupProps } from '#/hooks/use-morph'
 import type { DataTableColumnDef } from '#/components/data-table/data-table'
 import type {
-  MerchantFilters,
   MerchantListItem,
   MerchantRouteSearch,
   MerchantSortableColumn,
   Priority,
 } from '#/schemas/merchants.schema'
-import { DEFAULT_MERCHANT_STATUS_FILTER } from '#/schemas/merchants.schema'
 import type { RoleType } from '#/types/auth'
 import { createMerchantColumns } from './merchants-columns'
 import type { MerchantPriorityTarget } from './merchants-priority-dialog'
@@ -218,13 +216,6 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
   const deleteMorph = useMorph()
   const driveFilesMorph = useMorph()
 
-  const queryFilters: MerchantFilters = {
-    ...filters,
-    status: filters.status ?? DEFAULT_MERCHANT_STATUS_FILTER,
-    createdAtFrom: undefined,
-    createdAtTo: undefined,
-  }
-
   const {
     data,
     isLoading,
@@ -235,7 +226,7 @@ function MerchantsTableProvider({ children }: { children: React.ReactNode }) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(merchantsInfiniteQueryOptions(queryFilters))
+  } = useInfiniteQuery(merchantsTableQueryOptions(filters))
 
   // Skeleton only while there is nothing to show for these filters: a
   // background refetch of cached rows keeps them visible and swaps quietly.

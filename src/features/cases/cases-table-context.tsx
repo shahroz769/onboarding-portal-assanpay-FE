@@ -9,7 +9,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { useAuth } from '#/features/auth/auth-client'
 import {
   CASES_KEY,
-  casesInfiniteQueryOptions,
+  casesTableQueryOptions,
   queuesQueryOptions,
   useBulkAssignCasesMutation,
 } from '#/hooks/use-cases-query'
@@ -213,14 +213,7 @@ function CasesTableProviderState({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(
-    casesInfiniteQueryOptions({
-      ...filters,
-      queueAccess,
-      createdAtFrom: undefined,
-      createdAtTo: undefined,
-    }),
-  )
+  } = useInfiniteQuery(casesTableQueryOptions(filters, queueAccess))
 
   // Skeleton only while there is nothing to show for these filters: a
   // background refetch of cached rows keeps them visible and swaps quietly.

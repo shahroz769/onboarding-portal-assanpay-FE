@@ -5,6 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -16,8 +17,9 @@ import {
   fetchQueues,
   updateCasePriority,
 } from '#/apis/cases'
+import { userDirectoryQueryOptions } from '#/hooks/use-users-query'
 import { getApiErrorMessage } from '#/lib/get-api-error-message'
-import type { CaseFilters } from '#/schemas/cases.schema'
+import type { CaseFilters, CaseRouteSearch } from '#/schemas/cases.schema'
 
 export const CASES_KEY = ['cases'] as const
 export const CASES_PAGE_SIZE = 30
@@ -43,6 +45,40 @@ export function casesInfiniteQueryOptions(filters: CaseFilters) {
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
+}
+
+/**
+ * The list query a cases table runs for these filters. Shared by the table
+ * and the cases route loaders, so a prefetch lands on the exact same key.
+ */
+export function casesTableQueryOptions(
+  filters: CaseRouteSearch,
+  queueAccess: 'view' | 'work',
+) {
+  return casesInfiniteQueryOptions({
+    ...filters,
+    queueAccess,
+    createdAtFrom: undefined,
+    createdAtTo: undefined,
+  })
+}
+
+/**
+ * Starts every request a cases table makes on mount, from a route loader.
+ * Nothing is awaited: the route skeleton's minimum display time then overlaps
+ * the requests instead of preceding them, and the table keeps its own loading
+ * and error states.
+ */
+export function prefetchCasesTable(
+  queryClient: QueryClient,
+  filters: CaseRouteSearch,
+  queueAccess: 'view' | 'work',
+) {
+  void queryClient.prefetchInfiniteQuery(
+    casesTableQueryOptions(filters, queueAccess),
+  )
+  void queryClient.prefetchQuery(queuesQueryOptions())
+  void queryClient.prefetchQuery(userDirectoryQueryOptions())
 }
 
 export function queuesQueryOptions(

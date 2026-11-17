@@ -13,6 +13,22 @@ function isTextTruncated(element: Element | null | undefined) {
   return nodes.some((node) => node.scrollWidth > node.clientWidth)
 }
 
+// One observer for every focusable trigger. Its callbacks run after the
+// browser's own layout for the frame, so reading scrollWidth there costs no
+// extra reflow (a per-cell read in an effect forced one per mounting row and
+// dropped table scrolling to ~20fps). It also re-checks when a cell resizes.
+const truncationListeners = new WeakMap<Element, (truncated: boolean) => void>()
+let truncationObserver: ResizeObserver | null = null
+
+function getTruncationObserver() {
+  truncationObserver ??= new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      truncationListeners.get(entry.target)?.(isTextTruncated(entry.target))
+    }
+  })
+  return truncationObserver
+}
+
 type TooltipSide = React.ComponentProps<typeof TooltipContent>['side']
 
 type SharedTooltipPayload = {
@@ -97,12 +113,22 @@ export function TruncatedTooltip({
   const [open, setOpen] = useState(false)
   const [isTruncated, setIsTruncated] = useState(false)
 
-  // Measured once on mount: table columns have fixed widths. After paint, so
-  // rows mounting mid-scroll share one layout read instead of each blocking
-  // the frame.
+  // Text changes don't resize a fixed-width cell, so re-observe on new text:
+  // observing always delivers a fresh first measurement.
+  const contentKey =
+    typeof content === 'string' || typeof content === 'number' ? content : null
+
   useEffect(() => {
-    if (focusable) setIsTruncated(isTextTruncated(triggerRef.current))
-  }, [focusable])
+    const element = triggerRef.current
+    if (!focusable || !element) return
+    const observer = getTruncationObserver()
+    truncationListeners.set(element, setIsTruncated)
+    observer.observe(element)
+    return () => {
+      observer.unobserve(element)
+      truncationListeners.delete(element)
+    }
+  }, [focusable, contentKey])
 
   const setTriggerRef = (node: HTMLElement | null) => {
     triggerRef.current = node

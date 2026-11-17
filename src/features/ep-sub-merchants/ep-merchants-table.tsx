@@ -25,6 +25,7 @@ import {
 import {
   EP_MERCHANTS_KEY,
   epMerchantsInfiniteQueryOptions,
+  epMerchantsTableFilters,
 } from '#/hooks/use-ep-sub-merchants-query'
 import { useMorph } from '#/hooks/use-morph'
 import { useRetainedValue } from '#/hooks/use-retained-value'
@@ -35,8 +36,6 @@ import {
 } from '#/lib/status-styles'
 import { CASE_STATUS_LABELS } from '#/schemas/cases.schema'
 import {
-  DEFAULT_EP_PROGRESS_FILTER,
-  DEFAULT_EP_WORDPRESS_FILTER,
   EP_FILTER_ALL,
   EP_MERCHANT_STATUSES,
   EP_PROGRESS_FILTERS,
@@ -46,7 +45,6 @@ import {
 } from '#/schemas/ep-sub-merchants.schema'
 import type {
   EpMerchant,
-  EpMerchantFilters,
   EpMerchantRouteSearch,
   EpMerchantSortableColumn,
 } from '#/schemas/ep-sub-merchants.schema'
@@ -71,12 +69,7 @@ const progressFilterOptions = EP_PROGRESS_FILTERS.map((value) => ({
 
 // ─── Filter values ──────────────────────────────────────────────────────────
 // A filter missing from the URL uses its default, so clearing one is stored as
-// "all" to tell the two apart.
-
-function appliedFilter(value: string | undefined, defaultValue: string) {
-  const applied = value ?? defaultValue
-  return applied === EP_FILTER_ALL ? undefined : applied
-}
+// "all" to tell the two apart (epMerchantsTableFilters applies the defaults).
 
 function toSelectedSet(value: string | undefined) {
   return new Set(value?.split(',').filter(Boolean) ?? [])
@@ -391,22 +384,9 @@ export function EpMerchantsTable() {
     })
   }
 
-  const wordpressFilter = appliedFilter(
-    search.wordpress,
-    DEFAULT_EP_WORDPRESS_FILTER,
-  )
-  const progressFilter = appliedFilter(
-    search.progress,
-    DEFAULT_EP_PROGRESS_FILTER,
-  )
-  const queryFilters: EpMerchantFilters = {
-    search: search.search,
-    status: search.status === EP_FILTER_ALL ? undefined : search.status,
-    wordpress: wordpressFilter,
-    progress: progressFilter,
-    sortBy: search.sortBy,
-    sortOrder: search.sortOrder,
-  }
+  const queryFilters = epMerchantsTableFilters(search)
+  const wordpressFilter = queryFilters.wordpress
+  const progressFilter = queryFilters.progress
 
   const {
     data,

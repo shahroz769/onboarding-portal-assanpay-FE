@@ -15,6 +15,7 @@ import {
 } from '#/hooks/use-dashboard-query'
 import { dashboardRouteSearchSchema } from '#/schemas/dashboard.schema'
 import type { DashboardRouteSearch } from '#/schemas/dashboard.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 export const Route = createFileRoute('/_app/')({
   staticData: {
@@ -51,7 +52,7 @@ export const Route = createFileRoute('/_app/')({
     )
   },
   pendingComponent: DashboardSkeleton,
-  pendingMs: 0,
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   component: RouteComponent,
 })
 

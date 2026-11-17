@@ -112,9 +112,10 @@ const ROW_HEIGHT = 48
 const HEADER_HEIGHT = 40
 // Rows kept mounted beyond each edge of the viewport.
 const OVERSCAN_ROWS = 10
-// The next page starts loading once the last mounted row is this close to the
-// end of the loaded rows (about half a page ahead of the viewport).
-const LOAD_MORE_THRESHOLD_ROWS = 15
+// The next page starts loading once fewer than a screenful of loaded rows
+// (capped at this many) remain below the viewport. Measured against visible
+// rows, not mounted ones: overscan made every first page fetch the next.
+const LOAD_MORE_MAX_AHEAD_ROWS = 10
 
 interface DataTableRowProps<TData> {
   item: TData
@@ -200,16 +201,24 @@ function DataTableBody<TData>({
     ? virtualizer.getTotalSize() - (lastRow.end - HEADER_HEIGHT)
     : 0
 
-  const lastRenderedIndex = lastRow?.index ?? -1
+  // Visible range, without overscan; refreshed by getVirtualItems() above.
+  const visibleRange = virtualizer.range
+  const lastVisibleIndex = visibleRange?.endIndex ?? -1
+  const aheadRows = visibleRange
+    ? Math.min(
+        LOAD_MORE_MAX_AHEAD_ROWS,
+        visibleRange.endIndex - visibleRange.startIndex + 1,
+      )
+    : 0
   const canLoadMore = !!onScrollEnd && hasMore && !isFetchingMore
   const loadMore = useEffectEvent(() => onScrollEnd?.())
 
   useEffect(() => {
-    if (!canLoadMore || lastRenderedIndex === -1) return
-    if (lastRenderedIndex >= data.length - 1 - LOAD_MORE_THRESHOLD_ROWS) {
+    if (!canLoadMore || lastVisibleIndex === -1) return
+    if (lastVisibleIndex >= data.length - 1 - aheadRows) {
       loadMore()
     }
-  }, [canLoadMore, lastRenderedIndex, data.length])
+  }, [canLoadMore, lastVisibleIndex, aheadRows, data.length])
 
   return (
     <TableBody>

@@ -4,7 +4,9 @@ import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route
 import { CasesTableComposed } from '#/features/cases/cases-table'
 import { useCasesSearchActions } from '#/features/cases/cases-route-filters'
 import { TriggerCaseButton } from '#/features/cases/trigger-case-dialog'
+import { prefetchCasesTable } from '#/hooks/use-cases-query'
 import { caseRouteSearchSchema } from '#/schemas/cases.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 export const Route = createFileRoute('/_app/cases/all-cases')({
   staticData: {
@@ -13,7 +15,15 @@ export const Route = createFileRoute('/_app/cases/all-cases')({
     fitViewport: true,
   },
   validateSearch: caseRouteSearchSchema,
-  pendingMs: 0,
+  // Starts the table's requests while the route skeleton shows (see
+  // prefetchCasesTable). Loaders get the raw search; this is the same parse
+  // validateSearch runs, so the keys match the ones the table reads.
+  loader: ({ context: { queryClient }, location, preload }) => {
+    if (preload) return
+    const search = caseRouteSearchSchema.safeParse(location.search)
+    if (search.success) prefetchCasesTable(queryClient, search.data, 'view')
+  },
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   pendingComponent: CasesRoutePending,
   component: RouteComponent,
 })

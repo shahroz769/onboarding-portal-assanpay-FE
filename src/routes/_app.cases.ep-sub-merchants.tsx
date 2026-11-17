@@ -3,7 +3,12 @@ import { createFileRoute, Navigate } from '@tanstack/react-router'
 import { DataTableRouteSkeleton } from '#/components/data-table/data-table-route-skeleton'
 import { useAuth } from '#/features/auth/auth-client'
 import { EpMerchantsTable } from '#/features/ep-sub-merchants/ep-merchants-table'
+import {
+  epMerchantsInfiniteQueryOptions,
+  epMerchantsTableFilters,
+} from '#/hooks/use-ep-sub-merchants-query'
 import { epMerchantRouteSearchSchema } from '#/schemas/ep-sub-merchants.schema'
+import { ROUTE_SKELETON_DELAY_MS } from '#/lib/route-pending'
 
 export const Route = createFileRoute('/_app/cases/ep-sub-merchants')({
   staticData: {
@@ -13,8 +18,19 @@ export const Route = createFileRoute('/_app/cases/ep-sub-merchants')({
   },
   validateSearch: epMerchantRouteSearchSchema,
   // The access guard lives in the component: a beforeLoad would make every
-  // visit pending and flash the skeleton for pendingMinMs.
-  pendingMs: 0,
+  // visit pending and flash the skeleton for pendingMinMs. The loader only
+  // starts the list request while the skeleton shows, for users the guard
+  // lets through; the table keeps its own loading and error states.
+  loader: ({ context: { queryClient, auth }, location, preload }) => {
+    if (preload || !auth.getSnapshot().user?.canManageEpCases) return
+    const search = epMerchantRouteSearchSchema.safeParse(location.search)
+    if (search.success) {
+      void queryClient.prefetchInfiniteQuery(
+        epMerchantsInfiniteQueryOptions(epMerchantsTableFilters(search.data)),
+      )
+    }
+  },
+  pendingMs: ROUTE_SKELETON_DELAY_MS,
   pendingComponent: EpMerchantsRoutePending,
   component: RouteComponent,
 })
